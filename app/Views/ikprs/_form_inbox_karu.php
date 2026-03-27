@@ -1,3 +1,28 @@
+<!-- <div style="background: yellow; padding: 15px; margin: 10px; border: 3px solid red; font-size: 18px; font-weight: bold;">
+    <strong>DEBUG INBOX:</strong><br>
+    hris_user_id (session) = <?= session('hris_user_id') ?><br>
+    user_role = <?= session('user_role') ?><br>
+    <span style="font-size: 24px; color: blue;">TOTAL DATA = <?= $total ?></span><br>
+    karu_id_di_database = 17136<br>
+    <br>
+    <strong>PARAMETER:</strong><br>
+    keyword = "<?= $keyword ?? '' ?>"<br>
+    page = <?= $page ?? 1 ?>
+    <br>
+    <strong>PANGGIL MODEL LANGSUNG:</strong><br>
+    <?php 
+    $model = new \App\Models\IkpInsidenModel();
+    $user_id = session('hris_user_id');
+    
+    // Panggil langsung seperti controller
+    $totalTest = $model->countInboxFiltered($user_id, '', 'inbox');
+    echo "countInboxFiltered(user_id, '', 'inbox'): " . $totalTest . "<br>";
+    
+    // Dengan keyword kosong
+    $totalTest2 = $model->countInboxFiltered($user_id, null, 'inbox');
+    echo "countInboxFiltered(user_id, null, 'inbox'): " . $totalTest2 . "<br>";
+    ?>
+</div> -->
 <div class="card-header mailbox-header d-flex align-items-start gap-2">
 
     <!-- LEFT TOOLBAR -->

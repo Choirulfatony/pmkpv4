@@ -181,13 +181,20 @@ class IkpInsidenModel extends Model
      * ===================================================== */
     public function countSendFiltered($user_id, $search = '')
     {
+        $role = session('user_role');
         $builder = $this->db->table($this->table);
 
-        $builder->groupStart()
-            ->where('user_id', $user_id)
-            ->orWhere('karu_id', $user_id)
-            ->groupEnd()
-            ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
+        if ($role == 'KOMITE') {
+            // KOMITE: yang sudah diproses oleh komite
+            $builder->where('komite_id', $user_id);
+            $builder->whereIn('status_laporan', ['INSTALASI', 'SELESAI']);
+        } else {
+            $builder->groupStart()
+                ->where('user_id', $user_id)
+                ->orWhere('karu_id', $user_id)
+                ->groupEnd()
+                ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
+        }
 
         if ($search !== '') {
             $builder->groupStart()
@@ -205,6 +212,7 @@ class IkpInsidenModel extends Model
      * ===================================================== */
     public function getSendPaginated($user_id, $limit, $offset, $search = '')
     {
+        $role = session('user_role');
         $builder = $this->db->table($this->table);
 
         $builder->select('
@@ -217,11 +225,17 @@ class IkpInsidenModel extends Model
         created_at
      ');
 
-        $builder->groupStart()
-            ->where('user_id', $user_id)
-            ->orWhere('karu_id', $user_id)
-            ->groupEnd()
-            ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
+        if ($role == 'KOMITE') {
+            // KOMITE: yang sudah diproses oleh komite
+            $builder->where('komite_id', $user_id);
+            $builder->whereIn('status_laporan', ['INSTALASI', 'SELESAI']);
+        } else {
+            $builder->groupStart()
+                ->where('user_id', $user_id)
+                ->orWhere('karu_id', $user_id)
+                ->groupEnd()
+                ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
+        }
 
         if ($search !== '') {
             $builder->groupStart()
@@ -301,19 +315,18 @@ class IkpInsidenModel extends Model
         // STATUS FILTER
         // ======================
         if ($tab == 'inbox') {
-            $status = ['DRAFT', 'KARU', 'INSTALASI'];
+            // KARU & PELAPOR lihat semua status
+            $status = ['DRAFT', 'KARU', 'INSTALASI', 'SELESAI'];
         } else {
             $status = ['SELESAI'];
         }
 
         if ($role == 'KARU') {
-
+            
+            // Pakai whereRaw untuk jelas
             $builder->whereIn('i.status_laporan', $status);
-
-            $builder->groupStart()
-                ->where('i.current_receiver_id', $user_id)
-                ->orWhere('i.karu_id', $user_id)
-                ->groupEnd();
+            $builder->where("(i.current_receiver_id = " . intval($user_id) . " OR i.karu_id = " . intval($user_id) . ")");
+            
         } elseif ($role == 'KOMITE') {
 
             $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id', 'left');
@@ -321,6 +334,7 @@ class IkpInsidenModel extends Model
             $builder->whereIn('i.status_laporan', $status);
         } elseif ($role == 'PELAPOR') {
 
+            // PELAPOR lihat semua status laporan miliknya
             $builder->where('i.user_id', $user_id);
             $builder->whereIn('i.status_laporan', $status);
         } else {
@@ -344,6 +358,28 @@ class IkpInsidenModel extends Model
 
     public function getInboxPaginated($user_id, $limit, $offset, $keyword = '', $tab = 'inbox')
     {
+        $role = session('user_role');
+
+        // DEBUG: if KARU, show more info
+        if ($role == 'KARU') {
+            // Langsung query untuk debug
+            $check = $this->db->table('ikprssm_insiden')
+                ->select('id, status_laporan, karu_id, current_receiver_id')
+                ->where('status_laporan', 'DRAFT')
+                ->get()
+                ->getResultArray();
+            
+            log_message('error', 'DEBUG KARU - Semua DRAFT insiden: ' . json_encode($check));
+            
+            $check2 = $this->db->table('ikprssm_insiden')
+                ->select('id, status_laporan, karu_id, current_receiver_id')
+                ->where('karu_id', $user_id)
+                ->get()
+                ->getResultArray();
+            
+            log_message('error', 'DEBUG KARU - where karu_id=' . $user_id . ': ' . json_encode($check2));
+        }
+
         $builder = $this->db->table('ikprssm_insiden i');
 
         $builder->select('
@@ -366,32 +402,34 @@ class IkpInsidenModel extends Model
 
         $role = session('user_role');
 
+        // DEBUG: log query conditions
+        log_message('error', 'getInboxPaginated: user_id=' . $user_id . ', role=' . $role . ', tab=' . $tab);
+
         // ======================
         // STATUS FILTER
         // ======================
         if ($tab == 'inbox') {
-            $status = ['DRAFT', 'KARU', 'INSTALASI'];
+            // KARU & PELAPOR lihat semua status
+            $status = ['DRAFT', 'KARU', 'INSTALASI', 'SELESAI'];
         } else {
             $status = ['SELESAI'];
         }
 
         if ($role == 'KARU') {
 
+            // Pakai whereRaw untuk jelas
             $builder->whereIn('i.status_laporan', $status);
-
-            $builder->groupStart()
-                ->where('i.current_receiver_id', $user_id)
-                ->orWhere('i.karu_id', $user_id)
-                ->groupEnd();
+            $builder->where("(i.current_receiver_id = " . intval($user_id) . " OR i.karu_id = " . intval($user_id) . ")");
+            
         } elseif ($role == 'KOMITE') {
 
             $builder->where('n.hris_user_id', $user_id);
 
             $builder->whereIn('i.status_laporan', ['DRAFT', 'KARU', 'INSTALASI', 'SELESAI']);
 
-            // $builder->whereIn('i.status_laporan', $status);
         } elseif ($role == 'PELAPOR') {
 
+            // PELAPOR lihat semua status laporan miliknya
             $builder->where('i.user_id', $user_id);
             $builder->whereIn('i.status_laporan', $status);
         } else {

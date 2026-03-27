@@ -326,6 +326,14 @@
     $badge = $statusColor[$status] ?? 'secondary';
     $statusLabel = $statusText[$status] ?? $status;
 
+    $roleBadge = [
+        'PELAPOR' => '<span class="badge bg-info"><i class="bi bi-person me-1"></i>Pelapor</span>',
+        'KARU'    => '<span class="badge bg-warning text-dark"><i class="bi bi-person-badge me-1"></i>Kepala Ruangan</span>',
+        'KOMITE'  => '<span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>Komite PMKP</span>'
+    ];
+
+    $currentRoleBadge = $roleBadge[$user_role] ?? '';
+
     ?>
 
     <div class="insiden-header"
@@ -356,6 +364,10 @@
             <!-- KANAN -->
             <div class="insiden-right">
 
+                <div class="insiden-badge mb-2">
+                    <?= $currentRoleBadge ?>
+                </div>
+
                 <div class="insiden-badge">
 
                     <!-- STATUS -->
@@ -365,8 +377,7 @@
                     <br>
                     <!-- GRADING -->
                     <?php if ($grading): ?>
-                        <!-- <span class="badge bg-light border text-dark"> -->
-                        <span class="badge border bg-body text-body">
+                        <span class="badge border bg-body text-body mt-1 d-block">
                             <i class="bi <?= $icon ?>"></i>
                             Risiko <?= esc($grading) ?>
                         </span>
@@ -651,24 +662,49 @@
                 <div class="insiden-section">
 
                     <div class="insiden-section-title">
-                        Hasil Verifikasi KARU
+                        <i class="bi bi-check2-square me-1"></i>Hasil Verifikasi KARU
                     </div>
 
-                    <div class="row">
+                    <div class="insiden-box border-start border-4 border-info">
 
-                        <div class="col-md-12 mb-3">
-                            <div class="insiden-label">Grading Risiko :</div>
-                            <div class="insiden-value">
-                                <?= esc($insiden['grading_risiko']) ?>
+                        <div class="row">
+
+                            <div class="col-md-12 mb-2">
+                                <div class="insiden-label">Diverifikasi oleh :</div>
+                                <div class="insiden-value">
+                                    <i class="bi bi-person-badge me-1"></i>
+                                    <strong><?= isset($karu_user->full_name) ? esc($karu_user->full_name) : 'KARU' ?></strong>
+                                    <!-- <small class="text-muted">(<?= isset($karu_user->nip) ? esc($karu_user->nip) : '-' ?>)</small> -->
+                                </div>
                             </div>
-                        </div>
 
-
-                        <div class="col-md-12 mb-3">
-                            <div class="insiden-label">Catatan KARU :</div>
-                            <div class="insiden-value">
-                                <?= nl2br(esc($insiden['catatan_atasan'])) ?>
+                            <div class="col-md-6 mb-3">
+                                <div class="insiden-label">Grading Risiko :</div>
+                                <div class="insiden-value">
+                                    <?php 
+                                    $gr = strtolower($insiden['grading_risiko'] ?? '');
+                                    $grClass = $gr == 'merah' ? 'danger' : ($gr == 'kuning' ? 'warning' : ($gr == 'hijau' ? 'success' : 'primary'));
+                                    ?>
+                                    <span class="badge bg-<?= $grClass ?>">
+                                        <?= esc($insiden['grading_risiko'] ?? '-') ?>
+                                    </span>
+                                </div>
                             </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="insiden-label">Tanggal Verifikasi :</div>
+                                <div class="insiden-value">
+                                    <?= date('d M Y H:i', strtotime($insiden['tgl_terima'] ?? $insiden['updated_at'])) ?>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <div class="insiden-label">Catatan KARU :</div>
+                                <div class="insiden-value">
+                                    <?= nl2br(esc($insiden['catatan_atasan'])) ?>
+                                </div>
+                            </div>
+
                         </div>
 
                     </div>
@@ -683,16 +719,30 @@
                 <div class="insiden-section">
 
                     <div class="insiden-section-title">
-                        Hasil Validasi Komite PMKP
+                        <i class="bi bi-check2-square me-1"></i> Hasil Validasi Komite PMKP
                     </div>
 
                     <div class="insiden-box border-start border-4 border-success">
+
+                        <!-- PENGERJA -->
+                        <div class="mb-3">
+                            <div class="insiden-label">Divalidasi/diselesaikan oleh :</div>
+                            <div class="insiden-value">
+                                <span class="badge bg-success">
+                                    <i class="bi bi-shield-check me-1"></i>
+                                    <?= isset($komite_user->full_name) ? esc($komite_user->full_name) : 'Komite PMKP' ?>
+                                </span>
+                                <small class="text-muted ms-1">
+                                    <!-- (<?= isset($komite_user->nip) ? esc($komite_user->nip) : '-' ?>) -->
+                                </small>
+                            </div>
+                        </div>
 
                         <!-- GRADING FINAL -->
                         <div class="mb-2">
                             <div class="insiden-label">Grading Risiko Final :</div>
                             <div class="insiden-value">
-                                <?= esc($insiden['grading_final']) ?>
+                                <?= esc($insiden['grading_final'] ?? '-') ?>
                             </div>
                         </div>
 
@@ -700,8 +750,8 @@
                         <div class="mb-2">
                             <div class="insiden-label">Perbandingan Grading :</div>
                             <div class="insiden-value">
-                                KARU : <?= esc($insiden['grading_risiko']) ?> <br>
-                                KOMITE : <strong><?= esc($insiden['grading_final']) ?></strong>
+                                KARU : <?= esc($insiden['grading_risiko'] ?? '-') ?> <br>
+                                KOMITE : <strong><?= esc($insiden['grading_final'] ?? '-') ?></strong>
                             </div>
                         </div>
 
@@ -709,14 +759,15 @@
                         <div class="mb-2">
                             <div class="insiden-label">Catatan Komite :</div>
                             <div class="insiden-value">
-                                <?= nl2br(esc($insiden['catatan_komite'])) ?>
+                                <?= nl2br(esc($insiden['catatan_komite'] ?? '')) ?>
                             </div>
                         </div>
 
                         <!-- WAKTU -->
-                        <div class="mt-2 text-muted" style="font-size:12px;">
+                        <div class="mt-3 pt-2 border-top">
+                            <i class="bi bi-clock me-1"></i>
                             Diselesaikan pada:
-                            <?= date('d M Y H:i', strtotime($insiden['validated_at'])) ?>
+                            <?= date('d M Y H:i', strtotime($insiden['validated_at'] ?? date('Y-m-d H:i:s'))) ?>
                         </div>
 
                     </div>
@@ -726,12 +777,17 @@
             <?php endif; ?>
         </div>
 
-        <?php if ($insiden['status_laporan'] == 'INSTALASI'): ?>
+        <?php if ($user_role === 'KOMITE' && $insiden['status_laporan'] == 'INSTALASI'): ?>
 
             <div class="insiden-section">
 
                 <div class="insiden-section-title">
-                    Validasi Komite PMKP
+                    <i class="bi bi-shield-check me-1"></i>Validasi Komite PMKP
+                </div>
+
+                <div class="alert alert-success">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Anda sebagai <strong>Komite PMKP</strong>. Silakan lakukan analisa dan validasi terhadap laporan ini.
                 </div>
 
                 <input type="hidden" id="insiden_id" value="<?= $insiden['id'] ?>">
@@ -782,15 +838,6 @@
                         Selesai
                     </button>
 
-                    <!-- REVISI -->
-                    <button hidden class="btn btn-warning"
-                        onclick="validasiKomite(this)"
-                        data-aksi="revisi"
-                        data-id="<?= $insiden['id'] ?>">
-                        <i class="bi bi-pencil-square"></i>
-                        Minta Revisi
-                    </button>
-
                 </div>
 
             </div>
@@ -820,7 +867,7 @@
             <!-- PAGINATION -->
             <div class="btn-group btn-group-sm">
 
-                <?php if (in_array($insiden['status_laporan'], ['DRAFT', 'INBOX'])): ?>
+                <?php if ($user_role === 'KARU' && in_array($insiden['status_laporan'], ['DRAFT', 'INBOX'])): ?>
 
                     <button class="btn btn-mailbox btn-sm"
                         data-bs-toggle="collapse"
@@ -835,13 +882,18 @@
     </div>
 
 
-    <?php if (in_array($insiden['status_laporan'], ['DRAFT', 'INBOX'])): ?>
+    <?php if ($user_role === 'KARU' && in_array($insiden['status_laporan'], ['DRAFT', 'INBOX'])): ?>
         <div class="collapse" id="formVerifikasi">
 
             <div class="insiden-section">
 
                 <div class="insiden-section-title">
-                    Verifikasi / Balasan KARU
+                    <i class="bi bi-check2-square me-1"></i>Verifikasi / Balasan KARU
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Anda sebagai <strong>Kepala Ruangan</strong>. Silakan verifikasi laporan insiden ini.
                 </div>
 
                 <input type="hidden" id="insiden_id" value="<?= $insiden['id'] ?>">
@@ -897,7 +949,5 @@
         </div>
 
     <?php endif; ?>
-
-
 
 </div>

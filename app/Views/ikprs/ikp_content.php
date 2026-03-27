@@ -1,3 +1,5 @@
+<!-- DEBUG: hris_user_id = <?= session('hris_user_id') ?> | user_role = <?= session('user_role') ?> -->
+
   <style>
       /* =====================================================
         FIX CI3 LOOK (Bootstrap 5 + AdminLTE 4)

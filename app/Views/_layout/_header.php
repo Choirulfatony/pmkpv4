@@ -171,6 +171,12 @@
         transform: translateX(3px);
     }
 
+    /* disabled */
+    .notif-disabled {
+        pointer-events: none;
+        opacity: 0.5;
+    }
+
     /* =========================
     TEXT STYLE
     ========================= */
@@ -396,6 +402,9 @@
     window.user_id = "<?= session('hris_user_id') ?? '' ?>";
     window.user_role = "<?= session('user_role') ?? '' ?>";
     window.lastInboxCount = 0;
+    window.lastDraftCount = 0;
+    window.lastSendCount = 0;
+    window.lastNotifCount = 0;
 </script>
 
 <script>
@@ -411,64 +420,32 @@
 
     $(document).on('click', '.notif-open', function(e) {
 
-        e.preventDefault(); // 🔥 WAJIB PALING ATAS
+        e.preventDefault();
+        e.stopPropagation();
 
         const el = $(this);
-        const type = el.data('type') || '';
-        const receiver = el.data('receiver') || 0;
         const insiden_id = el.data('insiden');
 
-        console.log('CLICK', {
-            role: user_role,
-            receiver,
-            user_id,
-            type,
-            insiden_id
-        });
+        console.log('CLICK notif:', insiden_id);
 
-        // ❌ pelapor tidak boleh klik
+        // ❌ pelapor tidak boleh klik langsung ke detail dari notifikasi
         if (user_role === 'PELAPOR') {
             return false;
         }
 
-        // ❌ KARU hanya bisa klik miliknya
-        if (user_role === 'KARU') {
-            if (parseInt(user_id) !== parseInt(receiver)) {
-                return false;
-            }
-        }
-
-        // =====================
-        // UPDATE UI
-        // =====================
-        // el.removeClass('bg-light fw-bold');
+        // Update UI dulu
         el.removeClass('notif-unread notif-unread-text');
         el.find('.notif-dot').remove();
 
-        // =====================
-        // AJAX (HANYA KOMITE)
-        // =====================
-        if (user_role === 'KOMITE') {
-            $.ajax({
-                url: "<?= base_url('ikprs/tandaiDibaca') ?>",
-                type: "POST",
-                data: {
-                    insiden_id
-                },
-                success: function() {
-                    refreshNotif();
-                }
-            });
-        }
-
-        // =====================
-        // LOAD DETAIL
-        // =====================
+        // Langsung load detail tanpa AJAX tandaiDibaca dulu
+        // Nanti saat load detail, akan otomatis tandai baca
         if (typeof loadDetailInsiden === "function") {
             loadDetailInsiden(insiden_id, 'inbox');
         } else {
-            window.location.href = "<?= site_url('ikprs/menu') ?>";
+            window.location.href = "<?= site_url('ikprs/menu') ?>?id=" + insiden_id;
         }
+
+        return false;
 
     });
 
@@ -484,22 +461,74 @@
                 let inbox = res.total_inbox ?? 0;
                 let draft = res.total_draft ?? 0;
                 let send = res.total_send ?? 0;
+                let totalNotif = res.total_notif ?? 0;
+
+                /* =============================
+                      🔔 SOUND NOTIFIKASI (BERULANG KALAU BELUM DIBUKA)
+                 ============================= */
+                if (totalNotif > 0 && totalNotif >= lastNotifCount) {
+                    // Mainkan suara beep pake AudioContext (tanpa perlu file)
+                    // Berulang sampai user buka
+                    try {
+                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        const oscillator = audioCtx.createOscillator();
+                        const gainNode = audioCtx.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioCtx.destination);
+                        
+                        oscillator.frequency.value = 800;
+                        oscillator.type = 'sine';
+                        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                        
+                        oscillator.start(audioCtx.currentTime);
+                        oscillator.stop(audioCtx.currentTime + 0.5);
+                    } catch(e) {
+                        console.log('Audio error:', e);
+                    }
+                } else if (totalNotif == 0) {
+                    // Reset when no more notifications
+                    lastNotifCount = 0;
+                }
+                lastNotifCount = totalNotif;
 
                 /* =============================
                             AUTO REFRESH INBOX
                          ============================= */
 
                 if (inbox > lastInboxCount) {
-
                     console.log("Inbox baru masuk");
-
                     if (typeof loadInbox === "function") {
-                        loadInbox(); // reload inbox otomatis
+                        loadInbox();
                     }
+                }
 
+                /* =============================
+                            AUTO REFRESH DRAFTS
+                         ============================= */
+
+                if (draft > lastDraftCount) {
+                    console.log("Draft baru masuk");
+                    if (typeof loadDrafts === "function") {
+                        loadDrafts();
+                    }
+                }
+
+                /* =============================
+                            AUTO REFRESH SENT
+                         ============================= */
+
+                if (send > lastSendCount) {
+                    console.log("Sent baru masuk");
+                    if (typeof loadSend === "function") {
+                        loadSend();
+                    }
                 }
 
                 lastInboxCount = inbox;
+                lastDraftCount = draft;
+                lastSendCount = send;
 
 
                 /* =============================
@@ -577,21 +606,101 @@
                         }
 
                         // =============================
-                        // 🔥 STATUS (BAWAH)
+                        // 🔥 STATUS (SESUAI ROLE)
                         // =============================
                         let warna_status = "text-danger";
                         let status_read = "Baru";
                         let iconStatus = "bi bi-circle";
 
-                        if (item.komite_read_at) {
-                            warna_status = "text-success";
-                            status_read = "Sudah dibaca Komite";
-                            iconStatus = "bi bi-check-circle-fill";
+                        // Cek status laporan
+                        const status = item.status_laporan;
 
-                        } else if (item.karu_read_at) {
-                            warna_status = "text-primary";
-                            status_read = "Sudah dibaca KARU";
-                            iconStatus = "bi bi-eye-fill";
+                        if (user_role === 'PELAPOR') {
+                            // Tampilkan status laporan + sudah dibaca atau belum
+                            // Cek juga apakah KARU sudah membaca dari karu_read_at
+                            const hasKaruRead = item.karu_read_at !== null && item.karu_read_at !== '';
+
+                            if (item.is_read == 1) {
+                                // Sudah dibaca (sudah klik notifikasi)
+                                if (status === 'DRAFT') {
+                                    status_read = "Menunggu Verifikasi KARU";
+                                    warna_status = "text-secondary";
+
+                                } else if (status === 'KARU') {
+                                    status_read = hasKaruRead ? "Telah Diverifikasi KARU" : "Dalam Verifikasi KARU";
+                                    warna_status = "text-primary";
+
+                                } else if (status === 'INSTALASI') {
+                                    status_read = "Dalam Analisis Komite PMKP";
+                                    warna_status = "text-warning";
+
+                                } else if (status === 'SELESAI') {
+                                    status_read = "Laporan Selesai";
+                                    warna_status = "text-success";
+
+                                } else {
+                                    status_read = status || "Sudah dibaca";
+                                }
+                            } else {
+                                // Belum dibaca (belum klik notifikasi)
+                                if (status === 'DRAFT') {
+                                    status_read = "Menunggu Verifikasi KARU";
+                                    warna_status = "text-danger";
+
+                                } else if (status === 'KARU') {
+                                    status_read = hasKaruRead ? "Telah Diverifikasi KARU" : "Dalam Verifikasi KARU";
+                                    warna_status = hasKaruRead ? "text-primary" : "text-danger";
+
+                                } else if (status === 'INSTALASI') {
+                                    status_read = "Dalam Analisis Komite PMKP";
+                                    warna_status = "text-danger";
+
+                                } else if (status === 'SELESAI') {
+                                    status_read = "Laporan Selesai";
+                                    warna_status = "text-success";
+
+                                } else {
+                                    status_read = "Belum dibaca";
+                                    warna_status = "text-danger";
+                                }
+                            }
+
+                            iconStatus = item.is_read == 0 ? "bi bi-circle-fill" : "bi bi-circle";
+                        } else if (user_role === 'KARU') {
+                            // KARU: cek dari is_read dan siapa yang sudah baca
+                            if (item.is_read == 1) {
+
+                                if (item.komite_read_at) {
+                                    status_read = "Telah Dibaca Komite";
+                                    warna_status = "text-success";
+                                    iconStatus = "bi bi-check-circle-fill";
+
+                                } else if (item.karu_read_at) {
+                                    status_read = "Sudah Dibaca";
+                                    warna_status = "text-primary";
+                                    iconStatus = "bi bi-eye-fill";
+
+                                } else {
+                                    status_read = "Sudah Dibaca";
+                                    warna_status = "text-primary";
+                                }
+
+                            } else {
+                                status_read = "Belum Dibaca";
+                                warna_status = "text-danger";
+                            }
+                        } else if (user_role === 'KOMITE') {
+                            // KOMITE: cek komite sudah baca atau belum
+                            if (item.komite_read_at) {
+                                status_read = "Sudah Dibaca";
+                                warna_status = "text-success";
+                                iconStatus = "bi bi-check-circle-fill";
+
+                            } else {
+                                status_read = "Belum Dibaca";
+                                warna_status = "text-danger";
+                            }
+
                         }
 
                         // let bg = item.is_read == 0 ? "bg-light" : "";
@@ -599,14 +708,14 @@
                         let bold = item.is_read == 0 ? "notif-unread-text" : "";
 
                         let disabledClass = '';
-                        let receiver = item.current_receiver_id ?? 0;
 
+                        // PELAPOR tidak bisa klik dari notifikasi
                         if (user_role === 'PELAPOR') {
                             disabledClass = 'notif-disabled';
-                        } else if (user_role === 'KARU') {
-                            if (parseInt(user_id) !== parseInt(receiver)) {
-                                disabledClass = 'notif-disabled';
-                            }
+                            // Disable klik dengan inline style juga
+                        } else {
+                            // Untuk KARU dan KOMITE, wajib ada class notif-open
+                            disabledClass = 'notif-open';
                         }
 
                         // =============================
@@ -614,7 +723,7 @@
                         // =============================
                         html += `
                         <a href="#" 
-                        class="dropdown-item notif-item ${bg} ${bold} ${disabledClass}"
+                        class="dropdown-item notif-item ${disabledClass} ${bg} ${bold}"
                         data-insiden="${item.insiden_id}">
 
                             <div class="d-flex align-items-start gap-2">
