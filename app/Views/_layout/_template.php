@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+    <!-- 🔥 Dark Mode Engine — HARUS paling atas -->
+    <script>
+        (function() {
+            const saved = localStorage.getItem('theme');
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = saved ?? (systemDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-bs-theme', theme);
+        })();
+    </script>
+
+    <title><?= isset($judul) ? $judul : '' ?></title>
+    <?= @$_meta ?>
+    <?= @$_css ?>
+    <!-- JavaScript (WAJIB sebelum bottom navbar JS logic jalan) -->
+    <?= @$_js ?>
+</head>
+
+<!-- <body class="layout-fixed fixed-header fixed-footer sidebar-expand-lg sidebar-mini sidebar-collapse bg-body-tertiary"> -->
+
+<body class="layout-fixed fixed-header fixed-footer sidebar-expand-lg sidebar-mini sidebar-collapse">
+
+    <div class="app-wrapper">
+
+        <!-- Header -->
+        <?= @$_header ?>
+
+        <!-- Sidebar -->
+        <?= @$_sidebar ?>
+
+        <!--begin::App Main-->
+        <main class="app-main">
+
+            <div class="app-content-header">
+                <?= @$_headerContent ?>
+            </div>
+
+            <div class="app-content">
+                <?= @$_content ?>
+            </div>
+
+        </main>
+        <!--end::App Main-->
+
+        <!-- Footer -->
+        <?= @$_footer ?>
+
+    </div>
+    <!-- END app-wrapper -->
+
+
+    <!-- ⬇️⬇️⬇️ INI POSISI BENAR BOTTOM NAVBAR -->
+    <?= view('_layout/_bottom_navbar') ?>
+    <!-- ⬆️⬆️⬆️ -->
+
+
+
+
+
+    <!-- ⏳ Idle Warning Modal -->
+    <!-- <div class="modal fade" id="idleWarningModal" tabindex="-1"
+        data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">Sesi akan berakhir</h5>
+                </div>
+                <div class="modal-body text-center">
+                    <p>Tidak ada aktivitas terdeteksi.</p>
+                    <h1 id="countdownText" class="fw-bold text-danger">10</h1>
+                    <p>detik lagi Anda akan logout otomatis.</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button class="btn btn-success" id="stayLoggedIn">
+                        Saya masih bekerja
+                    </button>
+                    <a href="<?= site_url('auth/logout') ?>" class="btn btn-outline-danger">
+                        Logout sekarang
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div> -->
+    <style>
+        /* ===============================
+            IDLE MODAL - TOP RIGHT
+            ================================ */
+        .modal-top-right {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            margin: 0;
+            pointer-events: auto;
+        }
+
+        .modal.fade .modal-dialog.modal-top-right {
+            transform: translate(0, -20px);
+        }
+
+        .modal.show .modal-dialog.modal-top-right {
+            transform: translate(0, 0);
+        }
+
+        @media (max-width: 576px) {
+            .modal-top-right {
+                right: .5rem;
+                left: .5rem;
+                max-width: calc(100% - 1rem);
+            }
+        }
+    </style>
+    <div class="modal fade" id="idleWarningModal"
+        tabindex="-1"
+        data-bs-backdrop="static"
+        data-bs-keyboard="false">
+
+        <div class="modal-dialog modal-sm modal-top-right">
+            <div class="modal-content border-0 shadow">
+
+                <div class="modal-header bg-warning text-dark py-2">
+                    <h6 class="modal-title mb-0">
+                        ⏳ Sesi akan berakhir
+                    </h6>
+                </div>
+
+                <div class="modal-body text-center py-3">
+                    <p class="mb-2">Tidak ada aktivitas</p>
+                    <h2 id="countdownText" class="fw-bold text-danger mb-2">10</h2>
+                    <small>detik lagi logout otomatis</small>
+                </div>
+
+                <div class="modal-footer justify-content-center py-2">
+                    <button class="btn btn-success btn-sm" id="stayLoggedIn">
+                        Tetap login
+                    </button>
+                    <a href="<?= site_url('auth/logout') ?>"
+                        class="btn btn-outline-danger btn-sm">
+                        Logout
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+
+<script>
+    /**
+     * 🔒 Anti Back setelah Logout (FINAL)
+     * - Blok BFCache
+     * - Blok history restore
+     */
+    (function() {
+
+        // 1️⃣ Cegah halaman dari BFCache
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                window.location.replace("<?= site_url('auth') ?>");
+            }
+        });
+
+        // 2️⃣ Cegah tombol Back (history)
+        window.addEventListener('popstate', function() {
+            window.location.replace("<?= site_url('auth') ?>");
+        });
+
+        // 3️⃣ Paksa state baru (penting!)
+        if (window.history && window.history.pushState) {
+            window.history.pushState(null, '', window.location.href);
+        }
+
+    })();
+</script>
+
+
+</html>

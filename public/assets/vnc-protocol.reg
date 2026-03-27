@@ -1,0 +1,12 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\vnc]
+@="URL:VNC Protocol"
+"URL Protocol"="5900"
+
+[HKEY_CLASSES_ROOT\vnc\shell]
+
+[HKEY_CLASSES_ROOT\vnc\shell\open]
+
+[HKEY_CLASSES_ROOT\vnc\shell\open\command]
+@="powershell -Command \"$ip = '%1' -replace 'vnc://',''; $ip = $ip -replace '/',''; Start-Process 'C:\\Program Files\\RealVNC\\VNC Viewer\\vncviewer.exe' $ip\""

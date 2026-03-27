@@ -1,0 +1,132 @@
+<?php
+
+use CodeIgniter\Router\RouteCollection;
+
+/** @var RouteCollection $routes */
+
+// halaman default = login
+$routes->get('/', 'Auth::index');
+// $routes->get('test-gd', 'Test::gd');
+// $routes->get('test-db', 'TestDb::index');
+
+
+$routes->get('auth', 'Auth::index');
+$routes->post('auth/process', 'Auth::process');
+$routes->get('auth/refresh-captcha', 'Auth::refresh_captcha');
+$routes->get('auth/logout', 'Auth::logout');
+
+
+$routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
+
+
+// bebas login
+// $routes->get('ikprs/ikp_content', 'Ikprs::ikp_content');
+
+// yang butuh login
+// $routes->group('ikprs', ['filter' => 'auth'], function ($routes) {
+//     $routes->get('/', 'Ikprs::index');
+//     // 🔥 ROUTE FORM ADD IKP (WAJIB)
+//     $routes->get('_form_add_ikp', 'Ikprs::formAddIkp');
+//     $routes->get('_form_inbox', 'Ikprs::formInbox');
+//     $routes->get('ikprs/counter-ajax', 'Ikprs::counterAjax');
+//     $routes->match(['get', 'post'], 'form_drafts', 'Ikprs::formDrafts');
+
+
+//     // 🔥 AJAX CARI PASIEN (WAJIB DI SINI)
+//     $routes->post('cari_pasien', 'Ikprs::cari_pasien');
+
+//     $routes->get('get_departments', 'Ikprs::get_departments');
+//     $routes->post('simpanikp', 'Ikprs::simpanikp');
+// });
+
+$routes->get('test-email', 'Ikprs::kirimEmailTest');
+$routes->group('ikprs', ['filter' => 'auth'], function ($routes) {
+
+
+    $routes->get('/', 'Ikprs::index');      // Dashboard IKPRS
+    $routes->get('menu', 'Ikprs::ikprs');   // Halaman IKPRS
+
+    $routes->get('_form_add_ikp', 'Ikprs::formAddIkp');
+
+    $routes->match(['get', 'post'], 'form_drafts', 'Ikprs::formDrafts');
+    $routes->match(['get', 'post'], 'form_send', 'Ikprs::formSend');
+    $routes->match(['get', 'post'], 'form_inbox_karu', 'Ikprs::formInbox_karu');
+    $routes->match(['get', 'post'], 'tandaiDibaca', 'Ikprs::tandaiDibaca');
+
+    $routes->get('counter-ajax', 'Ikprs::counterAjax');
+    $routes->get('detailInboxKaru/(:num)', 'Ikprs::detailInboxKaru/$1');
+    $routes->get('detail-insiden/(:num)', 'Ikprs::detailInsiden/$1');
+    $routes->post('cari_pasien', 'Ikprs::cari_pasien');
+    $routes->get('get_departments', 'Ikprs::get_departments');
+    $routes->post('simpanikp', 'Ikprs::simpanikp');
+    $routes->post('simpan_verifikasi', 'Ikprs::verifikasi_karu');
+    $routes->post('validasi_komite', 'Ikprs::validasi_komite');
+});
+
+
+
+
+// $routes->group('ikprs', ['filter' => 'auth'], function ($routes) {
+
+//     $routes->get('/', 'Ikprs::index');
+
+//     // FORM
+//     $routes->match(['get', 'post'], 'form_inbox',  'Ikprs::formInbox');
+//     $routes->match(['get', 'post'], 'form_draft',  'Ikprs::formDrafts');
+//     $routes->match(['get', 'post'], 'form_send',   'Ikprs::formSend');
+//     $routes->get('form_add', 'Ikprs::formAddIkp');
+
+//     // AJAX
+//     $routes->get('counter-ajax', 'Ikprs::counterAjax');
+//     $routes->get('get_departments', 'Ikprs::get_departments');
+//     $routes->post('cari_pasien', 'Ikprs::cari_pasien');
+//     $routes->post('save', 'Ikprs::simpanikp');
+// });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// $routes->get('ikprs', 'Ikprs::index', ['filter' => 'auth']);
+
+
+// $routes->get('ikprs/data-login', 'Ikprs::dataLogin'); // tanpa filter
+// $routes->post('ikprs/login-process', 'Ikprs::loginProcess');
+
+// $routes->group('ikprs', ['filter' => 'auth'], function ($routes) {
+//     $routes->get('/', 'Ikprs::index');
+//     $routes->post('logout-hris', 'Ikprs::logoutHris');
+// });
+
+
+
+// ================= IKPRS =================
+
+// // AJAX LOGIN HRIS (TANPA FILTER APAPUN)
+// $routes->get('ikprs/data-login', 'Ikprs::dataLogin');
+// $routes->post('ikprs/login-process', 'Ikprs::loginProcess');
+
+// // HALAMAN IKPRS
+// $routes->group('ikprs', ['filter' => 'auth'], function ($routes) {
+
+//     $routes->get('/', 'Ikprs::index');
+//     $routes->post('logout-hris', 'Ikprs::logoutHris');
+
+//     // 🔥 ROUTE FORM ADD IKP (WAJIB)
+//     $routes->get('_form_add_ikp', 'Ikprs::formAddIkp');
+
+//     // 🔐 KHUSUS SETELAH LOGIN HRIS
+//     $routes->group('', ['filter' => 'hris'], function ($routes) {
+//         $routes->get('inbox', 'Ikprs::inbox');
+//         $routes->get('detail/(:num)', 'Ikprs::detail/$1');
+//     });
+// });
