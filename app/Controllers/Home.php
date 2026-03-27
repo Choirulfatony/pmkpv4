@@ -17,4 +17,9 @@ class Home extends BaseController
 
         return $template->render('home/index', $data);
     }
+
+    public function fatoni()
+    {
+        return view('fatoni');
+    }
 }

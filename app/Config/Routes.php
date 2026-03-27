@@ -18,6 +18,8 @@ $routes->get('auth/logout', 'Auth::logout');
 
 $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
 
+$routes->get('fatoni', 'Home::fatoni');
+
 
 // bebas login
 // $routes->get('ikprs/ikp_content', 'Ikprs::ikp_content');
