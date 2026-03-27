@@ -55,7 +55,6 @@
                                 <i class="nav-icon bi bi-pencil-square"></i>
                                 <p>
                                     Forms Input
-                                    <i class="nav-arrow bi bi-chevron-right"></i>
                                 </p>
                             </a>
 

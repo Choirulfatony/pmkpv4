@@ -178,3 +178,16 @@
 
 
 </html>
+
+<style>
+    .nav-link p {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+    .nav-link .nav-arrow {
+        margin-left: auto;
+    }
+</style>
