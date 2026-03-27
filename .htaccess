@@ -1,6 +1,39 @@
 <IfModule mod_rewrite.c>
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php/$1 [L] 
+    RewriteEngine On
+
+    # Prevent access to hidden files
+    RewriteCond %{SCRIPT_FILENAME} -d [OR]
+    RewriteCond %{SCRIPT_FILENAME} -f
+    RewriteRule "(^|/)\." - [F]
+
+    # Block access to backup and system files
+    <FilesMatch "(\.(bak|config|sql|fla|in[ci]|log|sh|inc|swp|dist)|~)$">
+        Require all denied
+    </FilesMatch>
+
+    # Prevent directory listing
+    Options -Indexes
+
+    # Route to index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php/$1 [L]
 </IfModule>
+
+<IfModule mod_headers.c>
+    # Security headers
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Disable directory browsing
+IndexIgnore *
+
+# Protect environment file
+<Files ".env">
+    Require all denied
+</Files>
+
+# Disable server signature
+ServerSignature Off
