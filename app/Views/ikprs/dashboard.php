@@ -73,16 +73,7 @@
                     <h6 class="fw-bold mb-3" id="tableTitle">Detail Data Insiden:</h6>
                     <div class="table-responsive">
                         <table class="table table-bordered table-sm table-hover" id="trendTable">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="text-center align-middle" id="periodHeader">Periode</th>
-                                    <th class="text-center bg-primary text-white">Near Miss (KNC)</th>
-                                    <th class="text-center" style="background-color: #ffc107; color: #000;">Adverse Event (KTD)</th>
-                                    <th class="text-center bg-secondary text-white">Incident (KTC)</th>
-                                    <th class="text-center bg-danger text-white">Potentially Injurious (KPC)</th>
-                                    <th class="text-center bg-success text-white">Sentinel Event</th>
-                                    <th class="text-center align-middle bg-dark text-white">Total</th>
-                                </tr>
+                            <thead class="table-light" id="trendTableHeader">
                             </thead>
                             <tbody id="trendTableBody">
                             </tbody>
@@ -244,43 +235,71 @@
     // Populate Trend Table
     const trendTableBody = document.getElementById('trendTableBody');
     const trendTableFooter = document.getElementById('trendTableFooter');
-    const periodHeader = document.getElementById('periodHeader');
     const tableTitle = document.getElementById('tableTitle');
     
-    if (periodHeader && tableTitle) {
+    if (tableTitle) {
         if (xAxisType === 'bulan') {
-            periodHeader.textContent = 'Bulan';
             tableTitle.textContent = 'Detail Data Insiden per Bulan:';
         } else {
-            periodHeader.textContent = 'Tahun';
             tableTitle.textContent = 'Detail Data Insiden per Tahun:';
         }
     }
     
-    if (trendTableBody && chartData.labels) {
-        let footerHtml = '<td class="text-center fw-bold">TOTAL</td>';
-        const colTotals = [0, 0, 0, 0, 0];
+    if (trendTableBody && chartData.labels && chartData.datasets) {
+        const trendTableHeader = document.getElementById('trendTableHeader');
         
-        chartData.labels.forEach((label, idx) => {
-            let rowHtml = `<tr><td class="text-center fw-bold">${label}</td>`;
+        const fullNames = {
+            'KNC': 'Near Miss (KNC)',
+            'KTD': 'Adverse Event (KTD)',
+            'KTC': 'Incident (KTC)',
+            'KPC': 'Potentially Injurious (KPC)',
+            'Sentinel': 'Sentinel Event'
+        };
+        
+        const headerColors = {
+            'KNC': 'bg-primary',
+            'KTD': 'bg-warning',
+            'KTC': 'bg-secondary',
+            'KPC': 'bg-danger',
+            'Sentinel': 'bg-success'
+        };
+        
+        // Build header row
+        let headerHtml = '<tr><th class="text-center align-middle">Jenis Insiden</th>';
+        chartData.labels.forEach(label => {
+            headerHtml += `<th class="text-center align-middle">${label}</th>`;
+        });
+        headerHtml += '<th class="text-center align-middle bg-dark text-white">Total</th></tr>';
+        trendTableHeader.innerHTML = headerHtml;
+        
+        // Build body rows (each insiden type as a row)
+        let rowTotals = new Array(chartData.labels.length).fill(0);
+        
+        chartData.datasets.forEach((ds, dsIdx) => {
+            const labelName = fullNames[ds.jenis] || ds.jenis;
+            const badgeClass = headerColors[ds.jenis] || 'bg-secondary';
+            let rowHtml = `<tr><td class="fw-bold"><span class="badge ${badgeClass} me-2">${ds.jenis}</span>${labelName}</td>`;
             
-            chartData.datasets.forEach((ds, dsIdx) => {
+            let rowTotal = 0;
+            chartData.labels.forEach((label, idx) => {
                 const value = ds.data[idx] || 0;
-                colTotals[dsIdx] += value;
+                rowTotal += value;
+                rowTotals[idx] += value;
                 rowHtml += `<td class="text-center">${value}</td>`;
             });
             
-            const rowTotal = chartData.datasets.reduce((sum, ds) => sum + (ds.data[idx] || 0), 0);
             rowHtml += `<td class="text-center fw-bold">${rowTotal}</td></tr>`;
-            
             trendTableBody.innerHTML += rowHtml;
         });
         
-        colTotals.forEach(total => {
+        // Build footer row
+        let footerHtml = '<td class="text-center fw-bold">TOTAL</td>';
+        let grandTotal = 0;
+        rowTotals.forEach(total => {
             footerHtml += `<td class="text-center">${total}</td>`;
+            grandTotal += total;
         });
-        const grandTotal = colTotals.reduce((a, b) => a + b, 0);
-        footerHtml += `<td class="text-center">${grandTotal}</td>`;
+        footerHtml += `<td class="text-center fw-bold">${grandTotal}</td>`;
         
         trendTableFooter.innerHTML = footerHtml;
     }
