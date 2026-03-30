@@ -1,64 +1,65 @@
 <!-- begin::Container-->
 <div class="container-fluid">
     <!--begin::Row-->
-    <div class="row mb-3">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Filter Periode</h5>
-                </div>
-                <div class="card-body">
-                    <form id="filterForm" class="row g-3 align-items-end">
-                        <div class="col-auto">
-                            <label class="form-label">Periode</label>
-                            <select class="form-select form-select-sm" id="filterPeriode" style="width: 150px;">
-                                <option value="">Semua Tahun</option>
-                                <?php for ($t = $tahunIni; $t >= $tahunMulai; $t--): ?>
-                                    <option value="<?= $t ?>" <?= (string)($filters['tahun'] ?? $tahunIni) === (string)$t ? 'selected' : '' ?>><?= $t ?></option>
-                                <?php endfor; ?>
-                            </select>
-                        </div>
-                        <div class="col-auto">
-                            <label class="form-label">Triwulan</label>
-                            <select class="form-select form-select-sm" id="filterTriwulan" style="width: 150px;">
-                                <option value="">Semua Triwulan</option>
-                                <option value="1" <?= ($filters['triwulan'] ?? '') == '1' ? 'selected' : '' ?>>Triwulan 1</option>
-                                <option value="2" <?= ($filters['triwulan'] ?? '') == '2' ? 'selected' : '' ?>>Triwulan 2</option>
-                                <option value="3" <?= ($filters['triwulan'] ?? '') == '3' ? 'selected' : '' ?>>Triwulan 3</option>
-                                <option value="4" <?= ($filters['triwulan'] ?? '') == '4' ? 'selected' : '' ?>>Triwulan 4</option>
-                            </select>
-                        </div>
-                        <div class="col-auto">
-                            <label class="form-label">Semester</label>
-                            <select class="form-select form-select-sm" id="filterSemester" style="width: 150px;">
-                                <option value="">Semua Semester</option>
-                                <option value="1" <?= ($filters['semester'] ?? '') == '1' ? 'selected' : '' ?>>Semester 1</option>
-                                <option value="2" <?= ($filters['semester'] ?? '') == '2' ? 'selected' : '' ?>>Semester 2</option>
-                            </select>
-                        </div>
-                        <div class="col-auto">
-                            <button type="button" class="btn btn-sm btn-primary" id="btnApplyFilter">
-                                <i class="bi bi-funnel"></i> Terapkan
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnClearFilter" <?= empty($filters['tahun']) && empty($filters['triwulan']) && empty($filters['semester']) ? 'style="display:none"' : '' ?>>
-                                <i class="bi bi-x-lg"></i> Reset
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!--begin::Row-->
     <div class="row">
         <div class="col-12">
-            <div class="card">
+            <div class="card card-outline card-primary">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Trend Line Chart - Insiden</h5>
+                    <h3 class="card-title">
+                        <i class="bi bi-graph-up-arrow mr-1"></i>
+                        Trend Line Chart - Insiden
+                    </h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <canvas id="trendLineChart" height="100"></canvas>
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="filter-wrapper d-flex flex-wrap align-items-end gap-2 p-3 bg-light rounded">
+                                <div class="filter-group">
+                                    <label class="form-label mb-1 text-muted small fw-semibold">PERIODE</label>
+                                    <select class="form-select form-select-sm border-primary" id="filterPeriode" style="min-width: 120px;">
+                                        <option value="">Semua Tahun</option>
+                                        <?php for ($t = $tahunIni; $t >= $tahunMulai; $t--): ?>
+                                            <option value="<?= $t ?>" <?= (string)($filters['tahun'] ?? $tahunIni) === (string)$t ? 'selected' : '' ?>><?= $t ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label class="form-label mb-1 text-muted small fw-semibold">TRIWULAN</label>
+                                    <select class="form-select form-select-sm" id="filterTriwulan" style="min-width: 140px;">
+                                        <option value="">Semua Triwulan</option>
+                                        <option value="1" <?= ($filters['triwulan'] ?? '') == '1' ? 'selected' : '' ?>>Triwulan I (Jan-Mar)</option>
+                                        <option value="2" <?= ($filters['triwulan'] ?? '') == '2' ? 'selected' : '' ?>>Triwulan II (Apr-Jun)</option>
+                                        <option value="3" <?= ($filters['triwulan'] ?? '') == '3' ? 'selected' : '' ?>>Triwulan III (Jul-Sep)</option>
+                                        <option value="4" <?= ($filters['triwulan'] ?? '') == '4' ? 'selected' : '' ?>>Triwulan IV (Okt-Des)</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label class="form-label mb-1 text-muted small fw-semibold">SEMESTER</label>
+                                    <select class="form-select form-select-sm" id="filterSemester" style="min-width: 140px;">
+                                        <option value="">Semua Semester</option>
+                                        <option value="1" <?= ($filters['semester'] ?? '') == '1' ? 'selected' : '' ?>>Semester I (Jan-Jun)</option>
+                                        <option value="2" <?= ($filters['semester'] ?? '') == '2' ? 'selected' : '' ?>>Semester II (Jul-Des)</option>
+                                    </select>
+                                </div>
+                                <div class="filter-actions d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-primary" id="btnApplyFilter">
+                                        <i class="bi bi-funnel"></i> Terapkan
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnClearFilter" <?= empty($filters['tahun']) && empty($filters['triwulan']) && empty($filters['semester']) ? 'style="display:none"' : '' ?>>
+                                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container" style="position: relative; height: 400px;">
+                        <canvas id="trendLineChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -66,6 +67,24 @@
     <!-- /.row (main row) -->
 </div>
 <!--end::Container -->
+
+<style>
+    .filter-wrapper {
+        border: 1px solid #e9ecef;
+    }
+    .filter-group .form-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .filter-group select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    }
+    .card-outline.card-primary {
+        border-top: 3px solid #0d6efd;
+    }
+</style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
