@@ -117,7 +117,7 @@ class IkpInsidenModel extends Model
     }
 
     /* =====================================================
-     * APPLY FILTERS (Triwulan, Semester, Tahun)
+     * APPLY FILTERS (Triwulan, Semester, Tahun, Status)
      * ===================================================== */
     private function applyFilters($builder, $filters = [])
     {
@@ -128,6 +128,7 @@ class IkpInsidenModel extends Model
         $tahun = $filters['tahun'] ?? null;
         $semester = $filters['semester'] ?? null;
         $triwulan = $filters['triwulan'] ?? null;
+        $status = $filters['status'] ?? null;
 
         if ($tahun) {
             $builder->where("YEAR(created_at)", $tahun);
@@ -145,6 +146,10 @@ class IkpInsidenModel extends Model
             $endMonth = $triwulan * 3;
             $builder->where("MONTH(created_at) >=", $startMonth);
             $builder->where("MONTH(created_at) <=", $endMonth);
+        }
+
+        if ($status) {
+            $builder->where('status_laporan', $status);
         }
     }
 
