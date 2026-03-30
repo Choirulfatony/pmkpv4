@@ -79,9 +79,17 @@
         'Sentinel': '#198754'
     };
 
+    const fullNames = {
+        'KNC': 'Near Miss (KNC)',
+        'KTD': 'Adverse Event (KTD)',
+        'KTC': 'Incident (KTC)',
+        'KPC': 'Potentially Injurious Event (KPC)',
+        'Sentinel': 'Sentinel Event'
+    };
+
     const labels = chartData.labels;
     const datasets = chartData.datasets.map(ds => ({
-        label: ds.jenis,
+        label: fullNames[ds.jenis] || ds.jenis,
         data: ds.data,
         borderColor: colors[ds.jenis] || '#333',
         backgroundColor: colors[ds.jenis] || '#333',
