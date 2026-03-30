@@ -247,27 +247,39 @@ class Ikprs extends AppController
             'Tidak ada cedera'
         ];
         
-        $getAkibatData = function($startMonth, $endMonth, $isYearly = false) use ($db, $displayStart, $akibatTypes) {
+        $akibatMapping = [
+            'Kematian' => ['Kematian'],
+            'Cedera Irreversibel / Cedera Berat' => ['Cedera Irreversibel / Cedera Berat', 'Cedera Berat'],
+            'Cedera Reversibel / Cedera Sedang' => ['Cedera Reversibel / Cedera Sedang', 'Cedera Sedang'],
+            'Cedera Ringan' => ['Cedera Ringan'],
+            'Tidak ada cedera' => ['Tidak ada cedera']
+        ];
+        
+        $getAkibatData = function($startMonth, $endMonth, $isYearly = false) use ($db, $displayStart, $akibatTypes, $akibatMapping) {
             $result = [];
             foreach ($akibatTypes as $a) {
                 $dataArr = [];
+                $mappingValues = $akibatMapping[$a] ?? [$a];
+                
                 if ($isYearly) {
                     for ($t = $startMonth; $t <= $endMonth; $t++) {
-                        $dataArr[] = (int) $db->table('ikprssm_insiden')
-                            ->where('akibat_insiden', $a)
+                        $count = (int) $db->table('ikprssm_insiden')
+                            ->whereIn('akibat_insiden', $mappingValues)
                             ->where('status_laporan', 'SELESAI')
                             ->where("selesai_at >= '{$t}-01-01' AND selesai_at <= '{$t}-12-31'")
                             ->countAllResults();
+                        $dataArr[] = $count;
                     }
                 } else {
                     for ($m = $startMonth; $m <= $endMonth; $m++) {
-                        $dataArr[] = (int) $db->table('ikprssm_insiden')
-                            ->where('akibat_insiden', $a)
+                        $count = (int) $db->table('ikprssm_insiden')
+                            ->whereIn('akibat_insiden', $mappingValues)
                             ->where('status_laporan', 'SELESAI')
                             ->where('selesai_at IS NOT NULL')
                             ->where("MONTH(selesai_at) = {$m}")
                             ->where("YEAR(selesai_at) = {$displayStart}")
                             ->countAllResults();
+                        $dataArr[] = $count;
                     }
                 }
                 $result[] = ['akibat' => $a, 'data' => $dataArr];
