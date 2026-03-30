@@ -105,8 +105,36 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="chart-container" style="position: relative; height: 400px;">
-                        <canvas id="gradingChart"></canvas>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="chart-container" style="position: relative; height: 300px;">
+                                <canvas id="gradingChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="alert alert-light border" role="alert">
+                                <h6 class="alert-heading fw-bold">Keterangan:</h6>
+                                <hr>
+                                <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
+                                    <li class="mb-2">
+                                        <span class="badge bg-success" style="width: 20px; height: 20px; display: inline-block;"></span>
+                                        <strong>Risiko Rendah (Hijau)</strong>
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge bg-primary" style="width: 20px; height: 20px; display: inline-block;"></span>
+                                        <strong>Risiko Sedang (Biru)</strong>
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge" style="background-color: #ffc107; width: 20px; height: 20px; display: inline-block;"></span>
+                                        <strong>Risiko Tinggi (Kuning)</strong>
+                                    </li>
+                                    <li>
+                                        <span class="badge bg-danger" style="width: 20px; height: 20px; display: inline-block;"></span>
+                                        <strong>Risiko Tinggi Sekali (Merah)</strong>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -400,11 +428,18 @@
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'top',
+                    display: false
                 },
                 title: {
                     display: true,
-                    text: xAxisType === 'bulan' ? 'Grading Risk Level Bulanan' : 'Grading Risk Level Tahunan'
+                    text: 'Grading Chart - Tingkat Bahaya (Risk Level)',
+                    font: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    padding: {
+                        bottom: 15
+                    }
                 }
             },
             scales: {
@@ -412,6 +447,10 @@
                     beginAtZero: true,
                     ticks: {
                         stepSize: 1
+                    },
+                    title: {
+                        display: true,
+                        text: 'Jumlah'
                     }
                 },
                 x: {
