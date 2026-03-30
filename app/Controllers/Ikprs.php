@@ -49,36 +49,47 @@ class Ikprs extends AppController
         
         $tahunMulai = $tahunMin && $tahunMin->min_tahun ? (int) $tahunMin->min_tahun : ($tahunIni - 4);
 
+        $tahunFilter = $request->getGet('tahun') ?? $tahunIni;
+        
         $filters = [
-            'tahun'     => $request->getGet('tahun') ?? null,
+            'tahun'     => $tahunFilter,
             'triwulan'  => $request->getGet('triwulan') ?? null,
             'semester'  => $request->getGet('semester') ?? null
         ];
 
         $labels = [];
-        $displayStart = $tahunMulai;
-        $displayEnd = $tahunIni;
+        $displayStart = (int) $tahunFilter;
+        $displayEnd = (int) $tahunFilter;
+        $xAxisType = 'tahun';
 
-        if ($filters['tahun']) {
-            $displayStart = (int) $filters['tahun'];
-            $displayEnd = (int) $filters['tahun'];
+        if ($filters['tahun'] == '' || $filters['tahun'] == null) {
+            $displayStart = $tahunMulai;
+            $displayEnd = $tahunIni;
+            $xAxisType = 'tahun';
         }
 
         if ($filters['triwulan']) {
+            $xAxisType = 'bulan';
             $triwulan = (int) $filters['triwulan'];
             $startMonth = ($triwulan - 1) * 3 + 1;
             $endMonth = $triwulan * 3;
             $labels = [];
             for ($m = $startMonth; $m <= $endMonth; $m++) {
-                $labels[] = date('M Y', mktime(0, 0, 0, $m, 1, $displayStart));
+                $labels[] = date('M', mktime(0, 0, 0, $m, 1));
             }
         } elseif ($filters['semester']) {
+            $xAxisType = 'bulan';
             $semester = (int) $filters['semester'];
             $startMonth = $semester == 1 ? 1 : 7;
             $endMonth = $semester == 1 ? 6 : 12;
             $labels = [];
             for ($m = $startMonth; $m <= $endMonth; $m++) {
-                $labels[] = date('M Y', mktime(0, 0, 0, $m, 1, $displayStart));
+                $labels[] = date('M', mktime(0, 0, 0, $m, 1));
+            }
+        } elseif ($filters['tahun'] && $filters['tahun'] != '') {
+            $xAxisType = 'bulan';
+            for ($m = 1; $m <= 12; $m++) {
+                $labels[] = date('M', mktime(0, 0, 0, $m, 1));
             }
         } else {
             for ($t = $displayStart; $t <= $displayEnd; $t++) {
@@ -120,6 +131,17 @@ class Ikprs extends AppController
                         ->countAllResults();
                     $dataPerPeriode[] = $count;
                 }
+            } elseif ($filters['tahun'] && $filters['tahun'] != '') {
+                for ($m = 1; $m <= 12; $m++) {
+                    $count = $db->table('ikprssm_insiden')
+                        ->where('jenis_insiden', $jenis)
+                        ->where('status_laporan', 'SELESAI')
+                        ->where('selesai_at IS NOT NULL')
+                        ->where("MONTH(selesai_at) = {$m}")
+                        ->where("YEAR(selesai_at) = {$displayStart}")
+                        ->countAllResults();
+                    $dataPerPeriode[] = $count;
+                }
             } else {
                 for ($t = $displayStart; $t <= $displayEnd; $t++) {
                     $count = $db->table('ikprssm_insiden')
@@ -149,11 +171,13 @@ class Ikprs extends AppController
             'filters' => $filters,
             'tahunMulai' => $tahunMulai,
             'tahunIni' => $tahunIni,
+            'xAxisType' => $xAxisType,
             '_content'  => view('ikprs/dashboard', [
                 'chartData' => $chartData,
                 'filters' => $filters,
                 'tahunMulai' => $tahunMulai,
-                'tahunIni' => $tahunIni
+                'tahunIni' => $tahunIni,
+                'xAxisType' => $xAxisType
             ]),
         ]);
     }

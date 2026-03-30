@@ -14,7 +14,7 @@
                             <select class="form-select form-select-sm" id="filterPeriode" style="width: 150px;">
                                 <option value="">Semua Tahun</option>
                                 <?php for ($t = $tahunIni; $t >= $tahunMulai; $t--): ?>
-                                    <option value="<?= $t ?>" <?= ($filters['tahun'] ?? '') == $t ? 'selected' : '' ?>><?= $t ?></option>
+                                    <option value="<?= $t ?>" <?= (string)($filters['tahun'] ?? $tahunIni) === (string)$t ? 'selected' : '' ?>><?= $t ?></option>
                                 <?php endfor; ?>
                             </select>
                         </div>
@@ -70,6 +70,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const chartData = <?= json_encode($chartData) ?>;
+    const xAxisType = '<?= $xAxisType ?>';
     
     const colors = {
         'KNC': '#0d6efd',
@@ -114,7 +115,7 @@
                 },
                 title: {
                     display: true,
-                    text: 'Trend Insiden per Kategori'
+                    text: xAxisType === 'bulan' ? 'Trend Insiden Bulanan' : 'Trend Insiden Tahunan'
                 }
             },
             scales: {
@@ -122,6 +123,12 @@
                     beginAtZero: true,
                     ticks: {
                         stepSize: 1
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: xAxisType === 'bulan' ? 'Bulan' : 'Tahun'
                     }
                 }
             }
@@ -148,7 +155,7 @@
     });
 
     $('#btnClearFilter').on('click', function() {
-        $('#filterPeriode').val('');
+        $('#filterPeriode').val('<?= $tahunIni ?>');
         $('#filterTriwulan').val('');
         $('#filterSemester').val('');
         window.location.href = "<?= site_url('ikprs') ?>";
