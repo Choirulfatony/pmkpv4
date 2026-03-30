@@ -89,7 +89,7 @@ class IkpInsidenModel extends Model
     /* =====================================================
      * GET DRAFT PAGINATED 
      * ===================================================== */
-    public function getDraftPaginated($user_id, $limit, $offset, $search = '')
+    public function getDraftPaginated($user_id, $limit, $offset, $search = '', $filters = [])
     {
         $builder = $this->builder();
 
@@ -107,6 +107,8 @@ class IkpInsidenModel extends Model
                 ->groupEnd();
         }
 
+        $this->applyFilters($builder, $filters);
+
         return $builder
             ->orderBy('created_at', 'DESC')
             ->limit($limit, $offset)
@@ -115,9 +117,41 @@ class IkpInsidenModel extends Model
     }
 
     /* =====================================================
+     * APPLY FILTERS (Triwulan, Semester, Tahun)
+     * ===================================================== */
+    private function applyFilters($builder, $filters = [])
+    {
+        if (empty($filters)) {
+            return;
+        }
+
+        $tahun = $filters['tahun'] ?? null;
+        $semester = $filters['semester'] ?? null;
+        $triwulan = $filters['triwulan'] ?? null;
+
+        if ($tahun) {
+            $builder->where("YEAR(created_at)", $tahun);
+        }
+
+        if ($semester) {
+            $startMonth = $semester == 1 ? 1 : 7;
+            $endMonth = $semester == 1 ? 6 : 12;
+            $builder->where("MONTH(created_at) >=", $startMonth);
+            $builder->where("MONTH(created_at) <=", $endMonth);
+        }
+
+        if ($triwulan) {
+            $startMonth = ($triwulan - 1) * 3 + 1;
+            $endMonth = $triwulan * 3;
+            $builder->where("MONTH(created_at) >=", $startMonth);
+            $builder->where("MONTH(created_at) <=", $endMonth);
+        }
+    }
+
+    /* =====================================================
      * COUNT DRAFT FILTERED
      * ===================================================== */
-    public function countDraftFiltered($user_id, $search = '')
+    public function countDraftFiltered($user_id, $search = '', $filters = [])
     {
         $builder = $this->builder();
 
@@ -132,6 +166,8 @@ class IkpInsidenModel extends Model
                 ->orLike('jenis_insiden', $search)
                 ->groupEnd();
         }
+
+        $this->applyFilters($builder, $filters);
 
         return $builder->countAllResults();
     }
@@ -179,7 +215,7 @@ class IkpInsidenModel extends Model
     /* =====================================================
      * COUNT SEND FILTERED
      * ===================================================== */
-    public function countSendFiltered($user_id, $search = '')
+    public function countSendFiltered($user_id, $search = '', $filters = [])
     {
         $role = session('user_role');
         $builder = $this->db->table($this->table);
@@ -204,13 +240,15 @@ class IkpInsidenModel extends Model
                 ->groupEnd();
         }
 
+        $this->applyFilters($builder, $filters);
+
         return $builder->countAllResults();
     }
 
     /* =====================================================
      *  * GET SEND PAGINATED
      * ===================================================== */
-    public function getSendPaginated($user_id, $limit, $offset, $search = '')
+    public function getSendPaginated($user_id, $limit, $offset, $search = '', $filters = [])
     {
         $role = session('user_role');
         $builder = $this->db->table($this->table);
@@ -244,6 +282,8 @@ class IkpInsidenModel extends Model
                 ->orLike('jenis_insiden', $search)
                 ->groupEnd();
         }
+
+        $this->applyFilters($builder, $filters);
 
         return $builder
             ->orderBy('created_at', 'DESC')
@@ -305,7 +345,7 @@ class IkpInsidenModel extends Model
     //     return $builder->countAllResults();
     // }
 
-    public function countInboxFiltered($user_id, $keyword = '', $tab = 'inbox')
+    public function countInboxFiltered($user_id, $keyword = '', $tab = 'inbox', $filters = [])
     {
         $role = session('user_role');
 
@@ -349,6 +389,8 @@ class IkpInsidenModel extends Model
                 ->groupEnd();
         }
 
+        $this->applyFilters($builder, $filters);
+
         return $builder->countAllResults();
     }
 
@@ -356,29 +398,9 @@ class IkpInsidenModel extends Model
     * GET INBOX PAGINATED
     * ===================================================== */
 
-    public function getInboxPaginated($user_id, $limit, $offset, $keyword = '', $tab = 'inbox')
+    public function getInboxPaginated($user_id, $limit, $offset, $keyword = '', $tab = 'inbox', $filters = [])
     {
         $role = session('user_role');
-
-        // DEBUG: if KARU, show more info
-        if ($role == 'KARU') {
-            // Langsung query untuk debug
-            $check = $this->db->table('ikprssm_insiden')
-                ->select('id, status_laporan, karu_id, current_receiver_id')
-                ->where('status_laporan', 'DRAFT')
-                ->get()
-                ->getResultArray();
-            
-            log_message('error', 'DEBUG KARU - Semua DRAFT insiden: ' . json_encode($check));
-            
-            $check2 = $this->db->table('ikprssm_insiden')
-                ->select('id, status_laporan, karu_id, current_receiver_id')
-                ->where('karu_id', $user_id)
-                ->get()
-                ->getResultArray();
-            
-            log_message('error', 'DEBUG KARU - where karu_id=' . $user_id . ': ' . json_encode($check2));
-        }
 
         $builder = $this->db->table('ikprssm_insiden i');
 
@@ -401,9 +423,6 @@ class IkpInsidenModel extends Model
         );
 
         $role = session('user_role');
-
-        // DEBUG: log query conditions
-        log_message('error', 'getInboxPaginated: user_id=' . $user_id . ', role=' . $role . ', tab=' . $tab);
 
         // ======================
         // STATUS FILTER
@@ -444,6 +463,8 @@ class IkpInsidenModel extends Model
                 ->orLike('d.department_name', $keyword)
                 ->groupEnd();
         }
+
+        $this->applyFilters($builder, $filters);
 
         return $builder
             ->groupBy('i.id')

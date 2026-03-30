@@ -35,10 +35,53 @@ class Ikprs extends AppController
     {
         $this->disableCache();
 
+        $db = db_connect();
+
+        $tahunIni = date('Y');
+        
+        $tahunMin = $db->table('ikprssm_insiden')
+            ->select('MIN(YEAR(selesai_at)) as min_tahun')
+            ->where('status_laporan', 'SELESAI')
+            ->where('selesai_at IS NOT NULL')
+            ->get()
+            ->getRow();
+        
+        $tahunMulai = $tahunMin && $tahunMin->min_tahun ? (int) $tahunMin->min_tahun : ($tahunIni - 4);
+
+        $labels = [];
+        for ($t = $tahunMulai; $t <= $tahunIni; $t++) {
+            $labels[] = (string) $t;
+        }
+
+        $jenisInsiden = ['KNC', 'KTD', 'KTC', 'KPC', 'Sentinel'];
+        $datasets = [];
+
+        foreach ($jenisInsiden as $jenis) {
+            $dataPerTahun = [];
+            for ($t = $tahunMulai; $t <= $tahunIni; $t++) {
+                $count = $db->table('ikprssm_insiden')
+                    ->where('jenis_insiden', $jenis)
+                    ->where('status_laporan', 'SELESAI')
+                    ->where("selesai_at >= '{$t}-01-01' AND selesai_at <= '{$t}-12-31'")
+                    ->countAllResults();
+                $dataPerTahun[] = $count;
+            }
+            $datasets[] = [
+                'jenis' => $jenis,
+                'data' => $dataPerTahun
+            ];
+        }
+
+        $chartData = [
+            'labels' => $labels,
+            'datasets' => $datasets,
+        ];
+
         return $this->render('dashboard/index', [
             'judul'    => 'Dashboard IKPRS',
             'icon'     => '<i class="bi bi-clipboard-check"></i>',
-            '_content' => view('ikprs/dashboard'),
+            'chartData' => $chartData,
+            '_content'  => view('ikprs/dashboard', ['chartData' => $chartData]),
         ]);
     }
 
@@ -507,11 +550,11 @@ class Ikprs extends AppController
                 ->countAllResults();
         } else {
 
-            // PELAPOR - hanya lihat yang SELESAI
+            // PELAPOR - bisa lihat semua status laporan miliknya
             $total_inbox = $db->table('ikprssm_insiden')
                 ->select('id')
                 ->where('user_id', $user_id)
-                ->where('status_laporan', 'SELESAI')
+                ->whereIn('status_laporan', ['DRAFT', 'KARU', 'INSTALASI', 'SELESAI'])
                 ->countAllResults();
         }
 
@@ -911,10 +954,16 @@ class Ikprs extends AppController
         $keyword = trim($request->getGet('keyword') ?? '');
         $limit   = 10;
 
+        $filters = [
+            'tahun'     => $request->getGet('tahun') ?? null,
+            'semester'  => $request->getGet('semester') ?? null,
+            'triwulan'  => $request->getGet('triwulan') ?? null
+        ];
+
         $model = new IkpInsidenModel();
 
         // 🔹 Hitung total
-        $total = $model->countDraftFiltered($user_id, $keyword);
+        $total = $model->countDraftFiltered($user_id, $keyword, $filters);
 
         // 🔹 Hitung total halaman TANPA dipaksa minimal 1
         $total_pages = $total > 0 ? (int) ceil($total / $limit) : 0;
@@ -929,11 +978,12 @@ class Ikprs extends AppController
         }
 
         $data = [
-            'list'        => $model->getDraftPaginated($user_id, $limit, $offset, $keyword),
+            'list'        => $model->getDraftPaginated($user_id, $limit, $offset, $keyword, $filters),
             'total'       => $total,
             'total_pages' => $total_pages,
             'page'        => $page,
-            'keyword'     => $keyword
+            'keyword'     => $keyword,
+            'filters'    => $filters
         ];
 
         if ($request->isAJAX()) {
@@ -963,11 +1013,17 @@ class Ikprs extends AppController
         $keyword = trim($request->getGet('keyword') ?? '');
         $limit   = 10;
 
+        $filters = [
+            'tahun'     => $request->getGet('tahun') ?? null,
+            'semester'  => $request->getGet('semester') ?? null,
+            'triwulan'  => $request->getGet('triwulan') ?? null
+        ];
+
         $model = new IkpInsidenModel();
 
 
         // 🔹 Hitung total
-        $total = $model->countSendFiltered($user_id, $keyword);
+        $total = $model->countSendFiltered($user_id, $keyword, $filters);
 
         // 🔹 Hitung total halaman TANPA dipaksa minimal 1
         $total_pages = $total > 0 ? (int) ceil($total / $limit) : 0;
@@ -982,11 +1038,12 @@ class Ikprs extends AppController
         }
 
         $data = [
-            'list'        => $model->getSendPaginated($user_id, $limit, $offset, $keyword),
+            'list'        => $model->getSendPaginated($user_id, $limit, $offset, $keyword, $filters),
             'total'       => $total,
             'total_pages' => $total_pages,
             'page'        => $page,
-            'keyword'     => $keyword
+            'keyword'     => $keyword,
+            'filters'    => $filters
         ];
 
         if ($request->isAJAX()) {
@@ -1020,10 +1077,16 @@ class Ikprs extends AppController
         $keyword = trim($request->getGet('keyword') ?? '');
         $limit   = 10;
 
+        $filters = [
+            'tahun'     => $request->getGet('tahun') ?? null,
+            'semester'  => $request->getGet('semester') ?? null,
+            'triwulan'  => $request->getGet('triwulan') ?? null
+        ];
+
         $model = new IkpInsidenModel();
 
         // 🔹 HITUNG TOTAL BERDASARKAN ROLE
-        $total = $model->countInboxFiltered($user_id, $keyword, 'inbox');
+        $total = $model->countInboxFiltered($user_id, $keyword, 'inbox', $filters);
 
         $total_pages = $total > 0 ? (int) ceil($total / $limit) : 0;
 
@@ -1036,11 +1099,12 @@ class Ikprs extends AppController
         }
 
         $data = [
-            'inbox'       => $model->getInboxPaginated($user_id, $limit, $offset, $keyword, 'inbox'),
+            'inbox'       => $model->getInboxPaginated($user_id, $limit, $offset, $keyword, 'inbox', $filters),
             'total'       => $total,
             'total_pages' => $total_pages,
             'page'        => $page,
-            'keyword'     => $keyword
+            'keyword'     => $keyword,
+            'filters'    => $filters
         ];
 
         return view('ikprs/_form_inbox_karu', $data);
