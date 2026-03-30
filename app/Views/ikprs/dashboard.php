@@ -70,12 +70,12 @@
                     
                     <hr>
                     
-                    <h6 class="fw-bold mb-3">Detail Data Insiden per Bulan:</h6>
+                    <h6 class="fw-bold mb-3" id="tableTitle">Detail Data Insiden:</h6>
                     <div class="table-responsive">
                         <table class="table table-bordered table-sm table-hover" id="trendTable">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="text-center align-middle">Bulan</th>
+                                    <th class="text-center align-middle" id="periodHeader">Periode</th>
                                     <th class="text-center bg-primary text-white">Near Miss (KNC)</th>
                                     <th class="text-center" style="background-color: #ffc107; color: #000;">Adverse Event (KTD)</th>
                                     <th class="text-center bg-secondary text-white">Incident (KTC)</th>
@@ -244,6 +244,19 @@
     // Populate Trend Table
     const trendTableBody = document.getElementById('trendTableBody');
     const trendTableFooter = document.getElementById('trendTableFooter');
+    const periodHeader = document.getElementById('periodHeader');
+    const tableTitle = document.getElementById('tableTitle');
+    
+    if (periodHeader && tableTitle) {
+        if (xAxisType === 'bulan') {
+            periodHeader.textContent = 'Bulan';
+            tableTitle.textContent = 'Detail Data Insiden per Bulan:';
+        } else {
+            periodHeader.textContent = 'Tahun';
+            tableTitle.textContent = 'Detail Data Insiden per Tahun:';
+        }
+    }
+    
     if (trendTableBody && chartData.labels) {
         let footerHtml = '<td class="text-center fw-bold">TOTAL</td>';
         const colTotals = [0, 0, 0, 0, 0];
