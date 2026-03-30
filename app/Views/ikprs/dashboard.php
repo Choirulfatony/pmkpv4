@@ -138,48 +138,8 @@
                         <i class="bi bi-info-circle-fill me-1"></i>
                         <?= $filterDesc ?>
                     </div>
-                    <div class="chart-container" style="position: relative; height: 600px;">
+                    <div class="chart-container" style="position: relative; height: 500px;">
                         <canvas id="akibatChart"></canvas>
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <h6 class="fw-bold">Detail Struktur Data:</h6>
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span><span class="badge bg-secondary me-2">1</span>Katastropik (Kematian)</span>
-                                    <span class="badge bg-primary rounded-pill" id="countKematian">-</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span><span class="badge bg-danger me-2">2</span>Mayor (Cedera Berat / Irreversibel)</span>
-                                    <span class="badge bg-primary rounded-pill" id="countCederaBerat">-</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span><span class="badge bg-warning text-dark me-2">3</span>Moderat (Cedera Sedang / Reversibel)</span>
-                                    <span class="badge bg-primary rounded-pill" id="countCederaSedang">-</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span><span class="badge bg-info text-dark me-2">4</span>Minor (Cedera Ringan)</span>
-                                    <span class="badge bg-primary rounded-pill" id="countCederaRingan">-</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span><span class="badge bg-success me-2">5</span>Tidak Signifikan (Tidak Ada Cedera)</span>
-                                    <span class="badge bg-primary rounded-pill" id="countTidakCedera">-</span>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="fw-bold">Analisis:</h6>
-                            <p class="text-muted" id="analisisText">
-                               Berdasarkan grafik di atas, dapat dilihat bahwa Tingkat Bahaya insiden di rumah sakit saat ini didominasi oleh kategori yang memerlukan peninjauan.
-                            </p>
-                            <div class="alert alert-warning mt-2">
-                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                                <strong>Saran Tindakan:</strong> Temuan kategori yang berbahaya memerlukan peninjauan segera dan pelaksanaan Root Cause Analysis (RCA).
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -394,11 +354,18 @@
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'top',
+                    display: false
                 },
                 title: {
                     display: true,
                     text: xAxisType === 'bulan' ? 'Akibat Insiden Bulanan' : 'Akibat Insiden Tahunan'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.raw + ' insiden';
+                        }
+                    }
                 }
             },
             scales: {
@@ -410,66 +377,33 @@
                     title: {
                         display: true,
                         text: 'Jumlah'
+                    },
+                    grid: {
+                        display: true
                     }
                 },
                 y: {
+                    ticks: {
+                        callback: function(value, index) {
+                            const label = this.getLabelForValue(value);
+                            const total = akibatDatasets[index] ? akibatDatasets[index].data.reduce((a, b) => a + b, 0) : 0;
+                            return label + ' (' + total + ')';
+                        },
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
                     title: {
                         display: true,
                         text: xAxisType === 'bulan' ? 'Bulan' : 'Tahun'
-                    }
+                    },
+                    barPercentage: 0.8,
+                    categoryPercentage: 1.0
                 }
             }
         }
     });
-
-    // Update detail counts and analysis
-    const akibatTotals = {};
-    akibatChartData.datasets.forEach(ds => {
-        const total = ds.data.reduce((a, b) => a + b, 0);
-        akibatTotals[ds.akibat] = total;
-    });
-
-    const akibatElementIds = {
-        'Kematian': 'countKematian',
-        'Cedera Irreversibel / Cedera Berat': 'countCederaBerat',
-        'Cedera Reversibel / Cedera Sedang': 'countCederaSedang',
-        'Cedera Ringan': 'countCederaRingan',
-        'Tidak ada cedera': 'countTidakCedera'
-    };
-
-    Object.keys(akibatElementIds).forEach(key => {
-        const elementId = akibatElementIds[key];
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.textContent = akibatTotals[key] || 0;
-        }
-    });
-
-    // Update analysis text
-    let maxCategory = '';
-    let maxValue = 0;
-    Object.keys(akibatTotals).forEach(key => {
-        if (akibatTotals[key] > maxValue) {
-            maxValue = akibatTotals[key];
-            maxCategory = key;
-        }
-    });
-
-    const kategoriNames = {
-        'Kematian': 'Katastropik (Kematian)',
-        'Cedera Irreversibel / Cedera Berat': 'Mayor (Cedera Berat / Irreversibel)',
-        'Cedera Reversibel / Cedera Sedang': 'Moderat (Cedera Sedang / Reversibel)',
-        'Cedera Ringan': 'Minor (Cedera Ringan)',
-        'Tidak ada cedera': 'Tidak Signifikan (Tidak Ada Cedera)'
-    };
-
-    const analisisText = document.getElementById('analisisText');
-    if (maxValue > 0) {
-        const displayName = kategoriNames[maxCategory] || maxCategory;
-        analisisText.innerHTML = `Berdasarkan grafik di atas, dapat dilihat bahwa Tingkat Bahaya insiden di rumah sakit saat ini didominasi oleh kategori <strong>${displayName}</strong> dengan jumlah ${maxValue} insiden.`;
-    } else {
-        analisisText.textContent = 'Belum ada data insiden untuk filter yang dipilih.';
-    }
 
     function applyFilters() {
         const tahun = $('#filterPeriode').val();
