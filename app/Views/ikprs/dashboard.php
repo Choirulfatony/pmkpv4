@@ -105,7 +105,7 @@
                 <div class="card-header">
                     <h3 class="card-title">
                         <i class="bi bi-person-x-fill mr-1"></i>
-                        Grafik Distribusi Insiden Keselamatan Pasien Berdasarkan Tingkat Akibat (Impact Severity)
+                        Chart Akibat Insiden
                     </h3>
                     <div class="card-tools">
                         <button type="button" class="btn btn-tool" data-card-widget="collapse">
@@ -114,30 +114,6 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <?php
-                    $filterDesc = "Tampilan grafik di bawah ini menunjukkan data akumulasi untuk ";
-                    if (!empty($filters['tahun'])) {
-                        $filterDesc .= "Tahun " . $filters['tahun'];
-                    } else {
-                        $filterDesc .= "Tahun " . $tahunIni;
-                    }
-                    
-                    if (!empty($filters['triwulan'])) {
-                        $triwulanLabels = ['', 'Januari - Maret', 'April - Juni', 'Juli - September', 'Oktober - Desember'];
-                        $filterDesc .= ", Triwulan " . $filters['triwulan'] . " (" . $triwulanLabels[$filters['triwulan']] . ")";
-                    } elseif (!empty($filters['semester'])) {
-                        $semesterLabels = ['', 'Januari - Juni', 'Juli - Desember'];
-                        $filterDesc .= ", Semester " . $filters['semester'] . " (" . $semesterLabels[$filters['semester']] . ")";
-                    } else {
-                        $filterDesc .= " (Bulan Januari - Desember)";
-                    }
-                    
-                    $filterDesc .= ". Kategori disusun berdasarkan tingkat keparahan medis.";
-                    ?>
-                    <div class="alert alert-info mb-3">
-                        <i class="bi bi-info-circle-fill me-1"></i>
-                        <?= $filterDesc ?>
-                    </div>
                     <div class="chart-container" style="position: relative; height: 400px;">
                         <canvas id="akibatChart"></canvas>
                     </div>
@@ -342,60 +318,11 @@
     }));
     
     const ctxAkibat = document.getElementById('akibatChart').getContext('2d');
-    
-    // Calculate totals for each category
-    const categoryTotals = {};
-    const categoryFullNames = {
-        'Kematian': 'Katastropik (Kematian)',
-        'Cedera Irreversibel / Cedera Berat': 'Mayor (Cedera Berat/Irreversibel)',
-        'Cedera Reversibel / Cedera Sedang': 'Moderat (Cedera Sedang/Reversibel)',
-        'Cedera Ringan': 'Minor (Cedera Ringan)',
-        'Tidak ada cedera': 'Tidak Signifikan (Tidak Ada Cedera)'
-    };
-    
-    akibatDatasets.forEach(ds => {
-        categoryTotals[ds.label] = ds.data.reduce((a, b) => a + b, 0);
-    });
-    
-    // Create labels with totals
-    const labelsWithTotals = akibatLabels.map(label => {
-        let total = 0;
-        akibatDatasets.forEach(ds => {
-            const idx = akibatLabels.indexOf(label);
-            if (ds.data[idx] !== undefined) {
-                total += ds.data[idx];
-            }
-        });
-        return label + ' (' + total + ')';
-    });
-    
     new Chart(ctxAkibat, {
         type: 'bar',
         data: {
-            labels: labelsWithTotals,
-            datasets: [{
-                label: 'Jumlah Insiden',
-                data: akibatLabels.map((label, idx) => {
-                    return akibatDatasets.reduce((sum, ds) => sum + (ds.data[idx] || 0), 0);
-                }),
-                backgroundColor: [
-                    'rgba(108, 117, 125, 0.9)',
-                    'rgba(220, 53, 69, 0.9)',
-                    'rgba(255, 193, 7, 0.9)',
-                    'rgba(13, 110, 253, 0.9)',
-                    'rgba(25, 135, 84, 0.9)'
-                ],
-                borderColor: [
-                    '#6c757d',
-                    '#dc3545',
-                    '#ffc107',
-                    '#0d6efd',
-                    '#198754'
-                ],
-                borderWidth: 2,
-                borderRadius: 8,
-                barPercentage: 0.7
-            }]
+            labels: akibatLabels,
+            datasets: akibatDatasets
         },
         options: {
             indexAxis: 'y',
@@ -403,62 +330,28 @@
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: false
+                    position: 'top',
                 },
                 title: {
                     display: true,
-                    text: 'Grafik Distribusi Insiden Keselamatan Pasien Berdasarkan Tingkat Akibat (Impact Severity)',
-                    font: {
-                        size: 16,
-                        weight: 'bold'
-                    },
-                    padding: {
-                        bottom: 20
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label.split(' (')[0];
-                            const fullName = categoryFullNames[label] || label;
-                            return fullName + ': ' + context.raw + ' insiden';
-                        }
-                    }
+                    text: xAxisType === 'bulan' ? 'Akibat Insiden Bulanan' : 'Akibat Insiden Tahunan'
                 }
             },
             scales: {
                 x: {
                     beginAtZero: true,
                     ticks: {
-                        stepSize: 1,
-                        font: {
-                            size: 12
-                        }
+                        stepSize: 1
                     },
                     title: {
                         display: true,
-                        text: 'Jumlah Insiden',
-                        font: {
-                            size: 14,
-                            weight: 'bold'
-                        }
-                    },
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.1)'
+                        text: 'Jumlah'
                     }
                 },
                 y: {
-                    ticks: {
-                        font: {
-                            size: 14,
-                            weight: 'bold'
-                        }
-                    },
                     title: {
-                        display: false
-                    },
-                    grid: {
-                        display: false
+                        display: true,
+                        text: xAxisType === 'bulan' ? 'Bulan' : 'Tahun'
                     }
                 }
             }
