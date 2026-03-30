@@ -105,7 +105,7 @@
                 <div class="card-header">
                     <h3 class="card-title">
                         <i class="bi bi-person-x-fill mr-1"></i>
-                        Chart Akibat Insiden
+                        Grafik Distribusi Insiden Keselamatan Pasien Berdasarkan Tingkat Akibat (Impact Severity)
                     </h3>
                     <div class="card-tools">
                         <button type="button" class="btn btn-tool" data-card-widget="collapse">
@@ -287,42 +287,58 @@
         }
     });
 
-    // Akibat Insiden Chart - Horizontal Bar
+    // Akibat Insiden Chart - Horizontal Bar (Total per Kategori)
     const akibatChartData = <?= json_encode($akibatChartData) ?>;
     
-    const akibatColors = {
-        'Kematian': 'rgba(108, 117, 125, 0.9)',
-        'Cedera Irreversibel / Cedera Berat': 'rgba(220, 53, 69, 0.9)',
-        'Cedera Reversibel / Cedera Sedang': 'rgba(255, 193, 7, 0.9)',
-        'Cedera Ringan': 'rgba(13, 110, 253, 0.9)',
-        'Tidak ada cedera': 'rgba(25, 135, 84, 0.9)'
+    // Calculate totals per category
+    const categoryLabels = [];
+    const categoryTotals = [];
+    const categoryColors = [
+        'rgba(108, 117, 125, 0.9)',
+        'rgba(220, 53, 69, 0.9)',
+        'rgba(255, 193, 7, 0.9)',
+        'rgba(13, 110, 253, 0.9)',
+        'rgba(25, 135, 84, 0.9)'
+    ];
+    
+    const categoryFullNames = {
+        'Kematian': 'Katastropik (Kematian)',
+        'Cedera Irreversibel / Cedera Berat': 'Mayor (Cedera Berat/Irreversibel)',
+        'Cedera Reversibel / Cedera Sedang': 'Moderat (Cedera Sedang/Reversibel)',
+        'Cedera Ringan': 'Minor (Cedera Ringan)',
+        'Tidak ada cedera': 'Tidak Signifikan (Tidak Ada Cedera)'
     };
     
-    const akibatBorderColors = {
-        'Kematian': '#6c757d',
-        'Cedera Irreversibel / Cedera Berat': '#dc3545',
-        'Cedera Reversibel / Cedera Sedang': '#ffc107',
-        'Cedera Ringan': '#0d6efd',
-        'Tidak ada cedera': '#198754'
-    };
-    
-    const akibatLabels = akibatChartData.labels;
-    const akibatDatasets = akibatChartData.datasets.map(ds => ({
-        label: ds.akibat,
-        data: ds.data,
-        backgroundColor: akibatColors[ds.akibat] || 'rgba(100,100,100,0.8)',
-        borderColor: akibatBorderColors[ds.akibat] || '#333',
-        borderWidth: 1,
-        barPercentage: 0.6,
-        categoryPercentage: 0.8
-    }));
+    // If data is per month, sum them up; otherwise use direct values
+    if (akibatChartData.datasets.length > 0 && akibatChartData.datasets[0].data.length > 1) {
+        // Data is per period (month/year) - sum all values
+        akibatChartData.datasets.forEach((ds, idx) => {
+            categoryLabels.push(categoryFullNames[ds.akibat] || ds.akibat);
+            const total = ds.data.reduce((a, b) => a + b, 0);
+            categoryTotals.push(total);
+        });
+    } else {
+        // Single value
+        akibatChartData.datasets.forEach((ds, idx) => {
+            categoryLabels.push(categoryFullNames[ds.akibat] || ds.akibat);
+            categoryTotals.push(ds.data[0] || 0);
+        });
+    }
     
     const ctxAkibat = document.getElementById('akibatChart').getContext('2d');
     new Chart(ctxAkibat, {
         type: 'bar',
         data: {
-            labels: akibatLabels,
-            datasets: akibatDatasets
+            labels: categoryLabels,
+            datasets: [{
+                label: 'Jumlah',
+                data: categoryTotals,
+                backgroundColor: categoryColors,
+                borderColor: ['#6c757d', '#dc3545', '#ffc107', '#0d6efd', '#198754'],
+                borderWidth: 2,
+                borderRadius: 6,
+                barPercentage: 0.7
+            }]
         },
         options: {
             indexAxis: 'y',
@@ -330,32 +346,81 @@
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'top',
+                    display: false
                 },
                 title: {
                     display: true,
-                    text: xAxisType === 'bulan' ? 'Akibat Insiden Bulanan' : 'Akibat Insiden Tahunan'
+                    text: 'Grafik Distribusi Insiden Keselamatan Pasien Berdasarkan Tingkat Akibat (Impact Severity)',
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    },
+                    padding: {
+                        bottom: 20
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.raw + ' Insiden';
+                        }
+                    }
                 }
             },
             scales: {
                 x: {
                     beginAtZero: true,
                     ticks: {
-                        stepSize: 1
+                        stepSize: 1,
+                        font: {
+                            size: 12
+                        }
                     },
                     title: {
                         display: true,
-                        text: 'Jumlah'
+                        text: 'Jumlah Insiden',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.08)'
                     }
                 },
                 y: {
-                    title: {
-                        display: true,
-                        text: xAxisType === 'bulan' ? 'Bulan' : 'Tahun'
+                    ticks: {
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    grid: {
+                        display: false
                     }
                 }
             }
-        }
+        },
+        plugins: [{
+            id: 'valueLabels',
+            afterDatasetsDraw: function(chart) {
+                const ctx = chart.ctx;
+                const xAxis = chart.scales.x;
+                const yAxis = chart.scales.y;
+                
+                ctx.font = 'bold 16px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#333';
+                
+                chart.data.datasets[0].data.forEach(function(value, i) {
+                    if (value > 0) {
+                        const xPos = xAxis.getPixelForValue(value) + 8;
+                        const yPos = yAxis.getPixelForValue(i);
+                        ctx.fillText(value, xPos, yPos + 5);
+                    }
+                });
+            }
+        }]
     });
 
     function applyFilters() {
