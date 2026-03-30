@@ -507,11 +507,11 @@ class Ikprs extends AppController
                 ->countAllResults();
         } else {
 
-            // PELAPOR - bisa lihat semua status laporan miliknya
+            // PELAPOR - hanya lihat yang SELESAI
             $total_inbox = $db->table('ikprssm_insiden')
                 ->select('id')
                 ->where('user_id', $user_id)
-                ->whereIn('status_laporan', ['DRAFT', 'KARU', 'INSTALASI', 'SELESAI'])
+                ->where('status_laporan', 'SELESAI')
                 ->countAllResults();
         }
 

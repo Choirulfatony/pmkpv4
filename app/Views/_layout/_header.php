@@ -465,8 +465,9 @@
 
                 /* =============================
                       🔔 SOUND NOTIFIKASI (BERULANG KALAU BELUM DIBUKA)
+                      Hanya untuk KARU dan KOMITE, tidak untuk PELAPOR
                  ============================= */
-                if (totalNotif > 0 && totalNotif >= lastNotifCount) {
+                if (totalNotif > 0 && totalNotif >= lastNotifCount && (user_role === 'KARU' || user_role === 'KOMITE')) {
                     // Mainkan suara beep pake AudioContext (tanpa perlu file)
                     // Berulang sampai user buka
                     try {

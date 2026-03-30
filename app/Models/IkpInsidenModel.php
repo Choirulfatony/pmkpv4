@@ -334,9 +334,9 @@ class IkpInsidenModel extends Model
             $builder->whereIn('i.status_laporan', $status);
         } elseif ($role == 'PELAPOR') {
 
-            // PELAPOR lihat semua status laporan miliknya
+            // PELAPOR hanya lihat yang sudah SELESAI (tidak lihat laporan yang belum selesai)
             $builder->where('i.user_id', $user_id);
-            $builder->whereIn('i.status_laporan', $status);
+            $builder->where('i.status_laporan', 'SELESAI');
         } else {
             return 0;
         }
@@ -429,9 +429,9 @@ class IkpInsidenModel extends Model
 
         } elseif ($role == 'PELAPOR') {
 
-            // PELAPOR lihat semua status laporan miliknya
+            // PELAPOR hanya lihat yang sudah SELESAI
             $builder->where('i.user_id', $user_id);
-            $builder->whereIn('i.status_laporan', $status);
+            $builder->where('i.status_laporan', 'SELESAI');
         } else {
 
             $builder->where('1=0');
