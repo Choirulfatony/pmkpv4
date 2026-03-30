@@ -64,8 +64,72 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <?php
+                    $filterDesc = "Tampilan grafik di bawah ini menunjukkan data akumulasi untuk ";
+                    if (!empty($filters['tahun'])) {
+                        $filterDesc .= "Tahun " . $filters['tahun'];
+                    } else {
+                        $filterDesc .= "Tahun " . $tahunIni;
+                    }
+                    
+                    if (!empty($filters['triwulan'])) {
+                        $triwulanLabels = ['', 'Januari - Maret', 'April - Juni', 'Juli - September', 'Oktober - Desember'];
+                        $filterDesc .= ", Triwulan " . $filters['triwulan'] . " (" . $triwulanLabels[$filters['triwulan']] . ")";
+                    } elseif (!empty($filters['semester'])) {
+                        $semesterLabels = ['', 'Januari - Juni', 'Juli - Desember'];
+                        $filterDesc .= ", Semester " . $filters['semester'] . " (" . $semesterLabels[$filters['semester']] . ")";
+                    } else {
+                        $filterDesc .= " (Bulan Januari - Desember)";
+                    }
+                    
+                    $filterDesc .= ". Kategori disusun berdasarkan jenis insiden.";
+                    ?>
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle-fill me-1"></i>
+                        <?= $filterDesc ?>
+                    </div>
+                    
                     <div class="chart-container" style="position: relative; height: 400px;">
                         <canvas id="trendLineChart"></canvas>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Legend:</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex align-items-center">
+                                    <span class="badge bg-primary me-2" style="width: 20px; height: 20px;"></span>
+                                    <span>Near Miss (KNC)</span>
+                                </li>
+                                <li class="list-group-item d-flex align-items-center">
+                                    <span class="badge me-2" style="background-color: #ffc107; width: 20px; height: 20px;"></span>
+                                    <span>Adverse Event (KTD)</span>
+                                </li>
+                                <li class="list-group-item d-flex align-items-center">
+                                    <span class="badge bg-secondary me-2" style="width: 20px; height: 20px;"></span>
+                                    <span>Incident (KTC)</span>
+                                </li>
+                                <li class="list-group-item d-flex align-items-center">
+                                    <span class="badge bg-danger me-2" style="width: 20px; height: 20px;"></span>
+                                    <span>Potentially Injurious Event (KPC)</span>
+                                </li>
+                                <li class="list-group-item d-flex align-items-center">
+                                    <span class="badge bg-success me-2" style="width: 20px; height: 20px;"></span>
+                                    <span>Sentinel Event</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Ringkasan:</h6>
+                            <div id="trendSummary">
+                                <p class="text-muted">Total insiden berdasarkan jenis:</p>
+                                <ul class="list-unstyled" id="trendTotalList">
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -215,6 +279,38 @@
             }
         }
     });
+
+    // Calculate and display totals for Trend Line Chart
+    const trendTotalList = document.getElementById('trendTotalList');
+    if (trendTotalList) {
+        const fullNames = {
+            'KNC': 'Near Miss (KNC)',
+            'KTD': 'Adverse Event (KTD)',
+            'KTC': 'Incident (KTC)',
+            'KPC': 'Potentially Injurious Event (KPC)',
+            'Sentinel': 'Sentinel Event'
+        };
+        
+        const colorBadges = {
+            'KNC': 'bg-primary',
+            'KTD': 'bg-warning',
+            'KTC': 'bg-secondary',
+            'KPC': 'bg-danger',
+            'Sentinel': 'bg-success'
+        };
+        
+        let summaryHtml = '';
+        datasets.forEach(ds => {
+            const total = ds.data.reduce((a, b) => a + b, 0);
+            const labelName = fullNames[ds.label] || ds.label;
+            const badgeClass = colorBadges[ds.label] || 'bg-secondary';
+            summaryHtml += `<li class="mb-2">
+                <span class="badge ${badgeClass} me-2" style="width: 15px; height: 15px; display: inline-block;"></span>
+                <strong>${labelName}:</strong> ${total} insiden
+            </li>`;
+        });
+        trendTotalList.innerHTML = summaryHtml;
+    }
 
     // Grading Chart - Bar Chart
     const gradingChartData = <?= json_encode($gradingChartData) ?>;
