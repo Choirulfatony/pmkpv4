@@ -67,9 +67,9 @@
                     <div class="chart-container" style="position: relative; height: 400px;">
                         <canvas id="trendLineChart"></canvas>
                     </div>
-                    
+
                     <hr>
-                    
+
                     <h6 class="fw-bold mb-3" id="tableTitle">Detail Data Insiden:</h6>
                     <div class="table-responsive">
                         <table class="table table-bordered table-sm table-hover" id="trendTable">
@@ -88,7 +88,7 @@
         </div>
     </div>
     <!-- /.row (main row) -->
-    
+
     <!--begin::Row-->
     <div class="row mt-4">
         <div class="col-12">
@@ -145,30 +145,47 @@
     .filter-wrapper {
         border: 1px solid #e9ecef;
     }
+
     .filter-group .form-label {
         font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
+
     .filter-group select:focus {
         border-color: #0d6efd;
         box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
     }
+
     .card-outline.card-primary {
         border-top: 3px solid #0d6efd;
     }
+
     .card-outline.card-danger {
         border-top: 3px solid #dc3545;
     }
+
     .card-outline.card-warning {
         border-top: 3px solid #ffc107;
+    }
+
+
+    /* akibatChart  */
+    #akibatChart {
+        height: 500px !important;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 550px;
+        width: 100%;
     }
 </style>
 
 <script>
     const chartData = <?= json_encode($chartData) ?>;
     const xAxisType = '<?= $xAxisType ?>';
-    
+
     const colors = {
         'KNC': '#0d6efd',
         'KTD': '#ffc107',
@@ -236,7 +253,7 @@
     const trendTableBody = document.getElementById('trendTableBody');
     const trendTableFooter = document.getElementById('trendTableFooter');
     const tableTitle = document.getElementById('tableTitle');
-    
+
     if (tableTitle) {
         if (xAxisType === 'bulan') {
             tableTitle.textContent = 'Detail Data Insiden per Bulan:';
@@ -244,10 +261,10 @@
             tableTitle.textContent = 'Detail Data Insiden per Tahun:';
         }
     }
-    
+
     if (trendTableBody && chartData.labels && chartData.datasets) {
         const trendTableHeader = document.getElementById('trendTableHeader');
-        
+
         const fullNames = {
             'KNC': 'Near Miss (KNC)',
             'KTD': 'Adverse Event (KTD)',
@@ -255,7 +272,7 @@
             'KPC': 'Potentially Injurious (KPC)',
             'Sentinel': 'Sentinel Event'
         };
-        
+
         const headerColors = {
             'KNC': 'bg-primary',
             'KTD': 'bg-warning',
@@ -263,7 +280,7 @@
             'KPC': 'bg-danger',
             'Sentinel': 'bg-success'
         };
-        
+
         // Build header row
         let headerHtml = '<tr><th class="text-center align-middle">Jenis Insiden</th>';
         chartData.labels.forEach(label => {
@@ -271,15 +288,15 @@
         });
         headerHtml += '<th class="text-center align-middle bg-dark text-white">Total</th></tr>';
         trendTableHeader.innerHTML = headerHtml;
-        
+
         // Build body rows (each insiden type as a row)
         let rowTotals = new Array(chartData.labels.length).fill(0);
-        
+
         chartData.datasets.forEach((ds, dsIdx) => {
             const labelName = fullNames[ds.jenis] || ds.jenis;
             const badgeClass = headerColors[ds.jenis] || 'bg-secondary';
             let rowHtml = `<tr><td class="fw-bold"><span class="badge ${badgeClass} me-2">${ds.jenis}</span>${labelName}</td>`;
-            
+
             let rowTotal = 0;
             chartData.labels.forEach((label, idx) => {
                 const value = ds.data[idx] || 0;
@@ -287,11 +304,11 @@
                 rowTotals[idx] += value;
                 rowHtml += `<td class="text-center">${value}</td>`;
             });
-            
+
             rowHtml += `<td class="text-center fw-bold">${rowTotal}</td></tr>`;
             trendTableBody.innerHTML += rowHtml;
         });
-        
+
         // Build footer row
         let footerHtml = '<td class="text-center fw-bold">TOTAL</td>';
         let grandTotal = 0;
@@ -300,34 +317,34 @@
             grandTotal += total;
         });
         footerHtml += `<td class="text-center fw-bold">${grandTotal}</td>`;
-        
+
         trendTableFooter.innerHTML = footerHtml;
     }
 
     // Grading Chart - Bar Chart
     const gradingChartData = <?= json_encode($gradingChartData) ?>;
-    
+
     const gradingColors = {
         'HIJAU': 'rgba(25, 135, 84, 0.8)',
         'BIRU': 'rgba(13, 110, 253, 0.8)',
         'KUNING': 'rgba(255, 193, 7, 0.8)',
         'MERAH': 'rgba(220, 53, 69, 0.8)'
     };
-    
+
     const gradingBorderColors = {
         'HIJAU': '#198754',
         'BIRU': '#0d6efd',
         'KUNING': '#ffc107',
         'MERAH': '#dc3545'
     };
-    
+
     const gradingFullNames = {
         'HIJAU': 'Risiko Rendah (Hijau)',
         'BIRU': 'Risiko Sedang (Biru)',
         'KUNING': 'Risiko Tinggi (Kuning)',
         'MERAH': 'Risiko Tinggi Sekali (Merah)'
     };
-    
+
     const gradingLabels = gradingChartData.labels;
     const gradingDatasets = gradingChartData.datasets.map(ds => ({
         label: gradingFullNames[ds.grading] || ds.grading,
@@ -338,7 +355,7 @@
         barPercentage: 0.6,
         categoryPercentage: 0.8
     }));
-    
+
     const ctxGrading = document.getElementById('gradingChart').getContext('2d');
     new Chart(ctxGrading, {
         type: 'bar',
@@ -377,7 +394,7 @@
 
     // Akibat Insiden Chart - Horizontal Bar
     const akibatChartData = <?= json_encode($akibatChartData) ?>;
-    
+
     const akibatColors = {
         'Kematian': 'rgba(108, 117, 125, 0.9)',
         'Cedera Irreversibel / Cedera Berat': 'rgba(220, 53, 69, 0.9)',
@@ -385,7 +402,7 @@
         'Cedera Ringan': 'rgba(13, 110, 253, 0.9)',
         'Tidak ada cedera': 'rgba(25, 135, 84, 0.9)'
     };
-    
+
     const akibatBorderColors = {
         'Kematian': '#6c757d',
         'Cedera Irreversibel / Cedera Berat': '#dc3545',
@@ -393,18 +410,29 @@
         'Cedera Ringan': '#0d6efd',
         'Tidak ada cedera': '#198754'
     };
-    
+
     const akibatLabels = akibatChartData.labels;
+    // const akibatDatasets = akibatChartData.datasets.map(ds => ({
+    //     label: ds.akibat,
+    //     data: ds.data,
+    //     backgroundColor: akibatColors[ds.akibat] || 'rgba(100,100,100,0.8)',
+    //     borderColor: akibatBorderColors[ds.akibat] || '#333',
+    //     borderWidth: 1,
+    //     borderRadius: 5,
+    //     barPercentage: 0.9,
+    //     categoryPercentage: 0.9
+    // }));
     const akibatDatasets = akibatChartData.datasets.map(ds => ({
         label: ds.akibat,
         data: ds.data,
         backgroundColor: akibatColors[ds.akibat] || 'rgba(100,100,100,0.8)',
         borderColor: akibatBorderColors[ds.akibat] || '#333',
         borderWidth: 1,
-        barPercentage: 0.6,
-        categoryPercentage: 0.8
+        borderRadius: 5,
+        barPercentage: 0.9,
+        categoryPercentage: 0.9
     }));
-    
+
     const ctxAkibat = document.getElementById('akibatChart').getContext('2d');
     new Chart(ctxAkibat, {
         type: 'bar',
@@ -416,30 +444,62 @@
             indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 20,
+                    bottom: 20,
+                    left: 20,
+                    right: 20
+                }
+            },
             plugins: {
                 legend: {
                     position: 'top',
+                    labels: {
+                        boxWidth: 20,
+                        padding: 15,
+                        font: {
+                            size: 12
+                        }
+                    }
                 },
                 title: {
                     display: true,
-                    text: xAxisType === 'bulan' ? 'Akibat Insiden Bulanan' : 'Akibat Insiden Tahunan'
+                    text: xAxisType === 'bulan' ? 'Akibat Insiden Bulanan' : 'Akibat Insiden Tahunan',
+                    font: {
+                        size: 18
+                    }
                 }
             },
             scales: {
                 x: {
                     beginAtZero: true,
                     ticks: {
-                        stepSize: 1
+                        stepSize: 1,
+                        font: {
+                            size: 12
+                        }
                     },
                     title: {
                         display: true,
-                        text: 'Jumlah'
+                        text: 'Jumlah',
+                        font: {
+                            size: 14
+                        }
                     }
                 },
                 y: {
+                    ticks: {
+                        font: {
+                            size: 12
+                        }
+                    },
                     title: {
                         display: true,
-                        text: xAxisType === 'bulan' ? 'Bulan' : 'Tahun'
+                        text: xAxisType === 'bulan' ? 'Bulan' : 'Tahun',
+                        font: {
+                            size: 14
+                        }
                     }
                 }
             }
