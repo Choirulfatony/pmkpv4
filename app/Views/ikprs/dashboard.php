@@ -97,6 +97,31 @@
         </div>
     </div>
     <!-- /.row -->
+
+    <!--begin::Row-->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card card-outline card-warning">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-person-x-fill mr-1"></i>
+                        Chart Akibat Insiden
+                    </h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 400px;">
+                        <canvas id="akibatChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /.row -->
 </div>
 <!--end::Container -->
 
@@ -118,6 +143,9 @@
     }
     .card-outline.card-danger {
         border-top: 3px solid #dc3545;
+    }
+    .card-outline.card-warning {
+        border-top: 3px solid #ffc107;
     }
 </style>
 
@@ -250,6 +278,77 @@
                     }
                 },
                 x: {
+                    title: {
+                        display: true,
+                        text: xAxisType === 'bulan' ? 'Bulan' : 'Tahun'
+                    }
+                }
+            }
+        }
+    });
+
+    // Akibat Insiden Chart - Horizontal Bar
+    const akibatChartData = <?= json_encode($akibatChartData) ?>;
+    
+    const akibatColors = {
+        'Kematian': 'rgba(108, 117, 125, 0.9)',
+        'Cedera Irreversibel / Cedera Berat': 'rgba(220, 53, 69, 0.9)',
+        'Cedera Reversibel / Cedera Sedang': 'rgba(255, 193, 7, 0.9)',
+        'Cedera Ringan': 'rgba(13, 110, 253, 0.9)',
+        'Tidak ada cedera': 'rgba(25, 135, 84, 0.9)'
+    };
+    
+    const akibatBorderColors = {
+        'Kematian': '#6c757d',
+        'Cedera Irreversibel / Cedera Berat': '#dc3545',
+        'Cedera Reversibel / Cedera Sedang': '#ffc107',
+        'Cedera Ringan': '#0d6efd',
+        'Tidak ada cedera': '#198754'
+    };
+    
+    const akibatLabels = akibatChartData.labels;
+    const akibatDatasets = akibatChartData.datasets.map(ds => ({
+        label: ds.akibat,
+        data: ds.data,
+        backgroundColor: akibatColors[ds.akibat] || 'rgba(100,100,100,0.8)',
+        borderColor: akibatBorderColors[ds.akibat] || '#333',
+        borderWidth: 1,
+        barPercentage: 0.6,
+        categoryPercentage: 0.8
+    }));
+    
+    const ctxAkibat = document.getElementById('akibatChart').getContext('2d');
+    new Chart(ctxAkibat, {
+        type: 'bar',
+        data: {
+            labels: akibatLabels,
+            datasets: akibatDatasets
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: xAxisType === 'bulan' ? 'Akibat Insiden Bulanan' : 'Akibat Insiden Tahunan'
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    title: {
+                        display: true,
+                        text: 'Jumlah'
+                    }
+                },
+                y: {
                     title: {
                         display: true,
                         text: xAxisType === 'bulan' ? 'Bulan' : 'Tahun'

@@ -238,11 +238,86 @@ class Ikprs extends AppController
             'datasets' => $gradingDatasets
         ];
 
+        $akibatLabels = [];
+        $akibatTypes = [
+            'Kematian',
+            'Cedera Irreversibel / Cedera Berat',
+            'Cedera Reversibel / Cedera Sedang',
+            'Cedera Ringan',
+            'Tidak ada cedera'
+        ];
+        
+        $getAkibatData = function($startMonth, $endMonth, $isYearly = false) use ($db, $displayStart, $akibatTypes) {
+            $result = [];
+            foreach ($akibatTypes as $a) {
+                $dataArr = [];
+                if ($isYearly) {
+                    for ($t = $startMonth; $t <= $endMonth; $t++) {
+                        $dataArr[] = (int) $db->table('ikprssm_insiden')
+                            ->where('akibat_insiden', $a)
+                            ->where('status_laporan', 'SELESAI')
+                            ->where("selesai_at >= '{$t}-01-01' AND selesai_at <= '{$t}-12-31'")
+                            ->countAllResults();
+                    }
+                } else {
+                    for ($m = $startMonth; $m <= $endMonth; $m++) {
+                        $dataArr[] = (int) $db->table('ikprssm_insiden')
+                            ->where('akibat_insiden', $a)
+                            ->where('status_laporan', 'SELESAI')
+                            ->where('selesai_at IS NOT NULL')
+                            ->where("MONTH(selesai_at) = {$m}")
+                            ->where("YEAR(selesai_at) = {$displayStart}")
+                            ->countAllResults();
+                    }
+                }
+                $result[] = ['akibat' => $a, 'data' => $dataArr];
+            }
+            return $result;
+        };
+        
+        if ($filters['triwulan']) {
+            $triwulan = (int) $filters['triwulan'];
+            $startMonth = ($triwulan - 1) * 3 + 1;
+            $endMonth = $triwulan * 3;
+            $akibatLabels = [];
+            for ($m = $startMonth; $m <= $endMonth; $m++) {
+                $akibatLabels[] = date('M', mktime(0, 0, 0, $m, 1));
+            }
+            $akibatDatasets = $getAkibatData($startMonth, $endMonth, false);
+        } elseif ($filters['semester']) {
+            $semester = (int) $filters['semester'];
+            $startMonth = $semester == 1 ? 1 : 7;
+            $endMonth = $semester == 1 ? 6 : 12;
+            $akibatLabels = [];
+            for ($m = $startMonth; $m <= $endMonth; $m++) {
+                $akibatLabels[] = date('M', mktime(0, 0, 0, $m, 1));
+            }
+            $akibatDatasets = $getAkibatData($startMonth, $endMonth, false);
+        } elseif ($filters['tahun'] && $filters['tahun'] != '') {
+            $akibatLabels = [];
+            for ($m = 1; $m <= 12; $m++) {
+                $akibatLabels[] = date('M', mktime(0, 0, 0, $m, 1));
+            }
+            $akibatDatasets = $getAkibatData(1, 12, false);
+        } else {
+            $akibatLabels = [];
+            for ($t = $displayStart; $t <= $displayEnd; $t++) {
+                $akibatLabels[] = (string) $t;
+            }
+            $akibatDatasets = $getAkibatData($displayStart, $displayEnd, true);
+        }
+
+        $akibatChartData = [
+            'labels' => $akibatLabels,
+            'datasets' => $akibatDatasets
+        ];
+
         return $this->render('dashboard/index', [
             'judul'    => 'Dashboard IKPRS',
             'icon'     => '<i class="bi bi-clipboard-check"></i>',
             'chartData' => $chartData,
             'gradingChartData' => $gradingChartData,
+            'akibatChartData' => $akibatChartData,
             'filters' => $filters,
             'tahunMulai' => $tahunMulai,
             'tahunIni' => $tahunIni,
@@ -250,6 +325,7 @@ class Ikprs extends AppController
             '_content'  => view('ikprs/dashboard', [
                 'chartData' => $chartData,
                 'gradingChartData' => $gradingChartData,
+                'akibatChartData' => $akibatChartData,
                 'filters' => $filters,
                 'tahunMulai' => $tahunMulai,
                 'tahunIni' => $tahunIni,
