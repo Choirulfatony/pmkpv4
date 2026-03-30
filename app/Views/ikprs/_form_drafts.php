@@ -9,14 +9,6 @@
 
     <!-- FILTERS -->
     <div class="d-flex gap-2 align-items-center">
-        <select class="form-select form-select-sm" id="filterStatus" style="width: 130px;">
-            <option value="">Status</option>
-            <option value="DRAFT" <?= ($filters['status'] ?? '') == 'DRAFT' ? 'selected' : '' ?>>Draft</option>
-            <option value="KARU" <?= ($filters['status'] ?? '') == 'KARU' ? 'selected' : '' ?>>KARU</option>
-            <option value="INSTALASI" <?= ($filters['status'] ?? '') == 'INSTALASI' ? 'selected' : '' ?>>Instalasi</option>
-            <option value="SELESAI" <?= ($filters['status'] ?? '') == 'SELESAI' ? 'selected' : '' ?>>Selesai</option>
-        </select>
-
         <select class="form-select form-select-sm" id="filterTriwulan" style="width: 120px;">
             <option value="">Triwulan</option>
             <option value="1" <?= ($filters['triwulan'] ?? '') == '1' ? 'selected' : '' ?>>Triwulan 1</option>
@@ -43,7 +35,7 @@
             <i class="bi bi-funnel"></i>
         </button>
 
-        <button class="btn btn-sm btn-outline-danger" id="btnClearFilter" title="Hapus Filter" <?= empty($filters['tahun']) && empty($filters['semester']) && empty($filters['triwulan']) && empty($filters['status']) ? 'style="display:none"' : '' ?>>
+        <button class="btn btn-sm btn-outline-danger" id="btnClearFilter" title="Hapus Filter" <?= empty($filters['tahun']) && empty($filters['semester']) && empty($filters['triwulan']) ? 'style="display:none"' : '' ?>>
             <i class="bi bi-x-lg"></i>
         </button>
     </div>
@@ -193,14 +185,12 @@ $end   = $total > 0 ? min($page * 10, $total) : 0;
         const triwulan = $('#filterTriwulan').val();
         const semester = $('#filterSemester').val();
         const tahun = $('#filterTahun').val();
-        const status = $('#filterStatus').val();
         const keyword = $('#searchDraft').val() || '';
 
         const params = new URLSearchParams();
         if (triwulan) params.set('triwulan', triwulan);
         if (semester) params.set('semester', semester);
         if (tahun) params.set('tahun', tahun);
-        if (status) params.set('status', status);
         if (keyword) params.set('keyword', keyword);
 
         const queryString = params.toString();
@@ -223,18 +213,16 @@ $end   = $total > 0 ? min($page * 10, $total) : 0;
         $('#filterTriwulan').val('');
         $('#filterSemester').val('');
         $('#filterTahun').val('');
-        $('#filterStatus').val('');
         $('#btnClearFilter').hide();
         applyDraftFilters();
     });
 
-    $(document).on('change', '#filterTriwulan, #filterSemester, #filterTahun, #filterStatus', function() {
+    $(document).on('change', '#filterTriwulan, #filterSemester, #filterTahun', function() {
         const triwulan = $('#filterTriwulan').val();
         const semester = $('#filterSemester').val();
         const tahun = $('#filterTahun').val();
-        const status = $('#filterStatus').val();
 
-        if (triwulan || semester || tahun || status) {
+        if (triwulan || semester || tahun) {
             $('#btnClearFilter').show();
         } else {
             $('#btnClearFilter').hide();

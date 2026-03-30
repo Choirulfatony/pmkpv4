@@ -957,8 +957,7 @@ class Ikprs extends AppController
         $filters = [
             'tahun'     => $request->getGet('tahun') ?? null,
             'semester'  => $request->getGet('semester') ?? null,
-            'triwulan'  => $request->getGet('triwulan') ?? null,
-            'status'    => $request->getGet('status') ?? null
+            'triwulan'  => $request->getGet('triwulan') ?? null
         ];
 
         $model = new IkpInsidenModel();
@@ -1017,8 +1016,7 @@ class Ikprs extends AppController
         $filters = [
             'tahun'     => $request->getGet('tahun') ?? null,
             'semester'  => $request->getGet('semester') ?? null,
-            'triwulan'  => $request->getGet('triwulan') ?? null,
-            'status'    => $request->getGet('status') ?? null
+            'triwulan'  => $request->getGet('triwulan') ?? null
         ];
 
         $model = new IkpInsidenModel();
@@ -1082,8 +1080,7 @@ class Ikprs extends AppController
         $filters = [
             'tahun'     => $request->getGet('tahun') ?? null,
             'semester'  => $request->getGet('semester') ?? null,
-            'triwulan'  => $request->getGet('triwulan') ?? null,
-            'status'    => $request->getGet('status') ?? null
+            'triwulan'  => $request->getGet('triwulan') ?? null
         ];
 
         $model = new IkpInsidenModel();
