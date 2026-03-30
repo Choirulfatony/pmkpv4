@@ -188,10 +188,17 @@
         }
     });
 
-    // Grading Chart
+    // Grading Chart - Bar Chart
     const gradingChartData = <?= json_encode($gradingChartData) ?>;
     
     const gradingColors = {
+        'HIJAU': 'rgba(25, 135, 84, 0.8)',
+        'BIRU': 'rgba(13, 110, 253, 0.8)',
+        'KUNING': 'rgba(255, 193, 7, 0.8)',
+        'MERAH': 'rgba(220, 53, 69, 0.8)'
+    };
+    
+    const gradingBorderColors = {
         'HIJAU': '#198754',
         'BIRU': '#0d6efd',
         'KUNING': '#ffc107',
@@ -209,16 +216,16 @@
     const gradingDatasets = gradingChartData.datasets.map(ds => ({
         label: gradingFullNames[ds.grading] || ds.grading,
         data: ds.data,
-        borderColor: gradingColors[ds.grading] || '#333',
-        backgroundColor: gradingColors[ds.grading] || '#333',
-        tension: 0.3,
-        fill: false,
-        borderWidth: 2
+        backgroundColor: gradingColors[ds.grading] || 'rgba(100,100,100,0.8)',
+        borderColor: gradingBorderColors[ds.grading] || '#333',
+        borderWidth: 1,
+        barPercentage: 0.6,
+        categoryPercentage: 0.8
     }));
     
     const ctxGrading = document.getElementById('gradingChart').getContext('2d');
     new Chart(ctxGrading, {
-        type: 'line',
+        type: 'bar',
         data: {
             labels: gradingLabels,
             datasets: gradingDatasets
