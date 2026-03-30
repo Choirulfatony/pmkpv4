@@ -174,10 +174,7 @@ class Ikprs extends AppController
                 if ($isYearly) {
                     for ($t = $startMonth; $t <= $endMonth; $t++) {
                         $dataArr[] = (int) $db->table('ikprssm_insiden')
-                            ->groupStart()
                             ->where('grading_final', $g)
-                            ->orWhere('grading_risiko', $g)
-                            ->groupEnd()
                             ->where('status_laporan', 'SELESAI')
                             ->where("selesai_at >= '{$t}-01-01' AND selesai_at <= '{$t}-12-31'")
                             ->countAllResults();
@@ -185,10 +182,7 @@ class Ikprs extends AppController
                 } else {
                     for ($m = $startMonth; $m <= $endMonth; $m++) {
                         $dataArr[] = (int) $db->table('ikprssm_insiden')
-                            ->groupStart()
                             ->where('grading_final', $g)
-                            ->orWhere('grading_risiko', $g)
-                            ->groupEnd()
                             ->where('status_laporan', 'SELESAI')
                             ->where('selesai_at IS NOT NULL')
                             ->where("MONTH(selesai_at) = {$m}")
