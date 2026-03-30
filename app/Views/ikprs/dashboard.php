@@ -138,7 +138,7 @@
                         <i class="bi bi-info-circle-fill me-1"></i>
                         <?= $filterDesc ?>
                     </div>
-                    <div class="chart-container" style="position: relative; height: 500px;">
+                    <div class="chart-container" style="position: relative; height: 400px;">
                         <canvas id="akibatChart"></canvas>
                     </div>
                 </div>
@@ -342,11 +342,60 @@
     }));
     
     const ctxAkibat = document.getElementById('akibatChart').getContext('2d');
+    
+    // Calculate totals for each category
+    const categoryTotals = {};
+    const categoryFullNames = {
+        'Kematian': 'Katastropik (Kematian)',
+        'Cedera Irreversibel / Cedera Berat': 'Mayor (Cedera Berat/Irreversibel)',
+        'Cedera Reversibel / Cedera Sedang': 'Moderat (Cedera Sedang/Reversibel)',
+        'Cedera Ringan': 'Minor (Cedera Ringan)',
+        'Tidak ada cedera': 'Tidak Signifikan (Tidak Ada Cedera)'
+    };
+    
+    akibatDatasets.forEach(ds => {
+        categoryTotals[ds.label] = ds.data.reduce((a, b) => a + b, 0);
+    });
+    
+    // Create labels with totals
+    const labelsWithTotals = akibatLabels.map(label => {
+        let total = 0;
+        akibatDatasets.forEach(ds => {
+            const idx = akibatLabels.indexOf(label);
+            if (ds.data[idx] !== undefined) {
+                total += ds.data[idx];
+            }
+        });
+        return label + ' (' + total + ')';
+    });
+    
     new Chart(ctxAkibat, {
         type: 'bar',
         data: {
-            labels: akibatLabels,
-            datasets: akibatDatasets
+            labels: labelsWithTotals,
+            datasets: [{
+                label: 'Jumlah Insiden',
+                data: akibatLabels.map((label, idx) => {
+                    return akibatDatasets.reduce((sum, ds) => sum + (ds.data[idx] || 0), 0);
+                }),
+                backgroundColor: [
+                    'rgba(108, 117, 125, 0.9)',
+                    'rgba(220, 53, 69, 0.9)',
+                    'rgba(255, 193, 7, 0.9)',
+                    'rgba(13, 110, 253, 0.9)',
+                    'rgba(25, 135, 84, 0.9)'
+                ],
+                borderColor: [
+                    '#6c757d',
+                    '#dc3545',
+                    '#ffc107',
+                    '#0d6efd',
+                    '#198754'
+                ],
+                borderWidth: 2,
+                borderRadius: 8,
+                barPercentage: 0.7
+            }]
         },
         options: {
             indexAxis: 'y',
@@ -358,12 +407,21 @@
                 },
                 title: {
                     display: true,
-                    text: xAxisType === 'bulan' ? 'Akibat Insiden Bulanan' : 'Akibat Insiden Tahunan'
+                    text: 'Grafik Distribusi Insiden Keselamatan Pasien Berdasarkan Tingkat Akibat (Impact Severity)',
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    },
+                    padding: {
+                        bottom: 20
+                    }
                 },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return context.dataset.label + ': ' + context.raw + ' insiden';
+                            const label = context.label.split(' (')[0];
+                            const fullName = categoryFullNames[label] || label;
+                            return fullName + ': ' + context.raw + ' insiden';
                         }
                     }
                 }
@@ -372,34 +430,36 @@
                 x: {
                     beginAtZero: true,
                     ticks: {
-                        stepSize: 1
+                        stepSize: 1,
+                        font: {
+                            size: 12
+                        }
                     },
                     title: {
                         display: true,
-                        text: 'Jumlah'
+                        text: 'Jumlah Insiden',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
                     },
                     grid: {
-                        display: true
+                        color: 'rgba(0, 0, 0, 0.1)'
                     }
                 },
                 y: {
                     ticks: {
-                        callback: function(value, index) {
-                            const label = this.getLabelForValue(value);
-                            const total = akibatDatasets[index] ? akibatDatasets[index].data.reduce((a, b) => a + b, 0) : 0;
-                            return label + ' (' + total + ')';
-                        },
                         font: {
                             size: 14,
                             weight: 'bold'
                         }
                     },
                     title: {
-                        display: true,
-                        text: xAxisType === 'bulan' ? 'Bulan' : 'Tahun'
+                        display: false
                     },
-                    barPercentage: 0.8,
-                    categoryPercentage: 1.0
+                    grid: {
+                        display: false
+                    }
                 }
             }
         }
