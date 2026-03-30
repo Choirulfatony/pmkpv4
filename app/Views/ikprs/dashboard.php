@@ -72,6 +72,31 @@
         </div>
     </div>
     <!-- /.row (main row) -->
+    
+    <!--begin::Row-->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card card-outline card-danger">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-exclamation-triangle-fill mr-1"></i>
+                        Grading Chart - Tingkat Bahaya (Risk Level)
+                    </h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 400px;">
+                        <canvas id="gradingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /.row -->
 </div>
 <!--end::Container -->
 
@@ -90,6 +115,9 @@
     }
     .card-outline.card-primary {
         border-top: 3px solid #0d6efd;
+    }
+    .card-outline.card-danger {
+        border-top: 3px solid #dc3545;
     }
 </style>
 
@@ -141,6 +169,70 @@
                 title: {
                     display: true,
                     text: xAxisType === 'bulan' ? 'Trend Insiden Bulanan' : 'Trend Insiden Tahunan'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: xAxisType === 'bulan' ? 'Bulan' : 'Tahun'
+                    }
+                }
+            }
+        }
+    });
+
+    // Grading Chart
+    const gradingChartData = <?= json_encode($gradingChartData) ?>;
+    
+    const gradingColors = {
+        'HIJAU': '#198754',
+        'BIRU': '#0d6efd',
+        'KUNING': '#ffc107',
+        'MERAH': '#dc3545'
+    };
+    
+    const gradingFullNames = {
+        'HIJAU': 'Risiko Rendah (Hijau)',
+        'BIRU': 'Risiko Sedang (Biru)',
+        'KUNING': 'Risiko Tinggi (Kuning)',
+        'MERAH': 'Risiko Tinggi Sekali (Merah)'
+    };
+    
+    const gradingLabels = gradingChartData.labels;
+    const gradingDatasets = gradingChartData.datasets.map(ds => ({
+        label: gradingFullNames[ds.grading] || ds.grading,
+        data: ds.data,
+        borderColor: gradingColors[ds.grading] || '#333',
+        backgroundColor: gradingColors[ds.grading] || '#333',
+        tension: 0.3,
+        fill: false,
+        borderWidth: 2
+    }));
+    
+    const ctxGrading = document.getElementById('gradingChart').getContext('2d');
+    new Chart(ctxGrading, {
+        type: 'line',
+        data: {
+            labels: gradingLabels,
+            datasets: gradingDatasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: xAxisType === 'bulan' ? 'Grading Risk Level Bulanan' : 'Grading Risk Level Tahunan'
                 }
             },
             scales: {

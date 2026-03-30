@@ -164,16 +164,134 @@ class Ikprs extends AppController
             'datasets' => $datasets,
         ];
 
+        $gradingLabels = [];
+        $gradingData = [];
+        
+        $gradingQuery = clone $db;
+        
+        if ($filters['triwulan']) {
+            $triwulan = (int) $filters['triwulan'];
+            $startMonth = ($triwulan - 1) * 3 + 1;
+            $endMonth = $triwulan * 3;
+            $gradingLabels = [];
+            for ($m = $startMonth; $m <= $endMonth; $m++) {
+                $gradingLabels[] = date('M', mktime(0, 0, 0, $m, 1));
+            }
+            $gradingTypes = ['HIJAU', 'BIRU', 'KUNING', 'MERAH'];
+            $gradingData = [];
+            foreach ($gradingTypes as $g) {
+                $dataPerGrading = [];
+                for ($m = $startMonth; $m <= $endMonth; $m++) {
+                    $count = $db->table('ikprssm_insiden')
+                        ->where('grading_final', $g)
+                        ->where('status_laporan', 'SELESAI')
+                        ->where('selesai_at IS NOT NULL')
+                        ->where("MONTH(selesai_at) = {$m}")
+                        ->where("YEAR(selesai_at) = {$displayStart}")
+                        ->countAllResults();
+                    $dataPerGrading[] = $count;
+                }
+                $gradingData[] = $g;
+            }
+            $gradingChartData = [
+                'labels' => $gradingLabels,
+                'datasets' => array_map(function($type, $data) {
+                    return ['grading' => $type, 'data' => $data];
+                }, $gradingTypes, array_map(function($g) use ($db, $displayStart, $startMonth, $endMonth) {
+                    $arr = [];
+                    for ($m = $startMonth; $m <= $endMonth; $m++) {
+                        $arr[] = $db->table('ikprssm_insiden')
+                            ->where('grading_final', $g)
+                            ->where('status_laporan', 'SELESAI')
+                            ->where('selesai_at IS NOT NULL')
+                            ->where("MONTH(selesai_at) = {$m}")
+                            ->where("YEAR(selesai_at) = {$displayStart}")
+                            ->countAllResults();
+                    }
+                    return $arr;
+                }, $gradingTypes))
+            ];
+        } elseif ($filters['semester']) {
+            $semester = (int) $filters['semester'];
+            $startMonth = $semester == 1 ? 1 : 7;
+            $endMonth = $semester == 1 ? 6 : 12;
+            $gradingLabels = [];
+            for ($m = $startMonth; $m <= $endMonth; $m++) {
+                $gradingLabels[] = date('M', mktime(0, 0, 0, $m, 1));
+            }
+            $gradingTypes = ['HIJAU', 'BIRU', 'KUNING', 'MERAH'];
+            $gradingChartData = [
+                'labels' => $gradingLabels,
+                'datasets' => array_map(function($g) use ($db, $displayStart, $startMonth, $endMonth) {
+                    $arr = [];
+                    for ($m = $startMonth; $m <= $endMonth; $m++) {
+                        $arr[] = $db->table('ikprssm_insiden')
+                            ->where('grading_final', $g)
+                            ->where('status_laporan', 'SELESAI')
+                            ->where('selesai_at IS NOT NULL')
+                            ->where("MONTH(selesai_at) = {$m}")
+                            ->where("YEAR(selesai_at) = {$displayStart}")
+                            ->countAllResults();
+                    }
+                    return ['grading' => $g, 'data' => $arr];
+                }, $gradingTypes)
+            ];
+        } elseif ($filters['tahun'] && $filters['tahun'] != '') {
+            $gradingLabels = [];
+            for ($m = 1; $m <= 12; $m++) {
+                $gradingLabels[] = date('M', mktime(0, 0, 0, $m, 1));
+            }
+            $gradingTypes = ['HIJAU', 'BIRU', 'KUNING', 'MERAH'];
+            $gradingChartData = [
+                'labels' => $gradingLabels,
+                'datasets' => array_map(function($g) use ($db, $displayStart) {
+                    $arr = [];
+                    for ($m = 1; $m <= 12; $m++) {
+                        $arr[] = $db->table('ikprssm_insiden')
+                            ->where('grading_final', $g)
+                            ->where('status_laporan', 'SELESAI')
+                            ->where('selesai_at IS NOT NULL')
+                            ->where("MONTH(selesai_at) = {$m}")
+                            ->where("YEAR(selesai_at) = {$displayStart}")
+                            ->countAllResults();
+                    }
+                    return ['grading' => $g, 'data' => $arr];
+                }, $gradingTypes)
+            ];
+        } else {
+            $gradingLabels = [];
+            for ($t = $displayStart; $t <= $displayEnd; $t++) {
+                $gradingLabels[] = (string) $t;
+            }
+            $gradingTypes = ['HIJAU', 'BIRU', 'KUNING', 'MERAH'];
+            $gradingChartData = [
+                'labels' => $gradingLabels,
+                'datasets' => array_map(function($g) use ($db, $displayStart, $displayEnd) {
+                    $arr = [];
+                    for ($t = $displayStart; $t <= $displayEnd; $t++) {
+                        $arr[] = $db->table('ikprssm_insiden')
+                            ->where('grading_final', $g)
+                            ->where('status_laporan', 'SELESAI')
+                            ->where("selesai_at >= '{$t}-01-01' AND selesai_at <= '{$t}-12-31'")
+                            ->countAllResults();
+                    }
+                    return ['grading' => $g, 'data' => $arr];
+                }, $gradingTypes)
+            ];
+        }
+
         return $this->render('dashboard/index', [
             'judul'    => 'Dashboard IKPRS',
             'icon'     => '<i class="bi bi-clipboard-check"></i>',
             'chartData' => $chartData,
+            'gradingChartData' => $gradingChartData,
             'filters' => $filters,
             'tahunMulai' => $tahunMulai,
             'tahunIni' => $tahunIni,
             'xAxisType' => $xAxisType,
             '_content'  => view('ikprs/dashboard', [
                 'chartData' => $chartData,
+                'gradingChartData' => $gradingChartData,
                 'filters' => $filters,
                 'tahunMulai' => $tahunMulai,
                 'tahunIni' => $tahunIni,
