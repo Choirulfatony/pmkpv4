@@ -429,7 +429,7 @@
         akibatTotals[ds.akibat] = total;
     });
 
-    const akibatLabels = {
+    const akibatElementIds = {
         'Kematian': 'countKematian',
         'Cedera Irreversibel / Cedera Berat': 'countCederaBerat',
         'Cedera Reversibel / Cedera Sedang': 'countCederaSedang',
@@ -437,8 +437,8 @@
         'Tidak ada cedera': 'countTidakCedera'
     };
 
-    Object.keys(akibatLabels).forEach(key => {
-        const elementId = akibatLabels[key];
+    Object.keys(akibatElementIds).forEach(key => {
+        const elementId = akibatElementIds[key];
         const element = document.getElementById(elementId);
         if (element) {
             element.textContent = akibatTotals[key] || 0;
