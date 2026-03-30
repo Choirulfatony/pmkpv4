@@ -18,40 +18,47 @@
                 <div class="card-body">
                     <div class="row mb-4">
                         <div class="col-12">
-                            <div class="filter-wrapper d-flex flex-wrap align-items-end gap-2 p-3 bg-light rounded">
-                                <div class="filter-group">
-                                    <label class="form-label mb-1 text-muted small fw-semibold">PERIODE</label>
-                                    <select class="form-select form-select-sm border-primary" id="filterPeriode" style="min-width: 120px;">
-                                        <option value="">Semua Tahun</option>
-                                        <?php for ($t = $tahunIni; $t >= $tahunMulai; $t--): ?>
-                                            <option value="<?= $t ?>" <?= (string)($filters['tahun'] ?? $tahunIni) === (string)$t ? 'selected' : '' ?>><?= $t ?></option>
-                                        <?php endfor; ?>
-                                    </select>
+                            <div class="filter-wrapper d-flex flex-wrap align-items-end justify-content-between gap-2 p-3 bg-light rounded">
+                                <div class="d-flex flex-wrap align-items-end gap-2">
+                                    <div class="filter-group">
+                                        <label class="form-label mb-1 text-muted small fw-semibold">PERIODE</label>
+                                        <select class="form-select form-select-sm border-primary" id="filterPeriode" style="min-width: 120px;">
+                                            <option value="">Semua Tahun</option>
+                                            <?php for ($t = $tahunIni; $t >= $tahunMulai; $t--): ?>
+                                                <option value="<?= $t ?>" <?= (string)($filters['tahun'] ?? $tahunIni) === (string)$t ? 'selected' : '' ?>><?= $t ?></option>
+                                            <?php endfor; ?>
+                                        </select>
+                                    </div>
+                                    <div class="filter-group">
+                                        <label class="form-label mb-1 text-muted small fw-semibold">TRIWULAN</label>
+                                        <select class="form-select form-select-sm" id="filterTriwulan" style="min-width: 140px;">
+                                            <option value="">Semua Triwulan</option>
+                                            <option value="1" <?= ($filters['triwulan'] ?? '') == '1' ? 'selected' : '' ?>>Triwulan I (Jan-Mar)</option>
+                                            <option value="2" <?= ($filters['triwulan'] ?? '') == '2' ? 'selected' : '' ?>>Triwulan II (Apr-Jun)</option>
+                                            <option value="3" <?= ($filters['triwulan'] ?? '') == '3' ? 'selected' : '' ?>>Triwulan III (Jul-Sep)</option>
+                                            <option value="4" <?= ($filters['triwulan'] ?? '') == '4' ? 'selected' : '' ?>>Triwulan IV (Okt-Des)</option>
+                                        </select>
+                                    </div>
+                                    <div class="filter-group">
+                                        <label class="form-label mb-1 text-muted small fw-semibold">SEMESTER</label>
+                                        <select class="form-select form-select-sm" id="filterSemester" style="min-width: 140px;">
+                                            <option value="">Semua Semester</option>
+                                            <option value="1" <?= ($filters['semester'] ?? '') == '1' ? 'selected' : '' ?>>Semester I (Jan-Jun)</option>
+                                            <option value="2" <?= ($filters['semester'] ?? '') == '2' ? 'selected' : '' ?>>Semester II (Jul-Des)</option>
+                                        </select>
+                                    </div>
+                                    <div class="filter-actions d-flex gap-2">
+                                        <button type="button" class="btn btn-sm btn-primary" id="btnApplyFilter">
+                                            <i class="bi bi-funnel"></i> Terapkan
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnClearFilter" <?= empty($filters['tahun']) && empty($filters['triwulan']) && empty($filters['semester']) ? 'style="display:none"' : '' ?>>
+                                            <i class="bi bi-arrow-counterclockwise"></i> Reset
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="filter-group">
-                                    <label class="form-label mb-1 text-muted small fw-semibold">TRIWULAN</label>
-                                    <select class="form-select form-select-sm" id="filterTriwulan" style="min-width: 140px;">
-                                        <option value="">Semua Triwulan</option>
-                                        <option value="1" <?= ($filters['triwulan'] ?? '') == '1' ? 'selected' : '' ?>>Triwulan I (Jan-Mar)</option>
-                                        <option value="2" <?= ($filters['triwulan'] ?? '') == '2' ? 'selected' : '' ?>>Triwulan II (Apr-Jun)</option>
-                                        <option value="3" <?= ($filters['triwulan'] ?? '') == '3' ? 'selected' : '' ?>>Triwulan III (Jul-Sep)</option>
-                                        <option value="4" <?= ($filters['triwulan'] ?? '') == '4' ? 'selected' : '' ?>>Triwulan IV (Okt-Des)</option>
-                                    </select>
-                                </div>
-                                <div class="filter-group">
-                                    <label class="form-label mb-1 text-muted small fw-semibold">SEMESTER</label>
-                                    <select class="form-select form-select-sm" id="filterSemester" style="min-width: 140px;">
-                                        <option value="">Semua Semester</option>
-                                        <option value="1" <?= ($filters['semester'] ?? '') == '1' ? 'selected' : '' ?>>Semester I (Jan-Jun)</option>
-                                        <option value="2" <?= ($filters['semester'] ?? '') == '2' ? 'selected' : '' ?>>Semester II (Jul-Des)</option>
-                                    </select>
-                                </div>
-                                <div class="filter-actions d-flex gap-2">
-                                    <button type="button" class="btn btn-sm btn-primary" id="btnApplyFilter">
-                                        <i class="bi bi-funnel"></i> Terapkan
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnClearFilter" <?= empty($filters['tahun']) && empty($filters['triwulan']) && empty($filters['semester']) ? 'style="display:none"' : '' ?>>
-                                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                                <div class="filter-actions">
+                                    <button type="button" class="btn btn-sm btn-success" id="btnReloadChart" title="Reload Data">
+                                        <i class="bi bi-arrow-repeat"></i> Reload
                                     </button>
                                 </div>
                             </div>
@@ -86,7 +93,6 @@
     }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const chartData = <?= json_encode($chartData) ?>;
     const xAxisType = '<?= $xAxisType ?>';
@@ -171,6 +177,10 @@
 
     $('#btnApplyFilter').on('click', function() {
         applyFilters();
+    });
+
+    $('#btnReloadChart').on('click', function() {
+        window.location.reload();
     });
 
     $('#btnClearFilter').on('click', function() {
