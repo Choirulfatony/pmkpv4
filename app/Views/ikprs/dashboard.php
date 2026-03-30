@@ -130,8 +130,40 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="chart-container" style="position: relative; height: 400px;">
-                        <canvas id="akibatChart"></canvas>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="chart-container" style="position: relative; height: 350px;">
+                                <canvas id="akibatChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="alert alert-light border" role="alert">
+                                <h6 class="alert-heading fw-bold">Keterangan:</h6>
+                                <hr>
+                                <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
+                                    <li class="mb-2">
+                                        <span class="badge" style="background-color: #6c757d; width: 20px; height: 20px; display: inline-block;"></span>
+                                        <strong>Katastropik (Kematian)</strong>
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge bg-danger" style="width: 20px; height: 20px; display: inline-block;"></span>
+                                        <strong>Mayor (Cedera Berat/Irreversibel)</strong>
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge" style="background-color: #ffc107; width: 20px; height: 20px; display: inline-block;"></span>
+                                        <strong>Moderat (Cedera Sedang/Reversibel)</strong>
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge bg-primary" style="width: 20px; height: 20px; display: inline-block;"></span>
+                                        <strong>Minor (Cedera Ringan)</strong>
+                                    </li>
+                                    <li>
+                                        <span class="badge bg-success" style="width: 20px; height: 20px; display: inline-block;"></span>
+                                        <strong>Tidak Signifikan</strong>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -444,30 +476,19 @@
             indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    top: 20,
-                    bottom: 20,
-                    left: 20,
-                    right: 20
-                }
-            },
             plugins: {
                 legend: {
-                    position: 'top',
-                    labels: {
-                        boxWidth: 20,
-                        padding: 15,
-                        font: {
-                            size: 12
-                        }
-                    }
+                    display: false
                 },
                 title: {
                     display: true,
-                    text: xAxisType === 'bulan' ? 'Akibat Insiden Bulanan' : 'Akibat Insiden Tahunan',
+                    text: 'Grafik Distribusi Insiden Keselamatan Pasien Berdasarkan Tingkat Akibat (Impact Severity)',
                     font: {
-                        size: 18
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    padding: {
+                        bottom: 15
                     }
                 }
             },
