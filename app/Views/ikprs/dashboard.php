@@ -114,7 +114,7 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="chart-container" style="position: relative; height: 400px;">
+                    <div class="chart-container" style="position: relative; height: 600px;">
                         <canvas id="akibatChart"></canvas>
                     </div>
                 </div>
