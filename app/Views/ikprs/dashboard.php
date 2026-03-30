@@ -1,114 +1,160 @@
-         <!-- begin::Container-->
-         <div class="container-fluid">
-             <!--begin::Row-->
-             <div class="row">
-                 <!--begin::Col-->
-                 <div class="col-lg-3 col-6">
-                     <div class="small-box text-bg-primary">
-                         <div class="inner">
-                             <h3>150</h3>
+<!-- begin::Container-->
+<div class="container-fluid">
+    <!--begin::Row-->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Filter Periode</h5>
+                </div>
+                <div class="card-body">
+                    <form id="filterForm" class="row g-3 align-items-end">
+                        <div class="col-auto">
+                            <label class="form-label">Periode</label>
+                            <select class="form-select form-select-sm" id="filterPeriode" style="width: 150px;">
+                                <option value="">Semua Tahun</option>
+                                <?php for ($t = $tahunIni; $t >= $tahunMulai; $t--): ?>
+                                    <option value="<?= $t ?>" <?= ($filters['tahun'] ?? '') == $t ? 'selected' : '' ?>><?= $t ?></option>
+                                <?php endfor; ?>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <label class="form-label">Triwulan</label>
+                            <select class="form-select form-select-sm" id="filterTriwulan" style="width: 150px;">
+                                <option value="">Semua Triwulan</option>
+                                <option value="1" <?= ($filters['triwulan'] ?? '') == '1' ? 'selected' : '' ?>>Triwulan 1</option>
+                                <option value="2" <?= ($filters['triwulan'] ?? '') == '2' ? 'selected' : '' ?>>Triwulan 2</option>
+                                <option value="3" <?= ($filters['triwulan'] ?? '') == '3' ? 'selected' : '' ?>>Triwulan 3</option>
+                                <option value="4" <?= ($filters['triwulan'] ?? '') == '4' ? 'selected' : '' ?>>Triwulan 4</option>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <label class="form-label">Semester</label>
+                            <select class="form-select form-select-sm" id="filterSemester" style="width: 150px;">
+                                <option value="">Semua Semester</option>
+                                <option value="1" <?= ($filters['semester'] ?? '') == '1' ? 'selected' : '' ?>>Semester 1</option>
+                                <option value="2" <?= ($filters['semester'] ?? '') == '2' ? 'selected' : '' ?>>Semester 2</option>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button type="button" class="btn btn-sm btn-primary" id="btnApplyFilter">
+                                <i class="bi bi-funnel"></i> Terapkan
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnClearFilter" <?= empty($filters['tahun']) && empty($filters['triwulan']) && empty($filters['semester']) ? 'style="display:none"' : '' ?>>
+                                <i class="bi bi-x-lg"></i> Reset
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                             <p>New Orders</p>
-                         </div>
-                         <svg
-                             class="small-box-icon"
-                             fill="currentColor"
-                             viewBox="0 0 24 24"
-                             xmlns="http://www.w3.org/2000/svg"
-                             aria-hidden="true">
-                             <path
-                                 d="M2.25 2.25a.75.75 0 000 1.5h1.386c.17 0 .318.114.362.278l2.558 9.592a3.752 3.752 0 00-2.806 3.63c0 .414.336.75.75.75h15.75a.75.75 0 000-1.5H5.378A2.25 2.25 0 017.5 15h11.218a.75.75 0 00.674-.421 60.358 60.358 0 002.96-7.228.75.75 0 00-.525-.965A60.864 60.864 0 005.68 4.509l-.232-.867A1.875 1.875 0 003.636 2.25H2.25zM3.75 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM16.5 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z"></path>
-                         </svg>
-                         <a
-                             href="#"
-                             class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover">
-                             More info <i class="bi bi-link-45deg"></i>
-                         </a>
-                     </div>
-                 </div>
-                 <!--end::Col-->
-                 <div class="col-lg-3 col-6">
-                     <div class="small-box text-bg-success">
-                         <div class="inner">
-                             <h3>53<sup class="fs-5">%</sup></h3>
+    <!--begin::Row-->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Trend Line Chart - Insiden</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="trendLineChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /.row (main row) -->
+</div>
+<!--end::Container -->
 
-                             <p>Bounce Rate</p>
-                         </div>
-                         <svg
-                             class="small-box-icon"
-                             fill="currentColor"
-                             viewBox="0 0 24 24"
-                             xmlns="http://www.w3.org/2000/svg"
-                             aria-hidden="true">
-                             <path
-                                 d="M18.375 2.25c-1.035 0-1.875.84-1.875 1.875v15.75c0 1.035.84 1.875 1.875 1.875h.75c1.035 0 1.875-.84 1.875-1.875V4.125c0-1.036-.84-1.875-1.875-1.875h-.75zM9.75 8.625c0-1.036.84-1.875 1.875-1.875h.75c1.036 0 1.875.84 1.875 1.875v11.25c0 1.035-.84 1.875-1.875 1.875h-.75a1.875 1.875 0 01-1.875-1.875V8.625zM3 13.125c0-1.036.84-1.875 1.875-1.875h.75c1.036 0 1.875.84 1.875 1.875v6.75c0 1.035-.84 1.875-1.875 1.875h-.75A1.875 1.875 0 013 19.875v-6.75z"></path>
-                         </svg>
-                         <a
-                             href="#"
-                             class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover">
-                             More info <i class="bi bi-link-45deg"></i>
-                         </a>
-                     </div>
-                 </div>
-                 <!--end::Col-->
-                 <div class="col-lg-3 col-6">
-                     <div class="small-box text-bg-warning">
-                         <div class="inner">
-                             <h3>44</h3>
-                             <p>User Registrations</p>
-                         </div>
-                         <svg
-                             class="small-box-icon"
-                             fill="currentColor"
-                             viewBox="0 0 24 24"
-                             xmlns="http://www.w3.org/2000/svg"
-                             aria-hidden="true">
-                             <path
-                                 d="M6.25 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM3.25 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM19.75 7.5a.75.75 0 00-1.5 0v2.25H16a.75.75 0 000 1.5h2.25v2.25a.75.75 0 001.5 0v-2.25H22a.75.75 0 000-1.5h-2.25V7.5z"></path>
-                         </svg>
-                         <a
-                             href="#"
-                             class="small-box-footer link-dark link-underline-opacity-0 link-underline-opacity-50-hover">
-                             More info <i class="bi bi-link-45deg"></i>
-                         </a>
-                     </div>
-                 </div>
-                 <!--end::Col-->
-                 <div class="col-lg-3 col-6">
-                     <div class="small-box text-bg-danger">
-                         <div class="inner">
-                             <h3>65</h3>
-                             <p>Unique Visitors</p>
-                         </div>
-                         <svg
-                             class="small-box-icon"
-                             fill="currentColor"
-                             viewBox="0 0 24 24"
-                             xmlns="http://www.w3.org/2000/svg"
-                             aria-hidden="true">
-                             <path
-                                 clip-rule="evenodd"
-                                 fill-rule="evenodd"
-                                 d="M2.25 13.5a8.25 8.25 0 018.25-8.25.75.75 0 01.75.75v6.75H18a.75.75 0 01.75.75 8.25 8.25 0 01-16.5 0z"></path>
-                             <path
-                                 clip-rule="evenodd"
-                                 fill-rule="evenodd"
-                                 d="M12.75 3a.75.75 0 01.75-.75 8.25 8.25 0 018.25 8.25.75.75 0 01-.75.75h-7.5a.75.75 0 01-.75-.75V3z"></path>
-                         </svg>
-                         <a
-                             href="#"
-                             class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover">
-                             More info <i class="bi bi-link-45deg"></i>
-                         </a>
-                     </div>
-                 </div>
-                 <!--end::Col-->
-             </div>
-             <!--end::Row-->
-             <!--begin::Row-->
-             <div class="row">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const chartData = <?= json_encode($chartData) ?>;
+    
+    const colors = {
+        'KNC': '#0d6efd',
+        'KTD': '#ffc107',
+        'KTC': '#6c757d',
+        'KPC': '#dc3545',
+        'Sentinel': '#198754'
+    };
 
-             </div>
-             <!-- /.row (main row) -->
-         </div>
-         <!--end::Container -->
+    const labels = chartData.labels;
+    const datasets = chartData.datasets.map(ds => ({
+        label: ds.jenis,
+        data: ds.data,
+        borderColor: colors[ds.jenis] || '#333',
+        backgroundColor: colors[ds.jenis] || '#333',
+        tension: 0.3,
+        fill: false,
+        borderWidth: 2
+    }));
+
+    const ctx = document.getElementById('trendLineChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Trend Insiden per Kategori'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+
+    function applyFilters() {
+        const tahun = $('#filterPeriode').val();
+        const triwulan = $('#filterTriwulan').val();
+        const semester = $('#filterSemester').val();
+
+        const params = new URLSearchParams();
+        if (tahun) params.set('tahun', tahun);
+        if (triwulan) params.set('triwulan', triwulan);
+        if (semester) params.set('semester', semester);
+
+        const queryString = params.toString();
+        const url = "<?= site_url('ikprs') ?>" + (queryString ? '?' + queryString : '');
+        window.location.href = url;
+    }
+
+    $('#btnApplyFilter').on('click', function() {
+        applyFilters();
+    });
+
+    $('#btnClearFilter').on('click', function() {
+        $('#filterPeriode').val('');
+        $('#filterTriwulan').val('');
+        $('#filterSemester').val('');
+        window.location.href = "<?= site_url('ikprs') ?>";
+    });
+
+    $('#filterPeriode, #filterTriwulan, #filterSemester').on('change', function() {
+        const tahun = $('#filterPeriode').val();
+        const triwulan = $('#filterTriwulan').val();
+        const semester = $('#filterSemester').val();
+
+        if (tahun || triwulan || semester) {
+            $('#btnClearFilter').show();
+        } else {
+            $('#btnClearFilter').hide();
+        }
+    });
+</script>

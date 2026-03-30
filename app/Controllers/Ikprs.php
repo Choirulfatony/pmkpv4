@@ -35,6 +35,7 @@ class Ikprs extends AppController
     {
         $this->disableCache();
 
+        $request = service('request');
         $db = db_connect();
 
         $tahunIni = date('Y');
@@ -48,27 +49,91 @@ class Ikprs extends AppController
         
         $tahunMulai = $tahunMin && $tahunMin->min_tahun ? (int) $tahunMin->min_tahun : ($tahunIni - 4);
 
+        $filters = [
+            'tahun'     => $request->getGet('tahun') ?? null,
+            'triwulan'  => $request->getGet('triwulan') ?? null,
+            'semester'  => $request->getGet('semester') ?? null
+        ];
+
         $labels = [];
-        for ($t = $tahunMulai; $t <= $tahunIni; $t++) {
-            $labels[] = (string) $t;
+        $displayStart = $tahunMulai;
+        $displayEnd = $tahunIni;
+
+        if ($filters['tahun']) {
+            $displayStart = (int) $filters['tahun'];
+            $displayEnd = (int) $filters['tahun'];
+        }
+
+        if ($filters['triwulan']) {
+            $triwulan = (int) $filters['triwulan'];
+            $startMonth = ($triwulan - 1) * 3 + 1;
+            $endMonth = $triwulan * 3;
+            $labels = [];
+            for ($m = $startMonth; $m <= $endMonth; $m++) {
+                $labels[] = date('M Y', mktime(0, 0, 0, $m, 1, $displayStart));
+            }
+        } elseif ($filters['semester']) {
+            $semester = (int) $filters['semester'];
+            $startMonth = $semester == 1 ? 1 : 7;
+            $endMonth = $semester == 1 ? 6 : 12;
+            $labels = [];
+            for ($m = $startMonth; $m <= $endMonth; $m++) {
+                $labels[] = date('M Y', mktime(0, 0, 0, $m, 1, $displayStart));
+            }
+        } else {
+            for ($t = $displayStart; $t <= $displayEnd; $t++) {
+                $labels[] = (string) $t;
+            }
         }
 
         $jenisInsiden = ['KNC', 'KTD', 'KTC', 'KPC', 'Sentinel'];
         $datasets = [];
 
         foreach ($jenisInsiden as $jenis) {
-            $dataPerTahun = [];
-            for ($t = $tahunMulai; $t <= $tahunIni; $t++) {
-                $count = $db->table('ikprssm_insiden')
-                    ->where('jenis_insiden', $jenis)
-                    ->where('status_laporan', 'SELESAI')
-                    ->where("selesai_at >= '{$t}-01-01' AND selesai_at <= '{$t}-12-31'")
-                    ->countAllResults();
-                $dataPerTahun[] = $count;
+            $dataPerPeriode = [];
+
+            if ($filters['triwulan']) {
+                $triwulan = (int) $filters['triwulan'];
+                $startMonth = ($triwulan - 1) * 3 + 1;
+                $endMonth = $triwulan * 3;
+                for ($m = $startMonth; $m <= $endMonth; $m++) {
+                    $count = $db->table('ikprssm_insiden')
+                        ->where('jenis_insiden', $jenis)
+                        ->where('status_laporan', 'SELESAI')
+                        ->where('selesai_at IS NOT NULL')
+                        ->where("MONTH(selesai_at) = {$m}")
+                        ->where("YEAR(selesai_at) = {$displayStart}")
+                        ->countAllResults();
+                    $dataPerPeriode[] = $count;
+                }
+            } elseif ($filters['semester']) {
+                $semester = (int) $filters['semester'];
+                $startMonth = $semester == 1 ? 1 : 7;
+                $endMonth = $semester == 1 ? 6 : 12;
+                for ($m = $startMonth; $m <= $endMonth; $m++) {
+                    $count = $db->table('ikprssm_insiden')
+                        ->where('jenis_insiden', $jenis)
+                        ->where('status_laporan', 'SELESAI')
+                        ->where('selesai_at IS NOT NULL')
+                        ->where("MONTH(selesai_at) = {$m}")
+                        ->where("YEAR(selesai_at) = {$displayStart}")
+                        ->countAllResults();
+                    $dataPerPeriode[] = $count;
+                }
+            } else {
+                for ($t = $displayStart; $t <= $displayEnd; $t++) {
+                    $count = $db->table('ikprssm_insiden')
+                        ->where('jenis_insiden', $jenis)
+                        ->where('status_laporan', 'SELESAI')
+                        ->where("selesai_at >= '{$t}-01-01' AND selesai_at <= '{$t}-12-31'")
+                        ->countAllResults();
+                    $dataPerPeriode[] = $count;
+                }
             }
+
             $datasets[] = [
                 'jenis' => $jenis,
-                'data' => $dataPerTahun
+                'data' => $dataPerPeriode
             ];
         }
 
@@ -81,7 +146,15 @@ class Ikprs extends AppController
             'judul'    => 'Dashboard IKPRS',
             'icon'     => '<i class="bi bi-clipboard-check"></i>',
             'chartData' => $chartData,
-            '_content'  => view('ikprs/dashboard', ['chartData' => $chartData]),
+            'filters' => $filters,
+            'tahunMulai' => $tahunMulai,
+            'tahunIni' => $tahunIni,
+            '_content'  => view('ikprs/dashboard', [
+                'chartData' => $chartData,
+                'filters' => $filters,
+                'tahunMulai' => $tahunMulai,
+                'tahunIni' => $tahunIni
+            ]),
         ]);
     }
 
