@@ -88,12 +88,14 @@
                     <div class="bg-light rounded-2 p-3 text-center" id="captcha_container">
                         <?= $captcha_html ?>
                     </div>
-                    <input type="number"
-                        class="form-control text-center mt-2"
-                        name="captcha"
-                        placeholder="Jawaban"
-                        autocomplete="off"
-                        required>
+                    <div class="mx-3">
+                        <input type="number"
+                            class="form-control text-center mt-2"
+                            name="captcha"
+                            placeholder="Jawaban"
+                            autocomplete="off"
+                            required>
+                    </div>
                 </div>
 
 
