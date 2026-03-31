@@ -32,17 +32,17 @@ class Auth extends BaseController
         }
 
         $captcha = $this->captcha->generate([
-            'img_width'  => 120,
-            'img_height' => 40,
+            'min' => 1,
+            'max' => 20
         ]);
 
         $this->session->set([
             'captcha_word'  => $captcha['word'],
-            'captcha_image' => $captcha['image']
+            'captcha_html' => $captcha['html']
         ]);
 
         $contentData = [
-            'captcha_image' => $this->session->get('captcha_image')
+            'captcha_html' => $this->session->get('captcha_html')
         ];
 
         $data = [
@@ -58,17 +58,17 @@ class Auth extends BaseController
     public function refresh_captcha()
     {
         $captcha = $this->captcha->generate([
-            'img_width'  => 120,
-            'img_height' => 40,
+            'min' => 1,
+            'max' => 20
         ]);
 
         $this->session->set([
             'captcha_word'  => $captcha['word'],
-            'captcha_image' => $captcha['image']
+            'captcha_html' => $captcha['html']
         ]);
 
         return $this->response->setJSON([
-            'captcha_image' => $captcha['image']
+            'captcha_html' => $captcha['html']
         ]);
     }
 

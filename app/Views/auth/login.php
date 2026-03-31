@@ -104,26 +104,25 @@
 
                 <div class="form-outline mb-3">
                     <div class="row g-2 align-items-center">
-                        <div class="col-5" id="captcha_container">
-                            <?= $captcha_image ?>
+                        <div class="col-12" id="captcha_container">
+                            <?= $captcha_html ?>
                         </div>
-
-
-                        <div class="col-4">
-                            <input type="text"
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <input type="number"
                                 class="form-control"
                                 name="captcha"
-                                placeholder="Enter Captcha..."
+                                placeholder="Jawaban perhitungan..."
                                 required>
                         </div>
-
-                        <div class="col-3">
+                    </div>
+                    <div class="row g-2 mt-2">
+                        <div class="col-12">
                             <button type="button"
                                 class="btn btn-outline-secondary w-100"
-                                style="width:42px; height:42px;"
-                                title="Reload"
                                 id="btnRefreshCaptcha">
-                                <i class="bi bi-arrow-clockwise"></i>
+                                <i class="bi bi-arrow-clockwise"></i> Ganti Pertanyaan
                             </button>
                         </div>
                     </div>
@@ -159,7 +158,7 @@
             fetch("<?= site_url('auth/refresh-captcha') ?>")
                 .then(res => res.json())
                 .then(data => {
-                    document.getElementById('captcha_container').innerHTML = data.captcha_image;
+                    document.getElementById('captcha_container').innerHTML = data.captcha_html;
                     document.querySelector("input[name='captcha']").value = '';
                 });
         });
