@@ -305,24 +305,6 @@ class Auth extends BaseController
     // }
 
 
-
-    // ================= REGENERATE CAPTCHA =================
-    private function regenerateCaptcha()
-    {
-        helper('captcha');
-
-        $captcha = create_captcha([
-            'img_width'  => 120,
-            'img_height' => 40,
-        ]);
-
-        $this->session->set([
-            'captcha_word'  => strtoupper($captcha['word']),
-            'captcha_image' => $captcha['image'],
-        ]);
-    }
-
-
     public function check_session()
     {
         if (!session()->get('logged_in')) {
