@@ -74,34 +74,7 @@
                     <label class="form-label">Password</label>
                 </div>
 
-                <!-- CAPTCHA -->
-                <!-- <div class="mb-3">
-                    <div class="row g-2 align-items-center">
-                        <div class="col-5" id="captcha_container">
-                            <?= $captcha_image ?>
-                        </div>
-                        <div class="col-4">
-                            <input type="text"
-                                class="form-control"
-                                name="captcha"
-                                placeholder="Captcha"
-                                required>
-                        </div>
-                        <div class="col-3">
-                            <button type="button"
-                                class="btn btn-outline-secondary w-100"
-                                id="btnRefreshCaptcha">
-                                <i class="bi bi-arrow-clockwise"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <button type="submit"
-                    class="btn btn-primary btn-lg w-100">
-                    Login
-                </button> -->
-
+                <!-- CAPTCHA MATH -->
                 <div class="form-outline mb-3">
                     <div class="row g-2 align-items-center">
                         <div class="col-12" id="captcha_container">
