@@ -43,24 +43,53 @@ class AppController extends Controller
     //     }
 
 
+    // protected function render(string $view, array $data = [])
+    // {
+    //     $this->disableCache(); // ⬅️ WAJIB
+
+    //     // 1️⃣ SET DEFAULT DATA DULU (INI KUNCI)
+    //     $data['judul'] = $data['judul'] ?? 'Dashboard';
+    //     $data['icon']  = $data['icon']  ?? '<i class="bi bi-speedometer2"></i>';
+
+    //     // 2️⃣ BARU RENDER PARTIAL YANG BUTUH DATA
+    //     $data = array_merge([
+    //         '_meta'          => view('_layout/_meta'),
+    //         '_css'           => view('_layout/_css'),
+    //         '_header'        => view('_layout/_header'),
+    //         '_sidebar'       => view('_layout/_sidebar'),
+    //         '_headerContent' => view('_layout/_headerContent', $data), // ⬅️ PENTING
+    //         '_footer'        => view('_layout/_footer'),
+    //         '_js'            => view('_layout/_js'),
+    //         '_content'       => view($view),
+    //     ], $data);
+
+    //     return view('_layout/_template', $data);
+    // }
+
     protected function render(string $view, array $data = [])
     {
-        $this->disableCache(); // ⬅️ WAJIB
+        $this->disableCache();
 
-        // 1️⃣ SET DEFAULT DATA DULU (INI KUNCI)
         $data['judul'] = $data['judul'] ?? 'Dashboard';
         $data['icon']  = $data['icon']  ?? '<i class="bi bi-speedometer2"></i>';
 
-        // 2️⃣ BARU RENDER PARTIAL YANG BUTUH DATA
+        // ✅ TAMBAHKAN MENU DI SINI
+        $menuModel = new \App\Models\SiimutMenuModel();
+        $role = session()->get('user_role');
+        $data['menus'] = $menuModel->getMenuByRole($role);
+
         $data = array_merge([
             '_meta'          => view('_layout/_meta'),
             '_css'           => view('_layout/_css'),
             '_header'        => view('_layout/_header'),
-            '_sidebar'       => view('_layout/_sidebar'),
-            '_headerContent' => view('_layout/_headerContent', $data), // ⬅️ PENTING
+
+            // ✅ FIX DI SINI
+            '_sidebar'       => view('_layout/_sidebar', $data),
+
+            '_headerContent' => view('_layout/_headerContent', $data),
             '_footer'        => view('_layout/_footer'),
             '_js'            => view('_layout/_js'),
-            '_content'       => view($view),
+            '_content'       => view($view, $data),
         ], $data);
 
         return view('_layout/_template', $data);

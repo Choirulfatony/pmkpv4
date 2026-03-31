@@ -30,12 +30,58 @@
                     <!-- MENU SIIMUT -->
                     <?php if ($login_source == 'APP'): ?>
 
-                        <li class="nav-item">
+                        <!-- <li class="nav-item">
                             <a href="<?= site_url('dashboard') ?>" class="nav-link">
                                 <i class="nav-icon bi bi-speedometer"></i>
                                 <p>Dashboard</p>
                             </a>
-                        </li>
+                        </li> -->
+
+
+                        <?php if ($login_source == 'APP'): ?>
+
+                            <?php foreach ($menus as $menu): ?>
+
+                                <?php if (empty($menu['children'])): ?>
+
+                                    <!-- MENU TANPA SUB -->
+                                    <li class="nav-item">
+                                        <a href="<?= site_url($menu['url']) ?>" class="nav-link">
+                                            <i class="nav-icon <?= esc($menu['icon']) ?>"></i>
+                                            <p><?= esc($menu['nama_menu']) ?></p>
+                                        </a>
+                                    </li>
+
+                                <?php else: ?>
+                                    <!-- MENU DENGAN SUB -->
+                                    <li class="nav-item has-treeview">
+                                        <a href="#" class="nav-link">
+                                            <i class="nav-icon <?= esc($menu['icon']) ?>"></i>
+                                            <p class="d-flex justify-content-between align-items-center mb-0">
+                                                <span><?= esc($menu['nama_menu']) ?></span>
+                                                <i class="nav-arrow bi bi-chevron-right"></i>
+                                            </p>
+                                        </a>
+                                        <ul class="nav nav-treeview">
+                                            <?php foreach ($menu['children'] as $child): ?>
+                                                <li class="nav-item">
+                                                    <a href="<?= site_url($child['url']) ?>" class="nav-link">
+                                                        <i class="nav-icon <?= esc($child['icon']) ?>"></i>
+                                                        <p><?= esc($child['nama_menu']) ?></p>
+                                                    </a>
+                                                </li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    </li>
+
+
+                                <?php endif; ?>
+
+
+
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+
 
                     <?php endif; ?>
 

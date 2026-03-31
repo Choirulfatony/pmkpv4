@@ -297,13 +297,17 @@
                 </a>
             </li>
 
-            <!-- Dashboard -->
+
+            <!-- Dashboard (KOMITE & KARU only) -->
+            <?php if (in_array(session('user_role'), ['KARU', 'KOMITE'])): ?>
             <li class="nav-item">
-                <a href="<?= site_url('dashboard') ?>" class="nav-link">
+                <a href="<?= site_url('ikprs') ?>" class="nav-link">
                     <i class="bi bi-speedometer"></i>
                     <span class="nav-text ms-1">Dashboard</span>
                 </a>
             </li>
+            <?php endif; ?>
+
 
         </ul>
 
@@ -474,21 +478,21 @@
                  ============================= */
                 if (totalNotif > 0 && totalNotif >= lastNotifCount && (user_role === 'KARU' || user_role === 'KOMITE')) {
                     try {
-                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
                         const oscillator = audioCtx.createOscillator();
                         const gainNode = audioCtx.createGain();
-                        
+
                         oscillator.connect(gainNode);
                         gainNode.connect(audioCtx.destination);
-                        
+
                         oscillator.frequency.value = 800;
                         oscillator.type = 'sine';
                         gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
                         gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-                        
+
                         oscillator.start(audioCtx.currentTime);
                         oscillator.stop(audioCtx.currentTime + 0.5);
-                    } catch(e) {}
+                    } catch (e) {}
                 } else if (totalNotif == 0) {
                     lastNotifCount = 0;
                 }

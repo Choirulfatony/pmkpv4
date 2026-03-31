@@ -24,7 +24,7 @@ class Auth extends BaseController
     public function index()
     {
         if ($this->session->get('logged_in')) {
-            return redirect()->to('dashboard');
+            return redirect()->to('ikprs/home');
         }
 
         if ($this->request->getGet('timeout')) {
@@ -109,6 +109,42 @@ class Auth extends BaseController
         }
     }
 
+    // private function loginAplikasi(string $email, string $password)
+    // {
+    //     $user = $this->sessionApps->checkLogin([
+    //         'user_profile.profile_email'    => $email,
+    //         'user_profile.profile_password' => md5($password),
+    //         'user_profile.profile_record_status' => 'A'
+    //     ]);
+
+    //     if (!$user) {
+    //         return redirect()->back()->with('error', 'Email atau password salah');
+    //     }
+
+    //     $roleMap = [
+    //         'Kendali Mutu dan Tim Pokja' => 'KENDALI_MUTU',
+    //         'Komite' => 'KOMITE',
+    //         'Administrator' => 'ADMINISTRATOR'
+    //     ];
+    //     session()->set([
+    //         'logged_in'       => true,
+    //         'login_source'    => 'APP',
+
+    //         'profile_id'      => $user->profile_id,
+    //         'nama_lengkap'    => $user->profile_fullname,
+    //         'profile_email'   => $user->profile_email,
+
+    //         'department_id'   => $user->department_id,
+    //         'department_name' => $user->department_name,
+    //         'user_role'            => $user->group_name,
+
+    //         'login_time'      => date('Y-m-d H:i:s'),
+    //     ]);
+
+    //     log_message('error', 'DEBUG LOGIN:APP - session set, redirecting to dashboard');
+    //     return redirect()->to('dashboard');
+    // }
+
     private function loginAplikasi(string $email, string $password)
     {
         $user = $this->sessionApps->checkLogin([
@@ -121,6 +157,17 @@ class Auth extends BaseController
             return redirect()->back()->with('error', 'Email atau password salah');
         }
 
+        // ✅ Mapping role dari database ke sistem menu
+        $roleMap = [
+            'Kendali Mutu dan Tim Pokja' => 'KENDALI_MUTU',
+            'Komite'                    => 'KOMITE',
+            'Administrator'             => 'ADMINISTRATOR'
+        ];
+
+        // ✅ Tentukan role final
+        $userRole = $roleMap[$user->group_name] ?? 'APP';
+
+        // ✅ Set session (SATU KALI SAJA)
         session()->set([
             'logged_in'       => true,
             'login_source'    => 'APP',
@@ -131,10 +178,17 @@ class Auth extends BaseController
 
             'department_id'   => $user->department_id,
             'department_name' => $user->department_name,
-            'role'            => $user->group_name,
+
+            // ✅ INI YANG DIPAKAI MENU
+            'user_role'       => $userRole,
+
+            // (opsional kalau mau simpan asli)
+            'role_asli'       => $user->group_name,
 
             'login_time'      => date('Y-m-d H:i:s'),
         ]);
+
+        log_message('error', 'DEBUG LOGIN:APP - role: ' . $userRole);
 
         return redirect()->to('dashboard');
     }
