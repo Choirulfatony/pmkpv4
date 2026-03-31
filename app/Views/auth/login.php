@@ -86,7 +86,7 @@
                         </button>
                     </div>
                     <div class="bg-light rounded-2 p-3 text-center" id="captcha_container">
-                        <?= $captcha_html ?>
+                        <?= $captcha_html ?? session()->get('captcha_html') ?>
                     </div>
                     <div class="mx-3">
                         <input type="number"

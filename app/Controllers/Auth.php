@@ -80,6 +80,12 @@ class Auth extends BaseController
 
         // CAPTCHA
         if (!Captcha::validate($captcha, session()->get('captcha_word'))) {
+            // Regenerate CAPTCHA
+            $newCaptcha = $this->captcha->generate(['min' => 1, 'max' => 20]);
+            $this->session->set([
+                'captcha_word'  => $newCaptcha['word'],
+                'captcha_html' => $newCaptcha['html']
+            ]);
             return redirect()->back()->with('error', 'Jawaban perhitungan salah');
         }
 
