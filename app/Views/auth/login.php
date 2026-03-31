@@ -75,28 +75,28 @@
                 </div>
 
                 <!-- CAPTCHA MATH -->
-                <div class="form-outline mb-3">
-                    <div class="row g-2 align-items-center">
-                        <div class="col-12" id="captcha_container">
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted small fw-medium">Verifikasi Keamanan</span>
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-primary rounded-pill px-3" 
+                                    id="btnRefreshCaptcha"
+                                    title="Ganti pertanyaan">
+                                <i class="bi bi-arrow-clockwise"></i> Baru
+                            </button>
+                        </div>
+                        <div class="bg-light rounded-3 p-4 text-center mb-3" id="captcha_container">
                             <?= $captcha_html ?>
                         </div>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-12">
-                            <input type="number"
-                                class="form-control"
-                                name="captcha"
-                                placeholder="Jawaban perhitungan..."
-                                required>
-                        </div>
-                    </div>
-                    <div class="row g-2 mt-2">
-                        <div class="col-12">
-                            <button type="button"
-                                class="btn btn-outline-secondary w-100"
-                                id="btnRefreshCaptcha">
-                                <i class="bi bi-arrow-clockwise"></i> Ganti Pertanyaan
-                            </button>
+                        <input type="number"
+                            class="form-control form-control-lg text-center fw-bold fs-5"
+                            name="captcha"
+                            placeholder="?"
+                            autocomplete="off"
+                            required>
+                        <div class="text-center mt-2">
+                            <small class="text-muted">Masukkan hasil perhitungan di atas</small>
                         </div>
                     </div>
                 </div>

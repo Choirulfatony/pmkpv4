@@ -26,8 +26,7 @@ class Captcha
         return [
             'word'     => (string) $answer,
             'question' => $question,
-            'html'     => '<div class="fw-bold text-primary fs-5">' . $question . '</div>'
-                        . '<input type="hidden" name="captcha_answer" value="' . $answer . '">'
+            'html'     => '<span class="fw-bold text-primary" style="font-size: 2rem; letter-spacing: 3px;">' . $question . '</span>'
         ];
     }
 
