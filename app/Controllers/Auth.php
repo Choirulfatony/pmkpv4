@@ -4,46 +4,43 @@
 namespace App\Controllers;
 
 use App\Models\SessionAppsModel;
+use App\Libraries\Captcha;
 use CodeIgniter\Controller;
 
 class Auth extends BaseController
 {
     protected $session;
     protected $sessionApps;
+    protected Captcha $captcha;
 
     public function __construct()
     {
         $this->session = session();
         $this->sessionApps = new SessionAppsModel();
-        helper(['url', 'captcha']);
+        $this->captcha = new Captcha();
+        helper(['url']);
     }
 
     public function index()
     {
-        // jika sudah login → dashboard
         if ($this->session->get('logged_in')) {
             return redirect()->to('dashboard');
         }
 
-        // jika redirect karena timeout
         if ($this->request->getGet('timeout')) {
             $this->session->setFlashdata('error', 'Session Anda berakhir karena tidak aktif.');
         }
 
-        // ================= CAPTCHA =================
-        $config = [
-            "img_width"  => 120,
-            "img_height" => 40,
-        ];
-
-        $captcha = create_captcha($config);
+        $captcha = $this->captcha->generate([
+            'img_width'  => 120,
+            'img_height' => 40,
+        ]);
 
         $this->session->set([
-            'captcha_word'  => strtoupper($captcha['word']),
+            'captcha_word'  => $captcha['word'],
             'captcha_image' => $captcha['image']
         ]);
 
-        // 🔥 INI YANG WAJIB
         $contentData = [
             'captcha_image' => $this->session->get('captcha_image')
         ];
@@ -58,16 +55,15 @@ class Auth extends BaseController
         return view('_layout/login_template', $data);
     }
 
-    // ================= REFRESH CAPTCHA =================
     public function refresh_captcha()
     {
-        $captcha = create_captcha([
+        $captcha = $this->captcha->generate([
             'img_width'  => 120,
             'img_height' => 40,
         ]);
 
         $this->session->set([
-            'captcha_word'  => strtoupper($captcha['word']),
+            'captcha_word'  => $captcha['word'],
             'captcha_image' => $captcha['image']
         ]);
 
@@ -76,7 +72,6 @@ class Auth extends BaseController
         ]);
     }
 
-    // ================= PROCESS LOGIN =================
     public function process()
     {
         $identity = trim($this->request->getPost('identity'));
@@ -84,7 +79,7 @@ class Auth extends BaseController
         $captcha  = strtoupper($this->request->getPost('captcha'));
 
         // CAPTCHA
-        if ($captcha !== session()->get('captcha_word')) {
+        if (!Captcha::validate($captcha, session()->get('captcha_word'))) {
             return redirect()->back()->with('error', 'Captcha salah');
         }
 
