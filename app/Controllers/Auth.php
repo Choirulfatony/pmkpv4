@@ -80,7 +80,7 @@ class Auth extends BaseController
 
         // CAPTCHA
         if (!Captcha::validate($captcha, session()->get('captcha_word'))) {
-            return redirect()->back()->with('error', 'Captcha salah');
+            return redirect()->back()->with('error', 'Jawaban perhitungan salah');
         }
 
         if (!$identity || !$password) {
