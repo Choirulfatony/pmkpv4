@@ -26,7 +26,7 @@ class Captcha
         return [
             'word'     => (string) $answer,
             'question' => $question,
-            'html'     => '<span class="fw-bold text-primary" style="font-size: 2rem; letter-spacing: 3px;">' . $question . '</span>'
+            'html'     => '<span class="fw-bold text-primary" style="font-size: 1.3rem; letter-spacing: 2px;">' . $question . '</span>'
         ];
     }
 

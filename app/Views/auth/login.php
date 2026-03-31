@@ -75,30 +75,25 @@
                 </div>
 
                 <!-- CAPTCHA MATH -->
-                <div class="card border-0 shadow-sm mb-3">
-                    <div class="card-body p-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="text-muted small fw-medium">Verifikasi Keamanan</span>
-                            <button type="button" 
-                                    class="btn btn-sm btn-outline-primary rounded-pill px-3" 
-                                    id="btnRefreshCaptcha"
-                                    title="Ganti pertanyaan">
-                                <i class="bi bi-arrow-clockwise"></i> Baru
-                            </button>
-                        </div>
-                        <div class="bg-light rounded-3 p-4 text-center mb-3" id="captcha_container">
-                            <?= $captcha_html ?>
-                        </div>
-                        <input type="number"
-                            class="form-control form-control-lg text-center fw-bold fs-5"
-                            name="captcha"
-                            placeholder="?"
-                            autocomplete="off"
-                            required>
-                        <div class="text-center mt-2">
-                            <small class="text-muted">Masukkan hasil perhitungan di atas</small>
-                        </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Verifikasi</span>
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-secondary" 
+                                id="btnRefreshCaptcha"
+                                title="Ganti pertanyaan">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
                     </div>
+                    <div class="bg-light rounded-2 p-3 text-center" id="captcha_container">
+                        <?= $captcha_html ?>
+                    </div>
+                    <input type="number"
+                        class="form-control text-center mt-2"
+                        name="captcha"
+                        placeholder="Jawaban"
+                        autocomplete="off"
+                        required>
                 </div>
 
 
