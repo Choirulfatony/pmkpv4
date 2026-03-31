@@ -328,9 +328,23 @@ class Auth extends BaseController
     }
 
 
+    public function check_session()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => 'unauthorized']);
+        }
+        return $this->response->setJSON(['status' => 'ok']);
+    }
+
+
     public function logout()
     {
-        session()->destroy(); // cukup ini
+        session()->destroy();
+
+        $this->response
+            ->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->setHeader('Pragma', 'no-cache')
+            ->setHeader('Expires', '0');
 
         return redirect()->to(site_url('auth'));
     }

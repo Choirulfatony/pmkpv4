@@ -455,6 +455,11 @@
             url: "<?= base_url('ikprs/counter-ajax') ?>",
             type: "GET",
             dataType: "json",
+            cache: false,
+            global: false,
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            },
             success: function(res) {
 
                 let notif = res.total_notif ?? 0;
@@ -468,8 +473,6 @@
                       Hanya untuk KARU dan KOMITE, tidak untuk PELAPOR
                  ============================= */
                 if (totalNotif > 0 && totalNotif >= lastNotifCount && (user_role === 'KARU' || user_role === 'KOMITE')) {
-                    // Mainkan suara beep pake AudioContext (tanpa perlu file)
-                    // Berulang sampai user buka
                     try {
                         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                         const oscillator = audioCtx.createOscillator();
@@ -485,18 +488,11 @@
                         
                         oscillator.start(audioCtx.currentTime);
                         oscillator.stop(audioCtx.currentTime + 0.5);
-                    } catch(e) {
-                        console.log('Audio error:', e);
-                    }
+                    } catch(e) {}
                 } else if (totalNotif == 0) {
-                    // Reset when no more notifications
                     lastNotifCount = 0;
                 }
                 lastNotifCount = totalNotif;
-
-                /* =============================
-                            AUTO REFRESH INBOX
-                         ============================= */
 
                 if (inbox > lastInboxCount) {
                     console.log("Inbox baru masuk");
@@ -505,20 +501,12 @@
                     }
                 }
 
-                /* =============================
-                            AUTO REFRESH DRAFTS
-                         ============================= */
-
                 if (draft > lastDraftCount) {
                     console.log("Draft baru masuk");
                     if (typeof loadDrafts === "function") {
                         loadDrafts();
                     }
                 }
-
-                /* =============================
-                            AUTO REFRESH SENT
-                         ============================= */
 
                 if (send > lastSendCount) {
                     console.log("Sent baru masuk");
@@ -530,7 +518,6 @@
                 lastInboxCount = inbox;
                 lastDraftCount = draft;
                 lastSendCount = send;
-
 
                 /* =============================
                    UPDATE BADGE COUNTER
@@ -768,6 +755,11 @@
 
                 $('#notif-list').html(html);
 
+            },
+            error: function(xhr, status, error) {
+                if (status !== 'abort') {
+                    console.log('Notif error:', status, error);
+                }
             }
         });
     }

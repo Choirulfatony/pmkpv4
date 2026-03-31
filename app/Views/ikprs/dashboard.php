@@ -1,195 +1,174 @@
 <!-- begin::Container-->
 <div class="container-fluid">
-    <!--begin::Row-->
-    <div class="row">
+    <!--begin::Row - Filter -->
+    <div class="row mb-4">
         <div class="col-12">
-            <div class="card card-outline card-primary">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="bi bi-graph-up-arrow mr-1"></i>
+            <div class="card border-0 shadow-sm" style="border-top: 3px solid #6c757d !important;">
+                <div class="card-header bg-light">
+                    <h3 class="card-title text-dark">
+                        <i class="bi bi-funnel-fill me-2 text-secondary"></i>
+                        Filter Periode
+                    </h3>
+                    <!-- <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="maximize">
+                            <i class="bi bi-fullscreen"></i>
+                        </button>
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                        <button type="button" class="btn btn-tool" data-card-widget="remove">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div> -->
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-end g-3">
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small mb-1">
+                                <i class="bi bi-calendar3 me-1"></i>PERIODE
+                            </label>
+                            <select class="form-select form-select-sm border-primary" id="filterPeriode">
+                                <option value="">Semua Tahun</option>
+                                <?php for ($t = $tahunIni; $t >= $tahunMulai; $t--): ?>
+                                    <option value="<?= $t ?>" <?= (string)($filters['tahun'] ?? $tahunIni) === (string)$t ? 'selected' : '' ?>><?= $t ?></option>
+                                <?php endfor; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small mb-1">
+                                <i class="bi bi-calendar-range me-1"></i>TRIWULAN
+                            </label>
+                            <select class="form-select form-select-sm" id="filterTriwulan">
+                                <option value="">Semua Triwulan</option>
+                                <option value="1" <?= ($filters['triwulan'] ?? '') == '1' ? 'selected' : '' ?>>Triwulan I (Jan-Mar)</option>
+                                <option value="2" <?= ($filters['triwulan'] ?? '') == '2' ? 'selected' : '' ?>>Triwulan II (Apr-Jun)</option>
+                                <option value="3" <?= ($filters['triwulan'] ?? '') == '3' ? 'selected' : '' ?>>Triwulan III (Jul-Sep)</option>
+                                <option value="4" <?= ($filters['triwulan'] ?? '') == '4' ? 'selected' : '' ?>>Triwulan IV (Okt-Des)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small mb-1">
+                                <i class="bi bi-calendar2-range me-1"></i>SEMESTER
+                            </label>
+                            <select class="form-select form-select-sm" id="filterSemester">
+                                <option value="">Semua Semester</option>
+                                <option value="1" <?= ($filters['semester'] ?? '') == '1' ? 'selected' : '' ?>>Semester I (Jan-Jun)</option>
+                                <option value="2" <?= ($filters['semester'] ?? '') == '2' ? 'selected' : '' ?>>Semester II (Jul-Des)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-primary btn-sm flex-grow-1" id="btnApplyFilter">
+                                    <i class="bi bi-funnel"></i> Terapkan
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnClearFilter" <?= empty($filters['tahun']) && empty($filters['triwulan']) && empty($filters['semester']) ? 'style="display:none"' : '' ?>>
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                                <button type="button" class="btn btn-success btn-sm" id="btnReloadChart" title="Reload Data">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!--begin::Row - Trend Line Chart -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm" style="border-top: 4px solid #0d6efd !important;">
+                <div class="card-header bg-gradient-primary">
+                    <h3 class="card-title text-white">
+                        <i class="bi bi-graph-up-arrow me-2"></i>
                         Trend Line Chart - Insiden
                     </h3>
                     <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                            <i class="bi bi-dash"></i>
+                        <button type="button" class="btn btn-tool text-white" data-card-widget="maximize">
+                            <i class="bi bi-fullscreen text-white"></i>
+                        </button>
+                        <button type="button" class="btn btn-tool text-white" data-card-widget="collapse">
+                            <i class="bi bi-dash text-white"></i>
+                        </button>
+                        <button type="button" class="btn btn-tool text-white" data-card-widget="remove">
+                            <i class="bi bi-x-lg text-white"></i>
                         </button>
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="filter-wrapper d-flex flex-wrap align-items-end justify-content-between gap-2 p-3 bg-light rounded">
-                                <div class="d-flex flex-wrap align-items-end gap-2">
-                                    <div class="filter-group">
-                                        <label class="form-label mb-1 text-muted small fw-semibold">PERIODE</label>
-                                        <select class="form-select form-select-sm border-primary" id="filterPeriode" style="min-width: 120px;">
-                                            <option value="">Semua Tahun</option>
-                                            <?php for ($t = $tahunIni; $t >= $tahunMulai; $t--): ?>
-                                                <option value="<?= $t ?>" <?= (string)($filters['tahun'] ?? $tahunIni) === (string)$t ? 'selected' : '' ?>><?= $t ?></option>
-                                            <?php endfor; ?>
-                                        </select>
-                                    </div>
-                                    <div class="filter-group">
-                                        <label class="form-label mb-1 text-muted small fw-semibold">TRIWULAN</label>
-                                        <select class="form-select form-select-sm" id="filterTriwulan" style="min-width: 140px;">
-                                            <option value="">Semua Triwulan</option>
-                                            <option value="1" <?= ($filters['triwulan'] ?? '') == '1' ? 'selected' : '' ?>>Triwulan I (Jan-Mar)</option>
-                                            <option value="2" <?= ($filters['triwulan'] ?? '') == '2' ? 'selected' : '' ?>>Triwulan II (Apr-Jun)</option>
-                                            <option value="3" <?= ($filters['triwulan'] ?? '') == '3' ? 'selected' : '' ?>>Triwulan III (Jul-Sep)</option>
-                                            <option value="4" <?= ($filters['triwulan'] ?? '') == '4' ? 'selected' : '' ?>>Triwulan IV (Okt-Des)</option>
-                                        </select>
-                                    </div>
-                                    <div class="filter-group">
-                                        <label class="form-label mb-1 text-muted small fw-semibold">SEMESTER</label>
-                                        <select class="form-select form-select-sm" id="filterSemester" style="min-width: 140px;">
-                                            <option value="">Semua Semester</option>
-                                            <option value="1" <?= ($filters['semester'] ?? '') == '1' ? 'selected' : '' ?>>Semester I (Jan-Jun)</option>
-                                            <option value="2" <?= ($filters['semester'] ?? '') == '2' ? 'selected' : '' ?>>Semester II (Jul-Des)</option>
-                                        </select>
-                                    </div>
-                                    <div class="filter-actions d-flex gap-2">
-                                        <button type="button" class="btn btn-sm btn-primary" id="btnApplyFilter">
-                                            <i class="bi bi-funnel"></i> Terapkan
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnClearFilter" <?= empty($filters['tahun']) && empty($filters['triwulan']) && empty($filters['semester']) ? 'style="display:none"' : '' ?>>
-                                            <i class="bi bi-arrow-counterclockwise"></i> Reset
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="filter-actions">
-                                    <button type="button" class="btn btn-sm btn-success" id="btnReloadChart" title="Reload Data">
-                                        <i class="bi bi-arrow-repeat"></i> Reload
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="chart-container" style="position: relative; height: 400px;">
+                    <div class="chart-container" style="position: relative; height: 300px;">
                         <canvas id="trendLineChart"></canvas>
                     </div>
 
-                    <hr>
-
-                    <h6 class="fw-bold mb-3" id="tableTitle">Detail Data Insiden:</h6>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-sm table-hover" id="trendTable">
-                            <thead class="table-light" id="trendTableHeader">
-                            </thead>
-                            <tbody id="trendTableBody">
-                            </tbody>
-                            <tfoot class="table-light fw-bold">
-                                <tr id="trendTableFooter">
-                                </tr>
-                            </tfoot>
-                        </table>
+                    <div class="mt-4">
+                        <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTrendTable">
+                            <i class="bi bi-table me-1"></i> Tampilkan Detail Data
+                        </button>
+                        <div class="collapse mt-3" id="collapseTrendTable">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm table-hover table-striped" id="trendTable">
+                                    <thead class="table-primary" id="trendTableHeader">
+                                    </thead>
+                                    <tbody id="trendTableBody">
+                                    </tbody>
+                                    <tfoot class="table-light fw-bold">
+                                        <tr id="trendTableFooter">
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <!-- /.row (main row) -->
 
-    <!--begin::Row-->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card card-outline card-danger">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="bi bi-exclamation-triangle-fill mr-1"></i>
-                        Grading Chart - Tingkat Bahaya (Risk Level)
+        <!--begin::Row - Grading Chart -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm" style="border-top: 4px solid #dc3545 !important;">
+                <div class="card-header bg-gradient-danger">
+                    <h3 class="card-title text-white">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Grading Chart - Tingkat Bahaya
                     </h3>
                     <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                            <i class="bi bi-dash"></i>
+                        <button type="button" class="btn btn-tool text-white" data-card-widget="maximize">
+                            <i class="bi bi-fullscreen text-white"></i>
+                        </button>
+                        <button type="button" class="btn btn-tool text-white" data-card-widget="collapse">
+                            <i class="bi bi-dash text-white"></i>
+                        </button>
+                        <button type="button" class="btn btn-tool text-white" data-card-widget="remove">
+                            <i class="bi bi-x-lg text-white"></i>
                         </button>
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="chart-container" style="position: relative; height: 300px;">
-                                <canvas id="gradingChart"></canvas>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="alert alert-light border" role="alert">
-                                <h6 class="alert-heading fw-bold">Keterangan:</h6>
-                                <hr>
-                                <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
-                                    <li class="mb-2">
-                                        <span class="badge bg-success" style="width: 20px; height: 20px; display: inline-block;"></span>
-                                        <strong>Risiko Rendah (Hijau)</strong>
-                                    </li>
-                                    <li class="mb-2">
-                                        <span class="badge bg-primary" style="width: 20px; height: 20px; display: inline-block;"></span>
-                                        <strong>Risiko Sedang (Biru)</strong>
-                                    </li>
-                                    <li class="mb-2">
-                                        <span class="badge" style="background-color: #ffc107; width: 20px; height: 20px; display: inline-block;"></span>
-                                        <strong>Risiko Tinggi (Kuning)</strong>
-                                    </li>
-                                    <li>
-                                        <span class="badge bg-danger" style="width: 20px; height: 20px; display: inline-block;"></span>
-                                        <strong>Risiko Tinggi Sekali (Merah)</strong>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
+                    <div class="chart-container" style="position: relative; height: 280px;">
+                        <canvas id="gradingChart"></canvas>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- /.row -->
 
-    <!--begin::Row-->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card card-outline card-warning">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="bi bi-person-x-fill mr-1"></i>
-                        Chart Akibat Insiden
-                    </h3>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                            <i class="bi bi-dash"></i>
+                    <div class="mt-4">
+                        <button class="btn btn-outline-danger btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGradingTable">
+                            <i class="bi bi-table me-1"></i> Tampilkan Detail Grading
                         </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="chart-container" style="position: relative; height: 350px;">
-                                <canvas id="akibatChart"></canvas>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="alert alert-light border" role="alert">
-                                <h6 class="alert-heading fw-bold">Keterangan:</h6>
-                                <hr>
-                                <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
-                                    <li class="mb-2">
-                                        <span class="badge" style="background-color: #6c757d; width: 20px; height: 20px; display: inline-block;"></span>
-                                        <strong>Katastropik (Kematian)</strong>
-                                    </li>
-                                    <li class="mb-2">
-                                        <span class="badge bg-danger" style="width: 20px; height: 20px; display: inline-block;"></span>
-                                        <strong>Mayor (Cedera Berat/Irreversibel)</strong>
-                                    </li>
-                                    <li class="mb-2">
-                                        <span class="badge" style="background-color: #ffc107; width: 20px; height: 20px; display: inline-block;"></span>
-                                        <strong>Moderat (Cedera Sedang/Reversibel)</strong>
-                                    </li>
-                                    <li class="mb-2">
-                                        <span class="badge bg-primary" style="width: 20px; height: 20px; display: inline-block;"></span>
-                                        <strong>Minor (Cedera Ringan)</strong>
-                                    </li>
-                                    <li>
-                                        <span class="badge bg-success" style="width: 20px; height: 20px; display: inline-block;"></span>
-                                        <strong>Tidak Signifikan</strong>
-                                    </li>
-                                </ul>
+                        <div class="collapse mt-3" id="collapseGradingTable">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm table-striped" id="gradingTable" style="min-width: 600px;">
+                                    <thead class="table-danger">
+                                        <tr>
+                                            <th class="text-left align-middle" style="width: 250px;">Grading</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                    <tfoot class="table-light">
+                                        <tr>
+                                            <th class="text-left">Total</th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -197,48 +176,54 @@
             </div>
         </div>
     </div>
-    <!-- /.row -->
 </div>
 <!--end::Container -->
 
 <style>
-    .filter-wrapper {
-        border: 1px solid #e9ecef;
+    .card {
+        border-radius: 8px;
     }
-
-    .filter-group .form-label {
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+    
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,0.1);
     }
-
-    .filter-group select:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
     }
-
-    .card-outline.card-primary {
-        border-top: 3px solid #0d6efd;
+    
+    .bg-gradient-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
     }
-
-    .card-outline.card-danger {
-        border-top: 3px solid #dc3545;
-    }
-
-    .card-outline.card-warning {
-        border-top: 3px solid #ffc107;
-    }
-
-
-    /* akibatChart  */
-    #akibatChart {
-        height: 500px !important;
-    }
-
+    
     .chart-container {
         position: relative;
-        height: 550px;
         width: 100%;
+    }
+    
+    #trendLineChart, #gradingChart {
+        cursor: pointer;
+    }
+    
+    .table {
+        font-size: 0.875rem;
+    }
+    
+    .table th {
+        font-weight: 600;
+    }
+    
+    .collapse:not(.show) {
+        display: none;
+    }
+    
+    .btn-outline-primary, .btn-outline-danger {
+        border-width: 2px;
+    }
+    
+    .form-select:focus, .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
     }
 </style>
 
@@ -267,10 +252,12 @@
         label: fullNames[ds.jenis] || ds.jenis,
         data: ds.data,
         borderColor: colors[ds.jenis] || '#333',
-        backgroundColor: colors[ds.jenis] || '#333',
+        backgroundColor: colors[ds.jenis] + '20' || '#333',
         tension: 0.3,
-        fill: false,
-        borderWidth: 2
+        fill: true,
+        borderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6
     }));
 
     const ctx = document.getElementById('trendLineChart').getContext('2d');
@@ -280,29 +267,83 @@
             labels: labels,
             datasets: datasets
         },
-        options: {
+            options: {
             responsive: true,
             maintainAspectRatio: false,
+            onClick: function(evt, elements) {
+                if (elements.length > 0) {
+                    const collapseEl = document.getElementById('collapseTrendTable');
+                    if (collapseEl.classList.contains('show')) {
+                        collapseEl.classList.remove('show');
+                    } else {
+                        collapseEl.classList.add('show');
+                    }
+                }
+            },
             plugins: {
                 legend: {
                     position: 'top',
+                    labels: {
+                        padding: 15,
+                        usePointStyle: true,
+                        font: {
+                            size: 11,
+                            weight: '500'
+                        }
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y + ' kasus';
+                        }
+                    }
                 },
                 title: {
                     display: true,
-                    text: xAxisType === 'bulan' ? 'Trend Insiden Bulanan' : 'Trend Insiden Tahunan'
+                    text: xAxisType === 'bulan' ? '📊 Trend Insiden Keselamatan Pasien Bulanan (Klik chart untuk lihat detail)' : '📊 Trend Insiden Keselamatan Pasien Tahunan (Klik chart untuk lihat detail)',
+                    font: {
+                        size: 13,
+                        weight: 'normal'
+                    },
+                    padding: {
+                        bottom: 10
+                    }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        stepSize: 1
+                        stepSize: 1,
+                        font: {
+                            size: 11
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Jumlah Insiden',
+                        font: {
+                            size: 11,
+                            weight: 'normal'
+                        }
                     }
                 },
                 x: {
                     title: {
                         display: true,
-                        text: xAxisType === 'bulan' ? 'Bulan' : 'Tahun'
+                        text: xAxisType === 'bulan' ? 'Bulan' : 'Tahun',
+                        font: {
+                            size: 11,
+                            weight: 'normal'
+                        }
+                    },
+                    ticks: {
+                        font: {
+                            size: 11
+                        }
                     }
                 }
             }
@@ -312,15 +353,6 @@
     // Populate Trend Table
     const trendTableBody = document.getElementById('trendTableBody');
     const trendTableFooter = document.getElementById('trendTableFooter');
-    const tableTitle = document.getElementById('tableTitle');
-
-    if (tableTitle) {
-        if (xAxisType === 'bulan') {
-            tableTitle.textContent = 'Detail Data Insiden per Bulan:';
-        } else {
-            tableTitle.textContent = 'Detail Data Insiden per Tahun:';
-        }
-    }
 
     if (trendTableBody && chartData.labels && chartData.datasets) {
         const trendTableHeader = document.getElementById('trendTableHeader');
@@ -411,160 +443,145 @@
         data: ds.data,
         backgroundColor: gradingColors[ds.grading] || 'rgba(100,100,100,0.8)',
         borderColor: gradingBorderColors[ds.grading] || '#333',
-        borderWidth: 1,
-        barPercentage: 0.6,
-        categoryPercentage: 0.8
+        borderWidth: 1
     }));
 
     const ctxGrading = document.getElementById('gradingChart').getContext('2d');
     new Chart(ctxGrading, {
-        type: 'bar',
+        type: 'doughnut',
         data: {
-            labels: gradingLabels,
-            datasets: gradingDatasets
+            labels: gradingDatasets.map(ds => ds.label),
+            datasets: [{
+                data: gradingDatasets.map(ds => ds.data.reduce((a, b) => a + b, 0)),
+                backgroundColor: gradingDatasets.map(ds => ds.backgroundColor),
+                borderColor: gradingDatasets.map(ds => ds.borderColor),
+                borderWidth: 2
+            }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: false
+                    position: 'right',
+                    labels: {
+                        padding: 15,
+                        usePointStyle: true,
+                        font: {
+                            size: 11,
+                            weight: '500'
+                        },
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            if (data.labels.length && data.datasets.length) {
+                                return data.labels.map((label, i) => {
+                                    const value = data.datasets[0].data[i];
+                                    const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                                    return {
+                                        text: `${label}: ${value} (${percentage})`,
+                                        fillStyle: data.datasets[0].backgroundColor[i],
+                                        strokeStyle: data.datasets[0].borderColor[i],
+                                        hidden: false,
+                                        index: i,
+                                        pointStyle: 'circle'
+                                    };
+                                });
+                            }
+                            return [];
+                        }
+                    }
                 },
                 title: {
                     display: true,
-                    text: 'Grading Chart - Tingkat Bahaya (Risk Level)',
+                    text: '⚠️ Distribusi Tingkat Bahaya (Risk Level)',
                     font: {
-                        size: 14,
-                        weight: 'bold'
+                        size: 13,
+                        weight: 'normal'
                     },
                     padding: {
-                        bottom: 15
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
-                    },
-                    title: {
-                        display: true,
-                        text: 'Jumlah'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: xAxisType === 'bulan' ? 'Bulan' : 'Tahun'
+                        bottom: 10
                     }
                 }
             }
         }
     });
 
-    // Akibat Insiden Chart - Horizontal Bar
-    const akibatChartData = <?= json_encode($akibatChartData) ?>;
+    // Grading Table - Transposed
+    const gradingTableHead = document.querySelector('#gradingTable thead tr');
+    const gradingTableBody = document.querySelector('#gradingTable tbody');
+    const gradingTableFoot = document.querySelector('#gradingTable tfoot tr');
 
-    const akibatColors = {
-        'Kematian': 'rgba(108, 117, 125, 0.9)',
-        'Cedera Irreversibel / Cedera Berat': 'rgba(220, 53, 69, 0.9)',
-        'Cedera Reversibel / Cedera Sedang': 'rgba(255, 193, 7, 0.9)',
-        'Cedera Ringan': 'rgba(13, 110, 253, 0.9)',
-        'Tidak ada cedera': 'rgba(25, 135, 84, 0.9)'
-    };
+    const gradingTableLabels = gradingChartData.labels;
+    const gradingTableDatasets = gradingChartData.datasets;
 
-    const akibatBorderColors = {
-        'Kematian': '#6c757d',
-        'Cedera Irreversibel / Cedera Berat': '#dc3545',
-        'Cedera Reversibel / Cedera Sedang': '#ffc107',
-        'Cedera Ringan': '#0d6efd',
-        'Tidak ada cedera': '#198754'
-    };
-
-    const akibatLabels = akibatChartData.labels;
-    // const akibatDatasets = akibatChartData.datasets.map(ds => ({
-    //     label: ds.akibat,
-    //     data: ds.data,
-    //     backgroundColor: akibatColors[ds.akibat] || 'rgba(100,100,100,0.8)',
-    //     borderColor: akibatBorderColors[ds.akibat] || '#333',
-    //     borderWidth: 1,
-    //     borderRadius: 5,
-    //     barPercentage: 0.9,
-    //     categoryPercentage: 0.9
-    // }));
-    const akibatDatasets = akibatChartData.datasets.map(ds => ({
-        label: ds.akibat,
-        data: ds.data,
-        backgroundColor: akibatColors[ds.akibat] || 'rgba(100,100,100,0.8)',
-        borderColor: akibatBorderColors[ds.akibat] || '#333',
-        borderWidth: 1,
-        borderRadius: 5,
-        barPercentage: 0.9,
-        categoryPercentage: 0.9
-    }));
-
-    const ctxAkibat = document.getElementById('akibatChart').getContext('2d');
-    new Chart(ctxAkibat, {
-        type: 'bar',
-        data: {
-            labels: akibatLabels,
-            datasets: akibatDatasets
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                title: {
-                    display: true,
-                    text: 'Grafik Distribusi Insiden Keselamatan Pasien Berdasarkan Tingkat Akibat (Impact Severity)',
-                    font: {
-                        size: 14,
-                        weight: 'bold'
-                    },
-                    padding: {
-                        bottom: 15
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1,
-                        font: {
-                            size: 12
-                        }
-                    },
-                    title: {
-                        display: true,
-                        text: 'Jumlah',
-                        font: {
-                            size: 14
-                        }
-                    }
-                },
-                y: {
-                    ticks: {
-                        font: {
-                            size: 12
-                        }
-                    },
-                    title: {
-                        display: true,
-                        text: xAxisType === 'bulan' ? 'Bulan' : 'Tahun',
-                        font: {
-                            size: 14
-                        }
-                    }
-                }
-            }
-        }
+    gradingTableLabels.forEach(label => {
+        const th = document.createElement('th');
+        th.className = 'text-center align-middle';
+        th.textContent = label;
+        gradingTableHead.appendChild(th);
     });
+
+    const totalThHead = document.createElement('th');
+    totalThHead.className = 'text-center align-middle';
+    totalThHead.textContent = 'Total';
+    gradingTableHead.appendChild(totalThHead);
+
+    let grandTotalGrading = 0;
+    const columnTotals = new Array(gradingTableLabels.length).fill(0);
+
+    gradingTableDatasets.forEach(ds => {
+        const tr = document.createElement('tr');
+
+        const tdGrading = document.createElement('td');
+        tdGrading.className = 'text-left fw-bold align-middle';
+        tdGrading.style.backgroundColor = gradingColors[ds.grading] + '20';
+
+        const colorBadge = document.createElement('span');
+        colorBadge.style.display = 'inline-block';
+        colorBadge.style.width = '14px';
+        colorBadge.style.height = '14px';
+        colorBadge.style.backgroundColor = gradingColors[ds.grading];
+        colorBadge.style.border = '1px solid ' + gradingBorderColors[ds.grading];
+        colorBadge.style.borderRadius = '3px';
+        colorBadge.style.marginRight = '8px';
+        colorBadge.style.verticalAlign = 'middle';
+
+        tdGrading.appendChild(colorBadge);
+        tdGrading.appendChild(document.createTextNode(gradingFullNames[ds.grading] || ds.grading));
+        tr.appendChild(tdGrading);
+
+        let rowTotal = 0;
+        ds.data.forEach((value, index) => {
+            const td = document.createElement('td');
+            td.className = 'text-center';
+            td.textContent = value;
+            rowTotal += value;
+            columnTotals[index] += value;
+            tr.appendChild(td);
+        });
+
+        const tdTotal = document.createElement('td');
+        tdTotal.className = 'text-center fw-bold';
+        tdTotal.textContent = rowTotal;
+        tdTotal.style.backgroundColor = gradingColors[ds.grading] + '30';
+        tr.appendChild(tdTotal);
+
+        gradingTableBody.appendChild(tr);
+        grandTotalGrading += rowTotal;
+    });
+
+    columnTotals.forEach(colTotal => {
+        const th = document.createElement('th');
+        th.className = 'text-center';
+        th.textContent = colTotal;
+        gradingTableFoot.appendChild(th);
+    });
+
+    const totalFootTh = document.createElement('th');
+    totalFootTh.className = 'text-center';
+    totalFootTh.textContent = grandTotalGrading;
+    gradingTableFoot.appendChild(totalFootTh);
 
     function applyFilters() {
         const tahun = $('#filterPeriode').val();
@@ -606,5 +623,56 @@
         } else {
             $('#btnClearFilter').hide();
         }
+    });
+
+    // Card Tools - Minimize, Maximize, Remove
+    $(document).on('click', '[data-card-widget="collapse"]', function() {
+        const card = $(this).closest('.card');
+        const body = card.find('.card-body');
+        if (body.is(':visible')) {
+            body.slideUp(200);
+            $(this).find('i').removeClass('bi-dash').addClass('bi-plus');
+        } else {
+            body.slideDown(200);
+            $(this).find('i').removeClass('bi-plus').addClass('bi-dash');
+        }
+    });
+
+    $(document).on('click', '[data-card-widget="maximize"]', function() {
+        const card = $(this).closest('.card');
+        if (!card.hasClass('card-fullscreen')) {
+            card.addClass('card-fullscreen');
+            card.css({
+                'position': 'fixed',
+                'top': '0',
+                'left': '0',
+                'width': '100vw',
+                'height': '100vh',
+                'z-index': '9999',
+                'margin': '0',
+                'border-radius': '0'
+            });
+            $(this).find('i').removeClass('bi-fullscreen').addClass('bi-fullscreen-exit');
+        } else {
+            card.removeClass('card-fullscreen');
+            card.css({
+                'position': '',
+                'top': '',
+                'left': '',
+                'width': '',
+                'height': '',
+                'z-index': '',
+                'margin': '',
+                'border-radius': '8px'
+            });
+            $(this).find('i').removeClass('bi-fullscreen-exit').addClass('bi-fullscreen');
+        }
+    });
+
+    $(document).on('click', '[data-card-widget="remove"]', function() {
+        const card = $(this).closest('.card');
+        card.fadeOut(200, function() {
+            $(this).remove();
+        });
     });
 </script>

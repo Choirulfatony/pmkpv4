@@ -41,7 +41,7 @@
 
 
                     <!-- MENU IKPRS -->
-                    <?php if ($login_source == 'HRIS'): ?>
+                    <?php if ($login_source == 'HRIS' && in_array(session('user_role'), ['KOMITE', 'KARU'])): ?>
 
                         <li class="nav-item">
                             <a href="<?= site_url('ikprs') ?>" class="nav-link">
@@ -49,6 +49,11 @@
                                 <p>Dashboard</p>
                             </a>
                         </li>
+
+                    <?php endif; ?>
+
+                    <!-- MENU FORMS INPUT (untuk semua HRIS) -->
+                    <?php if ($login_source == 'HRIS'): ?>
 
                         <li class="nav-item">
                             <a href="#" class="nav-link">
