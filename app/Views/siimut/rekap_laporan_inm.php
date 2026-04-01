@@ -200,18 +200,10 @@ var vtahun = '<?= $tahun ?>';
 var target, factor, operator;
 
 $(document).ready(function() {
-    // Loading overlay
-    $('#ajax_data_rekap').on('processing.dt', function(e, settings, processing) {
-        if (processing) {
-            $('#loading_overlay').removeClass('d-none');
-        } else {
-            $('#loading_overlay').addClass('d-none');
-        }
-    });
 
     // Init DataTable
     table_loquin = $('#ajax_data_rekap').DataTable({
-        processing: true,
+        processing: false, // Disable DataTables built-in processing
         serverSide: true,
         autoWidth: false,
         pageLength: 25,
@@ -222,6 +214,12 @@ $(document).ready(function() {
             data: function(d) {
                 d.vtahun = vtahun;
                 return d;
+            },
+            beforeSend: function() {
+                $('#loading_overlay').removeClass('d-none');
+            },
+            complete: function() {
+                $('#loading_overlay').addClass('d-none');
             }
         },
         columnDefs: [{
