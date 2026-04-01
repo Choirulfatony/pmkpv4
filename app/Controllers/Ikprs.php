@@ -33,6 +33,11 @@ class Ikprs extends AppController
 
     public function index()
     {
+        // 🔒 APP user tidak boleh akses IKPRS
+        if (session()->get('login_source') === 'APP') {
+            return redirect()->to('/siimut/dashboard');
+        }
+
         $this->disableCache();
 
         $role = session()->get('user_role');
@@ -260,6 +265,11 @@ class Ikprs extends AppController
 
     public function ikprs()
     {
+        // 🔒 APP user tidak boleh akses IKPRS
+        if (session()->get('login_source') === 'APP') {
+            return redirect()->to('/siimut/dashboard');
+        }
+
         $this->disableCache();
 
         $content = view('ikprs/ikp_content');

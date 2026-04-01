@@ -113,12 +113,5 @@ class Filters extends BaseFilters
      */
     // public array $filters = [];
 
-    public array $filters = [
-        'auth' => [
-            'before' => [
-                'dashboard',
-                'dashboard/*',
-            ],
-        ],
-    ];
+    public array $filters = [];
 }

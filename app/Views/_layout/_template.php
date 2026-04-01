@@ -149,30 +149,36 @@
 </body>
 
 <script>
-    /**
-     * 🔒 Anti Back setelah Logout (FINAL)
-     * - Blok BFCache
-     * - Blok history restore
-     */
+    // 🔒 Anti Back - Cek session dan redirect jika tidak valid
     (function() {
-
-        // 1️⃣ Cegah halaman dari BFCache
-        window.addEventListener('pageshow', function(event) {
-            if (event.persisted) {
-                window.location.replace("<?= site_url('auth') ?>");
+        function checkSessionAndRedirect() {
+            const currentPath = window.location.pathname;
+            
+            if (currentPath.indexOf('ikprs') !== -1) {
+                fetch('<?= site_url('auth/cek_session') ?>', {
+                    method: 'GET',
+                    cache: 'no-store',
+                    credentials: 'same-origin'
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.login_source === 'APP') {
+                        window.location.replace('<?= site_url('siimut/dashboard') ?>');
+                    }
+                })
+                .catch(() => {
+                    window.location.replace('<?= site_url('auth') ?>');
+                });
             }
+        }
+
+        window.addEventListener('pageshow', function(event) {
+            checkSessionAndRedirect();
         });
 
-        // 2️⃣ Cegah tombol Back (history)
-        window.addEventListener('popstate', function() {
-            window.location.replace("<?= site_url('auth') ?>");
-        });
-
-        // 3️⃣ Paksa state baru (penting!)
         if (window.history && window.history.pushState) {
             window.history.pushState(null, '', window.location.href);
         }
-
     })();
 </script>
 

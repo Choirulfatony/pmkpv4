@@ -46,7 +46,9 @@
 
                                     <!-- MENU TANPA SUB -->
                                     <li class="nav-item">
-                                        <a href="<?= site_url($menu['url']) ?>" class="nav-link">
+                                        <a href="<?= (!empty($menu['url']) && $menu['url'] != '#')
+                                                        ? site_url($menu['url'])
+                                                        : 'javascript:void(0)' ?>" class="nav-link">
                                             <i class="nav-icon <?= esc($menu['icon']) ?>"></i>
                                             <p><?= esc($menu['nama_menu']) ?></p>
                                         </a>
@@ -55,25 +57,35 @@
                                 <?php else: ?>
                                     <!-- MENU DENGAN SUB -->
                                     <li class="nav-item has-treeview">
+
                                         <a href="#" class="nav-link">
                                             <i class="nav-icon <?= esc($menu['icon']) ?>"></i>
-                                            <p class="d-flex justify-content-between align-items-center mb-0">
+
+                                            <p class="d-flex justify-content-between align-items-center mb-0 w-100">
                                                 <span><?= esc($menu['nama_menu']) ?></span>
-                                                <i class="nav-arrow bi bi-chevron-right"></i>
+                                                <!-- <i class="nav-arrow bi bi-chevron-right"></i> -->
                                             </p>
                                         </a>
+
+                                   
+
                                         <ul class="nav nav-treeview">
                                             <?php foreach ($menu['children'] as $child): ?>
                                                 <li class="nav-item">
-                                                    <a href="<?= site_url($child['url']) ?>" class="nav-link">
+                                                    <a href="<?= (!empty($child['url']) && $child['url'] != '#')
+                                                                    ? site_url($child['url'])
+                                                                    : 'javascript:void(0)' ?>"
+                                                        class="nav-link sub-menu">
+
                                                         <i class="nav-icon <?= esc($child['icon']) ?>"></i>
                                                         <p><?= esc($child['nama_menu']) ?></p>
+
                                                     </a>
                                                 </li>
                                             <?php endforeach; ?>
                                         </ul>
-                                    </li>
 
+                                    </li>
 
                                 <?php endif; ?>
 
@@ -134,3 +146,32 @@
     <!--end::Sidebar Wrapper-->
 </aside>
 <!--end::Sidebar-->
+
+
+<style>
+    /* 🔥 RAPATKAN SUBMENU */
+    .nav-treeview .nav-link {
+        display: flex;
+        align-items: center;
+        padding-left: 1.5rem !important;
+        /* atur jarak kiri */
+    }
+
+    /* ICON SUBMENU */
+    .nav-treeview .nav-icon {
+        width: 20px;
+        text-align: center;
+        margin-right: 10px;
+        font-size: 14px;
+    }
+
+    /* TEXT SUBMENU */
+    .nav-treeview .nav-link p {
+        margin: 0;
+    }
+
+    /* HILANGKAN BULLET / CIRCLE ANEH */
+    .nav-treeview .nav-item::before {
+        display: none !important;
+    }
+</style>

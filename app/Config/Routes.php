@@ -14,34 +14,20 @@ $routes->get('auth', 'Auth::index');
 $routes->post('auth/process', 'Auth::process');
 $routes->get('auth/refresh-captcha', 'Auth::refresh_captcha');
 $routes->get('auth/logout', 'Auth::logout');
+$routes->get('auth/cek_session', 'Auth::cek_session');
 
 
-$routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
+// ================= SIIMUT =================
+$routes->group('siimut', ['filter' => 'auth'], function ($routes) {
+    $routes->get('', 'Dashboard::index');        // /siimut
+    $routes->get('dashboard', 'Dashboard::index'); // /siimut/dashboard
+    $routes->get('rekap-laporan', 'RekapLaporan::index'); // /siimut/rekap-laporan
+    $routes->post('rekap-laporan/ajax', 'RekapLaporan::getAjaxDataRekapInm'); // AJAX
+    $routes->get('rekap-laporan/detail/(:num)', 'RekapLaporan::viewDetailInm/$1'); // Detail
+});
 
-$routes->get('fatoni', 'Home::fatoni');
+// $routes->get('test-email', 'Ikprs::kirimEmailTest');
 
-
-// bebas login
-// $routes->get('ikprs/ikp_content', 'Ikprs::ikp_content');
-
-// yang butuh login
-// $routes->group('ikprs', ['filter' => 'auth'], function ($routes) {
-//     $routes->get('/', 'Ikprs::index');
-//     // 🔥 ROUTE FORM ADD IKP (WAJIB)
-//     $routes->get('_form_add_ikp', 'Ikprs::formAddIkp');
-//     $routes->get('_form_inbox', 'Ikprs::formInbox');
-//     $routes->get('ikprs/counter-ajax', 'Ikprs::counterAjax');
-//     $routes->match(['get', 'post'], 'form_drafts', 'Ikprs::formDrafts');
-
-
-//     // 🔥 AJAX CARI PASIEN (WAJIB DI SINI)
-//     $routes->post('cari_pasien', 'Ikprs::cari_pasien');
-
-//     $routes->get('get_departments', 'Ikprs::get_departments');
-//     $routes->post('simpanikp', 'Ikprs::simpanikp');
-// });
-
-$routes->get('test-email', 'Ikprs::kirimEmailTest');
 $routes->group('ikprs', ['filter' => 'auth'], function ($routes) {
 
 

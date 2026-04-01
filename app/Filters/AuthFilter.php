@@ -31,6 +31,12 @@ class AuthFilter implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         $session = session();
+        $uri = ltrim($request->getUri()->getPath(), '/');
+
+        // ✅ Lewati /auth
+        if ($uri === 'auth' || strpos($uri, 'auth/') === 0) {
+            return;
+        }
 
         // 🔥 JIKA AJAX → JANGAN SENTUH SESSION
         if ($request->isAJAX()) {
@@ -44,7 +50,7 @@ class AuthFilter implements FilterInterface
                     ]);
             }
 
-            return; // ⬅️ STOP DI SINI (PENTING)
+            return;
         }
 
         // ===== NON-AJAX REQUEST =====
@@ -61,8 +67,14 @@ class AuthFilter implements FilterInterface
             return redirect()->to('/auth?timeout=1');
         }
 
-        // ✅ UPDATE last_activity HANYA UNTUK PAGE LOAD
         $session->set('last_activity', time());
+
+        // 🔥 CEK LOGIN SOURCE - APP tidak boleh akses IKPRS
+        $loginSource = $session->get('login_source');
+
+        if ($loginSource === 'APP' && strpos($uri, 'ikprs') === 0) {
+            return redirect()->to('/siimut/dashboard');
+        }
     }
 
     // public function before(RequestInterface $request, $arguments = null)

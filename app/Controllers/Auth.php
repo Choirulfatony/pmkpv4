@@ -24,7 +24,7 @@ class Auth extends BaseController
     public function index()
     {
         if ($this->session->get('logged_in')) {
-            return redirect()->to('ikprs/home');
+            return redirect()->to('/ikprs');
         }
 
         if ($this->request->getGet('timeout')) {
@@ -190,7 +190,7 @@ class Auth extends BaseController
 
         log_message('error', 'DEBUG LOGIN:APP - role: ' . $userRole);
 
-        return redirect()->to('dashboard');
+        return redirect()->to('/siimut/dashboard');
     }
 
     private function loginHris(string $nip, string $password)
@@ -384,5 +384,21 @@ class Auth extends BaseController
             ->setHeader('Expires', '0');
 
         return redirect()->to(site_url('auth'));
+    }
+
+    public function cek_session()
+    {
+        $session = session();
+        
+        if (!$session->get('logged_in')) {
+            return $this->response->setJSON([
+                'logged_in' => false
+            ])->setStatusCode(401);
+        }
+
+        return $this->response->setJSON([
+            'logged_in'    => true,
+            'login_source' => $session->get('login_source')
+        ]);
     }
 }
