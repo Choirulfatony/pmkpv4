@@ -230,29 +230,25 @@ class RekapLaporanInmModel extends Model
         }
 
         $db = db_connect();
-        $builder = $db->table('quality_indicator_group');
-        $builder->distinct();
-
-        $builder->select("quality_indicator.indicator_id");
-
-        $builder->join('quality_indicator', 'quality_indicator.indicator_id = quality_indicator_group.group_indicator_id');
-        $builder->join('master_institution_department', 'master_institution_department.department_id = quality_indicator_group.group_department_id');
-
-        $builder->where("quality_indicator.indicator_category_id = '4'");
-        $builder->where("quality_indicator.indicator_record_status = 'A'");
         
-        $builder->groupStart();
-        $builder->where("quality_indicator_group.group_period", $vtahun);
-        $builder->orWhere('quality_indicator_group.group_period', $vtahun - 1);
-        $builder->orWhere('quality_indicator_group.group_period', $vtahun - 2);
-        $builder->groupEnd();
+        // Query sama dengan getIndicatorInm tapi hanya COUNT
+        $query = $db->query("
+            SELECT COUNT(*) as total FROM (
+                SELECT DISTINCT quality_indicator.indicator_id
+                FROM quality_indicator_group
+                JOIN quality_indicator ON quality_indicator.indicator_id = quality_indicator_group.group_indicator_id
+                JOIN master_institution_department ON master_institution_department.department_id = quality_indicator_group.group_department_id
+                WHERE quality_indicator.indicator_category_id = '4'
+                AND quality_indicator.indicator_record_status = 'A'
+                AND (quality_indicator_group.group_period = ? 
+                     OR quality_indicator_group.group_period = ? 
+                     OR quality_indicator_group.group_period = ?)
+                " . ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? "AND master_institution_department.department_id = " . $userDepartmentId : "") . "
+                GROUP BY quality_indicator.indicator_id
+            ) as counted
+        ", [$vtahun, $vtahun - 1, $vtahun - 2]);
 
-        // Filter by user role
-        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
-            $builder->where('master_institution_department.department_id', $userDepartmentId);
-        }
-
-        $count = $builder->countAllResults();
+        $count = $query->getRow()->total ?? 0;
         
         // Cache 10 menit
         $cache->save($cacheKey, $count, 600);
@@ -277,47 +273,39 @@ class RekapLaporanInmModel extends Model
      */
     public function countFilteredRekapInm($post = [])
     {
-        $db = db_connect();
-        $builder = $db->table('quality_indicator_group');
-        $builder->distinct();
-
-        $builder->select("quality_indicator.indicator_id");
-
-        $builder->join('quality_indicator', 'quality_indicator.indicator_id = quality_indicator_group.group_indicator_id');
-        $builder->join('master_institution_department', 'master_institution_department.department_id = quality_indicator_group.group_department_id');
-
-        $builder->where("quality_indicator.indicator_category_id = '4'");
-        $builder->where("quality_indicator.indicator_record_status = 'A'");
-
         $vtahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
-        $builder->groupStart();
-        $builder->where("quality_indicator_group.group_period", $vtahun);
-        $builder->orWhere('quality_indicator_group.group_period', $vtahun - 1);
-        $builder->orWhere('quality_indicator_group.group_period', $vtahun - 2);
-        $builder->groupEnd();
-
-        // Filter by user group
-        $userGroupId = session('group_id') ?? 0;
+        $userRole = session('user_role') ?? '';
         $userDepartmentId = session('department_id') ?? 0;
-
-        if (!in_array($userGroupId, [1, 15])) {
-            $builder->where('master_institution_department.department_id', $userDepartmentId);
-        }
-
-        // Search filter
+        
+        $db = db_connect();
+        
+        // Search condition
+        $searchCondition = '';
         if (isset($post['search']['value']) && !empty($post['search']['value'])) {
-            $builder->groupStart();
-            foreach ($this->column_search as $i => $item) {
-                if ($i === 0) {
-                    $builder->like($item, $post['search']['value']);
-                } else {
-                    $builder->orLike($item, $post['search']['value']);
-                }
-            }
-            $builder->groupEnd();
+            $searchValue = $post['search']['value'];
+            $searchCondition = "AND (quality_indicator.indicator_element LIKE '%{$searchValue}%' 
+                               OR quality_indicator.indicator_name_id LIKE '%{$searchValue}%')";
         }
 
-        return $builder->countAllResults();
+        // Query sama dengan getIndicatorInm tapi hanya COUNT
+        $query = $db->query("
+            SELECT COUNT(*) as total FROM (
+                SELECT DISTINCT quality_indicator.indicator_id
+                FROM quality_indicator_group
+                JOIN quality_indicator ON quality_indicator.indicator_id = quality_indicator_group.group_indicator_id
+                JOIN master_institution_department ON master_institution_department.department_id = quality_indicator_group.group_department_id
+                WHERE quality_indicator.indicator_category_id = '4'
+                AND quality_indicator.indicator_record_status = 'A'
+                AND (quality_indicator_group.group_period = ? 
+                     OR quality_indicator_group.group_period = ? 
+                     OR quality_indicator_group.group_period = ?)
+                " . ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? "AND master_institution_department.department_id = " . $userDepartmentId : "") . "
+                {$searchCondition}
+                GROUP BY quality_indicator.indicator_id
+            ) as counted
+        ", [$vtahun, $vtahun - 1, $vtahun - 2]);
+
+        return $query->getRow()->total ?? 0;
     }
 
     /**
