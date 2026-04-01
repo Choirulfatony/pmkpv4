@@ -161,6 +161,8 @@ class RekapLaporan extends AppController
         // Ambil info indicator
         $indicatorInfo = $this->rekapModel->getDetailByIdInm($indicatorId);
         $target = $indicatorInfo->indicator_target ?? 0;
+        $factors = $indicatorInfo->indicator_factors ?? 1;
+        $units = $indicatorInfo->indicator_units ?? '%';
 
         $data = [];
         $no = isset($post['start']) ? (int) $post['start'] : 0;
@@ -178,7 +180,7 @@ class RekapLaporan extends AppController
             // Target
             $row[] = '<div class="py-1">
                 <span id="target_det">' . $target . '</span>
-                <span id="factor_det" style="display:none">1</span>
+                <span id="factor_det" style="display:none">' . $factors . '</span>
                 <span id="operator_det" style="display:none">>=</span>
             </div>';
 
@@ -196,9 +198,18 @@ class RekapLaporan extends AppController
                 } else {
                     $num = $list->num ?? 0;
                     $denum = $list->denum ?? 0;
+                    
+                    // Hitung total
+                    $total = 0;
+                    if ($denum > 0) {
+                        $total = round(($num / $denum) * $factors, 2);
+                    }
 
                     $row[] = '<div class="py-1">
-                        <span id="num_det">' . esc($num) . '</span> | <span id="denum_det">' . esc($denum) . '</span>
+                        <span class="fw-bold">' . $total . $units . '</span>
+                        <div class="small text-muted">
+                            <span id="num_det">' . esc($num) . '</span> | <span id="denum_det">' . esc($denum) . '</span>
+                        </div>
                     </div>';
                 }
             }
