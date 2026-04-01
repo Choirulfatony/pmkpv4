@@ -257,18 +257,6 @@ class RekapLaporanInmModel extends Model
     }
 
     /**
-     * Ambil detail INM by ID
-     */
-    public function getDetailByIdInm(int $indicatorId)
-    {
-        $db = db_connect();
-        $builder = $db->table('quality_indicator');
-        $builder->select("indicator_id, indicator_element, indicator_target, indicator_factors, indicator_target_calculation, indicator_units");
-        $builder->where('indicator_id', $indicatorId);
-        return $builder->get()->getRow();
-    }
-
-    /**
      * Ambil semua ruangan untuk indicator tertentu
      */
     public function getDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [])
