@@ -274,34 +274,65 @@ class RekapLaporanInmModel extends Model
     public function getDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [])
     {
         $db = db_connect();
-        $builder = $db->table('quality_indicator_group');
         
-        $builder->select("
-            DISTINCT master_institution_department.department_id,
-            master_institution_department.department_name
-        ");
-        
-        $builder->join('master_institution_department', 'master_institution_department.department_id = quality_indicator_group.group_department_id');
-        
-        $builder->where('quality_indicator_group.group_indicator_id', $indicatorId);
-        $builder->groupStart();
-        $builder->where('quality_indicator_group.group_period', $tahun);
-        $builder->orWhere('quality_indicator_group.group_period', $tahun - 1);
-        $builder->orWhere('quality_indicator_group.group_period', $tahun - 2);
-        $builder->groupEnd();
-
-        // Search filter
+        $searchCondition = '';
         if (isset($post['search']['value']) && !empty($post['search']['value'])) {
-            $builder->like('master_institution_department.department_name', $post['search']['value']);
+            $searchValue = addslashes($post['search']['value']);
+            $searchCondition = "AND master_institution_department.department_name LIKE '%{$searchValue}%'";
         }
 
-        $builder->orderBy('master_institution_department.department_name', 'ASC');
-
+        $limit = '';
         if (isset($post['length']) && $post['length'] != -1) {
-            $builder->limit($post['length'], $post['start'] ?? 0);
+            $start = isset($post['start']) ? (int) $post['start'] : 0;
+            $length = (int) $post['length'];
+            $limit = "LIMIT {$length} OFFSET {$start}";
         }
 
-        return $builder->get()->getResult();
+        $query = $db->query("
+            SELECT DISTINCT 
+                quality_indicator.indicator_id,
+                quality_indicator.indicator_element,
+                master_institution_department.department_id,
+                master_institution_department.department_name,
+                quality_indicator_group.group_indicator_id
+            FROM quality_indicator_group
+            JOIN quality_indicator ON quality_indicator.indicator_id = quality_indicator_group.group_indicator_id
+            JOIN master_institution_department ON master_institution_department.department_id = quality_indicator_group.group_department_id
+            WHERE quality_indicator.indicator_category_id = '4' 
+            AND quality_indicator.indicator_record_status = 'A' 
+            AND quality_indicator_group.group_record_status = 'A'
+            AND quality_indicator_group.group_indicator_id = ?
+            {$searchCondition}
+            GROUP BY master_institution_department.department_id
+            ORDER BY master_institution_department.department_name ASC
+            {$limit}
+        ", [$indicatorId]);
+
+        return $query->getResult();
+    }
+
+    /**
+     * Ambil detail indicator by ID (CI4 version of get_detail_byid_inm)
+     */
+    public function getDetailByIdInm(int $indicatorId)
+    {
+        $db = db_connect();
+        
+        $query = $db->query("
+            SELECT 
+                quality_indicator.indicator_id,
+                quality_indicator.indicator_element,
+                quality_indicator.indicator_target,
+                quality_indicator.indicator_factors,
+                quality_indicator.indicator_target_calculation,
+                quality_indicator.indicator_units
+            FROM quality_indicator
+            WHERE quality_indicator.indicator_id = ?
+            AND quality_indicator.indicator_category_id = '4' 
+            AND quality_indicator.indicator_record_status = 'A'
+        ", [$indicatorId]);
+
+        return $query->getRow();
     }
 
     /**
@@ -346,25 +377,25 @@ class RekapLaporanInmModel extends Model
     public function countDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [])
     {
         $db = db_connect();
-        $builder = $db->table('quality_indicator_group');
         
-        $builder->select("COUNT(DISTINCT master_institution_department.department_id) as total");
-        
-        $builder->join('master_institution_department', 'master_institution_department.department_id = quality_indicator_group.group_department_id');
-        
-        $builder->where('quality_indicator_group.group_indicator_id', $indicatorId);
-        $builder->groupStart();
-        $builder->where('quality_indicator_group.group_period', $tahun);
-        $builder->orWhere('quality_indicator_group.group_period', $tahun - 1);
-        $builder->orWhere('quality_indicator_group.group_period', $tahun - 2);
-        $builder->groupEnd();
-
-        // Search filter
+        $searchCondition = '';
         if (isset($post['search']['value']) && !empty($post['search']['value'])) {
-            $builder->like('master_institution_department.department_name', $post['search']['value']);
+            $searchValue = addslashes($post['search']['value']);
+            $searchCondition = "AND master_institution_department.department_name LIKE '%{$searchValue}%'";
         }
 
-        return $builder->get()->getRow()->total ?? 0;
+        $query = $db->query("
+            SELECT COUNT(DISTINCT master_institution_department.department_id) as total
+            FROM quality_indicator_group
+            JOIN quality_indicator ON quality_indicator.indicator_id = quality_indicator_group.group_indicator_id
+            JOIN master_institution_department ON master_institution_department.department_id = quality_indicator_group.group_department_id
+            WHERE quality_indicator_group.group_indicator_id = ?
+            AND quality_indicator.indicator_category_id = '4' 
+            AND quality_indicator.indicator_record_status = 'A'
+            {$searchCondition}
+        ", [$indicatorId]);
+
+        return $query->getRow()->total ?? 0;
     }
 
     /**
