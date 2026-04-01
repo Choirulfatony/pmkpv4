@@ -23,6 +23,7 @@ $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
     $routes->get('dashboard', 'Dashboard::index'); // /siimut/dashboard
     $routes->get('rekap-laporan', 'RekapLaporan::index'); // /siimut/rekap-laporan
     $routes->post('rekap-laporan/ajax', 'RekapLaporan::getAjaxDataRekapInm'); // AJAX
+    $routes->post('rekap-laporan/ajax-detail', 'RekapLaporan::getAjaxDataRekapInmDetail'); // AJAX Detail
     $routes->get('rekap-laporan/detail/(:num)', 'RekapLaporan::viewDetailInm/$1'); // Detail
 });
 

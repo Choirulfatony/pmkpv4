@@ -263,9 +263,108 @@ class RekapLaporanInmModel extends Model
     {
         $db = db_connect();
         $builder = $db->table('quality_indicator');
-        $builder->select("indicator_id, indicator_element, indicator_target");
+        $builder->select("indicator_id, indicator_element, indicator_target, indicator_factors, indicator_target_calculation, indicator_units");
         $builder->where('indicator_id', $indicatorId);
         return $builder->get()->getRow();
+    }
+
+    /**
+     * Ambil semua ruangan untuk indicator tertentu
+     */
+    public function getDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [])
+    {
+        $db = db_connect();
+        $builder = $db->table('quality_indicator_group');
+        
+        $builder->select("
+            DISTINCT master_institution_department.department_id,
+            master_institution_department.department_name
+        ");
+        
+        $builder->join('master_institution_department', 'master_institution_department.department_id = quality_indicator_group.group_department_id');
+        
+        $builder->where('quality_indicator_group.group_indicator_id', $indicatorId);
+        $builder->groupStart();
+        $builder->where('quality_indicator_group.group_period', $tahun);
+        $builder->orWhere('quality_indicator_group.group_period', $tahun - 1);
+        $builder->orWhere('quality_indicator_group.group_period', $tahun - 2);
+        $builder->groupEnd();
+
+        // Search filter
+        if (isset($post['search']['value']) && !empty($post['search']['value'])) {
+            $builder->like('master_institution_department.department_name', $post['search']['value']);
+        }
+
+        $builder->orderBy('master_institution_department.department_name', 'ASC');
+
+        if (isset($post['length']) && $post['length'] != -1) {
+            $builder->limit($post['length'], $post['start'] ?? 0);
+        }
+
+        return $builder->get()->getResult();
+    }
+
+    /**
+     * Ambil semua data detail per ruangan dalam 1 query
+     */
+    public function getAllDetailData(int $indicatorId, int $tahun)
+    {
+        $cache = \Config\Services::cache();
+        $cacheKey = 'detail_data_' . $indicatorId . '_' . $tahun;
+        
+        if ($cached = $cache->get($cacheKey)) {
+            return $cached;
+        }
+
+        $db = db_connect();
+        $builder = $db->table('quality_indicator_result');
+        $builder->select("
+            quality_indicator_result.result_department_id,
+            MONTH(quality_indicator_result.result_period) AS bulan,
+            SUM(quality_indicator_result.result_numerator_value) AS num,
+            SUM(quality_indicator_result.result_denumerator_value) AS denum
+        ");
+        $builder->where('YEAR(quality_indicator_result.result_period)', $tahun);
+        $builder->where('quality_indicator_result.result_indicator_id', $indicatorId);
+        $builder->groupBy('quality_indicator_result.result_department_id, MONTH(quality_indicator_result.result_period)');
+
+        $results = $builder->get()->getResult();
+
+        $data = [];
+        foreach ($results as $row) {
+            $key = $row->result_department_id . '_' . $row->bulan;
+            $data[$key] = $row;
+        }
+
+        $cache->save($cacheKey, $data, 600);
+        return $data;
+    }
+
+    /**
+     * Hitung jumlah ruangan untuk indicator tertentu
+     */
+    public function countDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [])
+    {
+        $db = db_connect();
+        $builder = $db->table('quality_indicator_group');
+        
+        $builder->select("COUNT(DISTINCT master_institution_department.department_id) as total");
+        
+        $builder->join('master_institution_department', 'master_institution_department.department_id = quality_indicator_group.group_department_id');
+        
+        $builder->where('quality_indicator_group.group_indicator_id', $indicatorId);
+        $builder->groupStart();
+        $builder->where('quality_indicator_group.group_period', $tahun);
+        $builder->orWhere('quality_indicator_group.group_period', $tahun - 1);
+        $builder->orWhere('quality_indicator_group.group_period', $tahun - 2);
+        $builder->groupEnd();
+
+        // Search filter
+        if (isset($post['search']['value']) && !empty($post['search']['value'])) {
+            $builder->like('master_institution_department.department_name', $post['search']['value']);
+        }
+
+        return $builder->get()->getRow()->total ?? 0;
     }
 
     /**
