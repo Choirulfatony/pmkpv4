@@ -138,7 +138,6 @@ class RekapLaporanInmModel extends Model
     {
         $db = db_connect();
         $builder = $db->table('quality_indicator_group');
-        $builder->distinct();
 
         $builder->select("
             quality_indicator_group.group_indicator_id,
@@ -158,8 +157,8 @@ class RekapLaporanInmModel extends Model
         $builder->join('quality_indicator', 'quality_indicator.indicator_id = quality_indicator_group.group_indicator_id');
         $builder->join('master_institution_department', 'master_institution_department.department_id = quality_indicator_group.group_department_id');
 
-        $builder->where("quality_indicator.indicator_category_id = '4'");
-        $builder->where("quality_indicator.indicator_record_status = 'A'");
+        $builder->where("quality_indicator.indicator_category_id", '4');
+        $builder->where("quality_indicator.indicator_record_status", 'A');
 
         $vtahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
         $builder->groupStart();
@@ -177,6 +176,9 @@ class RekapLaporanInmModel extends Model
         if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
             $builder->where('master_institution_department.department_id', $userDepartmentId);
         }
+
+        // GROUP BY indicator_id
+        $builder->groupBy('quality_indicator.indicator_id');
 
         // Search filter
         if (isset($post['search']['value']) && !empty($post['search']['value'])) {
