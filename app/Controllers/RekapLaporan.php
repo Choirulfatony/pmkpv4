@@ -39,19 +39,22 @@ class RekapLaporan extends AppController
     }
 
     /**
-     * AJAX: Ambil data rekap INM (untuk DataTables)
+     * AJAX: Ambil data rekap INM (untuk DataTables) - Optimized
      */
     public function getAjaxDataRekapInm()
     {
         $post = $this->request->getPost();
         
-        // Pastikan ini adalah request POST
         if (!$post) {
             return $this->response->setJSON(['error' => 'Invalid request']);
         }
 
         $indicators = $this->rekapModel->getIndicatorInm($post);
         $tahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
+        
+        // Ambil SEMUA data sekaligus (1 query saja)
+        $indicatorIds = array_column($indicators, 'indicator_id');
+        $allData = $this->rekapModel->getAllMonthlyData($indicatorIds, $tahun);
 
         $data = [];
         $no = isset($post['start']) ? (int) $post['start'] : 0;
@@ -60,10 +63,8 @@ class RekapLaporan extends AppController
             $no++;
             $row = [];
 
-            // Kolom No
             $row[] = '<div class="fw-bold">' . $no . '</div>';
 
-            // Kolom Indikator
             $row[] = '<div class="py-1">
                 <a href="javascript:void(0);" class="text-dark fw-semibold text-decoration-none" title="Detail Rekapan Ruangan" onclick="view_detail_inm(' . $indicator->indicator_id . ');">' 
                     . esc($indicator->indicator_element) . '
@@ -78,36 +79,29 @@ class RekapLaporan extends AppController
                 </div>
             </div>';
 
-            // Kolom Bulan 1-12
-            for ($i = 1; $i <= 12; $i++) {
-                try {
-                    $list = $this->rekapModel->getAjaxDataRekapInmm((int) $indicator->indicator_id, $tahun, $i);
+            // Ambil data dari array (bukan query)
+            for ($bulan = 1; $bulan <= 12; $bulan++) {
+                $key = $indicator->indicator_id . '_' . $bulan;
+                $list = isset($allData[$key]) ? $allData[$key] : null;
 
-                    if ($list == null || empty($list)) {
-                        $row[] = '<div class="py-1">
-                            <span class="text-muted">-</span>
-                            <span style="display:none" id="num">0</span>
-                            <span style="display:none" id="denum">0</span>
-                        </div>';
-                    } else {
-                        $total = isset($list->total) ? $list->total : '';
-                        $units = isset($list->units) ? $list->units : '';
-                        $num = isset($list->num) ? $list->num : 0;
-                        $denum = isset($list->denum) ? $list->denum : 0;
-
-                        $row[] = '<div class="py-1">
-                            <span id="total">' . esc($total) . '</span>
-                            <span id="unit">' . esc($units) . '</span>
-                            <div class="small text-muted mt-1">
-                                <span id="num">' . esc($num) . '</span> | <span id="denum">' . esc($denum) . '</span>
-                            </div>
-                        </div>';
-                    }
-                } catch (\Exception $e) {
+                if ($list == null) {
                     $row[] = '<div class="py-1">
                         <span class="text-muted">-</span>
                         <span style="display:none" id="num">0</span>
                         <span style="display:none" id="denum">0</span>
+                    </div>';
+                } else {
+                    $total = $list->total ?? '';
+                    $units = $list->units ?? '';
+                    $num = $list->num ?? 0;
+                    $denum = $list->denum ?? 0;
+
+                    $row[] = '<div class="py-1">
+                        <span id="total">' . esc($total) . '</span>
+                        <span id="unit">' . esc($units) . '</span>
+                        <div class="small text-muted mt-1">
+                            <span id="num">' . esc($num) . '</span> | <span id="denum">' . esc($denum) . '</span>
+                        </div>
                     </div>';
                 }
             }

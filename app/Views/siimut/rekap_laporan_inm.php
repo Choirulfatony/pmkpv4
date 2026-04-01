@@ -206,7 +206,7 @@ $(document).ready(function() {
         processing: false, // Disable DataTables built-in processing
         serverSide: true,
         autoWidth: false,
-        pageLength: 25,
+        pageLength: 10, // Kurangi default ke 10 untuk loading lebih cepat
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],
         ajax: {
             url: '<?= site_url('siimut/rekap-laporan/ajax') ?>',

@@ -77,6 +77,49 @@ class RekapLaporanInmModel extends Model
     }
 
     /**
+     * Ambil SEMUA data bulanan dalam 1 query (OPTIMIZED)
+     */
+    public function getAllMonthlyData(array $indicatorIds, int $tahun)
+    {
+        if (empty($indicatorIds)) {
+            return [];
+        }
+
+        $db = db_connect();
+        $builder = $db->table('quality_indicator_result');
+        $builder->select("
+            quality_indicator.indicator_id,
+            MONTH(quality_indicator_result.result_period) AS bulan,
+            SUM(quality_indicator_result.result_numerator_value) AS num,
+            SUM(quality_indicator_result.result_denumerator_value) AS denum,
+            ROUND(
+                SUM(quality_indicator_result.result_numerator_value) 
+                / NULLIF(SUM(quality_indicator_result.result_denumerator_value), 0) 
+                * quality_indicator.indicator_factors, 
+                2
+            ) AS total,
+            quality_indicator.indicator_units AS units
+        ");
+        $builder->join('quality_indicator', 'quality_indicator_result.result_indicator_id = quality_indicator.indicator_id', 'LEFT');
+        $builder->where("YEAR(quality_indicator_result.result_period)", $tahun);
+        $builder->where("quality_indicator.indicator_category_id", '4');
+        $builder->where("quality_indicator.indicator_record_status", 'A');
+        $builder->whereIn('quality_indicator.indicator_id', $indicatorIds);
+        $builder->groupBy('quality_indicator.indicator_id, MONTH(quality_indicator_result.result_period)');
+
+        $results = $builder->get()->getResult();
+
+        // Convert ke array associative: indicator_id_bulan => data
+        $data = [];
+        foreach ($results as $row) {
+            $key = $row->indicator_id . '_' . $row->bulan;
+            $data[$key] = $row;
+        }
+
+        return $data;
+    }
+
+    /**
      * Ambil indikator dengan pagination
      */
     public function getIndicatorInm($post)
