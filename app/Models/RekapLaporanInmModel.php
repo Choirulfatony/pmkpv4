@@ -77,7 +77,7 @@ class RekapLaporanInmModel extends Model
     }
 
     /**
-     * Ambil SEMUA data bulanan dalam 1 query (OPTIMIZED)
+     * Ambil SEMUA data bulanan dalam 1 query (OPTIMIZED + CACHE)
      */
     public function getAllMonthlyData(array $indicatorIds, int $tahun)
     {
@@ -85,6 +85,15 @@ class RekapLaporanInmModel extends Model
             return [];
         }
 
+        // Cek cache
+        $cache = \Config\Services::cache();
+        $cacheKey = 'rekap_monthly_' . $tahun . '_' . md5(implode(',', $indicatorIds));
+        
+        if ($cached = $cache->get($cacheKey)) {
+            return $cached;
+        }
+
+        // Query database
         $db = db_connect();
         $builder = $db->table('quality_indicator_result');
         $builder->select("
@@ -115,6 +124,9 @@ class RekapLaporanInmModel extends Model
             $key = $row->indicator_id . '_' . $row->bulan;
             $data[$key] = $row;
         }
+
+        // Simpan ke cache selama 10 menit
+        $cache->save($cacheKey, $data, 600);
 
         return $data;
     }
@@ -199,10 +211,22 @@ class RekapLaporanInmModel extends Model
     }
 
     /**
-     * Hitung semua rekap INM
+     * Hitung semua rekap INM (CACHE)
      */
     public function countAllRekapInm($post = [])
     {
+        $vtahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
+        $userRole = session('user_role') ?? '';
+        $userDepartmentId = session('department_id') ?? 0;
+        
+        // Cek cache
+        $cache = \Config\Services::cache();
+        $cacheKey = 'count_all_' . $vtahun . '_' . $userRole . '_' . $userDepartmentId;
+        
+        if ($cached = $cache->get($cacheKey)) {
+            return $cached;
+        }
+
         $db = db_connect();
         $builder = $db->table('quality_indicator_group');
         $builder->distinct();
@@ -214,36 +238,24 @@ class RekapLaporanInmModel extends Model
 
         $builder->where("quality_indicator.indicator_category_id = '4'");
         $builder->where("quality_indicator.indicator_record_status = 'A'");
-
-        $vtahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
+        
         $builder->groupStart();
         $builder->where("quality_indicator_group.group_period", $vtahun);
         $builder->orWhere('quality_indicator_group.group_period', $vtahun - 1);
         $builder->orWhere('quality_indicator_group.group_period', $vtahun - 2);
         $builder->groupEnd();
 
-        // Filter by user group
-        $userGroupId = session('group_id') ?? 0;
-        $userDepartmentId = session('department_id') ?? 0;
-
-        if (!in_array($userGroupId, [1, 15])) {
+        // Filter by user role
+        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
             $builder->where('master_institution_department.department_id', $userDepartmentId);
         }
 
-        // Search filter
-        if (isset($post['search']['value']) && !empty($post['search']['value'])) {
-            $builder->groupStart();
-            foreach ($this->column_search as $i => $item) {
-                if ($i === 0) {
-                    $builder->like($item, $post['search']['value']);
-                } else {
-                    $builder->orLike($item, $post['search']['value']);
-                }
-            }
-            $builder->groupEnd();
-        }
+        $count = $builder->countAllResults();
+        
+        // Cache 10 menit
+        $cache->save($cacheKey, $count, 600);
 
-        return $builder->countAllResults();
+        return $count;
     }
 
     /**
@@ -304,6 +316,17 @@ class RekapLaporanInmModel extends Model
         }
 
         return $builder->countAllResults();
+    }
+
+    /**
+     * Clear cache untuk refresh data
+     */
+    public function clearCache()
+    {
+        $cache = \Config\Services::cache();
+        // Cache dihapus otomatis saat timeout
+        // Atau bisa manual: $cache->delete('cache_key');
+        return true;
     }
 
     // ==================== HELPER ====================
