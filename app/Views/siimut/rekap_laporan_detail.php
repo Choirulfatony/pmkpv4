@@ -63,7 +63,7 @@
                 </h3>
                 <div class="card-tools d-flex align-items-center gap-2">
                     <!-- Tombol Back -->
-                    <a href="<?= site_url('siimut/rekap-laporan?tahun=' . $tahun) ?>" class="btn btn-sm btn-outline-secondary">
+                    <a href="<?= site_url('siimut/rekap-laporan-inm?tahun=' . $tahun) ?>" class="btn btn-sm btn-outline-secondary">
                         <i class="fas fa-arrow-left me-1"></i> Kembali
                     </a>
                     <!-- Tahun -->
@@ -157,7 +157,7 @@ $(document).ready(function() {
         pageLength: 25,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],
         ajax: {
-            url: '<?= site_url('siimut/rekap-laporan/ajax-detail') ?>',
+            url: '<?= site_url('siimut/rekap-laporan-inm/ajax-detail') ?>',
             type: 'POST',
             data: function(d) {
                 d.vtahun = vtahun;
@@ -249,7 +249,7 @@ $(document).ready(function() {
 function gantiTahun() {
     vtahun = $('#tahun').val();
     if (table_detail) {
-        table_detail.ajax.url('<?= site_url('siimut/rekap-laporan/ajax-detail') ?>').load();
+        table_detail.ajax.url('<?= site_url('siimut/rekap-laporan-inm/ajax-detail') ?>').load();
     }
 }
 

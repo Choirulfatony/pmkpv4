@@ -209,7 +209,7 @@ $(document).ready(function() {
         pageLength: 10, // Kurangi default ke 10 untuk loading lebih cepat
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],
         ajax: {
-            url: '<?= site_url('siimut/rekap-laporan/ajax') ?>',
+            url: '<?= site_url('siimut/rekap-laporan-inm/ajax') ?>',
             type: 'POST',
             data: function(d) {
                 d.vtahun = vtahun;
@@ -300,7 +300,7 @@ function gantiTahun() {
     vtahun = $('#tahun').val();
     if (table_loquin) {
         // Reset URL tanpa query param, data di-pass via POST body
-        table_loquin.ajax.url('<?= site_url('siimut/rekap-laporan/ajax') ?>').load();
+        table_loquin.ajax.url('<?= site_url('siimut/rekap-laporan-inm/ajax') ?>').load();
     }
 }
 
@@ -320,6 +320,6 @@ function maximizeCard(button) {
 }
 
 function view_detail_inm(indicator_id) {
-    window.location.href = '<?= site_url('siimut/rekap-laporan?indicator_id=') ?>' + indicator_id + '&tahun=' + vtahun;
+    window.location.href = '<?= site_url('siimut/rekap-laporan-inm?indicator_id=') ?>' + indicator_id + '&tahun=' + vtahun;
 }
 </script>
