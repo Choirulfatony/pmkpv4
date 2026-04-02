@@ -65,15 +65,22 @@ class RekapLaporan extends AppController
         log_message('error', 'getAjaxDataRekapInm called, post: ' . json_encode($post));
         
         if (!$post) {
-            return $this->response->setJSON(['error' => 'Invalid request', 'post_data' => $post]);
+            log_message('error', 'getAjaxDataRekapInm - POST is empty or null');
+            return $this->response->setJSON(['error' => 'Invalid request - no POST data', 'post_data' => $post]);
         }
 
-        $indicators = $this->rekapModel->getIndicatorInm($post);
-        $tahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
-        
-        // Ambil SEMUA data sekaligus (1 query saja)
-        $indicatorIds = array_column($indicators, 'indicator_id');
-        $allData = $this->rekapModel->getAllMonthlyData($indicatorIds, $tahun);
+        try {
+            $indicators = $this->rekapModel->getIndicatorInm($post);
+            $tahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
+            
+            log_message('error', 'getAjaxDataRekapInm - indicators count: ' . count($indicators) . ', tahun: ' . $tahun);
+            
+            // Ambil SEMUA data sekaligus (1 query saja)
+            $indicatorIds = array_column($indicators, 'indicator_id');
+            
+            log_message('error', 'getAjaxDataRekapInm - indicator IDs: ' . json_encode($indicatorIds));
+            
+            $allData = $this->rekapModel->getAllMonthlyData($indicatorIds, $tahun);
 
         $data = [];
         $no = isset($post['start']) ? (int) $post['start'] : 0;
@@ -129,7 +136,7 @@ class RekapLaporan extends AppController
         }
 
         return $this->response->setJSON([
-            'draw'            => $post['draw'],
+            'draw'            => $post['draw'] ?? 1,
             'recordsTotal'    => $this->rekapModel->countAllRekapInm($post),
             'recordsFiltered' => $this->rekapModel->countFilteredRekapInm($post),
             'data'            => $data,
