@@ -305,7 +305,10 @@ function gantiTahun() {
 }
 
 function reload_table() {
-    console.log('reload_table called, vtahun:', vtahun);
+    // Reset ke tahun saat ini
+    vtahun = new Date().getFullYear();
+    $('#tahun').val(vtahun);
+    console.log('reload_table called, resetting to vtahun:', vtahun);
     table_loquin.ajax.reload(null, false); // false = keep current paging
 }
 
