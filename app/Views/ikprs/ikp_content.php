@@ -397,9 +397,9 @@
               loadInbox();
           }
 
-          // Update badge from counter-ajax - hanya untuk HRIS login
-          const loginSource = "<?= session('login_source') ?? 'APP' ?>";
-          if (loginSource === 'HRIS') {
+          // Update badge from counter-ajax - hanya untuk HRIS login (yang punya hris_user_id)
+          const hrisUserId = "<?= session('hris_user_id') ?? '' ?>";
+          if (hrisUserId !== '') {
               $.get("<?= site_url('ikprs/counter-ajax') ?>", function(res) {
                   if (res.error && res.error === 'User belum login') {
                       console.log('User not logged in, skipping badge update');
