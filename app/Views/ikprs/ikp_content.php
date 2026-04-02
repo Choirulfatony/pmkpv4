@@ -387,17 +387,18 @@
       };
 
       $(document).ready(function() {
-          // Load tab dari hidden input (karena PHP variable mungkin tidak ter-render benar)
+          // Debug: Tampilkan semua info
+          console.log('URL search:', window.location.search);
+          console.log('initialTabInput value:', $('#initialTabInput').val());
+          
+          // Load tab dari hidden input
           const initialTab = $('#initialTabInput').val();
           
-          console.log('initialTab from input:', initialTab);
+          console.log('Loading tab:', initialTab);
           
           if (initialTab === 'info') {
-              console.log('Loading INFO page');
               loadInfo(1);
           } else {
-              console.log('Loading INBOX page (default)');
-              // Default: load inbox
               loadInbox();
           }
 
