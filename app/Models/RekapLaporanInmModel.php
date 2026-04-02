@@ -101,10 +101,9 @@ class RekapLaporanInmModel extends Model
             MONTH(quality_indicator_result.result_period) AS bulan,
             SUM(quality_indicator_result.result_numerator_value) AS num,
             SUM(quality_indicator_result.result_denumerator_value) AS denum,
+            quality_indicator.indicator_factors AS factors,
             ROUND(
-                SUM(quality_indicator_result.result_numerator_value) 
-                / NULLIF(SUM(quality_indicator_result.result_denumerator_value), 0) 
-                * quality_indicator.indicator_factors, 
+                (SUM(quality_indicator_result.result_numerator_value) / NULLIF(SUM(quality_indicator_result.result_denumerator_value), 0)) * quality_indicator.indicator_factors, 
                 2
             ) AS total,
             quality_indicator.indicator_units AS units
@@ -114,9 +113,12 @@ class RekapLaporanInmModel extends Model
         $builder->where("quality_indicator.indicator_category_id", '4');
         $builder->where("quality_indicator.indicator_record_status", 'A');
         $builder->whereIn('quality_indicator.indicator_id', $indicatorIds);
-        $builder->groupBy('quality_indicator.indicator_id, MONTH(quality_indicator_result.result_period)');
+        $builder->groupBy('quality_indicator.indicator_id, MONTH(quality_indicator_result.result_period), quality_indicator.indicator_factors, quality_indicator.indicator_units');
 
         $results = $builder->get()->getResult();
+
+        // Clear cache karena query sudah diubah
+        $cache->delete('rekap_monthly_' . $tahun . '_');
 
         // Convert ke array associative: indicator_id_bulan => data
         $data = [];
