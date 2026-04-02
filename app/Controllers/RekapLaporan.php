@@ -62,8 +62,10 @@ class RekapLaporan extends AppController
     {
         $post = $this->request->getPost();
         
+        log_message('error', 'getAjaxDataRekapInm called, post: ' . json_encode($post));
+        
         if (!$post) {
-            return $this->response->setJSON(['error' => 'Invalid request']);
+            return $this->response->setJSON(['error' => 'Invalid request', 'post_data' => $post]);
         }
 
         $indicators = $this->rekapModel->getIndicatorInm($post);

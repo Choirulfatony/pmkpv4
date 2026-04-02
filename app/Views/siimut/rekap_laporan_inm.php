@@ -305,7 +305,8 @@ function gantiTahun() {
 }
 
 function reload_table() {
-    table_loquin.ajax.reload();
+    console.log('reload_table called, vtahun:', vtahun);
+    table_loquin.ajax.reload(null, false); // false = keep current paging
 }
 
 function maximizeCard(button) {
