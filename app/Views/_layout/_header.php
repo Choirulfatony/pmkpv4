@@ -454,6 +454,11 @@
 
 
     function refreshNotif() {
+        // Hanya jalankan untuk HRIS login (yang punya user_id dari hris)
+        if (!window.user_id || window.user_id === '') {
+            return;
+        }
+
         $.ajax({
             url: "<?= base_url('ikprs/counter-ajax') ?>",
             type: "GET",
