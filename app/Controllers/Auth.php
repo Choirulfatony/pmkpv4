@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Models\SessionAppsModel;
 use App\Libraries\Captcha;
+use App\Libraries\GoogleLogin;
 use CodeIgniter\Controller;
 
 class Auth extends BaseController
@@ -400,5 +401,94 @@ class Auth extends BaseController
             'logged_in'    => true,
             'login_source' => $session->get('login_source')
         ]);
+    }
+
+    /**
+     * Redirect to Google OAuth
+     */
+    public function googleLogin()
+    {
+        $googleLogin = new GoogleLogin();
+        $authUrl = $googleLogin->getAuthUrl();
+        return redirect()->to($authUrl);
+    }
+
+    /**
+     * Google OAuth callback
+     */
+    public function googleCallback()
+    {
+        $code = $this->request->getGet('code');
+        
+        if (!$code) {
+            return redirect()->to(site_url('auth'))->with('error', 'Login Google gagal');
+        }
+
+        try {
+            $googleLogin = new GoogleLogin();
+            $token = $googleLogin->getAccessToken($code);
+            
+            if (isset($token['error'])) {
+                return redirect()->to(site_url('auth'))->with('error', 'Gagal mendapatkan akses Google');
+            }
+
+            $userInfo = $googleLogin->getUserInfo($token);
+            
+            $email = $userInfo->getEmail();
+            $name = $userInfo->getName();
+            $picture = $userInfo->getPicture();
+
+            // Cek apakah email terdaftar di database aplikasi
+            $user = $this->sessionApps->where('user_profile.profile_email', $email)
+                ->where('user_profile.profile_record_status', 'A')
+                ->join('user_group', 'user_group.group_id = user_profile.profile_group_id', 'left')
+                ->first();
+
+            if ($user) {
+                // Login berhasil - user terdaftar
+                $roleMap = [
+                    'Kendali Mutu dan Tim Pokja' => 'KENDALI_MUTU',
+                    'Komite' => 'KOMITE',
+                    'Administrator' => 'ADMINISTRATOR'
+                ];
+
+                $userRole = $roleMap[$user['group_name']] ?? 'APP';
+
+                session()->set([
+                    'logged_in'       => true,
+                    'login_source'    => 'GOOGLE',
+
+                    'profile_id'      => $user['profile_id'],
+                    'nama_lengkap'    => $user['profile_fullname'],
+                    'profile_email'   => $user['profile_email'],
+                    'profile_picture' => $picture,
+
+                    'department_id'   => $user['department_id'],
+                    'department_name' => $user['department_name'],
+                    'user_role'       => $userRole,
+
+                    'login_time'      => date('Y-m-d H:i:s'),
+                ]);
+
+                return redirect()->to('/siimut/dashboard');
+            } else {
+                // Email tidak terdaftar - buat session sementara
+                session()->set([
+                    'logged_in'       => true,
+                    'login_source'    => 'GOOGLE',
+                    'nama_lengkap'    => $name,
+                    'profile_email'   => $email,
+                    'profile_picture' => $picture,
+                    'user_role'       => 'PELAPOR',
+                    'login_time'      => date('Y-m-d H:i:s'),
+                ]);
+
+                return redirect()->to('/siimut/dashboard');
+            }
+
+        } catch (\Exception $e) {
+            log_message('error', 'Google Login Error: ' . $e->getMessage());
+            return redirect()->to(site_url('auth'))->with('error', 'Terjadi kesalahan saat login Google');
+        }
     }
 }

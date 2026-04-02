@@ -15,6 +15,8 @@ $routes->post('auth/process', 'Auth::process');
 $routes->get('auth/refresh-captcha', 'Auth::refresh_captcha');
 $routes->get('auth/logout', 'Auth::logout');
 $routes->get('auth/cek_session', 'Auth::cek_session');
+$routes->get('auth/google-login', 'Auth::googleLogin');
+$routes->get('auth/google-callback', 'Auth::googleCallback');
 
 
 // ================= SIIMUT =================

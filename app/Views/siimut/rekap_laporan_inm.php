@@ -47,6 +47,31 @@
         color: #007bff;
         text-decoration: underline;
     }
+
+    /* Dark mode - semua tulisan tabel putih */
+    [data-bs-theme="dark"] #ajax_data_rekap td,
+    [data-bs-theme="dark"] #ajax_data_rekap th {
+        color: #fff !important;
+    }
+    [data-bs-theme="dark"] #ajax_data_rekap td a {
+        color: #fff !important;
+    }
+    [data-bs-theme="dark"] #ajax_data_rekap td a:hover {
+        color: #80bdff !important;
+    }
+    [data-bs-theme="dark"] #ajax_data_rekap td .text-muted {
+        color: #adb5bd !important;
+    }
+    [data-bs-theme="dark"] #ajax_data_rekap td .small {
+        color: #ced4da !important;
+    }
+    [data-bs-theme="dark"] #ajax_data_rekap td span#total {
+        color: #fff !important;
+    }
+    [data-bs-theme="dark"] #ajax_data_rekap td span#num,
+    [data-bs-theme="dark"] #ajax_data_rekap td span#denum {
+        color: #ced4da !important;
+    }
 </style>
 
 <!-- ==================== HEADER INFO ==================== -->
