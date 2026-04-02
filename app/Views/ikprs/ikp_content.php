@@ -399,6 +399,10 @@
 
           // Update badge from counter-ajax
           $.get("<?= site_url('ikprs/counter-ajax') ?>", function(res) {
+              if (res.error && res.error === 'User belum login') {
+                  console.log('User not logged in, skipping badge update');
+                  return;
+              }
               if (res.total_notif !== undefined) {
                   $('#badge-notif').text(res.total_notif);
               }
@@ -408,6 +412,8 @@
               if (res.total_send !== undefined) {
                   $('#badge-send').text(res.total_send);
               }
+          }).fail(function(xhr) {
+              // Ignore network errors
           });
 
           initValidasiKomite();
