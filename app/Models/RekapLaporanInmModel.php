@@ -88,7 +88,7 @@ class RekapLaporanInmModel extends Model
         // Cek cache
         $cache = \Config\Services::cache();
         $cacheKey = 'rekap_monthly_' . $tahun . '_' . md5(implode(',', $indicatorIds));
-        
+
         if ($cached = $cache->get($cacheKey)) {
             return $cached;
         }
@@ -115,7 +115,12 @@ class RekapLaporanInmModel extends Model
         $builder->whereIn('quality_indicator.indicator_id', $indicatorIds);
         $builder->groupBy('quality_indicator.indicator_id, MONTH(quality_indicator_result.result_period), quality_indicator.indicator_factors, quality_indicator.indicator_units');
 
+        // Debug logging
+        log_message('error', 'getAllMonthlyData - tahun: ' . $tahun . ', indicator count: ' . count($indicatorIds));
+        
         $results = $builder->get()->getResult();
+        
+        log_message('error', 'getAllMonthlyData - results: ' . count($results));
 
         // Clear cache karena query sudah diubah
         $cache->delete('rekap_monthly_' . $tahun . '_');
@@ -222,17 +227,17 @@ class RekapLaporanInmModel extends Model
         $vtahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
         $userRole = session('user_role') ?? '';
         $userDepartmentId = session('department_id') ?? 0;
-        
+
         // Cek cache
         $cache = \Config\Services::cache();
         $cacheKey = 'count_all_' . $vtahun . '_' . $userRole . '_' . $userDepartmentId;
-        
+
         if ($cached = $cache->get($cacheKey)) {
             return $cached;
         }
 
         $db = db_connect();
-        
+
         // Query sama dengan getIndicatorInm tapi hanya COUNT
         $query = $db->query("
             SELECT COUNT(*) as total FROM (
@@ -251,7 +256,7 @@ class RekapLaporanInmModel extends Model
         ", [$vtahun, $vtahun - 1, $vtahun - 2]);
 
         $count = $query->getRow()->total ?? 0;
-        
+
         // Cache 10 menit
         $cache->save($cacheKey, $count, 600);
 
@@ -264,7 +269,7 @@ class RekapLaporanInmModel extends Model
     public function getDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [])
     {
         $db = db_connect();
-        
+
         $searchCondition = '';
         if (isset($post['search']['value']) && !empty($post['search']['value'])) {
             $searchValue = addslashes($post['search']['value']);
@@ -307,7 +312,7 @@ class RekapLaporanInmModel extends Model
     public function getDetailByIdInm(int $indicatorId)
     {
         $db = db_connect();
-        
+
         $query = $db->query("
             SELECT 
                 quality_indicator.indicator_id,
@@ -332,7 +337,7 @@ class RekapLaporanInmModel extends Model
     {
         $cache = \Config\Services::cache();
         $cacheKey = 'detail_data_' . $indicatorId . '_' . $tahun;
-        
+
         if ($cached = $cache->get($cacheKey)) {
             return $cached;
         }
@@ -367,7 +372,7 @@ class RekapLaporanInmModel extends Model
     public function countDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [])
     {
         $db = db_connect();
-        
+
         $searchCondition = '';
         if (isset($post['search']['value']) && !empty($post['search']['value'])) {
             $searchValue = addslashes($post['search']['value']);
@@ -396,9 +401,9 @@ class RekapLaporanInmModel extends Model
         $vtahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
         $userRole = session('user_role') ?? '';
         $userDepartmentId = session('department_id') ?? 0;
-        
+
         $db = db_connect();
-        
+
         // Search condition
         $searchCondition = '';
         if (isset($post['search']['value']) && !empty($post['search']['value'])) {
