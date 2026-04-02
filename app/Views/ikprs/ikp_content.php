@@ -387,20 +387,28 @@
       };
 
       $(document).ready(function() {
-          // Debug: Tampilkan semua info
-          console.log('URL search:', window.location.search);
-          console.log('initialTabInput value:', $('#initialTabInput').val());
-          
           // Load tab dari hidden input
           const initialTab = $('#initialTabInput').val();
           
-          console.log('Loading tab:', initialTab);
-          
+          // Load initial content
           if (initialTab === 'info') {
               loadInfo(1);
           } else {
               loadInbox();
           }
+
+          // Update badge from counter-ajax
+          $.get("<?= site_url('ikprs/counter-ajax') ?>", function(res) {
+              if (res.total_notif !== undefined) {
+                  $('#badge-notif').text(res.total_notif);
+              }
+              if (res.total_inbox !== undefined) {
+                  $('#badge-inbox').text(res.total_inbox);
+              }
+              if (res.total_send !== undefined) {
+                  $('#badge-send').text(res.total_send);
+              }
+          });
 
           initValidasiKomite();
 
