@@ -679,6 +679,8 @@ class Ikprs extends AppController
         $user_id = session()->get('hris_user_id');
         $role    = session()->get('user_role');
 
+        log_message('error', 'counterAjax called - user_id: ' . $user_id . ', role: ' . $role);
+
         if (!$user_id) {
             return $this->response->setJSON([
                 'error' => 'User belum login'
@@ -903,6 +905,8 @@ class Ikprs extends AppController
     //20.03.2026
     private function getNotifList($user_id, $role)
     {
+        log_message('error', 'getNotifList called - user_id: ' . $user_id . ', role: ' . $role);
+        
         $db = db_connect();
 
         $typeFilter = "";
@@ -1282,6 +1286,8 @@ class Ikprs extends AppController
 
         $user_id = session()->get('hris_user_id');
         $role    = session()->get('user_role');
+
+        log_message('error', 'formInfo called - user_id: ' . $user_id . ', role: ' . $role);
 
         if (!$user_id) {
             return 'SESSION USER BELUM ADA';
