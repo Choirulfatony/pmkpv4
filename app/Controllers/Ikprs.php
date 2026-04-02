@@ -272,7 +272,9 @@ class Ikprs extends AppController
 
         $this->disableCache();
 
-        $content = view('ikprs/ikp_content');
+        $tab = $this->request->getGet('tab') ?? '';
+
+        $content = view('ikprs/ikp_content', ['initial_tab' => $tab]);
         return $this->render('dashboard/index', [
             'judul'    => 'IKPRS',
             'icon'     => '<i class="bi bi-clipboard-check"></i>',
@@ -1270,6 +1272,137 @@ class Ikprs extends AppController
         ];
 
         return view('ikprs/_form_inbox_karu', $data);
+    }
+
+    // Info / Notifikasi - Pakai LOGIC YANG SAMA dengan getNotifList di counterAjax
+    public function formInfo()
+    {
+        helper('notifikasi');
+        $request = service('request');
+
+        $user_id = session()->get('hris_user_id');
+        $role    = session()->get('user_role');
+
+        if (!$user_id) {
+            return 'SESSION USER BELUM ADA';
+        }
+
+        $page = (int) (
+            $request->getPost('page')
+            ?? $request->getGet('page')
+            ?? 1
+        );
+
+        $keyword = trim($request->getGet('keyword') ?? '');
+        $limit   = 20;
+
+        $db = db_connect();
+
+        // ===================== SAMA DENGAN getNotifList =====================
+        $typeFilter = "";
+
+        if ($role == 'PELAPOR') {
+            $typeFilter = "AND n.type = 'to_pelapor'";
+        } elseif ($role == 'KARU') {
+            $typeFilter = "AND n.type = 'to_karu'";
+        } elseif ($role == 'KOMITE') {
+            $typeFilter = "AND n.type = 'to_komite'";
+        }
+
+        // Query untuk hitung total
+        $countQuery = "
+            SELECT COUNT(*) as total
+            FROM ikprssm_notifikasi n
+            LEFT JOIN ikprssm_insiden i ON i.id = n.insiden_id
+            WHERE n.hris_user_id = ?
+        ";
+        if (!empty($typeFilter)) {
+            $countQuery .= " " . $typeFilter;
+        }
+
+        if (!empty($keyword)) {
+            $countQuery .= " AND (n.pesan LIKE ? OR i.jenis_insiden LIKE ? OR i.nama_pasien LIKE ?)";
+            $keywordLike = "%{$keyword}%";
+            $total = (int) $db->query($countQuery, [$user_id, $keywordLike, $keywordLike, $keywordLike])->getRow()->total;
+        } else {
+            $total = (int) $db->query($countQuery, [$user_id])->getRow()->total;
+        }
+
+        $total_pages = $total > 0 ? (int) ceil($total / $limit) : 0;
+
+        if ($total_pages === 0) {
+            $page   = 0;
+            $offset = 0;
+        } else {
+            $page   = max(1, min($page, $total_pages));
+            $offset = ($page - 1) * $limit;
+        }
+
+        // Query untuk ambil data - SAMA DENGAN getNotifList
+        $dataQuery = "
+            SELECT 
+                n.id as notif_id,
+                n.insiden_id,
+                n.pesan,
+                n.is_read,
+                n.created_at as notif_time,
+                n.hris_user_id as receiver_id,
+                i.jenis_insiden,
+                i.status_laporan,
+                i.karu_read_at,
+                i.komite_read_at,
+                COALESCE(i.current_receiver_id,0) as current_receiver_id,
+                d.department_name as unit_ruangan
+            FROM ikprssm_notifikasi n
+            LEFT JOIN ikprssm_insiden i ON i.id = n.insiden_id
+            LEFT JOIN master_institution_department d ON d.department_id = i.tempat_insiden
+            WHERE n.hris_user_id = ?
+        ";
+        if (!empty($typeFilter)) {
+            $dataQuery .= " " . $typeFilter;
+        }
+        if (!empty($keyword)) {
+            $dataQuery .= " AND (n.pesan LIKE ? OR i.jenis_insiden LIKE ? OR i.nama_pasien LIKE ?)";
+        }
+        $dataQuery .= " ORDER BY n.id DESC LIMIT {$limit} OFFSET {$offset}";
+
+        if (!empty($keyword)) {
+            $rows = $db->query($dataQuery, [$user_id, $keywordLike, $keywordLike, $keywordLike])->getResultArray();
+        } else {
+            $rows = $db->query($dataQuery, [$user_id])->getResultArray();
+        }
+
+        // Proses data - SAMA DENGAN getNotifList
+        $notif = [];
+        foreach ($rows as $row) {
+            $status_read = ($row['is_read'] == 0) ? 'Baru' : 'Sudah dibaca';
+
+            $notif[] = [
+                'notif_id' => $row['notif_id'],
+                'insiden_id' => $row['insiden_id'],
+                'jenis' => $row['jenis_insiden'] ?? '-',
+                'unit' => $row['unit_ruangan'] ?? '-',
+                'receiver_id' => $row['receiver_id'],
+                'current_receiver_id' => $row['current_receiver_id'],
+                'status_laporan' => $row['status_laporan'],
+                'waktu_lalu' => waktu_lalu($row['notif_time']),
+                'status_text' => $row['pesan'],
+                'status_read' => $status_read,
+                'karu_read_at'   => $row['karu_read_at'],
+                'komite_read_at' => $row['komite_read_at'],
+                'is_read' => $row['is_read']
+            ];
+        }
+
+        $data = [
+            'notif'       => $notif,
+            'total'       => $total,
+            'total_pages' => $total_pages,
+            'page'        => $page,
+            'keyword'     => $keyword
+        ];
+
+        return view('ikprs/_form_info', $data);
     }
 
     // Verifikasi Karu

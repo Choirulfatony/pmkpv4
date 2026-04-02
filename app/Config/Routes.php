@@ -40,6 +40,7 @@ $routes->group('ikprs', ['filter' => 'auth'], function ($routes) {
     $routes->match(['get', 'post'], 'form_drafts', 'Ikprs::formDrafts');
     $routes->match(['get', 'post'], 'form_send', 'Ikprs::formSend');
     $routes->match(['get', 'post'], 'form_inbox_karu', 'Ikprs::formInbox_karu');
+    $routes->match(['get', 'post'], 'form_info', 'Ikprs::formInfo');
     $routes->match(['get', 'post'], 'tandaiDibaca', 'Ikprs::tandaiDibaca');
 
     $routes->get('counter-ajax', 'Ikprs::counterAjax');

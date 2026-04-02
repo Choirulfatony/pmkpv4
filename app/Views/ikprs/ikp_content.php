@@ -191,6 +191,16 @@
           font-weight: 600;
       }
 
+      /* BUTTON btnInfo */
+      #btnInfo:hover {
+          background-color: #e2e4e7;
+      }
+
+      #btnInfo.active {
+          background-color: #e2e4e7;
+          font-weight: 600;
+      }
+
       /* ===== TOP LOADING BAR (RGB JELAS) ===== */
       .top-loading {
           position: absolute;
@@ -300,7 +310,7 @@
 
                           <ul class="nav nav-pills flex-column">
                               <li class="nav-item">
-                                  <a href="#" class="nav-link d-flex align-items-center">
+                                  <a id="btnInfo" href="#" class="nav-link d-flex align-items-center">
                                       <i class="bi bi-bell me-2"></i>
                                       Info
                                       <span id="badge-notif" class="badge bg-info ms-auto">0</span>
@@ -366,6 +376,7 @@
       let inboxLoading = false;
       let draftsLoading = false;
       let sendLoading = false;
+      let infoLoading = false;
       let lastInboxCount = 0;
       const user_role = "<?= session('user_role') ?>";
 
@@ -374,8 +385,16 @@
       };
 
       $(document).ready(function() {
-          // load inbox pertama kali
-          loadInbox();
+          // Load tab sesuai parameter dari URL
+          const initialTab = "<?= $initial_tab ?? '' ?>";
+          
+          if (initialTab === 'info') {
+              loadInfo(1);
+          } else {
+              // Default: load inbox
+              loadInbox();
+          }
+
           initValidasiKomite();
 
       });
@@ -822,6 +841,84 @@
       //       loadDetailInsiden(id, 'send');
 
       //   });
+
+      /* ===============================
+       * INFO / NOTIFIKASI
+       * ===============================
+       */
+
+      /* ===== KLIK MENU INFO ===== */
+      $(document).on('click', '#btnInfo', function(e) {
+          e.preventDefault();
+          loadInfo(1);
+      });
+
+      /* ===== LOAD INFO ===== */
+      function loadInfo(page = 1, keywordParam = null) {
+
+          if (infoLoading) return;
+          infoLoading = true;
+
+          let keyword = keywordParam ?? $('#searchInfo').val() ?? '';
+
+          $('#inbox-wrapper').trigger('processing.inbox', [true]);
+
+          $.get("<?= site_url('ikprs/form_info') ?>", {
+              page: page,
+              keyword: keyword
+          }, function(res) {
+
+              $('#inbox-wrapper').html(res);
+
+          }).always(function() {
+
+              infoLoading = false;
+              $('#inbox-wrapper').trigger('processing.inbox', [false]);
+
+          });
+      }
+
+      /* ===== SEARCH INFO (ENTER KEY) ===== */
+      $(document).on('keydown', '#searchInfo', function(e) {
+          if (e.keyCode === 13) {
+              e.preventDefault();
+              loadInfo(1, this.value);
+          }
+      });
+
+      /* ===== SEARCH INFO (BUTTON) ===== */
+      $(document).off('click', '.btn-search-info')
+          .on('click', '.btn-search-info', function() {
+              let keyword = $('#searchInfo').val();
+              loadInfo(1, keyword);
+          });
+
+      /* ===== PAGINATION INFO ===== */
+      $(document).on('click', '.btn-info-next:not(.disabled)', function() {
+          loadInfo($(this).data('page'));
+      });
+
+      $(document).on('click', '.btn-info-prev:not(.disabled)', function() {
+          loadInfo($(this).data('page'));
+      });
+
+      /* ===== reloadInfo ===== */
+      $(document).off('click', '.btn-info-reload').on('click', '.btn-info-reload', function() {
+          loadInfo(1);
+      });
+
+      /* ===== KLIK ROW INFO ===== */
+      $(document).on('click', '.info-row', function() {
+
+          let id = $(this).data('id');
+
+          // tandai sudah dibaca
+          tandaiSudahDibaca(id);
+
+          // buka detail inbox
+          loadDetailInsiden(id, 'inbox');
+
+      });
 
 
       /* ===== tandaiBaca ===== */

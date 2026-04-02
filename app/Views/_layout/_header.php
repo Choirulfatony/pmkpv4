@@ -342,7 +342,7 @@
                     <div id="notif-list"></div>
 
                     <div class="dropdown-divider"></div>
-                    <a href="<?= base_url('ikprs/form_inbox_karu') ?>"
+                    <a href="<?= base_url('ikprs/menu?tab=info') ?>"
                         class="dropdown-item dropdown-footer">
                         Lihat semua notifikasi
                     </a>
