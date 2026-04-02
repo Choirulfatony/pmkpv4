@@ -1,4 +1,6 @@
-<!-- DEBUG: hris_user_id = <?= session('hris_user_id') ?> | user_role = <?= session('user_role') ?> -->
+<!-- DEBUG: hris_user_id = <?= session('hris_user_id') ?> | user_role = <?= session('user_role') ?> | initial_tab = <?= $initial_tab ?? 'EMPTY' ?> -->
+
+  <input type="hidden" id="initialTabInput" value="<?= $initial_tab ?? '' ?>">
 
   <style>
       /* =====================================================
@@ -385,10 +387,10 @@
       };
 
       $(document).ready(function() {
-          // Load tab sesuai parameter dari URL
-          const initialTab = "<?= $initial_tab ?? '' ?>";
+          // Load tab dari hidden input (karena PHP variable mungkin tidak ter-render benar)
+          const initialTab = $('#initialTabInput').val();
           
-          console.log('initialTab:', initialTab);
+          console.log('initialTab from input:', initialTab);
           
           if (initialTab === 'info') {
               console.log('Loading INFO page');
