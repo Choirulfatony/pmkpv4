@@ -30,8 +30,11 @@ class Captcha
         ];
     }
 
-    public static function validate(string $input, string $sessionWord): bool
+    public static function validate(string $input, ?string $sessionWord): bool
     {
-        return $input === $sessionWord;
+        if ($sessionWord === null || $sessionWord === '') {
+            return false;
+        }
+        return strtoupper($input) === strtoupper($sessionWord);
     }
 }
