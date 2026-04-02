@@ -72,12 +72,8 @@ class RekapLaporan extends AppController
         $indicators = $this->rekapModel->getIndicatorInm($post);
         $tahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
         
-        log_message('error', 'getAjaxDataRekapInm - indicators count: ' . count($indicators) . ', tahun: ' . $tahun);
-        
         // Ambil SEMUA data sekaligus (1 query saja)
         $indicatorIds = array_column($indicators, 'indicator_id');
-        
-        log_message('error', 'getAjaxDataRekapInm - indicator IDs: ' . json_encode($indicatorIds));
         
         $allData = $this->rekapModel->getAllMonthlyData($indicatorIds, $tahun);
 
@@ -90,18 +86,17 @@ class RekapLaporan extends AppController
 
             $row[] = '<div class="fw-bold">' . $no . '</div>';
 
-            $row[] = '<div class="py-1">
-                <a href="javascript:void(0);" class="text-dark fw-semibold text-decoration-none" title="Detail Rekapan Ruangan" onclick="view_detail_inm(' . $indicator->indicator_id . ');">' 
+            $row[] = '<div class="py-1 text-start ps-2">
+                <a href="javascript:void(0);" class="fw-semibold text-decoration-none" title="Detail Rekapan Ruangan" onclick="view_detail_inm(' . $indicator->indicator_id . ');">' 
                     . esc($indicator->indicator_element) . '
                 </a>
-                <div class="mt-1">
-                    <span class="text-muted small">Target</span>
-                    <span class="badge bg-success ms-1">
-                        <span id="operator">' . esc($indicator->operator) . '</span>
-                        <span id="factor" style="display:none">' . esc($indicator->factors) . '</span>
-                        <span id="target">' . esc($indicator->indicator_target) . '</span>' . esc($indicator->indicator_units) . '
-                    </span>
-                </div>
+            </div>';
+
+            $row[] = '<div class="py-1">
+                <span id="target">' . esc($indicator->indicator_target) . '</span>
+                <span id="factor" style="display:none">' . esc($indicator->factors) . '</span>
+                <span id="operator" style="display:none">' . esc($indicator->operator) . '</span>
+                <span class="small text-muted ms-1">' . esc($indicator->indicator_units) . '</span>
             </div>';
 
             // Ambil data dari array (bukan query)
@@ -117,13 +112,11 @@ class RekapLaporan extends AppController
                     </div>';
                 } else {
                     $total = $list->total ?? '';
-                    $units = $list->units ?? '';
                     $num = $list->num ?? 0;
                     $denum = $list->denum ?? 0;
 
                     $row[] = '<div class="py-1">
                         <span id="total">' . esc($total) . '</span>
-                        <span id="unit">' . esc($units) . '</span>
                         <div class="small text-muted mt-1">
                             <span id="num">' . esc($num) . '</span> | <span id="denum">' . esc($denum) . '</span>
                         </div>
@@ -147,90 +140,99 @@ class RekapLaporan extends AppController
      */
     public function getAjaxDataRekapInmDetail()
     {
-        $post = $this->request->getPost();
-        
-        if (!$post) {
-            return $this->response->setJSON(['error' => 'Invalid request']);
-        }
-
-        $indicatorId = isset($post['indicator_id']) ? (int) $post['indicator_id'] : 0;
-        $tahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
-        
-        if ($indicatorId == 0) {
-            return $this->response->setJSON(['error' => 'Invalid indicator_id']);
-        }
-
-        // Ambil semua ruangan untuk indicator ini
-        $departments = $this->rekapModel->getDepartmentsByIndicator($indicatorId, $tahun, $post);
-        
-        // Ambil semua data detail sekaligus
-        $allDetailData = $this->rekapModel->getAllDetailData($indicatorId, $tahun);
-        
-        // Ambil info indicator
-        $indicatorInfo = $this->rekapModel->getDetailByIdInm($indicatorId);
-        $target = $indicatorInfo->indicator_target ?? 0;
-        $factors = $indicatorInfo->indicator_factors ?? 1;
-        $units = $indicatorInfo->indicator_units ?? '%';
-
-        $data = [];
-        $no = isset($post['start']) ? (int) $post['start'] : 0;
-
-        foreach ($departments as $dept) {
-            $no++;
-            $row = [];
-
-            // No
-            $row[] = '<div class="fw-bold">' . $no . '</div>';
-
-            // Ruangan
-            $row[] = '<div class="py-1 text-start ps-2">' . esc($dept->department_name) . '</div>';
-
-            // Target
-            $row[] = '<div class="py-1">
-                <span id="target_det">' . $target . '</span>
-                <span id="factor_det" style="display:none">' . $factors . '</span>
-                <span id="operator_det" style="display:none">>=</span>
-            </div>';
-
-            // Bulan 1-12
-            for ($bulan = 1; $bulan <= 12; $bulan++) {
-                $key = $dept->department_id . '_' . $bulan;
-                $list = isset($allDetailData[$key]) ? $allDetailData[$key] : null;
-
-                if ($list == null) {
-                    $row[] = '<div class="py-1">
-                        <span class="text-muted">-</span>
-                        <span style="display:none" id="num_det">0</span>
-                        <span style="display:none" id="denum_det">0</span>
-                    </div>';
-                } else {
-                    $num = $list->num ?? 0;
-                    $denum = $list->denum ?? 0;
-                    
-                    // Hitung total
-                    $total = 0;
-                    if ($denum > 0) {
-                        $total = round(($num / $denum) * $factors, 2);
-                    }
-
-                    $row[] = '<div class="py-1">
-                        <span class="fw-bold">' . $total . $units . '</span>
-                        <div class="small text-muted">
-                            <span id="num_det">' . esc($num) . '</span> | <span id="denum_det">' . esc($denum) . '</span>
-                        </div>
-                    </div>';
-                }
+        try {
+            $post = $this->request->getPost();
+            
+            log_message('error', 'DETAIL called: ' . json_encode($post));
+            
+            if (!$post) {
+                return $this->response->setJSON(['error' => 'Invalid request']);
             }
 
-            $data[] = $row;
-        }
+            $indicatorId = isset($post['indicator_id']) ? (int) $post['indicator_id'] : 0;
+            $tahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
+            
+            log_message('error', 'DETAIL: indicatorId=' . $indicatorId . ', tahun=' . $tahun);
+            
+            if ($indicatorId == 0) {
+                return $this->response->setJSON(['error' => 'Invalid indicator_id']);
+            }
 
-        return $this->response->setJSON([
-            'draw'            => $post['draw'],
-            'recordsTotal'    => $this->rekapModel->countDepartmentsByIndicator($indicatorId, $tahun),
-            'recordsFiltered' => $this->rekapModel->countDepartmentsByIndicator($indicatorId, $tahun, $post),
-            'data'            => $data,
-        ]);
+            // Ambil semua ruangan untuk indicator ini
+            $departments = $this->rekapModel->getDepartmentsByIndicator($indicatorId, $tahun, $post);
+            log_message('error', 'DETAIL: departments count=' . count($departments));
+            
+            // Ambil semua data detail sekaligus
+            $allDetailData = $this->rekapModel->getAllDetailData($indicatorId, $tahun);
+            log_message('error', 'DETAIL: allDetailData count=' . count($allDetailData));
+            
+            // Ambil info indicator
+            $indicatorInfo = $this->rekapModel->getDetailByIdInm($indicatorId);
+            $target = $indicatorInfo->indicator_target ?? 0;
+            $factors = $indicatorInfo->indicator_factors ?? 1;
+            $units = $indicatorInfo->indicator_units ?? '%';
+            log_message('error', 'DETAIL: indicatorInfo found=' . ($indicatorInfo ? 'yes' : 'no'));
+
+            $data = [];
+            $no = isset($post['start']) ? (int) $post['start'] : 0;
+
+            foreach ($departments as $dept) {
+                $no++;
+                $row = [];
+
+                // No
+                $row[] = '<div class="fw-bold">' . $no . '</div>';
+
+                // Ruangan
+                $row[] = '<div class="py-1 text-start ps-2">' . esc($dept->department_name) . '</div>';
+
+                // Target
+                $row[] = '<div class="py-1">
+                    <span id="target_det">' . $target . '</span>
+                    <span id="factor_det" style="display:none">' . $factors . '</span>
+                    <span id="operator_det" style="display:none">>=</span>
+                </div>';
+
+                // Bulan 1-12
+                for ($bulan = 1; $bulan <= 12; $bulan++) {
+                    $key = $dept->department_id . '_' . $bulan;
+                    $list = isset($allDetailData[$key]) ? $allDetailData[$key] : null;
+
+                    if ($list == null) {
+                        $row[] = '<div class="py-1">
+                            <span class="text-muted">-</span>
+                            <span style="display:none" id="num_det">0</span>
+                            <span style="display:none" id="denum_det">0</span>
+                        </div>';
+                    } else {
+                        $total = $list->total ?? '';
+                        $num = $list->num ?? 0;
+                        $denum = $list->denum ?? 0;
+
+                        $row[] = '<div class="py-1">
+                            <span id="total_det">' . esc($total) . '</span>
+                            <div class="small text-muted mt-1">
+                                <span id="num_det">' . esc($num) . '</span> | <span id="denum_det">' . esc($denum) . '</span>
+                            </div>
+                        </div>';
+                    }
+                }
+
+                $data[] = $row;
+            }
+
+            return $this->response->setJSON([
+                'draw'            => $post['draw'] ?? 1,
+                'recordsTotal'    => count($departments),
+                'recordsFiltered' => count($departments),
+                'data'            => $data,
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'DETAIL ERROR: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            return $this->response->setStatusCode(500)->setJSON([
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**

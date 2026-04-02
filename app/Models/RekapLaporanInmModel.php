@@ -39,28 +39,46 @@ class RekapLaporanInmModel extends Model
         $db = db_connect();
         $day = $this->getDaysInMonth($bulan, $tahun);
         $bulanx = str_pad($bulan, 2, '0', STR_PAD_LEFT);
+        $builder = $db->table('quality_indicator_result qir');
 
-        $builder = $db->table('quality_indicator_result');
         $builder->select("
-            quality_indicator.indicator_category_id,
-            quality_indicator.indicator_id,
-            quality_indicator.indicator_element,
-            SUM(quality_indicator_result.result_numerator_value) AS num,
-            SUM(quality_indicator_result.result_denumerator_value) AS denum,
+            qi.indicator_category_id,
+            qi.indicator_id,
+            qi.indicator_element,
+
+            SUM(qir.result_numerator_value) AS num,
+            SUM(qir.result_denumerator_value) AS denum,
+
+            ROUND(
+                SUM(qir.result_numerator_value) 
+                / NULLIF(SUM(qir.result_denumerator_value), 0)
+                * qi.indicator_factors, 
+            4) AS total_value,
+
             CONCAT(
                 ROUND(
-                    SUM(quality_indicator_result.result_numerator_value) 
-                    / SUM(quality_indicator_result.result_denumerator_value) 
-                    * quality_indicator.indicator_factors, 
-                    2
-                ), 
-                quality_indicator.indicator_units
+                    SUM(qir.result_numerator_value) 
+                    / NULLIF(SUM(qir.result_denumerator_value), 0)
+                    * qi.indicator_factors, 
+                2),
+                qi.indicator_units
             ) AS total
         ");
-        $builder->join('quality_indicator', 'quality_indicator_result.result_indicator_id = quality_indicator.indicator_id', 'LEFT');
-        $builder->where("quality_indicator_result.result_period BETWEEN '{$tahun}-{$bulanx}-01' AND '{$tahun}-{$bulanx}-{$day}' AND quality_indicator.indicator_category_id = '4' AND quality_indicator.indicator_record_status = 'A'");
-        $builder->where('quality_indicator.indicator_id', $indicator);
-        $builder->groupBy('quality_indicator.indicator_id');
+
+        $builder->join('quality_indicator qi', 'qir.result_indicator_id = qi.indicator_id', 'LEFT');
+
+        $builder->where("qir.result_period BETWEEN '{$tahun}-{$bulanx}-01' AND '{$tahun}-{$bulanx}-{$day}'");
+        $builder->where('qi.indicator_category_id', '4');
+        $builder->where('qi.indicator_record_status', 'A');
+        $builder->where('qi.indicator_id', $indicator);
+
+        $builder->groupBy([
+            'qi.indicator_category_id',
+            'qi.indicator_id',
+            'qi.indicator_element',
+            'qi.indicator_factors',
+            'qi.indicator_units'
+        ]);
 
         return $builder;
     }
@@ -85,45 +103,52 @@ class RekapLaporanInmModel extends Model
             return [];
         }
 
-        // Cek cache
-        $cache = \Config\Services::cache();
-        $cacheKey = 'rekap_monthly_' . $tahun . '_' . md5(implode(',', $indicatorIds));
-
-        if ($cached = $cache->get($cacheKey)) {
-            return $cached;
-        }
-
         // Query database
         $db = db_connect();
-        $builder = $db->table('quality_indicator_result');
+        $builder = $db->table('quality_indicator_result qir');
+
         $builder->select("
-            quality_indicator.indicator_id,
-            MONTH(quality_indicator_result.result_period) AS bulan,
-            SUM(quality_indicator_result.result_numerator_value) AS num,
-            SUM(quality_indicator_result.result_denumerator_value) AS denum,
-            quality_indicator.indicator_factors AS factors,
+        qi.indicator_id,
+        MONTH(qir.result_period) AS bulan,
+
+        SUM(qir.result_numerator_value) AS num,
+        SUM(qir.result_denumerator_value) AS denum,
+
+        ROUND(
+            SUM(qir.result_numerator_value) 
+            / NULLIF(SUM(qir.result_denumerator_value), 0)
+            * qi.indicator_factors, 
+        4) AS total_value,
+
+        CONCAT(
             ROUND(
-                (SUM(quality_indicator_result.result_numerator_value) / NULLIF(SUM(quality_indicator_result.result_denumerator_value), 0)) * quality_indicator.indicator_factors, 
-                2
-            ) AS total,
-            quality_indicator.indicator_units AS units
+                SUM(qir.result_numerator_value) 
+                / NULLIF(SUM(qir.result_denumerator_value), 0)
+                * qi.indicator_factors, 
+            2),
+            qi.indicator_units
+        ) AS total,
+
+        qi.indicator_units AS units
         ");
-        $builder->join('quality_indicator', 'quality_indicator_result.result_indicator_id = quality_indicator.indicator_id', 'LEFT');
-        $builder->where("YEAR(quality_indicator_result.result_period)", $tahun);
-        $builder->where("quality_indicator.indicator_category_id", '4');
-        $builder->where("quality_indicator.indicator_record_status", 'A');
-        $builder->whereIn('quality_indicator.indicator_id', $indicatorIds);
-        $builder->groupBy('quality_indicator.indicator_id, MONTH(quality_indicator_result.result_period), quality_indicator.indicator_factors, quality_indicator.indicator_units');
 
-        // Debug logging
-        log_message('error', 'getAllMonthlyData - tahun: ' . $tahun . ', indicator count: ' . count($indicatorIds));
-        
+        $builder->join('quality_indicator qi', 'qir.result_indicator_id = qi.indicator_id', 'LEFT');
+
+        $builder->where("YEAR(qir.result_period)", $tahun);
+        $builder->where("qi.indicator_category_id", '4');
+        $builder->where("qi.indicator_record_status", 'A');
+        $builder->whereIn('qi.indicator_id', $indicatorIds);
+
+        $builder->groupBy([
+            'qi.indicator_id',
+            'MONTH(qir.result_period)',
+            'qi.indicator_factors',
+            'qi.indicator_units'
+        ]);
+
         $results = $builder->get()->getResult();
-        
-        log_message('error', 'getAllMonthlyData - results: ' . count($results));
 
-        // Clear cache karena query sudah diubah
-        $cache->delete('rekap_monthly_' . $tahun . '_');
+        log_message('error', 'DEBUG getAllMonthlyData: tahun=' . $tahun . ', indicators=' . json_encode($indicatorIds) . ', result_count=' . count($results));
 
         // Convert ke array associative: indicator_id_bulan => data
         $data = [];
@@ -131,9 +156,6 @@ class RekapLaporanInmModel extends Model
             $key = $row->indicator_id . '_' . $row->bulan;
             $data[$key] = $row;
         }
-
-        // Simpan ke cache selama 10 menit
-        $cache->save($cacheKey, $data, 600);
 
         return $data;
     }
@@ -168,10 +190,15 @@ class RekapLaporanInmModel extends Model
         $builder->where("quality_indicator.indicator_record_status", 'A');
 
         $vtahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
+
+        // Cek available group_period - gunakan tahun dipilih jika ada, kalau tidak gunakan yang tersedia
+        $availablePeriods = $this->getAvailableGroupPeriods();
+        $usePeriod = in_array($vtahun, $availablePeriods) ? $vtahun : min($availablePeriods);
+
         $builder->groupStart();
-        $builder->where("quality_indicator_group.group_period", $vtahun);
-        $builder->orWhere('quality_indicator_group.group_period', $vtahun - 1);
-        $builder->orWhere('quality_indicator_group.group_period', $vtahun - 2);
+        $builder->where("quality_indicator_group.group_period", $usePeriod);
+        $builder->orWhere('quality_indicator_group.group_period', $usePeriod - 1);
+        $builder->orWhere('quality_indicator_group.group_period', $usePeriod - 2);
         $builder->groupEnd();
 
         // Filter by user role
@@ -338,23 +365,50 @@ class RekapLaporanInmModel extends Model
         $cache = \Config\Services::cache();
         $cacheKey = 'detail_data_' . $indicatorId . '_' . $tahun;
 
-        if ($cached = $cache->get($cacheKey)) {
-            return $cached;
-        }
+        // Skip cache for debugging
+        // if ($cached = $cache->get($cacheKey)) {
+        //     return $cached;
+        // }
 
         $db = db_connect();
-        $builder = $db->table('quality_indicator_result');
+        $builder = $db->table('quality_indicator_result qir');
+
         $builder->select("
-            quality_indicator_result.result_department_id,
-            MONTH(quality_indicator_result.result_period) AS bulan,
-            SUM(quality_indicator_result.result_numerator_value) AS num,
-            SUM(quality_indicator_result.result_denumerator_value) AS denum
+            qir.result_department_id,
+            MONTH(qir.result_period) AS bulan,
+
+            SUM(qir.result_numerator_value) AS num,
+            SUM(qir.result_denumerator_value) AS denum,
+
+            ROUND(
+                SUM(qir.result_numerator_value) 
+                / NULLIF(SUM(qir.result_denumerator_value), 0)
+                * 100,
+            4) AS total_value,
+
+            CONCAT(
+                ROUND(
+                    SUM(qir.result_numerator_value) 
+                    / NULLIF(SUM(qir.result_denumerator_value), 0)
+                    * 100,
+                2),
+            '%') AS total
         ");
-        $builder->where('YEAR(quality_indicator_result.result_period)', $tahun);
-        $builder->where('quality_indicator_result.result_indicator_id', $indicatorId);
-        $builder->groupBy('quality_indicator_result.result_department_id, MONTH(quality_indicator_result.result_period)');
+
+        $builder->where('YEAR(qir.result_period)', $tahun);
+        $builder->where('qir.result_indicator_id', $indicatorId);
+
+        $builder->groupBy([
+            'qir.result_department_id',
+            'MONTH(qir.result_period)'
+        ]);
 
         $results = $builder->get()->getResult();
+
+        log_message('error', 'getAllDetailData: indicatorId=' . $indicatorId . ', tahun=' . $tahun . ', count=' . count($results));
+        if (count($results) > 0) {
+            log_message('error', 'getAllDetailData sample: dept=' . $results[0]->result_department_id . ', bulan=' . $results[0]->bulan . ', total=' . ($results[0]->total ?? 'NULL') . ', num=' . $results[0]->num);
+        }
 
         $data = [];
         foreach ($results as $row) {
@@ -368,7 +422,7 @@ class RekapLaporanInmModel extends Model
 
     /**
      * Hitung jumlah ruangan untuk indicator tertentu
-     */
+    */
     public function countDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [])
     {
         $db = db_connect();
@@ -439,9 +493,27 @@ class RekapLaporanInmModel extends Model
     public function clearCache()
     {
         $cache = \Config\Services::cache();
-        // Cache dihapus otomatis saat timeout
-        // Atau bisa manual: $cache->delete('cache_key');
         return true;
+    }
+
+    /**
+     * Ambil available group_period dari database
+     */
+    private function getAvailableGroupPeriods(): array
+    {
+        $cache = \Config\Services::cache();
+        $cacheKey = 'available_group_periods';
+
+        if ($cached = $cache->get($cacheKey)) {
+            return $cached;
+        }
+
+        $db = db_connect();
+        $query = $db->query("SELECT DISTINCT group_period FROM quality_indicator_group WHERE group_record_status = 'A' ORDER BY group_period DESC");
+        $periods = array_column($query->getResult(), 'group_period');
+
+        $cache->save($cacheKey, $periods, 3600);
+        return $periods;
     }
 
     // ==================== HELPER ====================

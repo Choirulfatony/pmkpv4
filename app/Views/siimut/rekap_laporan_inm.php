@@ -1,23 +1,4 @@
 <style>
-    .card-maximized {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        z-index: 1050;
-        margin: 0;
-        border-radius: 0;
-    }
-    .card-maximized .card-body {
-        overflow: auto;
-        max-height: calc(100vh - 60px);
-    }
-    .badge-info {
-        padding: 4px 8px;
-        font-size: 11px;
-        border-radius: 4px;
-    }
     .cell-target {
         background-color: rgba(41, 185, 92) !important;
         font-weight: bold;
@@ -31,6 +12,13 @@
         color: #fff !important;
         font-weight: bold;
     }
+    .cell-target *,
+    .cell-fail * {
+        color: #fff !important;
+    }
+    .cell-empty * {
+        color: #000 !important;
+    }
     .legend-dot {
         width: 12px;
         height: 12px;
@@ -42,14 +30,13 @@
         font-size: 13px;
         vertical-align: middle;
         white-space: nowrap;
-        padding: 12px 10px !important;
+        padding: 10px 8px !important;
     }
     #ajax_data_rekap th {
-        background-color: #3d9970 !important;
+        background-color: #28a745 !important;
         color: #fff;
         text-align: center;
         font-weight: 600;
-        padding: 12px 10px !important;
     }
     #ajax_data_rekap td a {
         color: #000;
@@ -59,15 +46,6 @@
     #ajax_data_rekap td a:hover {
         color: #007bff;
         text-decoration: underline;
-    }
-    #ajax_data_rekap td {
-        text-align: center;
-        padding: 10px 8px !important;
-    }
-    #ajax_data_rekap td:nth-child(2) {
-        text-align: left !important;
-        min-width: 250px;
-        padding-left: 15px !important;
     }
 </style>
 
@@ -151,6 +129,7 @@
                             <tr class="align-middle">
                                 <th style="width: 50px;" class="text-center">#</th>
                                 <th style="min-width: 250px; text-align: left !important; padding-left: 15px !important;">Indikator</th>
+                                <th class="text-center">Target</th>
                                 <th class="text-center">Jan</th>
                                 <th class="text-center">Feb</th>
                                 <th class="text-center">Mar</th>
@@ -225,15 +204,15 @@ $(document).ready(function() {
             }
         },
         columnDefs: [{
-            targets: [0],
+            targets: [0, 2],
             orderable: false,
             className: 'text-center'
         }, {
-            targets: [-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13],
+            targets: [-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14],
             orderable: false,
             className: 'text-center',
             createdCell: function(td, cellData, rowData, row, col) {
-                if (col == 1) {
+                if (col == 2) {
                     try {
                         let parser = new DOMParser();
                         const doc = parser.parseFromString(cellData, 'text/html');
@@ -243,9 +222,10 @@ $(document).ready(function() {
                         if (targetEl) target = targetEl.innerText;
                         if (factorEl) factor = factorEl.innerText;
                         if (operatorEl) operator = operatorEl.innerText;
+                        $(td).addClass('cell-target');
                     } catch(e) {}
                 }
-                if (col !== 1 && col !== 0) {
+                if (col > 2) {
                     try {
                         let parser = new DOMParser();
                         const doc = parser.parseFromString(cellData, 'text/html');
