@@ -196,10 +196,12 @@
 
 <script>
 var table_loquin;
-var vtahun = '<?= $tahun ?>';
+var vtahun = new Date().getFullYear(); // Default ke tahun saat ini saat page load
 var target, factor, operator;
 
 $(document).ready(function() {
+    // Set dropdown tahun ke tahun saat ini
+    $('#tahun').val(vtahun);
 
     // Init DataTable
     table_loquin = $('#ajax_data_rekap').DataTable({
