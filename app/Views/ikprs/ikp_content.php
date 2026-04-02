@@ -388,9 +388,13 @@
           // Load tab sesuai parameter dari URL
           const initialTab = "<?= $initial_tab ?? '' ?>";
           
+          console.log('initialTab:', initialTab);
+          
           if (initialTab === 'info') {
+              console.log('Loading INFO page');
               loadInfo(1);
           } else {
+              console.log('Loading INBOX page (default)');
               // Default: load inbox
               loadInbox();
           }

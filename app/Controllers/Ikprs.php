@@ -273,6 +273,8 @@ class Ikprs extends AppController
         $this->disableCache();
 
         $tab = $this->request->getGet('tab') ?? '';
+        
+        log_message('error', 'ikprs() called with tab: ' . $tab);
 
         $content = view('ikprs/ikp_content', ['initial_tab' => $tab]);
         return $this->render('dashboard/index', [
