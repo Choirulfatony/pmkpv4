@@ -1137,16 +1137,10 @@ class Ikprs extends AppController
         $keyword = trim($request->getGet('keyword') ?? '');
         $limit   = 10;
 
-        $filters = [
-            'tahun'     => $request->getGet('tahun') ?? null,
-            'semester'  => $request->getGet('semester') ?? null,
-            'triwulan'  => $request->getGet('triwulan') ?? null
-        ];
-
         $model = new IkpInsidenModel();
 
         // 🔹 Hitung total
-        $total = $model->countDraftFiltered($user_id, $keyword, $filters);
+        $total = $model->countDraftFiltered($user_id, $keyword, []);
 
         // 🔹 Hitung total halaman TANPA dipaksa minimal 1
         $total_pages = $total > 0 ? (int) ceil($total / $limit) : 0;
@@ -1161,12 +1155,11 @@ class Ikprs extends AppController
         }
 
         $data = [
-            'list'        => $model->getDraftPaginated($user_id, $limit, $offset, $keyword, $filters),
+            'list'        => $model->getDraftPaginated($user_id, $limit, $offset, $keyword, []),
             'total'       => $total,
             'total_pages' => $total_pages,
             'page'        => $page,
-            'keyword'     => $keyword,
-            'filters'    => $filters
+            'keyword'     => $keyword
         ];
 
         if ($request->isAJAX()) {
@@ -1196,17 +1189,11 @@ class Ikprs extends AppController
         $keyword = trim($request->getGet('keyword') ?? '');
         $limit   = 10;
 
-        $filters = [
-            'tahun'     => $request->getGet('tahun') ?? null,
-            'semester'  => $request->getGet('semester') ?? null,
-            'triwulan'  => $request->getGet('triwulan') ?? null
-        ];
-
         $model = new IkpInsidenModel();
 
 
         // 🔹 Hitung total
-        $total = $model->countSendFiltered($user_id, $keyword, $filters);
+        $total = $model->countSendFiltered($user_id, $keyword, []);
 
         // 🔹 Hitung total halaman TANPA dipaksa minimal 1
         $total_pages = $total > 0 ? (int) ceil($total / $limit) : 0;
@@ -1221,12 +1208,11 @@ class Ikprs extends AppController
         }
 
         $data = [
-            'list'        => $model->getSendPaginated($user_id, $limit, $offset, $keyword, $filters),
+            'list'        => $model->getSendPaginated($user_id, $limit, $offset, $keyword, []),
             'total'       => $total,
             'total_pages' => $total_pages,
             'page'        => $page,
-            'keyword'     => $keyword,
-            'filters'    => $filters
+            'keyword'     => $keyword
         ];
 
         if ($request->isAJAX()) {
@@ -1260,16 +1246,10 @@ class Ikprs extends AppController
         $keyword = trim($request->getGet('keyword') ?? '');
         $limit   = 10;
 
-        $filters = [
-            'tahun'     => $request->getGet('tahun') ?? null,
-            'semester'  => $request->getGet('semester') ?? null,
-            'triwulan'  => $request->getGet('triwulan') ?? null
-        ];
-
         $model = new IkpInsidenModel();
 
         // 🔹 HITUNG TOTAL BERDASARKAN ROLE
-        $total = $model->countInboxFiltered($user_id, $keyword, 'inbox', $filters);
+        $total = $model->countInboxFiltered($user_id, $keyword, 'inbox', []);
 
         $total_pages = $total > 0 ? (int) ceil($total / $limit) : 0;
 
@@ -1282,12 +1262,11 @@ class Ikprs extends AppController
         }
 
         $data = [
-            'inbox'       => $model->getInboxPaginated($user_id, $limit, $offset, $keyword, 'inbox', $filters),
+            'inbox'       => $model->getInboxPaginated($user_id, $limit, $offset, $keyword, 'inbox', []),
             'total'       => $total,
             'total_pages' => $total_pages,
             'page'        => $page,
-            'keyword'     => $keyword,
-            'filters'    => $filters
+            'keyword'     => $keyword
         ];
 
         return view('ikprs/_form_inbox_karu', $data);

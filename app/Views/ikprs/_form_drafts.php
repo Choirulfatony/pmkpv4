@@ -7,39 +7,6 @@
         </button>
     </div>
 
-    <!-- FILTERS -->
-    <div class="d-flex gap-2 align-items-center">
-        <select class="form-select form-select-sm" id="filterTriwulan" style="width: 120px;">
-            <option value="">Triwulan</option>
-            <option value="1" <?= ($filters['triwulan'] ?? '') == '1' ? 'selected' : '' ?>>Triwulan 1</option>
-            <option value="2" <?= ($filters['triwulan'] ?? '') == '2' ? 'selected' : '' ?>>Triwulan 2</option>
-            <option value="3" <?= ($filters['triwulan'] ?? '') == '3' ? 'selected' : '' ?>>Triwulan 3</option>
-            <option value="4" <?= ($filters['triwulan'] ?? '') == '4' ? 'selected' : '' ?>>Triwulan 4</option>
-        </select>
-
-        <select class="form-select form-select-sm" id="filterSemester" style="width: 120px;">
-            <option value="">Semester</option>
-            <option value="1" <?= ($filters['semester'] ?? '') == '1' ? 'selected' : '' ?>>Semester 1</option>
-            <option value="2" <?= ($filters['semester'] ?? '') == '2' ? 'selected' : '' ?>>Semester 2</option>
-        </select>
-
-        <select class="form-select form-select-sm" id="filterTahun" style="width: 100px;">
-            <option value="">Tahun</option>
-            <?php $tahunSekarang = date('Y'); ?>
-            <?php for ($t = $tahunSekarang; $t >= $tahunSekarang - 5; $t--): ?>
-                <option value="<?= $t ?>" <?= ($filters['tahun'] ?? '') == $t ? 'selected' : '' ?>><?= $t ?></option>
-            <?php endfor; ?>
-        </select>
-
-        <button class="btn btn-sm btn-outline-secondary" id="btnApplyFilter" title="Terapkan Filter">
-            <i class="bi bi-funnel"></i>
-        </button>
-
-        <button class="btn btn-sm btn-outline-danger" id="btnClearFilter" title="Hapus Filter" <?= empty($filters['tahun']) && empty($filters['semester']) && empty($filters['triwulan']) ? 'style="display:none"' : '' ?>>
-            <i class="bi bi-x-lg"></i>
-        </button>
-    </div>
-
     <!-- PUSH RIGHT -->
     <div class="ms-auto"></div>
 
@@ -176,57 +143,6 @@ $end   = $total > 0 ? min($page * 10, $total) : 0;
         $('.mailbox-checkbox').prop('checked', checkAll);
 
         updateCheckboxIcon();
-    });
-
-    /**
-     * FILTER HANDLERS
-     */
-    function applyDraftFilters() {
-        const triwulan = $('#filterTriwulan').val();
-        const semester = $('#filterSemester').val();
-        const tahun = $('#filterTahun').val();
-        const keyword = $('#searchDraft').val() || '';
-
-        const params = new URLSearchParams();
-        if (triwulan) params.set('triwulan', triwulan);
-        if (semester) params.set('semester', semester);
-        if (tahun) params.set('tahun', tahun);
-        if (keyword) params.set('keyword', keyword);
-
-        const queryString = params.toString();
-        const url = "<?= site_url('ikprs/form_drafts') ?>" + (queryString ? '?' + queryString : '');
-
-        $('#inbox-wrapper').trigger('processing.inbox', [true]);
-
-        $.get(url, function(res) {
-            $('#inbox-wrapper').html(res);
-        }).always(function() {
-            $('#inbox-wrapper').trigger('processing.inbox', [false]);
-        });
-    }
-
-    $(document).on('click', '#btnApplyFilter', function() {
-        applyDraftFilters();
-    });
-
-    $(document).on('click', '#btnClearFilter', function() {
-        $('#filterTriwulan').val('');
-        $('#filterSemester').val('');
-        $('#filterTahun').val('');
-        $('#btnClearFilter').hide();
-        applyDraftFilters();
-    });
-
-    $(document).on('change', '#filterTriwulan, #filterSemester, #filterTahun', function() {
-        const triwulan = $('#filterTriwulan').val();
-        const semester = $('#filterSemester').val();
-        const tahun = $('#filterTahun').val();
-
-        if (triwulan || semester || tahun) {
-            $('#btnClearFilter').show();
-        } else {
-            $('#btnClearFilter').hide();
-        }
     });
 
     /**
