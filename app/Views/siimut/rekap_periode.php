@@ -247,21 +247,21 @@ function refreshPage() {
 }
 
 function initTable() {
-    console.log('Loading data from:', '<?= site_url('siimut/rekap-laporan-inm/rekap-periode-ajax') ?>');
-    
-    var tableWrapper = $('#ajax_data_periode').closest('.table-responsive');
-    
-    table_periode = $('#ajax_data_periode').DataTable({
-        processing: true,
-        serverSide: false,
-        ajax: {
-            url: '<?= site_url('siimut/rekap-laporan-inm/rekap-periode-ajax') ?>',
-            type: 'POST',
-            data: function(d) {
-                d.tahun = vtahun;
-                return d;
-            },
-            dataSrc: 'data',
+     console.log('Loading data from:', '<?= site_url('siimut/rekap-laporan-inm/rekap-periode-inm') ?>');
+     
+     var tableWrapper = $('#ajax_data_periode').closest('.table-responsive');
+     
+     table_periode = $('#ajax_data_periode').DataTable({
+         processing: true,
+         serverSide: false,
+         ajax: {
+             url: '<?= site_url('siimut/rekap-laporan-inm/rekap-periode-inm') ?>',
+             type: 'POST',
+             data: function(d) {
+                 d.tahun = vtahun;
+                 return d;
+             },
+             dataSrc: 'data',
             beforeSend: function(xhr) {
                 if ($('#loading_overlay_detail').length === 0) {
                     tableWrapper.append(
