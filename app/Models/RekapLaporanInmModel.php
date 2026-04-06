@@ -517,12 +517,21 @@ class RekapLaporanInmModel extends Model
     }
 
     /**
-     * Ambil data rekap per Triwulan, Semester, dan Tahun
+     * Ambil data rekap per Triwulan, Semester, dan Tahun (OPTIMIZED + CACHE)
      */
     public function getRekapPeriode(int $tahun)
     {
+        // Check cache first
+        $cache = \Config\Services::cache();
+        $cacheKey = 'rekap_periode_' . $tahun;
+
+        if ($cached = $cache->get($cacheKey)) {
+            return $cached;
+        }
+
         $db = db_connect();
 
+        // Get all indicators
         $indicators = $db->table('quality_indicator')
             ->select('indicator_id, indicator_element, indicator_target, indicator_factors, indicator_units, indicator_target_calculation')
             ->where('indicator_category_id', '4')
@@ -530,35 +539,85 @@ class RekapLaporanInmModel extends Model
             ->get()
             ->getResult();
 
+        if (empty($indicators)) {
+            return [];
+        }
+
+        // Get ALL monthly data for all indicators in ONE query
+        $indicatorIds = array_column($indicators, 'indicator_id');
+        $allMonthlyData = $this->getAllMonthlyData($indicatorIds, $tahun);
+
+        // Organize monthly data by indicator_id -> bulan -> data
+        $monthlyByIndicator = [];
+        foreach ($allMonthlyData as $key => $data) {
+            // Parse key: "indicatorId_bulan"
+            if (strpos($key, '_') !== false) {
+                $parts = explode('_', $key);
+                $indicatorId = (int)$parts[0];
+                $bulan = (int)$parts[1];
+                $monthlyByIndicator[$indicatorId][$bulan] = $data;
+            }
+        }
+
         $results = [];
 
         foreach ($indicators as $indicator) {
+            $indicatorId = $indicator->indicator_id;
             $target = (float) $indicator->indicator_target;
             $factors = (float) $indicator->indicator_factors;
             $operator = $indicator->indicator_target_calculation ?? '>=';
+            $units = $indicator->indicator_units;
 
-            // Triwulan
+            // Get monthly data for this indicator (default to null arrays)
+            $indicatorMonthly = $monthlyByIndicator[$indicatorId] ?? [];
+
+            // Initialize monthly num/denum arrays (1-12)
+            $monthlyNum = array_fill(1, 12, 0);
+            $monthlyDenum = array_fill(1, 12, 0);
+
+            // Fill actual data
+            for ($bulan = 1; $bulan <= 12; $bulan++) {
+                if (isset($indicatorMonthly[$bulan])) {
+                    $monthlyNum[$bulan] = (float)($indicatorMonthly[$bulan]->num ?? 0);
+                    $monthlyDenum[$bulan] = (float)($indicatorMonthly[$bulan]->denum ?? 0);
+                }
+            }
+
+            // Helper to compute nilai from num/denum range
+            $computeNilai = function ($startBulan, $endBulan) use ($monthlyNum, $monthlyDenum, $factors) {
+                $totalNum = array_sum(array_slice($monthlyNum, $startBulan - 1, $endBulan - $startBulan + 1));
+                $totalDenum = array_sum(array_slice($monthlyDenum, $startBulan - 1, $endBulan - $startBulan + 1));
+
+                if ($totalDenum == 0) {
+                    return null;
+                }
+
+                $nilai = round(($totalNum / $totalDenum) * $factors, 2);
+                return $nilai;
+            };
+
+            // Triwulan (4 periods of 3 months each)
             $triwulan = [];
             for ($tw = 1; $tw <= 4; $tw++) {
                 $bulanMulai = ($tw - 1) * 3 + 1;
                 $bulanAkhir = $tw * 3;
-                $nilai = $this->getNilaiPeriode($indicator->indicator_id, $tahun, $bulanMulai, $bulanAkhir, $factors);
+                $nilai = $computeNilai($bulanMulai, $bulanAkhir);
                 $tercap = $this->cekTercapai($nilai, $target, $operator);
                 $triwulan[$tw] = ['nilai' => $nilai, 'tercap' => $tercap];
             }
 
-            // Semester
+            // Semester (2 periods of 6 months each)
             $semester = [];
             for ($sm = 1; $sm <= 2; $sm++) {
                 $bulanMulai = ($sm - 1) * 6 + 1;
                 $bulanAkhir = $sm * 6;
-                $nilai = $this->getNilaiPeriode($indicator->indicator_id, $tahun, $bulanMulai, $bulanAkhir, $factors);
+                $nilai = $computeNilai($bulanMulai, $bulanAkhir);
                 $tercap = $this->cekTercapai($nilai, $target, $operator);
                 $semester[$sm] = ['nilai' => $nilai, 'tercap' => $tercap];
             }
 
-            // Tahunan
-            $nilaiTahun = $this->getNilaiPeriode($indicator->indicator_id, $tahun, 1, 12, $factors);
+            // Tahunan (1-12)
+            $nilaiTahun = $computeNilai(1, 12);
             $tercap = $this->cekTercapai($nilaiTahun, $target, $operator);
 
             $tercapTw = count(array_filter($triwulan, fn($t) => $t['tercap']));
@@ -568,7 +627,7 @@ class RekapLaporanInmModel extends Model
                 'indicator_id' => $indicator->indicator_id,
                 'indicator_element' => $indicator->indicator_element,
                 'indicator_target' => $indicator->indicator_target,
-                'indicator_units' => $indicator->indicator_units,
+                'indicator_units' => $units,
                 'triwulan' => $triwulan,
                 'semester' => $semester,
                 'tahun' => ['nilai' => $nilaiTahun, 'tercap' => $tercap],
@@ -577,6 +636,9 @@ class RekapLaporanInmModel extends Model
                 'tercap_tgl' => $tercap
             ];
         }
+
+        // Save to cache for 10 minutes
+        $cache->save($cacheKey, $results, 600);
 
         return $results;
     }

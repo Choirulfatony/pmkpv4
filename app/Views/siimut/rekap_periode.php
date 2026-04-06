@@ -36,45 +36,86 @@
         font-size: 11px;
     }
     .dataTables_wrapper .dataTables_processing {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
-    .dataTables_wrapper .dataTables_processing::before,
-    .dataTables_wrapper .dataTables_processing::after {
         display: none !important;
     }
-    table.dataTable tbody tr.odd {
-        background-color: #f9f9f9;
+    .table-responsive {
+        position: relative;
     }
-    table.dataTable tbody tr.even {
-        background-color: #fff;
+    .overlay-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
     }
-    .dataTables_wrapper .dataTables_processing {
-        display: none !important;
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
     }
-    .custom-loading {
+    .loader {
+        width: 3em;
+        height: 3em;
+        transform: rotate(165deg);
+    }
+    .loader:before,
+    .loader:after {
+        content: "";
         position: absolute;
         top: 50%;
         left: 50%;
+        display: block;
+        width: 1em;
+        height: 1em;
+        border-radius: 0.5em;
         transform: translate(-50%, -50%);
-        z-index: 100;
-        background: rgba(255,255,255,0.9);
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    .custom-loading img {
-        width: 50px;
-        height: 50px;
+    .loader:before {
+        animation: before8 2s infinite;
     }
-    .custom-loading-text {
-        margin-top: 10px;
-        color: #198754;
-        font-weight: 600;
+    .loader:after {
+        animation: after6 2s infinite;
     }
-    .dataTables_wrapper .dataTables_processing {
-        display: none !important;
+    @keyframes before8 {
+        0% {
+            width: 1em;
+            box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
+        }
+        35% {
+            width: 4em;
+            box-shadow: 0 -1em rgba(225, 20, 98, 0.75), 0 1em rgba(111, 202, 220, 0.75);
+        }
+        70% {
+            width: 1em;
+            box-shadow: -2em -1em rgba(225, 20, 98, 0.75), 2em 1em rgba(111, 202, 220, 0.75);
+        }
+        100% {
+            box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
+        }
+    }
+    @keyframes after6 {
+        0% {
+            height: 1em;
+            box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
+        }
+        35% {
+            height: 4em;
+            box-shadow: 1em 0 rgba(61, 184, 143, 0.75), -1em 0 rgba(233, 169, 32, 0.75);
+        }
+        70% {
+            height: 1em;
+            box-shadow: 1em -2em rgba(61, 184, 143, 0.75), -1em 2em rgba(233, 169, 32, 0.75);
+        }
+        100% {
+            box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
+        }
     }
 </style>
 
@@ -87,13 +128,18 @@
     </div>
 
     <div class="row mb-3">
-        <div class="col-md-4">
-            <label class="form-label fw-bold">Pilih Tahun</label>
-            <select class="form-select" id="tahun" onchange="gantiTahun()">
-                <?php for ($y = date('Y'); $y >= date('Y') - 5; $y--): ?>
-                    <option value="<?= $y ?>" <?= ($y == $tahun) ? 'selected' : '' ?>><?= $y ?></option>
-                <?php endfor; ?>
-            </select>
+        <div class="col-md-4 d-flex align-items-center">
+            <label class="form-label fw-bold me-2">Pilih Tahun</label>
+            <div class="input-group input-group-sm" style="width: 200px;">
+                <select class="form-select form-select-sm" id="tahun" onchange="gantiTahun()">
+                    <?php for ($y = date('Y'); $y >= date('Y') - 5; $y--): ?>
+                        <option value="<?= $y ?>" <?= ($y == $tahun) ? 'selected' : '' ?>><?= $y ?></option>
+                    <?php endfor; ?>
+                </select>
+                <button class="btn btn-outline-secondary" type="button" onclick="refreshPage()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
         </div>
         <div class="col-md-8">
             <label class="form-label fw-bold">Filter Periode</label>
@@ -179,6 +225,27 @@ $(document).ready(function() {
     initTable();
 });
 
+// F5 refresh should reset to current year
+$(document).on('keydown', function(e) {
+    if (e.key === 'F5') {
+        // Reset to current year when F5 is pressed
+        vtahun = <?= date('Y') ?>;
+        $('#tahun').val(vtahun);
+        // Update URL without page reload
+        var url = new URL(window.location.href);
+        url.searchParams.set('tahun', vtahun);
+        window.history.pushState({}, '', url);
+    }
+});
+
+function refreshPage() {
+    // Reload the page with currently selected year
+    var selectedYear = $('#tahun').val();
+    var url = new URL(window.location.href);
+    url.searchParams.set('tahun', selectedYear);
+    window.location.href = url.toString();
+}
+
 function initTable() {
     console.log('Loading data from:', '<?= site_url('siimut/rekap-laporan-inm/rekap-periode-ajax') ?>');
     
@@ -196,17 +263,18 @@ function initTable() {
             },
             dataSrc: 'data',
             beforeSend: function(xhr) {
-                tableWrapper.append(
-                    '<div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75 loading-overlay" style="z-index:10;">' +
-                    '<div class="text-center">' +
-                    '<div class="spinner-border text-success" role="status"></div>' +
-                    '<div class="mt-2 small text-muted">Memuat data...</div>' +
-                    '</div>' +
-                    '</div>'
-                );
+                if ($('#loading_overlay_detail').length === 0) {
+                    tableWrapper.append(
+                        '<div class="overlay-wrapper" id="loading_overlay_detail">' +
+                        '<div class="overlay">' +
+                        '<i class="loader"></i>' +
+                        '</div>' +
+                        '</div>'
+                    );
+                }
             },
             complete: function() {
-                $('.loading-overlay').remove();
+                $('#loading_overlay_detail').remove();
             }
         },
         columns: [
@@ -301,17 +369,18 @@ function gantiTahun() {
     
     var tableWrapper = $('#ajax_data_periode').closest('.table-responsive');
     
-    tableWrapper.append(
-        '<div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75 loading-overlay" style="z-index:10;">' +
-        '<div class="text-center">' +
-        '<div class="spinner-border text-success" role="status"></div>' +
-        '<div class="mt-2 small text-muted">Memuat data...</div>' +
-        '</div>' +
-        '</div>'
-    );
+    if ($('#loading_overlay_detail').length === 0) {
+        tableWrapper.append(
+            '<div class="overlay-wrapper" id="loading_overlay_detail">' +
+            '<div class="overlay">' +
+            '<i class="loader"></i>' +
+            '</div>' +
+            '</div>'
+        );
+    }
     
     table_periode.ajax.reload(function() {
-        $('.loading-overlay').remove();
+        $('#loading_overlay_detail').remove();
     });
 }
 
