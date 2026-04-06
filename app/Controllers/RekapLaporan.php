@@ -250,4 +250,51 @@ class RekapLaporan extends AppController
         }
         return $this->response->setJSON(['status' => false]);
     }
+
+    /**
+     * Rekap per Periode (Triwulan, Semester, Tahun)
+     */
+    public function rekapPeriode()
+    {
+        if (!session()->get('logged_in')) {
+            return redirect()->to('/auth');
+        }
+
+        $this->disableCache();
+
+        $role = session()->get('user_role');
+        $menuModel = new SiimutMenuModel();
+        $menus = $menuModel->getMenuByRole($role);
+
+        $tahun = $this->request->getGet('tahun') ?? date('Y');
+
+        return $this->render('siimut/rekap_periode', [
+            'judul'    => 'Rekap INM per Periode',
+            'icon'     => '<i class="bi bi-calendar-range"></i>',
+            '_content' => view('siimut/rekap_periode', [
+                'tahun' => $tahun,
+            ]),
+            'menus'    => $menus
+        ]);
+    }
+
+    /**
+     * AJAX: Rekap Periode
+     */
+    public function getAjaxRekapPeriode()
+    {
+        $post = $this->request->getPost();
+        $tahun = isset($post['tahun']) ? (int) $post['tahun'] : (int) date('Y');
+
+        log_message('error', 'REKAP PERIODE: tahun=' . $tahun);
+
+        $data = $this->rekapModel->getRekapPeriode($tahun);
+
+        log_message('error', 'REKAP PERIODE: data count=' . count($data));
+
+        return $this->response->setJSON([
+            'draw' => $post['draw'] ?? 1,
+            'data' => $data,
+        ]);
+    }
 }

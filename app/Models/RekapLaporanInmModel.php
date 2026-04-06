@@ -516,11 +516,123 @@ class RekapLaporanInmModel extends Model
         return $periods;
     }
 
-    // ==================== HELPER ====================
+    /**
+     * Ambil data rekap per Triwulan, Semester, dan Tahun
+     */
+    public function getRekapPeriode(int $tahun)
+    {
+        $db = db_connect();
+
+        $indicators = $db->table('quality_indicator')
+            ->select('indicator_id, indicator_element, indicator_target, indicator_factors, indicator_units, indicator_target_calculation')
+            ->where('indicator_category_id', '4')
+            ->where('indicator_record_status', 'A')
+            ->get()
+            ->getResult();
+
+        $results = [];
+
+        foreach ($indicators as $indicator) {
+            $target = (float) $indicator->indicator_target;
+            $factors = (float) $indicator->indicator_factors;
+            $operator = $indicator->indicator_target_calculation ?? '>=';
+
+            // Triwulan
+            $triwulan = [];
+            for ($tw = 1; $tw <= 4; $tw++) {
+                $bulanMulai = ($tw - 1) * 3 + 1;
+                $bulanAkhir = $tw * 3;
+                $nilai = $this->getNilaiPeriode($indicator->indicator_id, $tahun, $bulanMulai, $bulanAkhir, $factors);
+                $tercap = $this->cekTercapai($nilai, $target, $operator);
+                $triwulan[$tw] = ['nilai' => $nilai, 'tercap' => $tercap];
+            }
+
+            // Semester
+            $semester = [];
+            for ($sm = 1; $sm <= 2; $sm++) {
+                $bulanMulai = ($sm - 1) * 6 + 1;
+                $bulanAkhir = $sm * 6;
+                $nilai = $this->getNilaiPeriode($indicator->indicator_id, $tahun, $bulanMulai, $bulanAkhir, $factors);
+                $tercap = $this->cekTercapai($nilai, $target, $operator);
+                $semester[$sm] = ['nilai' => $nilai, 'tercap' => $tercap];
+            }
+
+            // Tahunan
+            $nilaiTahun = $this->getNilaiPeriode($indicator->indicator_id, $tahun, 1, 12, $factors);
+            $tercap = $this->cekTercapai($nilaiTahun, $target, $operator);
+
+            $tercapTw = count(array_filter($triwulan, fn($t) => $t['tercap']));
+            $tercapSm = count(array_filter($semester, fn($s) => $s['tercap']));
+
+            $results[] = [
+                'indicator_id' => $indicator->indicator_id,
+                'indicator_element' => $indicator->indicator_element,
+                'indicator_target' => $indicator->indicator_target,
+                'indicator_units' => $indicator->indicator_units,
+                'triwulan' => $triwulan,
+                'semester' => $semester,
+                'tahun' => ['nilai' => $nilaiTahun, 'tercap' => $tercap],
+                'tercap_tw' => $tercapTw,
+                'tercap_sm' => $tercapSm,
+                'tercap_tgl' => $tercap
+            ];
+        }
+
+        return $results;
+    }
 
     /**
-     * Hitung hari dalam bulan
+     * Ambil nilai rata-rata untuk periode tertentu
      */
+    private function getNilaiPeriode(int $indicatorId, int $tahun, int $bulanMulai, int $bulanAkhir, float $factors)
+    {
+        $db = db_connect();
+        $bulanMulaiStr = str_pad($bulanMulai, 2, '0', STR_PAD_LEFT);
+        $bulanAkhirStr = str_pad($bulanAkhir, 2, '0', STR_PAD_LEFT);
+        $dayAkhir = $this->getDaysInMonth($bulanAkhir, $tahun);
+
+        $query = $db->query("
+            SELECT 
+                SUM(qir.result_numerator_value) AS num,
+                SUM(qir.result_denumerator_value) AS denum,
+                qi.indicator_units
+            FROM quality_indicator_result qir
+            JOIN quality_indicator qi ON qir.result_indicator_id = qi.indicator_id
+            WHERE qir.result_indicator_id = ?
+            AND qir.result_period BETWEEN '{$tahun}-{$bulanMulaiStr}-01' AND '{$tahun}-{$bulanAkhirStr}-{$dayAkhir}'
+            GROUP BY qi.indicator_units
+        ", [$indicatorId]);
+
+        $row = $query->getRow();
+        if (!$row || $row->denum == 0) {
+            return null;
+        }
+
+        $nilai = round(($row->num / $row->denum) * $factors, 2);
+        return $nilai . $row->indicator_units;
+    }
+
+    /**
+     * Cek apakah tercapai berdasarkan operator
+     */
+    private function cekTercapai($nilai, float $target, string $operator): bool
+    {
+        if ($nilai === null) {
+            return false;
+        }
+        $angka = (float) preg_replace('/[^0-9.]/', '', $nilai);
+        switch ($operator) {
+            case '>=': return $angka >= $target;
+            case '>': return $angka > $target;
+            case '<=': return $angka <= $target;
+            case '<': return $angka < $target;
+            case '=': return $angka == $target;
+            default: return $angka >= $target;
+        }
+    }
+
+    // ==================== HELPER ====================
+
     private function getDaysInMonth(int $bulan, int $tahun): int
     {
         switch ($bulan) {
