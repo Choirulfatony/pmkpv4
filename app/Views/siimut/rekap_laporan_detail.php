@@ -157,7 +157,7 @@ $(document).ready(function() {
         pageLength: 25,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],
         ajax: {
-            url: '<?= site_url('siimut/rekap-laporan-inm/ajax-detail') ?>',
+            url: '<?= site_url('siimut/rekap-laporan-inm/ajax-detail-inm') ?>',
             type: 'POST',
             data: function(d) {
                 d.vtahun = vtahun;
@@ -249,7 +249,7 @@ $(document).ready(function() {
 function gantiTahun() {
     vtahun = $('#tahun').val();
     if (table_detail) {
-        table_detail.ajax.url('<?= site_url('siimut/rekap-laporan-inm/ajax-detail') ?>').load();
+        table_detail.ajax.url('<?= site_url('siimut/rekap-laporan-inm/ajax-detail-inm') ?>').load();
     }
 }
 

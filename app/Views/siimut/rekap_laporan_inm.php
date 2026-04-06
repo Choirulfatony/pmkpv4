@@ -215,7 +215,7 @@ $(document).ready(function() {
         pageLength: 10, // Kurangi default ke 10 untuk loading lebih cepat
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],
         ajax: {
-            url: '<?= site_url('siimut/rekap-laporan-inm/ajax') ?>',
+            url: '<?= site_url('siimut/rekap-laporan-inm/ajax_rekap_inm') ?>',
             type: 'POST',
             data: function(d) {
                 d.vtahun = vtahun;
@@ -307,7 +307,7 @@ function gantiTahun() {
     vtahun = $('#tahun').val();
     if (table_loquin) {
         // Reset URL tanpa query param, data di-pass via POST body
-        table_loquin.ajax.url('<?= site_url('siimut/rekap-laporan-inm/ajax') ?>').load();
+        table_loquin.ajax.url('<?= site_url('siimut/rekap-laporan-inm/ajax_rekap_inm') ?>').load();
     }
 }
 
