@@ -182,6 +182,8 @@ $(document).ready(function() {
 function initTable() {
     console.log('Loading data from:', '<?= site_url('siimut/rekap-laporan-inm/rekap-periode-ajax') ?>');
     
+    var tableWrapper = $('#ajax_data_periode').closest('.table-responsive');
+    
     table_periode = $('#ajax_data_periode').DataTable({
         processing: true,
         serverSide: false,
@@ -192,61 +194,90 @@ function initTable() {
                 d.tahun = vtahun;
                 return d;
             },
-            dataSrc: 'data'
+            dataSrc: 'data',
+            beforeSend: function(xhr) {
+                tableWrapper.append(
+                    '<div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75 loading-overlay" style="z-index:10;">' +
+                    '<div class="text-center">' +
+                    '<div class="spinner-border text-success" role="status"></div>' +
+                    '<div class="mt-2 small text-muted">Memuat data...</div>' +
+                    '</div>' +
+                    '</div>'
+                );
+            },
+            complete: function() {
+                $('.loading-overlay').remove();
+            }
         },
         columns: [
-            { data: null, render: function(data, type, row, meta) {
-                return meta.row + 1;
-            }},
-            { data: 'indicator_element', render: function(data, type, row) {
-                return '<div class="text-start">' + data + '</div>';
-            }},
-            { data: 'indicator_target', render: function(data, type, row) {
-                return data + ' ' + row.indicator_units;
-            }},
-            // Triwulan 1-4
-            { data: 'triwulan.1.nilai', render: function(data, type, row) {
-                var tercapai = row.triwulan && row.triwulan[1] ? row.triwulan[1].tercap : false;
-                return renderCell(data, tercapai);
-            }},
-            { data: 'triwulan.2.nilai', render: function(data, type, row) {
-                var tercapai = row.triwulan && row.triwulan[2] ? row.triwulan[2].tercap : false;
-                return renderCell(data, tercapai);
-            }},
-            { data: 'triwulan.3.nilai', render: function(data, type, row) {
-                var tercapai = row.triwulan && row.triwulan[3] ? row.triwulan[3].tercap : false;
-                return renderCell(data, tercapai);
-            }},
-            { data: 'triwulan.4.nilai', render: function(data, type, row) {
-                var tercapai = row.triwulan && row.triwulan[4] ? row.triwulan[4].tercap : false;
-                return renderCell(data, tercapai);
-            }},
-            // Semester 1-2
-            { data: 'semester.1.nilai', render: function(data, type, row) {
-                var tercapai = row.semester && row.semester[1] ? row.semester[1].tercap : false;
-                return renderCell(data, tercapai);
-            }},
-            { data: 'semester.2.nilai', render: function(data, type, row) {
-                var tercapai = row.semester && row.semester[2] ? row.semester[2].tercap : false;
-                return renderCell(data, tercapai);
-            }},
-            // Tahun
-            { data: 'tahun.nilai', render: function(data, type, row) {
-                var tercapai = row.tahun ? row.tahun.tercap : false;
-                return renderCell(data, tercapai);
-            }}
-        ],
-        ordering: true,
-        paging: true,
-        pageLength: 25,
-        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'Semua']],
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
-        },
-        error: function(xhr, error, thrown) {
-            console.error('DataTables error:', error, 'Response:', xhr.responseText);
-            alert('Error: ' + xhr.responseText);
-        }
+            { 
+                data: null,
+                render: function(data, type, row, meta) {
+                    return meta.row + 1;
+                }
+            },
+            { 
+                data: 'indicator_element',
+                render: function(data, type, row) {
+                    return '<div class="text-start">' + data + '</div>';
+                }
+            },
+            { 
+                data: 'indicator_target',
+                render: function(data, type, row) {
+                    return data + ' ' + row.indicator_units;
+                }
+            },
+            { 
+                data: 'triwulan.1.nilai',
+                render: function(data, type, row) {
+                    var tercapai = row.triwulan && row.triwulan[1] ? row.triwulan[1].tercap : false;
+                    return renderCell(data, tercapai);
+                }
+            },
+            { 
+                data: 'triwulan.2.nilai',
+                render: function(data, type, row) {
+                    var tercapai = row.triwulan && row.triwulan[2] ? row.triwulan[2].tercap : false;
+                    return renderCell(data, tercapai);
+                }
+            },
+            { 
+                data: 'triwulan.3.nilai',
+                render: function(data, type, row) {
+                    var tercapai = row.triwulan && row.triwulan[3] ? row.triwulan[3].tercap : false;
+                    return renderCell(data, tercapai);
+                }
+            },
+            { 
+                data: 'triwulan.4.nilai',
+                render: function(data, type, row) {
+                    var tercapai = row.triwulan && row.triwulan[4] ? row.triwulan[4].tercap : false;
+                    return renderCell(data, tercapai);
+                }
+            },
+            { 
+                data: 'semester.1.nilai',
+                render: function(data, type, row) {
+                    var tercapai = row.semester && row.semester[1] ? row.semester[1].tercap : false;
+                    return renderCell(data, tercapai);
+                }
+            },
+            { 
+                data: 'semester.2.nilai',
+                render: function(data, type, row) {
+                    var tercapai = row.semester && row.semester[2] ? row.semester[2].tercap : false;
+                    return renderCell(data, tercapai);
+                }
+            },
+            { 
+                data: 'tahun.nilai',
+                render: function(data, type, row) {
+                    var tercapai = row.tahun ? row.tahun.tercap : false;
+                    return renderCell(data, tercapai);
+                }
+            }
+        ]
     });
 }
 
@@ -268,7 +299,20 @@ function gantiTahun() {
     url.searchParams.set('tahun', vtahun);
     window.history.pushState({}, '', url);
     
-    table_periode.ajax.reload();
+    var tableWrapper = $('#ajax_data_periode').closest('.table-responsive');
+    
+    tableWrapper.append(
+        '<div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75 loading-overlay" style="z-index:10;">' +
+        '<div class="text-center">' +
+        '<div class="spinner-border text-success" role="status"></div>' +
+        '<div class="mt-2 small text-muted">Memuat data...</div>' +
+        '</div>' +
+        '</div>'
+    );
+    
+    table_periode.ajax.reload(function() {
+        $('.loading-overlay').remove();
+    });
 }
 
 function filterPeriode(type) {

@@ -294,6 +294,8 @@ class RekapLaporan extends AppController
 
         return $this->response->setJSON([
             'draw' => $post['draw'] ?? 1,
+            'recordsTotal' => count($data),
+            'recordsFiltered' => count($data),
             'data' => $data,
         ]);
     }
