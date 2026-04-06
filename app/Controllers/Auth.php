@@ -166,7 +166,7 @@ class Auth extends BaseController
         ];
 
         // ✅ Tentukan role final
-        $userRole = $roleMap[$user->group_name] ?? 'APP';
+        $userRole = $roleMap[$user->hak_akses] ?? 'APP';
 
         // ✅ Set session (SATU KALI SAJA)
         session()->set([
@@ -176,15 +176,16 @@ class Auth extends BaseController
             'profile_id'      => $user->profile_id,
             'nama_lengkap'    => $user->profile_fullname,
             'profile_email'   => $user->profile_email,
+            'profile_picture' => $user->profile_photo ?: null,
 
             'department_id'   => $user->department_id,
-            'department_name' => $user->department_name,
+            'department_name' => $user->lokasi,
 
             // ✅ INI YANG DIPAKAI MENU
             'user_role'       => $userRole,
 
             // (opsional kalau mau simpan asli)
-            'role_asli'       => $user->group_name,
+            'role_asli'       => $user->hak_akses,
 
             'login_time'      => date('Y-m-d H:i:s'),
         ]);
@@ -387,6 +388,118 @@ class Auth extends BaseController
         return redirect()->to(site_url('auth'));
     }
 
+    public function showRegister()
+    {
+        $email = session('register_email');
+        $name = session('register_name');
+
+        if (!$email) {
+            return redirect()->to(site_url('auth'));
+        }
+
+        $data = [
+            'email' => $email,
+            'name' => $name,
+        ];
+
+        $contentData = [
+            'email' => $email,
+            'name' => $name,
+        ];
+
+        $data = [
+            'login_title' => 'Registrasi - PMKP v2.0 RSSM',
+            '_content'   => view('auth/register', $contentData),
+            '_login_css' => view('_layout/_login_css'),
+            '_login_js'  => view('_layout/_login_js'),
+        ];
+
+        return view('_layout/login_template', $data);
+    }
+
+    public function processRegister()
+    {
+        log_message('error', 'GOOGLE REGISTER: Session register_picture = ' . (session('register_picture') ?: 'NULL'));
+
+        $email = $this->request->getPost('profile_email');
+        $fullname = $this->request->getPost('profile_fullname');
+        $gender = $this->request->getPost('profile_gender');
+        $birthPlace = $this->request->getPost('profile_birth_place');
+        $dob = $this->request->getPost('profile_dob');
+        $handphone1 = $this->request->getPost('profile_handphone1');
+        $handphone2 = $this->request->getPost('profile_handphone2');
+
+        if (!$email || !$fullname) {
+            return redirect()->back()->with('error', 'Nama dan email wajib diisi');
+        }
+
+        $db = db_connect();
+
+        $existing = $db->table('user_profile')
+            ->where('profile_email', $email)
+            ->where('profile_record_status', 'A')
+            ->get()
+            ->getRow();
+
+        if ($existing) {
+            return redirect()->back()->with('error', 'Email sudah terdaftar');
+        }
+
+        $data = [
+            'profile_fullname'      => $fullname,
+            'profile_email'         => $email,
+            'profile_gender'        => $gender ?: null,
+            'profile_birth_place'   => $birthPlace ?: null,
+            'profile_dob'           => $dob ?: null,
+            'profile_password'      => $dob ? md5($dob) : md5('123456'),
+            'profile_handphone1'    => $handphone1 ?: null,
+            'profile_handphone2'    => $handphone2 ?: null,
+            'profile_photo'         => session('register_picture') ?: null,
+            'profile_record_status' => 'A',
+            'profile_insert_by'     => 'GOOGLE',
+            'profile_insert_date'   => date('Y-m-d H:i:s'),
+            'profile_online_status' => 0,
+            'profile_disable'       => 0,
+        ];
+
+        log_message('error', 'GOOGLE REGISTER: DOB = ' . ($dob ?: 'NULL') . ', Password = ' . ($dob ? md5($dob) : md5('123456')));
+
+        $insert = $db->table('user_profile')->insert($data);
+
+        if (!$insert) {
+            return redirect()->back()->with('error', 'Gagal membuat akun');
+        }
+
+        $profileId = $db->insertID();
+
+        log_message('error', 'GOOGLE REGISTER: User registered - ' . $email . ' profile_id: ' . $profileId);
+
+        $photoUrl = session('register_picture') ?: null;
+
+        log_message('error', 'GOOGLE REGISTER: Photo URL from session = ' . ($photoUrl ?: 'NULL'));
+        log_message('error', 'GOOGLE REGISTER: All session data = ' . json_encode(session()->get()));
+
+        session()->remove(['register_email', 'register_name', 'register_picture']);
+
+        log_message('error', 'GOOGLE REGISTER: Photo URL = ' . ($photoUrl ?: 'NULL'));
+
+        session()->set([
+            'logged_in'       => true,
+            'login_source'    => 'APP',
+            'auth_method'     => 'GOOGLE',
+            'profile_id'      => $profileId,
+            'nama_lengkap'    => $fullname,
+            'profile_email'   => $email,
+            'profile_picture' => $photoUrl,
+            'user_role'       => 'APP',
+            'login_time'      => date('Y-m-d H:i:s'),
+        ]);
+
+        log_message('error', 'GOOGLE REGISTER: Session profile_picture = ' . (session('profile_picture') ?: 'NULL'));
+
+        return redirect()->to('/siimut/dashboard');
+    }
+
     public function cek_session()
     {
         $session = session();
@@ -421,27 +534,35 @@ class Auth extends BaseController
         $code = $this->request->getGet('code');
         
         if (!$code) {
+            log_message('error', 'GOOGLE CALLBACK: No code received');
             return redirect()->to(site_url('auth'))->with('error', 'Login Google gagal');
         }
 
         try {
+            log_message('error', 'GOOGLE CALLBACK: Code received, fetching token');
             $googleLogin = new GoogleLogin();
             $token = $googleLogin->getAccessToken($code);
             
             if (isset($token['error'])) {
+                log_message('error', 'GOOGLE CALLBACK: Token error - ' . $token['error']);
                 return redirect()->to(site_url('auth'))->with('error', 'Gagal mendapatkan akses Google');
             }
 
+            log_message('error', 'GOOGLE CALLBACK: Token received, fetching user info');
             $userInfo = $googleLogin->getUserInfo($token);
             
             $email = $userInfo->getEmail();
             $name = $userInfo->getName();
             $picture = $userInfo->getPicture();
 
+            log_message('error', 'GOOGLE CALLBACK: User info - Email: ' . $email . ', Name: ' . $name);
+
             // Cek apakah email terdaftar di database aplikasi
-            $user = $this->sessionApps->where('user_profile.profile_email', $email)
-                ->where('user_profile.profile_record_status', 'A')
+            $user = $this->sessionApps->select('*, user_group.group_name as hak_akses, master_institution_department.department_name as lokasi')
+                ->join('master_institution_department', 'master_institution_department.department_id = user_profile.profile_department_id', 'left')
                 ->join('user_group', 'user_group.group_id = user_profile.profile_group_id', 'left')
+                ->where('user_profile.profile_email', $email)
+                ->where('user_profile.profile_record_status', 'A')
                 ->first();
 
             if ($user) {
@@ -452,38 +573,40 @@ class Auth extends BaseController
                     'Administrator' => 'ADMINISTRATOR'
                 ];
 
-                $userRole = $roleMap[$user['group_name']] ?? 'APP';
+                $userRole = $roleMap[$user->hak_akses] ?? 'APP';
 
                 session()->set([
                     'logged_in'       => true,
-                    'login_source'    => 'GOOGLE',
+                    'login_source'    => 'APP',
+                    'auth_method'     => 'GOOGLE',
 
-                    'profile_id'      => $user['profile_id'],
-                    'nama_lengkap'    => $user['profile_fullname'],
-                    'profile_email'   => $user['profile_email'],
+                    'profile_id'      => $user->profile_id,
+                    'nama_lengkap'    => $user->profile_fullname,
+                    'profile_email'   => $user->profile_email,
                     'profile_picture' => $picture,
 
-                    'department_id'   => $user['department_id'],
-                    'department_name' => $user['department_name'],
+                    'department_id'   => $user->department_id,
+                    'department_name' => $user->lokasi,
                     'user_role'       => $userRole,
+                    'role_asli'       => $user->hak_akses,
 
                     'login_time'      => date('Y-m-d H:i:s'),
                 ]);
+
+                log_message('error', 'GOOGLE CALLBACK: Login success - ' . $email . ' role: ' . $userRole);
 
                 return redirect()->to('/siimut/dashboard');
             } else {
-                // Email tidak terdaftar - buat session sementara
+                // Email tidak terdaftar - redirect ke halaman register
                 session()->set([
-                    'logged_in'       => true,
-                    'login_source'    => 'GOOGLE',
-                    'nama_lengkap'    => $name,
-                    'profile_email'   => $email,
-                    'profile_picture' => $picture,
-                    'user_role'       => 'PELAPOR',
-                    'login_time'      => date('Y-m-d H:i:s'),
+                    'register_email'    => $email,
+                    'register_name'     => $name,
+                    'register_picture'  => $picture,
                 ]);
 
-                return redirect()->to('/siimut/dashboard');
+                log_message('error', 'GOOGLE CALLBACK: Email not registered - ' . $email . ' - redirect to register');
+
+                return redirect()->to(site_url('auth/register'));
             }
 
         } catch (\Exception $e) {

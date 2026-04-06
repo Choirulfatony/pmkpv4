@@ -16,10 +16,15 @@ class GoogleLogin
         $this->client->setRedirectUri(env('google.redirect_uri'));
         $this->client->addScope('email');
         $this->client->addScope('profile');
+        
+        log_message('error', 'GOOGLE INIT: client_id=' . env('google.client_id') . ', redirect_uri=' . env('google.redirect_uri'));
     }
 
     public function getAuthUrl()
     {
+        $this->client->setPrompt('select_account');
+        $redirectUri = $this->client->getRedirectUri();
+        log_message('error', 'GOOGLE AUTH: Redirect URI = ' . $redirectUri);
         return $this->client->createAuthUrl();
     }
 

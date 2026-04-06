@@ -366,13 +366,13 @@
                 <a href="#"
                     class="nav-link dropdown-toggle d-flex align-items-center gap-2"
                     data-bs-toggle="dropdown">
-                    <img src="<?= base_url('assets/adminlte/img/logorssmnew.png') ?>"
+                    <img src="<?= session('profile_picture') ?: base_url('assets/adminlte/img/logorssmnew.png') ?>"
                         class="user-image rounded-circle shadow">
                 </a>
 
                 <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
                     <li class="user-header text-bg-success">
-                        <img src="<?= base_url('assets/adminlte/img/logorssmnew.png') ?>"
+                        <img src="<?= session('profile_picture') ?: base_url('assets/adminlte/img/logorssmnew.png') ?>"
                             class="rounded-circle shadow">
                         <p>
                         <h5 class="fw-bold mb-0">

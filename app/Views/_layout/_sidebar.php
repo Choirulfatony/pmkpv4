@@ -30,6 +30,14 @@
                     <!-- MENU SIIMUT -->
                     <?php if ($login_source == 'APP'): ?>
 
+                        <!-- DEBUG HAK AKSES -->
+                        <li class="nav-item">
+                            <div class="px-3 py-2 mb-2 bg-warning text-dark rounded">
+                                <small class="d-block"><strong>Hak Akses:</strong> <?= session('role_asli') ?? '-' ?></small>
+                                <small class="d-block"><strong>User Role:</strong> <?= session('user_role') ?? '-' ?></small>
+                            </div>
+                        </li>
+
                         <!-- <li class="nav-item">
                             <a href="<?= site_url('dashboard') ?>" class="nav-link">
                                 <i class="nav-icon bi bi-speedometer"></i>

@@ -17,6 +17,11 @@ $routes->get('auth/logout', 'Auth::logout');
 $routes->get('auth/cek_session', 'Auth::cek_session');
 $routes->get('auth/google-login', 'Auth::googleLogin');
 $routes->get('auth/google-callback', 'Auth::googleCallback');
+$routes->get('auth/register', 'Auth::showRegister');
+$routes->post('auth/register/process', 'Auth::processRegister');
+
+// Redirect /dashboard ke /siimut/dashboard
+$routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
 
 
 // ================= SIIMUT =================
