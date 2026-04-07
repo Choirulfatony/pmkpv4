@@ -1,7 +1,3 @@
-<?= $this->extend('layouts/layout') ?>
-
-<?= $this->section('content') ?>
-
 <style>
     #ajax_data_periode_inm td, #ajax_data_periode_inm th {
         font-size: 12px;
@@ -421,5 +417,3 @@ function filterPeriode(type) {
     }
 }
 </script>
-
-<?= $this->endSection() ?>
