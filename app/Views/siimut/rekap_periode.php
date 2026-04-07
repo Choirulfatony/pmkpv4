@@ -27,25 +27,6 @@
         background-color: rgba(220, 53, 69, 0.9) !important;
         color: #fff !important;
     }
-    .badge-label {
-        font-size: 9px;
-        padding: 2px 5px;
-        border-radius: 3px;
-        display: inline-block;
-        margin-top: 3px;
-    }
-    .badge-terjadi {
-        background-color: rgba(255, 255, 255, 0.25);
-        color: #fff;
-    }
-    .badge-tidak {
-        background-color: rgba(255, 255, 255, 0.25);
-        color: #fff;
-    }
-    .badge-kosong {
-        background-color: rgba(0, 0, 0, 0.15);
-        color: #000;
-    }
     .dataTables_wrapper .dataTables_processing {
         display: none !important;
     }
@@ -421,23 +402,8 @@ function initTable() {
 }
 
 function renderCell(nilai, tercapai, num, denum, units) {
-    var label = '';
-    var labelClass = '';
-    
-    if (!nilai || nilai === 0) {
-        label = 'Kosong';
-        labelClass = 'badge-kosong';
-    } else if (tercapai) {
-        label = 'Terjadi';
-        labelClass = 'badge-terjadi';
-    } else {
-        label = 'Tidak';
-        labelClass = 'badge-tidak';
-    }
-    
     return '<div class="fw-semibold">' + nilai + ' ' + units + '</div>' +
-           '<div class="small opacity-75">' + num + ' / ' + denum + '</div>' +
-           '<span class="badge-label ' + labelClass + '">' + label + '</span>';
+           '<div class="small opacity-75">' + num + ' / ' + denum + '</div>';
 }
 
 function gantiTahun() {
