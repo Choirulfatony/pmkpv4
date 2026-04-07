@@ -121,12 +121,12 @@
 </style>
 
 <div class="container-fluid py-4">
-    <div class="row mb-4">
+    <!-- <div class="row mb-4">
         <div class="col-12">
             <h4 class="mb-1"><i class="bi bi-calendar-range me-2"></i>Rekap INM per Periode</h4>
             <p class="text-muted">Laporan indikator nasional mutu per Triwulan, Semester, dan Tahun</p>
         </div>
-    </div>
+    </div> -->
 
     <div class="row mb-3">
         <div class="col-md-4 d-flex align-items-center">
@@ -442,4 +442,5 @@ function filterPeriode(type) {
         console.log('Showing Tahun column');
     }
 }
+
 </script>
