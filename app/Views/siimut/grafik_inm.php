@@ -288,8 +288,13 @@ function renderLineChart(bulanan, indicator) {
     
     const target = parseFloat(indicator.indicator_target);
     const units = indicator.indicator_units || '';
-    // Auto scale - jika target <= 100 dan units adalah %, gunakan max 100
-    const usePercentScale = (units === '%' || units.includes('%')) && target <= 100;
+    // Max scale: gunakan target * 1.3 atau 100 (yg lebih kecil), atau target + 20 jika > 80%
+    let maxScale;
+    if (units === '%' || units.includes('%')) {
+        maxScale = target <= 80 ? 100 : target + 20;
+    } else {
+        maxScale = target * 1.3;
+    }
 
     if (lineChart) lineChart.destroy();
 
@@ -342,7 +347,7 @@ function renderLineChart(bulanan, indicator) {
             scales: {
                 y: { 
                     beginAtZero: true,
-                    max: usePercentScale ? 100 : undefined,
+                    max: maxScale,
                     title: {
                         display: true,
                         text: 'Nilai ' + units
@@ -387,6 +392,13 @@ function renderTrenKinerjaChart(triwulan, semester, indicator) {
     
     const target = parseFloat(indicator.indicator_target);
     const units = indicator.indicator_units || '';
+    // Max scale calculation
+    let maxScaleTriwulan;
+    if (units === '%' || units.includes('%')) {
+        maxScaleTriwulan = target <= 80 ? 100 : target + 20;
+    } else {
+        maxScaleTriwulan = target * 1.3;
+    }
 
     if (trenKinerjaChart) trenKinerjaChart.destroy();
 
@@ -442,6 +454,7 @@ function renderTrenKinerjaChart(triwulan, semester, indicator) {
             scales: {
                 y: { 
                     beginAtZero: true,
+                    max: maxScaleTriwulan,
                     title: {
                         display: true,
                         text: 'Nilai ' + units
