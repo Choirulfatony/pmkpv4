@@ -15,26 +15,17 @@
         text-align: left;
         white-space: nowrap;
     }
-    .badge-tercap {
-        background-color: #28a745;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 11px;
+    .cell-target {
+        background-color: rgba(40, 167, 69, 0.9) !important;
+        color: #fff !important;
     }
-    .badge-tidak-tercap {
-        background-color: #dc3545;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 11px;
+    .cell-empty {
+        background-color: rgba(255, 193, 7, 0.9) !important;
+        color: #000 !important;
     }
-    .badge-kosong {
-        background-color: #ffc107;
-        color: #000;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 11px;
+    .cell-fail {
+        background-color: rgba(220, 53, 69, 0.9) !important;
+        color: #fff !important;
     }
     .dataTables_wrapper .dataTables_processing {
         display: none !important;
@@ -278,6 +269,38 @@ function initTable() {
                 $('#loading_overlay_detail').remove();
             }
         },
+        columnDefs: [{
+            targets: [0, 1, 2],
+            orderable: false
+        }, {
+            targets: '_all',
+            createdCell: function(td, cellData, rowData, rowIndex, colIndex) {
+                if (colIndex > 2) {
+                    var periodeData;
+                    var colName = table_periode.column(colIndex).dataSrc();
+                    
+                    if (colName.includes('triwulan')) {
+                        var twNum = parseInt(colName.split('.')[1]);
+                        periodeData = rowData.triwulan ? rowData.triwulan[twNum] : null;
+                    } else if (colName.includes('semester')) {
+                        var smNum = parseInt(colName.split('.')[1]);
+                        periodeData = rowData.semester ? rowData.semester[smNum] : null;
+                    } else if (colName.includes('tahun')) {
+                        periodeData = rowData.tahun;
+                    }
+                    
+                    if (periodeData) {
+                        if (!periodeData.nilai || periodeData.nilai === 0) {
+                            $(td).addClass('cell-empty');
+                        } else if (periodeData.tercap) {
+                            $(td).addClass('cell-target');
+                        } else {
+                            $(td).addClass('cell-fail');
+                        }
+                    }
+                }
+            }
+        }],
         columns: [
             { 
                 data: null,
@@ -379,17 +402,8 @@ function initTable() {
 }
 
 function renderCell(nilai, tercapai, num, denum, units) {
-    if (!nilai || nilai === 0) {
-        return '<span class="badge badge-kosong">Kosong</span>';
-    }
-    
-    var badge = tercapai 
-        ? '<span class="badge badge-tercap">Tercapai</span>' 
-        : '<span class="badge badge-tidak-tercap">Tidak</span>';
-    
     return '<div class="fw-semibold">' + nilai + ' ' + units + '</div>' +
-           '<div class="small text-muted">' + num + ' / ' + denum + '</div>' +
-           '<div class="mt-1">' + badge + '</div>';
+           '<div class="small opacity-75">' + num + ' / ' + denum + '</div>';
 }
 
 function gantiTahun() {
