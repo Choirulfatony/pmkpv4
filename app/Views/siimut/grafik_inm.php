@@ -127,9 +127,15 @@ var lineChart, trenKinerjaChart, tahunanChart;
 
 function getMaxScale(target, units, dataArray) {
     var maxData = Math.max.apply(null, dataArray.filter(function(x) { return x > 0; }));
-    if (units.indexOf('%') !== -1) {
+    
+    var isPercent = units.indexOf('%') !== -1;
+    var isTime = units.indexOf('menit') !== -1 || units.indexOf('mnt') !== -1 || units.indexOf('menit') !== -1 || units.indexOf('detik') !== -1 || units.indexOf('dtk') !== -1;
+    
+    if (isPercent) {
         var calcMax = target * 2;
         return Math.max(maxData * 1.2, calcMax);
+    } else if (isTime) {
+        return Math.max(maxData * 1.3, target * 1.3);
     }
     return Math.max(maxData * 1.2, target * 1.3);
 }
