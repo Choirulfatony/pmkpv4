@@ -288,6 +288,8 @@ function renderLineChart(bulanan, indicator) {
     
     const target = parseFloat(indicator.indicator_target);
     const units = indicator.indicator_units || '';
+    // Auto scale - jika target <= 100 dan units adalah %, gunakan max 100
+    const usePercentScale = (units === '%' || units.includes('%')) && target <= 100;
 
     if (lineChart) lineChart.destroy();
 
@@ -340,152 +342,10 @@ function renderLineChart(bulanan, indicator) {
             scales: {
                 y: { 
                     beginAtZero: true,
+                    max: usePercentScale ? 100 : undefined,
                     title: {
                         display: true,
                         text: 'Nilai ' + units
-                    }
-                }
-            }
-        }
-    });
-}
-
-function renderTriwulanChart(triwulan, indicator) {
-    const ctx = document.getElementById('triwulanChart').getContext('2d');
-    
-    const labels = ['TW 1', 'TW 2', 'TW 3', 'TW 4'];
-    const data = [triwulan[1]?.nilai, triwulan[2]?.nilai, triwulan[3]?.nilai, triwulan[4]?.nilai];
-    const colors = [triwulan[1]?.tercap ? '#28a745' : '#dc3545', triwulan[2]?.tercap ? '#28a745' : '#dc3545', triwulan[3]?.tercap ? '#28a745' : '#dc3545', triwulan[4]?.tercap ? '#28a745' : '#dc3545'];
-    const target = indicator.indicator_target;
-
-    if (triwulanChart) triwulanChart.destroy();
-
-    triwulanChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Nilai',
-                data: data,
-                backgroundColor: colors,
-                borderWidth: 0
-            }, {
-                label: 'Target',
-                data: Array(4).fill(target),
-                type: 'line',
-                borderColor: '#ffc107',
-                borderDash: [5, 5],
-                pointRadius: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
-    });
-}
-
-function renderSemesterChart(semester, indicator) {
-    const ctx = document.getElementById('semesterChart').getContext('2d');
-    
-    const labels = ['Semester 1', 'Semester 2'];
-    const data = [semester[1]?.nilai, semester[2]?.nilai];
-    const colors = [semester[1]?.tercap ? '#28a745' : '#dc3545', semester[2]?.tercap ? '#28a745' : '#dc3545'];
-    const target = indicator.indicator_target;
-
-    if (semesterChart) semesterChart.destroy();
-
-    semesterChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Nilai',
-                data: data,
-                backgroundColor: colors,
-                borderWidth: 0
-            }, {
-                label: 'Target',
-                data: Array(2).fill(target),
-                type: 'line',
-                borderColor: '#ffc107',
-                borderDash: [5, 5],
-                pointRadius: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
-    });
-}
-
-function renderTahunanChart(tahunan, indicator) {
-    const ctx = document.getElementById('tahunanChart').getContext('2d');
-    
-    const target = parseFloat(indicator.indicator_target);
-    const nilai = tahunan.nilai || 0;
-    const tercapai = tahunan.tercap;
-    const units = indicator.indicator_units || '';
-
-    if (tahunanChart) tahunanChart.destroy();
-
-    tahunanChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Capaian', 'Target'],
-            datasets: [{
-                label: 'Nilai',
-                data: [nilai, target],
-                backgroundColor: [
-                    tercapai ? '#28a745' : '#dc3545',
-                    '#6c757d'
-                ],
-                borderWidth: 0,
-                barThickness: 80
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                title: {
-                    display: true,
-                    text: `Nilai: ${nilai}${units}  |  Target: ${target}${units}  |  Status: ${tercapai ? 'TERCAPAI ✓' : 'TIDAK TERCAPAI ✗'}`,
-                    font: { size: 16, weight: 'bold' },
-                    padding: { top: 10, bottom: 20 },
-                    color: '#333'
-                },
-                datalabels: {
-                    display: true,
-                    anchor: 'end',
-                    align: 'end',
-                    formatter: function(value) {
-                        return value + units;
-                    }
-                }
-            },
-            scales: {
-                x: { 
-                    beginAtZero: true, 
-                    max: Math.max(target * 1.5, nilai * 1.2),
-                    title: {
-                        display: true,
-                        text: 'Nilai ' + units
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: ''
                     }
                 }
             }
