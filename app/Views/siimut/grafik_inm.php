@@ -346,6 +346,7 @@ function renderTahunanChart(tahunan, indicator) {
     var nilai = tahunan.nilai || 0;
     var tercapai = tahunan.tercap || false;
     var units = indicator.indicator_units || '';
+    var percent = target > 0 ? Math.round((nilai / target) * 100) : 0;
 
     if (tahunanChart) tahunanChart.destroy();
     tahunanChart = new Chart(ctx, {
@@ -367,7 +368,7 @@ function renderTahunanChart(tahunan, indicator) {
                 legend: { display: false },
                 title: {
                     display: true,
-                    text: 'Capaian: ' + nilai + ' ' + units + '  |  Target: ' + target + ' ' + units + '  |  Status: ' + (tercapai ? 'TERCAPAI' : 'TIDAK TERCAPAI'),
+                    text: 'Capaian: ' + nilai + ' ' + units + ' (' + percent + '%)  |  Target: ' + target + ' ' + units + '  |  Status: ' + (tercaping ? 'TERCAPAI' : 'TIDAK TERCAPAI'),
                     font: { size: 14, weight: 'bold' },
                     color: '#333'
                 },
