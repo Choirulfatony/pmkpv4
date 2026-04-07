@@ -748,4 +748,139 @@ class RekapLaporanInmModel extends Model
                 return 30;
         }
     }
+
+    /**
+     * Ambil data bulanan untuk satu indikator
+     */
+    public function getMonthlyDataByIndicator(int $indicatorId, int $tahun): array
+    {
+        $db = db_connect();
+        $builder = $db->table('quality_indicator_result qir');
+
+        $builder->select("
+            MONTH(qir.result_period) AS bulan,
+            SUM(qir.result_numerator_value) AS num,
+            SUM(qir.result_denumerator_value) AS denum
+        ");
+
+        $builder->join('quality_indicator qi', 'qir.result_indicator_id = qi.indicator_id', 'LEFT');
+        $builder->where('qir.result_indicator_id', $indicatorId);
+        $builder->where("YEAR(qir.result_period)", $tahun);
+        $builder->groupBy('MONTH(qir.result_period)');
+
+        $results = $builder->get()->getResult();
+
+        $data = array_fill(1, 12, ['num' => 0, 'denum' => 0, 'nilai' => null]);
+        
+        $indicator = $this->getDetailByIdInm($indicatorId);
+        $target = (float) ($indicator->indicator_target ?? 0);
+        $factors = (float) ($indicator->indicator_factors ?? 1);
+
+        foreach ($results as $row) {
+            $bulan = (int) $row->bulan;
+            $num = (float) $row->num;
+            $denum = (float) $row->denum;
+            
+            $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
+            
+            $data[$bulan] = [
+                'num'    => $num,
+                'denum'  => $denum,
+                'nilai'  => $nilai
+            ];
+        }
+
+        return $data;
+    }
+
+    /**
+     * Ambil nilai triwulan
+     */
+    public function getNilaiTriwulan(int $indicatorId, int $tahun): array
+    {
+        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
+        
+        $indicator = $this->getDetailByIdInm($indicatorId);
+        $target = (float) ($indicator->indicator_target ?? 0);
+        $factors = (float) ($indicator->indicator_factors ?? 1);
+        $operator = $indicator->indicator_target_calculation ?? '>=';
+
+        $triwulan = [];
+        for ($tw = 1; $tw <= 4; $tw++) {
+            $bulanMulai = ($tw - 1) * 3 + 1;
+            $bulanAkhir = $tw * 3;
+
+            $totalNum = 0;
+            $totalDenum = 0;
+            for ($i = $bulanMulai; $i <= $bulanAkhir; $i++) {
+                $totalNum += $monthly[$i]['num'];
+                $totalDenum += $monthly[$i]['denum'];
+            }
+
+            $nilai = $totalDenum > 0 ? round(($totalNum / $totalDenum) * $factors, 2) : null;
+            $tercap = $this->cekTercapai($nilai, $target, $operator);
+
+            $triwulan[$tw] = ['nilai' => $nilai, 'num' => $totalNum, 'denum' => $totalDenum, 'tercap' => $tercap];
+        }
+
+        return $triwulan;
+    }
+
+    /**
+     * Ambil nilai semester
+     */
+    public function getNilaiSemester(int $indicatorId, int $tahun): array
+    {
+        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
+        
+        $indicator = $this->getDetailByIdInm($indicatorId);
+        $target = (float) ($indicator->indicator_target ?? 0);
+        $factors = (float) ($indicator->indicator_factors ?? 1);
+        $operator = $indicator->indicator_target_calculation ?? '>=';
+
+        $semester = [];
+        for ($sm = 1; $sm <= 2; $sm++) {
+            $bulanMulai = ($sm - 1) * 6 + 1;
+            $bulanAkhir = $sm * 6;
+
+            $totalNum = 0;
+            $totalDenum = 0;
+            for ($i = $bulanMulai; $i <= $bulanAkhir; $i++) {
+                $totalNum += $monthly[$i]['num'];
+                $totalDenum += $monthly[$i]['denum'];
+            }
+
+            $nilai = $totalDenum > 0 ? round(($totalNum / $totalDenum) * $factors, 2) : null;
+            $tercap = $this->cekTercapai($nilai, $target, $operator);
+
+            $semester[$sm] = ['nilai' => $nilai, 'num' => $totalNum, 'denum' => $totalDenum, 'tercap' => $tercap];
+        }
+
+        return $semester;
+    }
+
+    /**
+     * Ambil nilai tahunan
+     */
+    public function getNilaiTahun(int $indicatorId, int $tahun): array
+    {
+        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
+        
+        $indicator = $this->getDetailByIdInm($indicatorId);
+        $target = (float) ($indicator->indicator_target ?? 0);
+        $factors = (float) ($indicator->indicator_factors ?? 1);
+        $operator = $indicator->indicator_target_calculation ?? '>=';
+
+        $totalNum = 0;
+        $totalDenum = 0;
+        for ($i = 1; $i <= 12; $i++) {
+            $totalNum += $monthly[$i]['num'];
+            $totalDenum += $monthly[$i]['denum'];
+        }
+
+        $nilai = $totalDenum > 0 ? round(($totalNum / $totalDenum) * $factors, 2) : null;
+        $tercap = $this->cekTercapai($nilai, $target, $operator);
+
+        return ['nilai' => $nilai, 'num' => $totalNum, 'denum' => $totalDenum, 'tercap' => $tercap, 'target' => $target];
+    }
 }
