@@ -60,11 +60,14 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(255, 255, 255, 0.8);
+        background: var(--bs-body-bg, rgba(255, 255, 255, 0.8));
         display: flex;
         justify-content: center;
         align-items: center;
         z-index: 9999;
+    }
+    [data-bs-theme="dark"] .overlay {
+        background: var(--bs-body-bg, rgba(33, 37, 41, 0.9));
     }
     .loader {
         width: 3em;
