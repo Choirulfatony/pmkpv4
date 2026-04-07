@@ -44,6 +44,63 @@
         border-bottom: 2px solid #28a745;
         font-weight: bold;
     }
+    .table-responsive {
+        position: relative;
+    }
+    .overlay-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+    .loader {
+        width: 3em;
+        height: 3em;
+        transform: rotate(165deg);
+    }
+    .loader:before,
+    .loader:after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        display: block;
+        width: 1em;
+        height: 1em;
+        border-radius: 0.5em;
+        transform: translate(-50%, -50%);
+    }
+    .loader:before {
+        animation: before8 2s infinite;
+    }
+    .loader:after {
+        animation: after6 2s infinite;
+    }
+    @keyframes before8 {
+        0% { width: 1em; box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75); }
+        35% { width: 4em; box-shadow: 0 -1em rgba(225, 20, 98, 0.75), 0 1em rgba(111, 202, 220, 0.75); }
+        70% { width: 1em; box-shadow: -2em -1em rgba(225, 20, 98, 0.75), 2em 1em rgba(111, 202, 220, 0.75); }
+        100% { box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75); }
+    }
+    @keyframes after6 {
+        0% { height: 1em; box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75); }
+        35% { height: 4em; box-shadow: 1em 0 rgba(61, 184, 143, 0.75), -1em 0 rgba(233, 169, 32, 0.75); }
+        70% { height: 1em; box-shadow: 1em -2em rgba(61, 184, 143, 0.75), -1em 2em rgba(233, 169, 32, 0.75); }
+        100% { box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75); }
+    }
 </style>
 
 <div class="container-fluid py-4">
@@ -155,11 +212,16 @@
     </div>
 
     <!-- Loading -->
-    <div id="loading" class="text-center py-5">
-        <div class="spinner-border text-success" role="status">
-            <span class="visually-hidden">Loading...</span>
+    <div id="loadingGrafik" class="card" style="display: none;">
+        <div class="card-body text-center py-5">
+            <div class="table-responsive" style="position: relative; min-height: 200px;">
+                <div class="overlay-wrapper" id="loading_overlay_grafik">
+                    <div class="overlay">
+                        <i class="loader"></i>
+                    </div>
+                </div>
+            </div>
         </div>
-        <p class="mt-2 text-muted">Pilih indikator untuk melihat grafik</p>
     </div>
 </div>
 
@@ -170,6 +232,8 @@ let lineChart, triwulanChart, semesterChart, tahunanChart;
 $(document).ready(function() {
     <?php if ($indicatorId): ?>
     loadGrafik();
+    <?php else: ?>
+    $('#loadingGrafik').show();
     <?php endif; ?>
 });
 
@@ -180,11 +244,11 @@ function loadGrafik() {
     if (!indicatorId) {
         $('#indicatorInfo').hide();
         $('#grafikContainer').hide();
-        $('#loading').show();
+        $('#loadingGrafik').hide();
         return;
     }
 
-    $('#loading').show();
+    $('#loadingGrafik').show();
     $('#grafikContainer').hide();
 
     $.ajax({
@@ -192,7 +256,7 @@ function loadGrafik() {
         type: 'POST',
         data: { tahun: tahun, indicator_id: indicatorId },
         success: function(response) {
-            $('#loading').hide();
+            $('#loadingGrafik').hide();
             $('#grafikContainer').show();
             $('#indicatorInfo').show();
 
