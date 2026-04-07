@@ -499,7 +499,7 @@ function renderTrenKinerjaChart(triwulan, semester, indicator) {
     // Labels: TW1, TW2, TW3, TW4, S1, S2
     const labels = ['TW 1', 'TW 2', 'TW 3', 'TW 4', 'Sem 1', 'Sem 2'];
     
-    // Data triwulan dan semester
+    // Data triwulan dan semester - convert object to array
     const dataTriwulan = [
         triwulan[1]?.nilai || 0,
         triwulan[2]?.nilai || 0,
@@ -516,11 +516,17 @@ function renderTrenKinerjaChart(triwulan, semester, indicator) {
     const data = [...dataTriwulan, ...dataSemester];
     
     // Warna: hijau jika tercapai, merah jika tidak
-    const colorsTriwulan = triwulan.map(t => t?.tercap ? '#28a745' : '#dc3545');
-    const colorsSemester = semester.map(s => s?.tercap ? '#20c997' : '#fd7e14');
-    const colors = [...colorsTriwulan, ...colorsSemester];
+    const colors = [
+        triwulan[1]?.tercap ? '#28a745' : '#dc3545',
+        triwulan[2]?.tercap ? '#28a745' : '#dc3545',
+        triwulan[3]?.tercap ? '#28a745' : '#dc3545',
+        triwulan[4]?.tercap ? '#28a745' : '#dc3545',
+        semester[1]?.tercap ? '#20c997' : '#fd7e14',
+        semester[2]?.tercap ? '#20c997' : '#fd7e14'
+    ];
     
-    const target = indicator.indicator_target;
+    const target = parseFloat(indicator.indicator_target);
+    const units = indicator.indicator_units || '';
 
     if (trenKinerjaChart) trenKinerjaChart.destroy();
 
@@ -566,9 +572,9 @@ function renderTrenKinerjaChart(triwulan, semester, indicator) {
                                 } else {
                                     status = semester[idx - 3]?.tercap ? '✓ Tercapai' : '✗ Tidak';
                                 }
-                                return `Nilai: ${context.raw} ${indicator.indicator_units || ''} (${status})`;
+                                return `Nilai: ${context.raw}${units} (${status})`;
                             }
-                            return `Target: ${context.raw}`;
+                            return `Target: ${context.raw}${units}`;
                         }
                     }
                 }
@@ -578,7 +584,7 @@ function renderTrenKinerjaChart(triwulan, semester, indicator) {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Nilai'
+                        text: 'Nilai ' + units
                     }
                 }
             }
