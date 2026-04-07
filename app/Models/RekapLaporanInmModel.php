@@ -422,7 +422,7 @@ class RekapLaporanInmModel extends Model
 
     /**
      * Hitung jumlah ruangan untuk indicator tertentu
-    */
+     */
     public function countDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [])
     {
         $db = db_connect();
@@ -584,16 +584,35 @@ class RekapLaporanInmModel extends Model
             }
 
             // Helper to compute nilai from num/denum range
-            $computeNilai = function ($startBulan, $endBulan) use ($monthlyNum, $monthlyDenum, $factors) {
-                $totalNum = array_sum(array_slice($monthlyNum, $startBulan - 1, $endBulan - $startBulan + 1));
-                $totalDenum = array_sum(array_slice($monthlyDenum, $startBulan - 1, $endBulan - $startBulan + 1));
+            // $computeNilai = function ($startBulan, $endBulan) use ($monthlyNum, $monthlyDenum, $factors) {
+            //     $totalNum = array_sum(array_slice($monthlyNum, $startBulan - 1, $endBulan - $startBulan + 1));
+            //     $totalDenum = array_sum(array_slice($monthlyDenum, $startBulan - 1, $endBulan - $startBulan + 1));
 
-                if ($totalDenum == 0) {
-                    return null;
+            //     if ($totalDenum == 0) {
+            //         return null;
+            //     }
+
+            //     $nilai = round(($totalNum / $totalDenum) * $factors, 2);
+            //     return $nilai;
+            // };
+
+            $computeNilai = function ($startBulan, $endBulan) use ($monthlyNum, $monthlyDenum, $factors) {
+
+                $totalNum = 0;
+                $totalDenum = 0;
+
+                for ($i = $startBulan; $i <= $endBulan; $i++) {
+                    $totalNum += $monthlyNum[$i] ?? 0;
+                    $totalDenum += $monthlyDenum[$i] ?? 0;
                 }
 
-                $nilai = round(($totalNum / $totalDenum) * $factors, 2);
-                return $nilai;
+                // 🔥 FIX: jangan return null
+                if ($totalDenum == 0) {
+                    return 0;
+                }
+
+                // 🔥 FIX: jangan langsung round (biar akurat)
+                return ($totalNum / $totalDenum) * $factors;
             };
 
             // Triwulan (4 periods of 3 months each)
@@ -684,12 +703,18 @@ class RekapLaporanInmModel extends Model
         }
         $angka = (float) preg_replace('/[^0-9.]/', '', $nilai);
         switch ($operator) {
-            case '>=': return $angka >= $target;
-            case '>': return $angka > $target;
-            case '<=': return $angka <= $target;
-            case '<': return $angka < $target;
-            case '=': return $angka == $target;
-            default: return $angka >= $target;
+            case '>=':
+                return $angka >= $target;
+            case '>':
+                return $angka > $target;
+            case '<=':
+                return $angka <= $target;
+            case '<':
+                return $angka < $target;
+            case '=':
+                return $angka == $target;
+            default:
+                return $angka >= $target;
         }
     }
 
