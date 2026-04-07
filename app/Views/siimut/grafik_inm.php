@@ -178,6 +178,13 @@ function loadGrafik() {
     xhr.send('tahun=' + tahun + '&indicator_id=' + indicatorId);
 }
 
+function getMaxScale(target, units) {
+    if (units.indexOf('%') !== -1) {
+        return target <= 80 ? 100 : target + 20;
+    }
+    return target * 1.3;
+}
+
 function renderLineChart(bulanan, indicator) {
     var ctx = document.getElementById('lineChart').getContext('2d');
     var labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -203,7 +210,7 @@ function renderLineChart(bulanan, indicator) {
                 tension: 0.4,
                 pointRadius: 6
             }, {
-                label: 'Target',
+                label: 'Target (' + target + units + ')',
                 data: Array(12).fill(target),
                 borderColor: '#ffc107',
                 borderDash: [8, 4],
@@ -214,8 +221,15 @@ function renderLineChart(bulanan, indicator) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true, position: 'top' }
+            },
             scales: {
-                y: { beginAtZero: true, max: maxScale }
+                y: { 
+                    beginAtZero: true, 
+                    max: maxScale,
+                    title: { display: true, text: 'Nilai ' + units }
+                }
             }
         }
     });
@@ -255,7 +269,7 @@ function renderTrenKinerjaChart(triwulan, semester, indicator) {
                 backgroundColor: colors,
                 borderWidth: 0
             }, {
-                label: 'Target',
+                label: 'Target (' + target + units + ')',
                 data: Array(6).fill(target),
                 type: 'line',
                 borderColor: '#ffc107',
@@ -266,8 +280,15 @@ function renderTrenKinerjaChart(triwulan, semester, indicator) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true, position: 'top' }
+            },
             scales: {
-                y: { beginAtZero: true, max: maxScale }
+                y: { 
+                    beginAtZero: true, 
+                    max: maxScale,
+                    title: { display: true, text: 'Nilai ' + units }
+                }
             }
         }
     });
