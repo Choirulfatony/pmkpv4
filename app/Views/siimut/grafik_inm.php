@@ -125,11 +125,13 @@
 <script>
 var lineChart, trenKinerjaChart, tahunanChart;
 
-function getMaxScale(target, units) {
+function getMaxScale(target, units, dataArray) {
+    var maxData = Math.max.apply(null, dataArray.filter(function(x) { return x > 0; }));
     if (units.indexOf('%') !== -1) {
-        return target <= 80 ? 100 : target + 20;
+        var calcMax = target * 2;
+        return Math.max(maxData * 1.2, calcMax);
     }
-    return target * 1.3;
+    return Math.max(maxData * 1.2, target * 1.3);
 }
 
 function loadGrafik() {
@@ -178,13 +180,6 @@ function loadGrafik() {
     xhr.send('tahun=' + tahun + '&indicator_id=' + indicatorId);
 }
 
-function getMaxScale(target, units) {
-    if (units.indexOf('%') !== -1) {
-        return target <= 80 ? 100 : target + 20;
-    }
-    return target * 1.3;
-}
-
 function renderLineChart(bulanan, indicator) {
     var ctx = document.getElementById('lineChart').getContext('2d');
     var labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -194,7 +189,7 @@ function renderLineChart(bulanan, indicator) {
     }
     var target = parseFloat(indicator.indicator_target);
     var units = indicator.indicator_units || '';
-    var maxScale = getMaxScale(target, units);
+    var maxScale = getMaxScale(target, units, data);
 
     if (lineChart) lineChart.destroy();
     lineChart = new Chart(ctx, {
@@ -256,7 +251,7 @@ function renderTrenKinerjaChart(triwulan, semester, indicator) {
     ];
     var target = parseFloat(indicator.indicator_target);
     var units = indicator.indicator_units || '';
-    var maxScale = getMaxScale(target, units);
+    var maxScale = getMaxScale(target, units, data);
 
     if (trenKinerjaChart) trenKinerjaChart.destroy();
     trenKinerjaChart = new Chart(ctx, {
