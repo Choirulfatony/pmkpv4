@@ -25,89 +25,23 @@
         border-radius: 20px;
         font-weight: bold;
     }
-    .status-tercap {
-        background: #28a745;
-        color: white;
-    }
-    .status-tidak {
-        background: #dc3545;
-        color: white;
-    }
-    .card-grafik {
-        border: none;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-    }
-    .card-grafik .card-header {
-        background: #f8f9fa;
-        border-bottom: 2px solid #28a745;
-        font-weight: bold;
-    }
-    .table-responsive {
-        position: relative;
-    }
-    .overlay-wrapper {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-    }
-    .overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: var(--bs-body-bg, rgba(255, 255, 255, 0.8));
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-    [data-bs-theme="dark"] .overlay {
-        background: var(--bs-body-bg, rgba(33, 37, 41, 0.9));
-    }
-    .loader {
-        width: 3em;
-        height: 3em;
-        transform: rotate(165deg);
-    }
-    .loader:before,
-    .loader:after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        display: block;
-        width: 1em;
-        height: 1em;
-        border-radius: 0.5em;
-        transform: translate(-50%, -50%);
-    }
-    .loader:before {
-        animation: before8 2s infinite;
-    }
-    .loader:after {
-        animation: after6 2s infinite;
-    }
-    @keyframes before8 {
-        0% { width: 1em; box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75); }
-        35% { width: 4em; box-shadow: 0 -1em rgba(225, 20, 98, 0.75), 0 1em rgba(111, 202, 220, 0.75); }
-        70% { width: 1em; box-shadow: -2em -1em rgba(225, 20, 98, 0.75), 2em 1em rgba(111, 202, 220, 0.75); }
-        100% { box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75); }
-    }
-    @keyframes after6 {
-        0% { height: 1em; box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75); }
-        35% { height: 4em; box-shadow: 1em 0 rgba(61, 184, 143, 0.75), -1em 0 rgba(233, 169, 32, 0.75); }
-        70% { height: 1em; box-shadow: 1em -2em rgba(61, 184, 143, 0.75), -1em 2em rgba(233, 169, 32, 0.75); }
-        100% { box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75); }
-    }
+    .status-tercap { background: #28a745; color: white; }
+    .status-tidak { background: #dc3545; color: white; }
+    .card-grafik { border: none; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .card-grafik .card-header { background: #f8f9fa; border-bottom: 2px solid #28a745; font-weight: bold; }
+    .table-responsive { position: relative; }
+    .overlay-wrapper { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+    .overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--bs-body-bg, rgba(255,255,255,0.8)); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+    [data-bs-theme="dark"] .overlay { background: var(--bs-body-bg, rgba(33,37,41,0.9)); }
+    .loader { width: 3em; height: 3em; transform: rotate(165deg); }
+    .loader:before, .loader:after { content:""; position: absolute; top: 50%; left: 50%; display: block; width: 1em; height: 1em; border-radius: 0.5em; transform: translate(-50%, -50%); }
+    .loader:before { animation: before8 2s infinite; }
+    .loader:after { animation: after6 2s infinite; }
+    @keyframes before8 { 0% { width: 1em; box-shadow: 2em -1em rgba(225,20,98,0.75), -2em 1em rgba(111,202,220,0.75); } 35% { width: 4em; box-shadow: 0 -1em rgba(225,20,98,0.75), 0 1em rgba(111,202,220,0.75); } 70% { width: 1em; box-shadow: -2em -1em rgba(225,20,98,0.75), 2em 1em rgba(111,202,220,0.75); } 100% { box-shadow: 2em -1em rgba(225,20,98,0.75), -2em 1em rgba(111,202,220,0.75); } }
+    @keyframes after6 { 0% { height: 1em; box-shadow: 1em 2em rgba(61,184,143,0.75), -1em -2em rgba(233,169,32,0.75); } 35% { height: 4em; box-shadow: 1em 0 rgba(61,184,143,0.75), -1em 0 rgba(233,169,32,0.75); } 70% { height: 1em; box-shadow: 1em -2em rgba(61,184,143,0.75), -1em 2em rgba(233,169,32,0.75); } 100% { box-shadow: 1em 2em rgba(61,184,143,0.75), -1em -2em rgba(233,169,32,0.75); } }
 </style>
 
 <div class="container-fluid py-4">
-    <!-- Header -->
     <div class="row mb-4">
         <div class="col-12">
             <h4><i class="bi bi-graph-up me-2"></i>Grafik Tren Indikator Nasional Mutu</h4>
@@ -115,7 +49,6 @@
         </div>
     </div>
 
-    <!-- Filter -->
     <div class="row mb-4">
         <div class="col-md-4">
             <label class="form-label fw-bold">Pilih Tahun</label>
@@ -130,15 +63,12 @@
             <select class="form-select" id="indicator_id" onchange="loadGrafik()">
                 <option value="">-- Pilih Indikator --</option>
                 <?php foreach ($indicators as $ind): ?>
-                    <option value="<?= $ind->indicator_id ?>" <?= ($ind->indicator_id == $indicatorId) ? 'selected' : '' ?>>
-                        <?= esc($ind->indicator_element) ?>
-                    </option>
+                    <option value="<?= $ind->indicator_id ?>" <?= ($ind->indicator_id == $indicatorId) ? 'selected' : '' ?>><?= esc($ind->indicator_element) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
     </div>
 
-    <!-- Indicator Info -->
     <div id="indicatorInfo" class="indicator-info" style="display: none;">
         <div class="row align-items-center">
             <div class="col-md-8">
@@ -151,65 +81,40 @@
         </div>
     </div>
 
-    <!-- Grafik -->
     <div id="grafikContainer" style="display: none;">
-        <!-- Line Chart - Bulanan -->
         <div class="row">
             <div class="col-12">
                 <div class="card card-grafik">
-                    <div class="card-header">
-                        <i class="bi bi-graph-up me-2"></i>Tren Bulanan (Line Chart)
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container">
-                            <canvas id="lineChart"></canvas>
-                        </div>
-                    </div>
+                    <div class="card-header"><i class="bi bi-graph-up me-2"></i>Tren Bulanan (Line Chart)</div>
+                    <div class="card-body"><div class="chart-container"><canvas id="lineChart"></canvas></div></div>
                 </div>
             </div>
         </div>
 
-        <!-- Gabungan Triwulan & Semester -->
         <div class="row">
             <div class="col-12">
                 <div class="card card-grafik">
-                    <div class="card-header">
-                        <i class="bi bi-bar-chart me-2"></i>Tren Kinerja (Triwulan & Semester)
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container">
-                            <canvas id="trenKinerjaChart"></canvas>
-                        </div>
-                    </div>
+                    <div class="card-header"><i class="bi bi-bar-chart me-2"></i>Tren Kinerja (Triwulan & Semester)</div>
+                    <div class="card-body"><div class="chart-container"><canvas id="trenKinerjaChart"></canvas></div></div>
                 </div>
             </div>
         </div>
 
-        <!-- Gauge/Bar - Tahunan -->
         <div class="row">
             <div class="col-12">
                 <div class="card card-grafik">
-                    <div class="card-header">
-                        <i class="bi bi-speedometer2 me-2"></i>Capaian Tahunan vs Target (Gauge Chart)
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container" style="height: 250px;">
-                            <canvas id="tahunanChart"></canvas>
-                        </div>
-                    </div>
+                    <div class="card-header"><i class="bi bi-speedometer2 me-2"></i>Capaian Tahunan vs Target</div>
+                    <div class="card-body"><div class="chart-container" style="height: 250px;"><canvas id="tahunanChart"></canvas></div></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Loading -->
     <div id="loadingGrafik" class="card" style="display: none;">
         <div class="card-body text-center py-5">
             <div class="table-responsive" style="position: relative; min-height: 200px;">
                 <div class="overlay-wrapper" id="loading_overlay_grafik">
-                    <div class="overlay">
-                        <i class="loader"></i>
-                    </div>
+                    <div class="overlay"><i class="loader"></i></div>
                 </div>
             </div>
         </div>
@@ -218,86 +123,73 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-let lineChart, trenKinerjaChart, tahunanChart;
+var lineChart, trenKinerjaChart, tahunanChart;
 
-$(document).ready(function() {
-    <?php if ($indicatorId): ?>
-    loadGrafik();
-    <?php else: ?>
-    $('#loadingGrafik').show();
-    <?php endif; ?>
-});
+function getMaxScale(target, units) {
+    if (units.indexOf('%') !== -1) {
+        return target <= 80 ? 100 : target + 20;
+    }
+    return target * 1.3;
+}
 
 function loadGrafik() {
-    const tahun = $('#tahun').val();
-    const indicatorId = $('#indicator_id').val();
+    var tahun = document.getElementById('tahun').value;
+    var indicatorId = document.getElementById('indicator_id').value;
 
     if (!indicatorId) {
-        $('#indicatorInfo').hide();
-        $('#grafikContainer').hide();
-        $('#loadingGrafik').hide();
+        document.getElementById('indicatorInfo').style.display = 'none';
+        document.getElementById('grafikContainer').style.display = 'none';
+        document.getElementById('loadingGrafik').style.display = 'none';
         return;
     }
 
-    $('#loadingGrafik').show();
-    $('#grafikContainer').hide();
+    document.getElementById('loadingGrafik').style.display = 'block';
+    document.getElementById('grafikContainer').style.display = 'none';
 
-    $.ajax({
-        url: '<?= site_url('siimut/grafik-inm/data') ?>',
-        type: 'POST',
-        data: { tahun: tahun, indicator_id: indicatorId },
-        success: function(response) {
-            $('#loadingGrafik').hide();
-            $('#grafikContainer').show();
-            $('#indicatorInfo').show();
-
-            // Info indikator
-            $('#indicatorName').text(response.indicator.indicator_element);
-            $('#indicatorTarget').text(response.indicator.indicator_target);
-            $('#indicatorUnits').text(response.indicator.indicator_units);
-
-            // Status
-            const statusBadge = $('#statusBadge');
-            if (response.tahunan.tercap) {
-                statusBadge.text('TERCAPAI').removeClass('status-tidak').addClass('status-tercap');
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '<?= site_url('siimut/grafik-inm/data') ?>', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            document.getElementById('loadingGrafik').style.display = 'none';
+            if (xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                document.getElementById('grafikContainer').style.display = 'block';
+                document.getElementById('indicatorInfo').style.display = 'block';
+                document.getElementById('indicatorName').textContent = response.indicator.indicator_element;
+                document.getElementById('indicatorTarget').textContent = response.indicator.indicator_target;
+                document.getElementById('indicatorUnits').textContent = response.indicator.indicator_units;
+                var statusBadge = document.getElementById('statusBadge');
+                if (response.tahunan.tercap) {
+                    statusBadge.textContent = 'TERCAPAI';
+                    statusBadge.className = 'status-badge status-tercap';
+                } else {
+                    statusBadge.textContent = 'TIDAK TERCAPAI';
+                    statusBadge.className = 'status-badge status-tidak';
+                }
+                renderLineChart(response.bulanan, response.indicator);
+                renderTrenKinerjaChart(response.triwulan, response.semester, response.indicator);
+                renderTahunanChart(response.tahunan, response.indicator);
             } else {
-                statusBadge.text('TIDAK TERCAPAI').removeClass('status-tercap').addClass('status-tidak');
+                alert('Error mengambil data');
             }
-
-            // Render charts
-            renderLineChart(response.bulanan, response.indicator);
-            renderTrenKinerjaChart(response.triwulan, response.semester, response.indicator);
-            renderTahunanChart(response.tahunan, response.indicator);
-        },
-        error: function() {
-            alert('Error mengambil data');
         }
-    });
+    };
+    xhr.send('tahun=' + tahun + '&indicator_id=' + indicatorId);
 }
 
 function renderLineChart(bulanan, indicator) {
-    const ctx = document.getElementById('lineChart').getContext('2d');
-    
-    const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
-    // Convert object to array
-    const data = [];
-    for (let i = 1; i <= 12; i++) {
+    var ctx = document.getElementById('lineChart').getContext('2d');
+    var labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var data = [];
+    for (var i = 1; i <= 12; i++) {
         data.push(bulanan[i] ? bulanan[i].nilai : 0);
     }
-    
-    const target = parseFloat(indicator.indicator_target);
-    const units = indicator.indicator_units || '';
-    // Max scale: target <= 80% -> 100, else -> target + 20
-    let maxScale;
-    if (units === '%' || units.includes('%')) {
-        maxScale = target <= 80 ? 100 : target + 20;
-    } else {
-        maxScale = target * 1.3;
-    }
+    var target = parseFloat(indicator.indicator_target);
+    var units = indicator.indicator_units || '';
+    var maxScale = getMaxScale(target, units);
 
     if (lineChart) lineChart.destroy();
-
     lineChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -309,157 +201,50 @@ function renderLineChart(bulanan, indicator) {
                 backgroundColor: 'rgba(40, 167, 69, 0.1)',
                 fill: true,
                 tension: 0.4,
-                pointRadius: 6,
-                pointBackgroundColor: data.map((d, i) => d >= target ? '#28a745' : '#dc3545'),
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2
+                pointRadius: 6
             }, {
-                label: 'Target (' + target + units + ')',
+                label: 'Target',
                 data: Array(12).fill(target),
                 borderColor: '#ffc107',
-                borderWidth: 2,
                 borderDash: [8, 4],
                 fill: false,
-                pointRadius: 0,
-                tension: 0
+                pointRadius: 0
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            if (context.datasetIndex === 0) {
-                                const status = context.raw >= target ? '✓' : '✗';
-                                return `Nilai: ${context.raw}${units} ${status}`;
-                            }
-                            return `Target: ${context.raw}${units}`;
-                        }
-                    }
-                }
-            },
             scales: {
-                y: { 
-                    beginAtZero: true,
-                    max: maxScale,
-                    title: {
-                        display: true,
-                        text: 'Nilai ' + units
-                    }
-                }
-            }
-        }
-    });
-}
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Nilai Aktual',
-                data: data,
-                borderColor: '#28a745',
-                backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                fill: true,
-                tension: 0.4,
-                pointRadius: 6,
-                pointBackgroundColor: data.map((d, i) => d >= target ? '#28a745' : '#dc3545'),
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2
-            }, {
-                label: 'Target (' + target + units + ')',
-                data: Array(12).fill(target),
-                borderColor: '#ffc107',
-                borderWidth: 2,
-                borderDash: [8, 4],
-                fill: false,
-                pointRadius: 0,
-                tension: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            if (context.datasetIndex === 0) {
-                                const status = context.raw >= target ? '✓' : '✗';
-                                return `Nilai: ${context.raw}${units} ${status}`;
-                            }
-                            return `Target: ${context.raw}${units}`;
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: { 
-                    beginAtZero: true,
-                    max: maxScale,
-                    title: {
-                        display: true,
-                        text: 'Nilai ' + units
-                    }
-                }
+                y: { beginAtZero: true, max: maxScale }
             }
         }
     });
 }
 
 function renderTrenKinerjaChart(triwulan, semester, indicator) {
-    const ctx = document.getElementById('trenKinerjaChart').getContext('2d');
-    
-    // Labels: TW1, TW2, TW3, TW4, S1, S2
-    const labels = ['TW 1', 'TW 2', 'TW 3', 'TW 4', 'Sem 1', 'Sem 2'];
-    
-    // Data triwulan dan semester - convert object to array
-    const dataTriwulan = [
-        triwulan[1]?.nilai || 0,
-        triwulan[2]?.nilai || 0,
-        triwulan[3]?.nilai || 0,
-        triwulan[4]?.nilai || 0
+    var ctx = document.getElementById('trenKinerjaChart').getContext('2d');
+    var labels = ['TW 1', 'TW 2', 'TW 3', 'TW 4', 'Sem 1', 'Sem 2'];
+    var data = [
+        triwulan[1] ? triwulan[1].nilai : 0,
+        triwulan[2] ? triwulan[2].nilai : 0,
+        triwulan[3] ? triwulan[3].nilai : 0,
+        triwulan[4] ? triwulan[4].nilai : 0,
+        semester[1] ? semester[1].nilai : 0,
+        semester[2] ? semester[2].nilai : 0
     ];
-    
-    const dataSemester = [
-        semester[1]?.nilai || 0,
-        semester[2]?.nilai || 0
+    var colors = [
+        triwulan[1] && triwulan[1].tercap ? '#28a745' : '#dc3545',
+        triwulan[2] && triwulan[2].tercap ? '#28a745' : '#dc3545',
+        triwulan[3] && triwulan[3].tercap ? '#28a745' : '#dc3545',
+        triwulan[4] && triwulan[4].tercap ? '#28a745' : '#dc3545',
+        semester[1] && semester[1].tercap ? '#20c997' : '#fd7e14',
+        semester[2] && semester[2].tercap ? '#20c997' : '#fd7e14'
     ];
-    
-    // Gabungkan data
-    const data = [...dataTriwulan, ...dataSemester];
-    
-    // Warna: hijau jika tercapai, merah jika tidak
-    const colors = [
-        triwulan[1]?.tercap ? '#28a745' : '#dc3545',
-        triwulan[2]?.tercap ? '#28a745' : '#dc3545',
-        triwulan[3]?.tercap ? '#28a745' : '#dc3545',
-        triwulan[4]?.tercap ? '#28a745' : '#dc3545',
-        semester[1]?.tercap ? '#20c997' : '#fd7e14',
-        semester[2]?.tercap ? '#20c997' : '#fd7e14'
-    ];
-    
-    const target = parseFloat(indicator.indicator_target);
-    const units = indicator.indicator_units || '';
-    // Max scale calculation
-    let maxScaleTriwulan;
-    if (units === '%' || units.includes('%')) {
-        maxScaleTriwulan = target <= 80 ? 100 : target + 20;
-    } else {
-        maxScaleTriwulan = target * 1.3;
-    }
+    var target = parseFloat(indicator.indicator_target);
+    var units = indicator.indicator_units || '';
+    var maxScale = getMaxScale(target, units);
 
     if (trenKinerjaChart) trenKinerjaChart.destroy();
-
     trenKinerjaChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -468,58 +253,60 @@ function renderTrenKinerjaChart(triwulan, semester, indicator) {
                 label: 'Nilai',
                 data: data,
                 backgroundColor: colors,
-                borderWidth: 0,
-                borderRadius: 8
+                borderWidth: 0
             }, {
                 label: 'Target',
                 data: Array(6).fill(target),
                 type: 'line',
                 borderColor: '#ffc107',
-                borderWidth: 2,
                 borderDash: [8, 4],
-                pointRadius: 4,
-                pointBackgroundColor: '#ffc107',
-                fill: false,
-                tension: 0.3
+                fill: false
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            if (context.datasetIndex === 0) {
-                                const idx = context.dataIndex;
-                                let status = '';
-                                if (idx < 4) {
-                                    status = triwulan[idx + 1]?.tercap ? '✓ Tercapai' : '✗ Tidak';
-                                } else {
-                                    status = semester[idx - 3]?.tercap ? '✓ Tercapai' : '✗ Tidak';
-                                }
-                                return `Nilai: ${context.raw}${units} (${status})`;
-                            }
-                            return `Target: ${context.raw}${units}`;
-                        }
-                    }
-                }
-            },
             scales: {
-                y: { 
-                    beginAtZero: true,
-                    max: maxScaleTriwulan,
-                    title: {
-                        display: true,
-                        text: 'Nilai ' + units
-                    }
+                y: { beginAtZero: true, max: maxScale }
+            }
+        }
+    });
+}
+
+function renderTahunanChart(tahunan, indicator) {
+    var ctx = document.getElementById('tahunanChart').getContext('2d');
+    var target = parseFloat(indicator.indicator_target);
+    var nilai = tahunan.nilai || 0;
+    var tercapai = tahunan.tercap;
+    var units = indicator.indicator_units || '';
+
+    if (tahunanChart) tahunanChart.destroy();
+    tahunanChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Capaian', 'Target'],
+            datasets: [{
+                data: [nilai, target],
+                backgroundColor: [tercapai ? '#28a745' : '#dc3545', '#6c757d']
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Nilai: ' + nilai + units + ' | Target: ' + target + units + ' | ' + (tercapai ? 'TERCAPAI' : 'TIDAK TERCAPAI')
                 }
             }
         }
     });
 }
+
+<?php if ($indicatorId): ?>
+loadGrafik();
+<?php else: ?>
+document.getElementById('loadingGrafik').style.display = 'block';
+<?php endif; ?>
 </script>
