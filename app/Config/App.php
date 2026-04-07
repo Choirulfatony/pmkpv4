@@ -6,21 +6,7 @@ use CodeIgniter\Config\BaseConfig;
 
 class App extends BaseConfig
 {
-    public function __construct()
-    {
-        parent::__construct();
 
-        if (php_sapi_name() === 'cli') {
-            // Jika dijalankan lewat terminal (php spark)
-            $this->baseURL = 'http://localhost/pmkpv4/';
-        } else {
-            // Jika lewat browser (web server)
-            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
-            $this->baseURL = $scheme . '://' . $_SERVER['HTTP_HOST'] . '/pmkpv4/';
-        }
-
-        date_default_timezone_set("Asia/Jakarta");
-    }
 
     /**
      * --------------------------------------------------------------------------
@@ -32,7 +18,7 @@ class App extends BaseConfig
      *
      * E.g., http://example.com/
      */
-    // public string $baseURL = 'http://localhost:8080/';
+    public string $baseURL = 'http://localhost/pmkpv4/';
 
     /**
      * Session settings

@@ -22,7 +22,17 @@ final class HealthTest extends CIUnitTestCase
 
         // Check the baseURL in .env
         if (is_file(HOMEPATH . '.env')) {
-            $env = preg_grep('/^app\.baseURL = ./', file(HOMEPATH . '.env')) !== false;
+            $envLines = file(HOMEPATH . '.env');
+            $env = preg_grep('/^app\.baseURL = ./', $envLines) !== false;
+            // Debug: show what we found
+            if ($env) {
+                foreach ($envLines as $lineNum => $line) {
+                    if (preg_match('/^app\.baseURL = ./', $line)) {
+                        error_log("Found baseURL in .env at line " . ($lineNum+1) . ": " . trim($line));
+                        break;
+                    }
+                }
+            }
         }
 
         if ($env) {

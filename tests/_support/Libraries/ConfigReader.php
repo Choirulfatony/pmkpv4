@@ -13,6 +13,8 @@ use Config\App;
  */
 class ConfigReader extends App
 {
+    public string $baseURL = '';
+
     public function __construct()
     {
     }
