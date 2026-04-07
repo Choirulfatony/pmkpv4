@@ -92,10 +92,16 @@
         </div>
 
         <div class="row">
-            <div class="col-12">
+            <div class="col-md-6">
                 <div class="card card-grafik">
-                    <div class="card-header"><i class="bi bi-bar-chart me-2"></i>Tren Kinerja (Triwulan & Semester)</div>
-                    <div class="card-body"><div class="chart-container"><canvas id="trenKinerjaChart"></canvas></div></div>
+                    <div class="card-header"><i class="bi bi-bar-chart me-2"></i>Triwulan</div>
+                    <div class="card-body"><div class="chart-container"><canvas id="triwulanChart"></canvas></div></div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card card-grafik">
+                    <div class="card-header"><i class="bi bi-bar-chart me-2"></i>Semester</div>
+                    <div class="card-body"><div class="chart-container"><canvas id="semesterChart"></canvas></div></div>
                 </div>
             </div>
         </div>
@@ -123,7 +129,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-var lineChart, trenKinerjaChart, tahunanChart;
+var lineChart, triwulanChart, semesterChart, tahunanChart;
 
 function getMaxScale(target, units, dataArray) {
     var maxData = Math.max.apply(null, dataArray.filter(function(x) { return x > 0; }));
@@ -183,7 +189,8 @@ function loadGrafik() {
                     statusBadge.className = 'status-badge status-tidak';
                 }
                 renderLineChart(response.bulanan, response.indicator);
-                renderTrenKinerjaChart(response.triwulan, response.semester, response.indicator);
+                renderTriwulanChart(response.triwulan, response.indicator);
+                renderSemesterChart(response.semester, response.indicator);
                 renderTahunanChart(response.tahunan, response.indicator);
             } else {
                 alert('Error mengambil data');
@@ -243,31 +250,27 @@ function renderLineChart(bulanan, indicator) {
     });
 }
 
-function renderTrenKinerjaChart(triwulan, semester, indicator) {
-    var ctx = document.getElementById('trenKinerjaChart').getContext('2d');
-    var labels = ['TW 1', 'TW 2', 'TW 3', 'TW 4', 'Sem 1', 'Sem 2'];
+function renderTriwulanChart(triwulan, indicator) {
+    var ctx = document.getElementById('triwulanChart').getContext('2d');
+    var labels = ['TW 1', 'TW 2', 'TW 3', 'TW 4'];
     var data = [
         triwulan[1] ? triwulan[1].nilai : 0,
         triwulan[2] ? triwulan[2].nilai : 0,
         triwulan[3] ? triwulan[3].nilai : 0,
-        triwulan[4] ? triwulan[4].nilai : 0,
-        semester[1] ? semester[1].nilai : 0,
-        semester[2] ? semester[2].nilai : 0
+        triwulan[4] ? triwulan[4].nilai : 0
     ];
     var colors = [
         triwulan[1] && triwulan[1].tercap ? '#28a745' : '#dc3545',
         triwulan[2] && triwulan[2].tercap ? '#28a745' : '#dc3545',
         triwulan[3] && triwulan[3].tercap ? '#28a745' : '#dc3545',
-        triwulan[4] && triwulan[4].tercap ? '#28a745' : '#dc3545',
-        semester[1] && semester[1].tercap ? '#20c997' : '#fd7e14',
-        semester[2] && semester[2].tercap ? '#20c997' : '#fd7e14'
+        triwulan[4] && triwulan[4].tercap ? '#28a745' : '#dc3545'
     ];
     var target = parseFloat(indicator.indicator_target);
     var units = indicator.indicator_units || '';
     var maxScale = getMaxScale(target, units, data);
 
-    if (trenKinerjaChart) trenKinerjaChart.destroy();
-    trenKinerjaChart = new Chart(ctx, {
+    if (triwulanChart) triwulanChart.destroy();
+    triwulanChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
@@ -278,7 +281,7 @@ function renderTrenKinerjaChart(triwulan, semester, indicator) {
                 borderWidth: 0
             }, {
                 label: 'Target (' + target + units + ')',
-                data: Array(6).fill(target),
+                data: Array(4).fill(target),
                 type: 'line',
                 borderColor: '#ffc107',
                 borderDash: [8, 4],
@@ -288,16 +291,51 @@ function renderTrenKinerjaChart(triwulan, semester, indicator) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: true, position: 'top' }
-            },
-            scales: {
-                y: { 
-                    beginAtZero: true, 
-                    max: maxScale,
-                    title: { display: true, text: 'Nilai ' + units }
-                }
-            }
+            plugins: { legend: { display: true, position: 'top' } },
+            scales: { y: { beginAtZero: true, max: maxScale, title: { display: true, text: 'Nilai ' + units } } }
+        }
+    });
+}
+
+function renderSemesterChart(semester, indicator) {
+    var ctx = document.getElementById('semesterChart').getContext('2d');
+    var labels = ['Semester 1', 'Semester 2'];
+    var data = [
+        semester[1] ? semester[1].nilai : 0,
+        semester[2] ? semester[2].nilai : 0
+    ];
+    var colors = [
+        semester[1] && semester[1].tercap ? '#20c997' : '#fd7e14',
+        semester[2] && semester[2].tercap ? '#20c997' : '#fd7e14'
+    ];
+    var target = parseFloat(indicator.indicator_target);
+    var units = indicator.indicator_units || '';
+    var maxScale = getMaxScale(target, units, data);
+
+    if (semesterChart) semesterChart.destroy();
+    semesterChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Nilai',
+                data: data,
+                backgroundColor: colors,
+                borderWidth: 0
+            }, {
+                label: 'Target (' + target + units + ')',
+                data: Array(2).fill(target),
+                type: 'line',
+                borderColor: '#ffc107',
+                borderDash: [8, 4],
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: true, position: 'top' } },
+            scales: { y: { beginAtZero: true, max: maxScale, title: { display: true, text: 'Nilai ' + units } } }
         }
     });
 }
