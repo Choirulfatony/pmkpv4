@@ -225,7 +225,13 @@ function renderLineChart(bulanan, indicator) {
     const ctx = document.getElementById('lineChart').getContext('2d');
     
     const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const data = bulanan.map(b => b.nilai);
+    
+    // Convert object to array
+    const data = [];
+    for (let i = 1; i <= 12; i++) {
+        data.push(bulanan[i] ? bulanan[i].nilai : null);
+    }
+    
     const target = indicator.indicator_target;
 
     if (lineChart) lineChart.destroy();
@@ -242,7 +248,8 @@ function renderLineChart(bulanan, indicator) {
                 fill: true,
                 tension: 0.4,
                 pointRadius: 5,
-                pointBackgroundColor: '#28a745'
+                pointBackgroundColor: '#28a745',
+                spanGaps: true
             }, {
                 label: 'Target',
                 data: Array(12).fill(target),
@@ -266,8 +273,8 @@ function renderTriwulanChart(triwulan, indicator) {
     const ctx = document.getElementById('triwulanChart').getContext('2d');
     
     const labels = ['TW 1', 'TW 2', 'TW 3', 'TW 4'];
-    const data = triwulan.map(t => t.nilai);
-    const colors = triwulan.map(t => t.tercap ? '#28a745' : '#dc3545');
+    const data = [triwulan[1]?.nilai, triwulan[2]?.nilai, triwulan[3]?.nilai, triwulan[4]?.nilai];
+    const colors = [triwulan[1]?.tercap ? '#28a745' : '#dc3545', triwulan[2]?.tercap ? '#28a745' : '#dc3545', triwulan[3]?.tercap ? '#28a745' : '#dc3545', triwulan[4]?.tercap ? '#28a745' : '#dc3545'];
     const target = indicator.indicator_target;
 
     if (triwulanChart) triwulanChart.destroy();
@@ -304,8 +311,8 @@ function renderSemesterChart(semester, indicator) {
     const ctx = document.getElementById('semesterChart').getContext('2d');
     
     const labels = ['Semester 1', 'Semester 2'];
-    const data = semester.map(s => s.nilai);
-    const colors = semester.map(s => s.tercap ? '#28a745' : '#dc3545');
+    const data = [semester[1]?.nilai, semester[2]?.nilai];
+    const colors = [semester[1]?.tercap ? '#28a745' : '#dc3545', semester[2]?.tercap ? '#28a745' : '#dc3545'];
     const target = indicator.indicator_target;
 
     if (semesterChart) semesterChart.destroy();
