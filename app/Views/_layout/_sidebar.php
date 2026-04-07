@@ -48,58 +48,64 @@
 
                         <?php if ($login_source == 'APP'): ?>
 
-                            <?php foreach ($menus as $menu): ?>
+                            <?php
+                            function renderMenu($menus, $level = 0)
+                            {
+                                foreach ($menus as $menu):
 
-                                <?php if (empty($menu['children'])): ?>
+                                    $hasChild = !empty($menu['children']);
+                            ?>
 
-                                    <!-- MENU TANPA SUB -->
-                                    <li class="nav-item">
-                                        <a href="<?= (!empty($menu['url']) && $menu['url'] != '#')
-                                                        ? site_url($menu['url'])
-                                                        : 'javascript:void(0)' ?>" class="nav-link">
-                                            <i class="nav-icon <?= esc($menu['icon']) ?>"></i>
-                                            <p><?= esc($menu['nama_menu']) ?></p>
-                                        </a>
-                                    </li>
+                                    <?php if ($hasChild): ?>
 
-                                <?php else: ?>
-                                    <!-- MENU DENGAN SUB -->
-                                    <li class="nav-item has-treeview">
+                                        <li class="nav-item has-treeview">
+                                            <a href="#" class="nav-link d-flex align-items-center">
 
-                                        <a href="#" class="nav-link">
-                                            <i class="nav-icon <?= esc($menu['icon']) ?>"></i>
+                                                <!-- ICON -->
+                                                <i class="nav-icon <?= esc($menu['icon']) ?>"></i>
 
-                                            <p class="d-flex justify-content-between align-items-center mb-0 w-100">
-                                                <span><?= esc($menu['nama_menu']) ?></span>
-                                                <!-- <i class="nav-arrow bi bi-chevron-right"></i> -->
-                                            </p>
-                                        </a>
+                                                <!-- TEXT -->
+                                                <p class="mb-0 ms-2 flex-grow-1">
+                                                    <?= esc($menu['nama_menu']) ?>
+                                                </p>
 
-                                   
+                                            </a>
 
-                                        <ul class="nav nav-treeview">
-                                            <?php foreach ($menu['children'] as $child): ?>
-                                                <li class="nav-item">
-                                                    <a href="<?= (!empty($child['url']) && $child['url'] != '#')
-                                                                    ? site_url($child['url'])
-                                                                    : 'javascript:void(0)' ?>"
-                                                        class="nav-link sub-menu">
+                                            <!-- SUB MENU -->
+                                            <ul class="nav nav-treeview ms-3">
+                                                <?php renderMenu($menu['children'], $level + 1); ?>
+                                            </ul>
 
-                                                        <i class="nav-icon <?= esc($child['icon']) ?>"></i>
-                                                        <p><?= esc($child['nama_menu']) ?></p>
+                                        </li>
 
-                                                    </a>
-                                                </li>
-                                            <?php endforeach; ?>
-                                        </ul>
+                                    <?php else: ?>
 
-                                    </li>
+                                        <li class="nav-item">
+                                            <a href="<?= (!empty($menu['url']) && $menu['url'] != '#')
+                                                            ? site_url($menu['url'])
+                                                            : 'javascript:void(0)' ?>"
+                                                class="nav-link d-flex align-items-center">
 
-                                <?php endif; ?>
+                                                <!-- ICON -->
+                                                <i class="nav-icon <?= esc($menu['icon']) ?>"></i>
 
+                                                <!-- TEXT -->
+                                                <p class="mb-0 ms-2">
+                                                    <?= esc($menu['nama_menu']) ?>
+                                                </p>
 
+                                            </a>
+                                        </li>
 
-                            <?php endforeach; ?>
+                                    <?php endif; ?>
+
+                            <?php
+                                endforeach;
+                            }
+                            ?>
+
+                            <?php renderMenu($menus); ?>
+
                         <?php endif; ?>
 
 

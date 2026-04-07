@@ -32,8 +32,8 @@ $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
     $routes->post('rekap-laporan-inm/ajax_rekap_inm', 'RekapLaporan::getAjaxDataRekapInm'); // AJAX
     $routes->post('rekap-laporan-inm/ajax-detail-inm', 'RekapLaporan::getAjaxDataRekapInmDetail'); // AJAX Detail
     $routes->get('rekap-laporan-inm/rekap-periode', 'RekapLaporan::rekapPeriode'); // Rekap Triwulan/Semester/Tahun
-    $routes->post('rekap-laporan-inm/rekap-periode-ajax', 'RekapLaporan::getAjaxRekapPeriode'); // AJAX Rekap Periode
-$routes->post('rekap-laporan-inm/rekap-periode-inm', 'RekapLaporan::getAjaxRekapPeriode'); // AJAX Rekap Periode (alternative name)
+    // $routes->post('rekap-laporan-inm/rekap-periode-ajax', 'RekapLaporan::getAjaxRekapPeriode'); // AJAX Rekap Periode
+    $routes->post('rekap-laporan-inm/rekap-periode-inm', 'RekapLaporan::getAjaxRekapPeriode'); // AJAX Rekap Periode (alternative name)
     $routes->get('rekap-laporan-inm/detail/(:num)', 'RekapLaporan::viewDetailInm/$1'); // Detail
 });
 
