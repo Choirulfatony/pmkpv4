@@ -288,7 +288,7 @@ function renderLineChart(bulanan, indicator) {
     
     const target = parseFloat(indicator.indicator_target);
     const units = indicator.indicator_units || '';
-    // Max scale: gunakan target * 1.3 atau 100 (yg lebih kecil), atau target + 20 jika > 80%
+    // Max scale: target <= 80% -> 100, else -> target + 20
     let maxScale;
     if (units === '%' || units.includes('%')) {
         maxScale = target <= 80 ? 100 : target + 20;
@@ -299,6 +299,64 @@ function renderLineChart(bulanan, indicator) {
     if (lineChart) lineChart.destroy();
 
     lineChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Nilai Aktual',
+                data: data,
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 6,
+                pointBackgroundColor: data.map((d, i) => d >= target ? '#28a745' : '#dc3545'),
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }, {
+                label: 'Target (' + target + units + ')',
+                data: Array(12).fill(target),
+                borderColor: '#ffc107',
+                borderWidth: 2,
+                borderDash: [8, 4],
+                fill: false,
+                pointRadius: 0,
+                tension: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            if (context.datasetIndex === 0) {
+                                const status = context.raw >= target ? '✓' : '✗';
+                                return `Nilai: ${context.raw}${units} ${status}`;
+                            }
+                            return `Target: ${context.raw}${units}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    max: maxScale,
+                    title: {
+                        display: true,
+                        text: 'Nilai ' + units
+                    }
+                }
+            }
+        }
+    });
+}
         type: 'line',
         data: {
             labels: labels,
