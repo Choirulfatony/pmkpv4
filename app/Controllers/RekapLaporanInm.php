@@ -5,7 +5,7 @@ namespace App\Controllers;
 use App\Models\SiimutMenuModel;
 use App\Models\RekapLaporanInmModel;
 
-class RekapLaporan extends AppController
+class RekapLaporanInm extends AppController
 {
     protected $rekapModel;
 

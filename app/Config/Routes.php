@@ -28,12 +28,12 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
 $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
     $routes->get('', 'Dashboard::index');        // /siimut
     $routes->get('dashboard', 'Dashboard::index'); // /siimut/dashboard
-    $routes->get('rekap-laporan-inm', 'RekapLaporan::index'); // /siimut/rekap-laporan-inm
-    $routes->post('rekap-laporan-inm/ajax_rekap_inm', 'RekapLaporan::getAjaxDataRekapInm'); // AJAX
-    $routes->post('rekap-laporan-inm/ajax-detail-inm', 'RekapLaporan::getAjaxDataRekapInmDetail'); // AJAX Detail
+    $routes->get('rekap-laporan-inm', 'RekapLaporanInm::index'); // /siimut/rekap-laporan-inm
+    $routes->post('rekap-laporan-inm/ajax_rekap_inm', 'RekapLaporanInm::getAjaxDataRekapInm'); // AJAX
+    $routes->post('rekap-laporan-inm/ajax-detail-inm', 'RekapLaporanInm::getAjaxDataRekapInmDetail'); // AJAX Detail
     $routes->get('rekap-periode-inm', 'RekapPeriodeInm::index'); // Rekap Triwulan/Semester/Tahun
     $routes->post('rekap-periode-inm/ajax', 'RekapPeriodeInm::getAjaxRekapPeriode'); // AJAX Rekap Periode INM
-    $routes->get('rekap-laporan-inm/detail/(:num)', 'RekapLaporan::viewDetailInm/$1'); // Detail
+    $routes->get('rekap-laporan-inm/detail/(:num)', 'RekapLaporanInm::viewDetailInm/$1'); // Detail
 });
 
 // $routes->get('test-email', 'Ikprs::kirimEmailTest');
