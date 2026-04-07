@@ -342,9 +342,9 @@ function renderSemesterChart(semester, indicator) {
 
 function renderTahunanChart(tahunan, indicator) {
     var ctx = document.getElementById('tahunanChart').getContext('2d');
-    var target = parseFloat(indicator.indicator_target);
+    var target = parseFloat(indicator.indicator_target || 0);
     var nilai = tahunan.nilai || 0;
-    var tercapai = tahunan.tercap;
+    var tercapai = tahunan.tercap || false;
     var units = indicator.indicator_units || '';
 
     if (tahunanChart) tahunanChart.destroy();
@@ -353,8 +353,10 @@ function renderTahunanChart(tahunan, indicator) {
         data: {
             labels: ['Capaian', 'Target'],
             datasets: [{
+                label: 'Nilai',
                 data: [nilai, target],
-                backgroundColor: [tercapai ? '#28a745' : '#dc3545', '#6c757d']
+                backgroundColor: [tercapai ? '#28a745' : '#dc3545', '#6c757d'],
+                barThickness: 40
             }]
         },
         options: {
@@ -362,9 +364,25 @@ function renderTahunanChart(tahunan, indicator) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
+                legend: { display: false },
                 title: {
                     display: true,
-                    text: 'Nilai: ' + nilai + units + ' | Target: ' + target + units + ' | ' + (tercapai ? 'TERCAPAI' : 'TIDAK TERCAPAI')
+                    text: 'Capaian: ' + nilai + ' ' + units + '  |  Target: ' + target + ' ' + units + '  |  Status: ' + (tercapai ? 'TERCAPAI' : 'TIDAK TERCAPAI'),
+                    font: { size: 14, weight: 'bold' },
+                    color: '#333'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.raw + ' ' + units;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { 
+                    beginAtZero: true,
+                    title: { display: true, text: 'Nilai ' + units }
                 }
             }
         }
