@@ -3,7 +3,8 @@
         font-size: 12px;
         vertical-align: middle;
         text-align: center;
-        padding: 8px 4px !important;
+        padding: 12px 8px !important;
+        white-space: nowrap;
     }
     #ajax_data_periode th {
         background-color: #198754 !important;
@@ -299,58 +300,86 @@ function initTable() {
             { 
                 data: 'triwulan.1.nilai',
                 render: function(data, type, row) {
-                    var tercapai = row.triwulan && row.triwulan[1] ? row.triwulan[1].tercap : false;
-                    return renderCell(data, tercapai);
+                    var tw = row.triwulan && row.triwulan[1] ? row.triwulan[1] : {};
+                    var tercapai = tw.tercap || false;
+                    var num = tw.num || 0;
+                    var denum = tw.denum || 0;
+                    var units = row.indicator_units || '';
+                    return renderCell(data, tercapai, num, denum, units);
                 }
             },
             { 
                 data: 'triwulan.2.nilai',
                 render: function(data, type, row) {
-                    var tercapai = row.triwulan && row.triwulan[2] ? row.triwulan[2].tercap : false;
-                    return renderCell(data, tercapai);
+                    var tw = row.triwulan && row.triwulan[2] ? row.triwulan[2] : {};
+                    var tercapai = tw.tercap || false;
+                    var num = tw.num || 0;
+                    var denum = tw.denum || 0;
+                    var units = row.indicator_units || '';
+                    return renderCell(data, tercapai, num, denum, units);
                 }
             },
             { 
                 data: 'triwulan.3.nilai',
                 render: function(data, type, row) {
-                    var tercapai = row.triwulan && row.triwulan[3] ? row.triwulan[3].tercap : false;
-                    return renderCell(data, tercapai);
+                    var tw = row.triwulan && row.triwulan[3] ? row.triwulan[3] : {};
+                    var tercapai = tw.tercap || false;
+                    var num = tw.num || 0;
+                    var denum = tw.denum || 0;
+                    var units = row.indicator_units || '';
+                    return renderCell(data, tercapai, num, denum, units);
                 }
             },
             { 
                 data: 'triwulan.4.nilai',
                 render: function(data, type, row) {
-                    var tercapai = row.triwulan && row.triwulan[4] ? row.triwulan[4].tercap : false;
-                    return renderCell(data, tercapai);
+                    var tw = row.triwulan && row.triwulan[4] ? row.triwulan[4] : {};
+                    var tercapai = tw.tercap || false;
+                    var num = tw.num || 0;
+                    var denum = tw.denum || 0;
+                    var units = row.indicator_units || '';
+                    return renderCell(data, tercapai, num, denum, units);
                 }
             },
             { 
                 data: 'semester.1.nilai',
                 render: function(data, type, row) {
-                    var tercapai = row.semester && row.semester[1] ? row.semester[1].tercap : false;
-                    return renderCell(data, tercapai);
+                    var sm = row.semester && row.semester[1] ? row.semester[1] : {};
+                    var tercapai = sm.tercap || false;
+                    var num = sm.num || 0;
+                    var denum = sm.denum || 0;
+                    var units = row.indicator_units || '';
+                    return renderCell(data, tercapai, num, denum, units);
                 }
             },
             { 
                 data: 'semester.2.nilai',
                 render: function(data, type, row) {
-                    var tercapai = row.semester && row.semester[2] ? row.semester[2].tercap : false;
-                    return renderCell(data, tercapai);
+                    var sm = row.semester && row.semester[2] ? row.semester[2] : {};
+                    var tercapai = sm.tercap || false;
+                    var num = sm.num || 0;
+                    var denum = sm.denum || 0;
+                    var units = row.indicator_units || '';
+                    return renderCell(data, tercapai, num, denum, units);
                 }
             },
             { 
                 data: 'tahun.nilai',
                 render: function(data, type, row) {
-                    var tercapai = row.tahun ? row.tahun.tercap : false;
-                    return renderCell(data, tercapai);
+                    var th = row.tahun || {};
+                    var tercapai = th.tercap || false;
+                    var num = th.num || 0;
+                    var denum = th.denum || 0;
+                    var units = row.indicator_units || '';
+                    return renderCell(data, tercapai, num, denum, units);
                 }
             }
         ]
     });
 }
 
-function renderCell(nilai, tercapai) {
-    if (!nilai) {
+function renderCell(nilai, tercapai, num, denum, units) {
+    if (!nilai || nilai === 0) {
         return '<span class="badge badge-kosong">Kosong</span>';
     }
     
@@ -358,7 +387,9 @@ function renderCell(nilai, tercapai) {
         ? '<span class="badge badge-tercap">Tercapai</span>' 
         : '<span class="badge badge-tidak-tercap">Tidak</span>';
     
-    return nilai + '<div class="mt-1">' + badge + '</div>';
+    return '<div class="fw-semibold">' + nilai + ' ' + units + '</div>' +
+           '<div class="small text-muted">' + num + ' / ' + denum + '</div>' +
+           '<div class="mt-1">' + badge + '</div>';
 }
 
 function gantiTahun() {
