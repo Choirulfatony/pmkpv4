@@ -34,6 +34,10 @@ $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
     $routes->get('rekap-periode-inm', 'RekapPeriodeInm::index'); // Rekap Triwulan/Semester/Tahun
     $routes->post('rekap-periode-inm/ajax', 'RekapPeriodeInm::getAjaxRekapPeriode'); // AJAX Rekap Periode INM
     $routes->get('rekap-laporan-inm/detail/(:num)', 'RekapLaporanInm::viewDetailInm/$1'); // Detail
+    
+    // Grafik INM
+    $routes->get('grafik-inm', 'GrafikInm::index'); // Halaman Grafik
+    $routes->post('grafik-inm/data', 'GrafikInm::getDataGrafik'); // AJAX Data Grafik
 });
 
 // $routes->get('test-email', 'Ikprs::kirimEmailTest');
