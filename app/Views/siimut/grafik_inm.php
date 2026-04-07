@@ -169,28 +169,16 @@
             </div>
         </div>
 
-        <!-- Bar Chart - Triwulan & Semester -->
+        <!-- Gabungan Triwulan & Semester -->
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-12">
                 <div class="card card-grafik">
                     <div class="card-header">
-                        <i class="bi bi-bar-chart me-2"></i>Perbandingan Triwulan (Bar Chart)
+                        <i class="bi bi-bar-chart me-2"></i>Tren Kinerja (Triwulan & Semester)
                     </div>
                     <div class="card-body">
                         <div class="chart-container">
-                            <canvas id="triwulanChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card card-grafik">
-                    <div class="card-header">
-                        <i class="bi bi-bar-chart me-2"></i>Perbandingan Semester (Bar Chart)
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container">
-                            <canvas id="semesterChart"></canvas>
+                            <canvas id="trenKinerjaChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -230,7 +218,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-let lineChart, triwulanChart, semesterChart, tahunanChart;
+let lineChart, trenKinerjaChart, tahunanChart;
 
 $(document).ready(function() {
     <?php if ($indicatorId): ?>
@@ -278,8 +266,7 @@ function loadGrafik() {
 
             // Render charts
             renderLineChart(response.bulanan, response.indicator);
-            renderTriwulanChart(response.triwulan, response.indicator);
-            renderSemesterChart(response.semester, response.indicator);
+            renderTrenKinerjaChart(response.triwulan, response.semester, response.indicator);
             renderTahunanChart(response.tahunan, response.indicator);
         },
         error: function() {
@@ -421,7 +408,6 @@ function renderTahunanChart(tahunan, indicator) {
 
     if (tahunanChart) tahunanChart.destroy();
 
-    // Gauge simulation with horizontal bar
     tahunanChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -432,7 +418,8 @@ function renderTahunanChart(tahunan, indicator) {
                     tercapai ? '#28a745' : '#dc3545',
                     '#6c757d'
                 ],
-                borderWidth: 0
+                borderWidth: 0,
+                barThickness: 60
             }]
         },
         options: {
@@ -440,14 +427,115 @@ function renderTahunanChart(tahunan, indicator) {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                x: { beginAtZero: true, max: target * 1.2 }
+                x: { beginAtZero: true, max: target * 1.3 }
             },
             plugins: {
                 legend: { display: false },
                 title: {
                     display: true,
-                    text: `Nilai: ${nilai} | Target: ${target} | ${tercapai ? 'TERCAPAI' : 'TIDAK TERCAPAI'}`,
-                    font: { size: 16 }
+                    text: `Nilai: ${nilai}${indicator.indicator_units || ''} | Target: ${target}${indicator.indicator_units || ''} | ${tercapai ? 'TERCAPAI' : 'TIDAK TERCAPAI'}`,
+                    font: { size: 14, weight: 'bold' },
+                    padding: 20
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return ` ${context.raw}${indicator.indicator_units || ''}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderTrenKinerjaChart(triwulan, semester, indicator) {
+    const ctx = document.getElementById('trenKinerjaChart').getContext('2d');
+    
+    // Labels: TW1, TW2, TW3, TW4, S1, S2
+    const labels = ['TW 1', 'TW 2', 'TW 3', 'TW 4', 'Sem 1', 'Sem 2'];
+    
+    // Data triwulan dan semester
+    const dataTriwulan = [
+        triwulan[1]?.nilai || 0,
+        triwulan[2]?.nilai || 0,
+        triwulan[3]?.nilai || 0,
+        triwulan[4]?.nilai || 0
+    ];
+    
+    const dataSemester = [
+        semester[1]?.nilai || 0,
+        semester[2]?.nilai || 0
+    ];
+    
+    // Gabungkan data
+    const data = [...dataTriwulan, ...dataSemester];
+    
+    // Warna: hijau jika tercapai, merah jika tidak
+    const colorsTriwulan = triwulan.map(t => t?.tercap ? '#28a745' : '#dc3545');
+    const colorsSemester = semester.map(s => s?.tercap ? '#20c997' : '#fd7e14');
+    const colors = [...colorsTriwulan, ...colorsSemester];
+    
+    const target = indicator.indicator_target;
+
+    if (trenKinerjaChart) trenKinerjaChart.destroy();
+
+    trenKinerjaChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Nilai',
+                data: data,
+                backgroundColor: colors,
+                borderWidth: 0,
+                borderRadius: 8
+            }, {
+                label: 'Target',
+                data: Array(6).fill(target),
+                type: 'line',
+                borderColor: '#ffc107',
+                borderWidth: 2,
+                borderDash: [8, 4],
+                pointRadius: 4,
+                pointBackgroundColor: '#ffc107',
+                fill: false,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            if (context.datasetIndex === 0) {
+                                const idx = context.dataIndex;
+                                let status = '';
+                                if (idx < 4) {
+                                    status = triwulan[idx + 1]?.tercap ? '✓ Tercapai' : '✗ Tidak';
+                                } else {
+                                    status = semester[idx - 3]?.tercap ? '✓ Tercapai' : '✗ Tidak';
+                                }
+                                return `Nilai: ${context.raw} ${indicator.indicator_units || ''} (${status})`;
+                            }
+                            return `Target: ${context.raw}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Nilai'
+                    }
                 }
             }
         }
