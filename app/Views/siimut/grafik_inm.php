@@ -130,13 +130,20 @@ function getMaxScale(target, units, dataArray) {
     
     var isPercent = units.indexOf('%') !== -1;
     var isTime = units.indexOf('menit') !== -1 || units.indexOf('mnt') !== -1 || units.indexOf('menit') !== -1 || units.indexOf('detik') !== -1 || units.indexOf('dtk') !== -1;
+    var isIndex = units.indexOf('indek') !== -1 || units.indexOf('indeks') !== -1 || units.indexOf('index') !== -1;
     
     if (isPercent) {
+        // Persen: target * 2 atau max data * 1.2
         var calcMax = target * 2;
         return Math.max(maxData * 1.2, calcMax);
     } else if (isTime) {
+        // Waktu: max data * 1.3 atau target * 1.3
         return Math.max(maxData * 1.3, target * 1.3);
+    } else if (isIndex) {
+        // Indeks: gunakan max(data, target) * 1.3
+        return Math.max(maxData, target) * 1.3;
     }
+    // Default: max(data * 1.2, target * 1.3)
     return Math.max(maxData * 1.2, target * 1.3);
 }
 
