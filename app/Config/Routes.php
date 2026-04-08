@@ -14,11 +14,15 @@ $routes->get('auth', 'Auth::index');
 $routes->post('auth/process', 'Auth::process');
 $routes->get('auth/refresh-captcha', 'Auth::refresh_captcha');
 $routes->get('auth/logout', 'Auth::logout');
+$routes->post('auth/clear_register_session', 'Auth::clear_register_session');
+$routes->get('auth/resend_verification', 'Auth::resend_verification');
 $routes->get('auth/cek_session', 'Auth::cek_session');
 $routes->get('auth/google-login', 'Auth::googleLogin');
 $routes->get('auth/google-callback', 'Auth::googleCallback');
 $routes->get('auth/register', 'Auth::showRegister');
 $routes->post('auth/register/process', 'Auth::processRegister');
+$routes->get('auth/verify_email', 'Auth::verify_email');
+$routes->get('auth/verify_email_notice', 'Auth::verify_email_notice');
 
 // Redirect /dashboard ke /siimut/dashboard
 $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
@@ -34,13 +38,13 @@ $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
     $routes->get('rekap-periode-inm', 'RekapPeriodeInm::index'); // Rekap Triwulan/Semester/Tahun
     $routes->post('rekap-periode-inm/ajax', 'RekapPeriodeInm::getAjaxRekapPeriode'); // AJAX Rekap Periode INM
     $routes->get('rekap-laporan-inm/detail/(:num)', 'RekapLaporanInm::viewDetailInm/$1'); // Detail
-    
+
     // Grafik INM
     $routes->get('grafik-inm', 'GrafikInm::index'); // Halaman Grafik
     $routes->post('grafik-inm/data', 'GrafikInm::getDataGrafik'); // AJAX Data Grafik
 });
 
-// $routes->get('test-email', 'Ikprs::kirimEmailTest');
+$routes->get('test-email', 'Ikprs::kirimEmailTest');
 
 $routes->group('ikprs', ['filter' => 'auth'], function ($routes) {
 
