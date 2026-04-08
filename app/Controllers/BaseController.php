@@ -60,10 +60,10 @@ abstract class BaseController extends Controller
         // E.g.: $this->session = service('session');
     }
 
-    // protected function disableCache()
-    // {
-    //     $this->response->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-    //     $this->response->setHeader('Pragma', 'no-cache');
-    //     $this->response->setHeader('Expires', '0');
-    // }
+    protected function disableCache()
+    {
+        $this->response->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        $this->response->setHeader('Pragma', 'no-cache');
+        $this->response->setHeader('Expires', '0');
+    }
 }

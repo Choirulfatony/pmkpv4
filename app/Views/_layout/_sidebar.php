@@ -9,7 +9,7 @@
                 alt="Logo"
                 style="width:40px; height:40px; object-fit:cover;">
 
-            <span class="brand-text fw-light">PMKP</span>
+            <span class="brand-text fw-light">SIIMUT</span>
         </a>
     </div>
     <!--end::Sidebar Brand-->
