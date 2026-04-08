@@ -2351,7 +2351,7 @@ class Ikprs extends AppController
     {
         $email = \Config\Services::email();
 
-        $email->setTo('bimahayunugraha@gmail.com');
+        $email->setTo('choirulfatoni@gmail.com');
         $email->setSubject('Notifikasi IKPRS');
 
         $email->setMessage('
