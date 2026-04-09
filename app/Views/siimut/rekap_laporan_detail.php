@@ -40,6 +40,7 @@
         left: 0;
         right: 0;
         bottom: 0;
+        background: transparent;
     }
     .overlay {
         position: absolute;
@@ -47,7 +48,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(255, 255, 255, 0.8);
+        background: transparent;
         display: flex;
         justify-content: center;
         align-items: center;
