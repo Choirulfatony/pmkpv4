@@ -186,11 +186,12 @@ class Auth extends BaseController
         session()->set([
             'logged_in'       => true,
             'login_source'    => 'APP',
+            'last_activity'   => time(),
 
             'profile_id'      => $user->profile_id,
             'nama_lengkap'    => $user->profile_fullname,
             'profile_email'   => $user->profile_email,
-            'profile_picture' => $user->profile_photo ?: null,
+            'profile_picture' => $user->profile_photo ?? null,
 
             'department_id'   => $user->department_id,
             'department_name' => $user->lokasi,
@@ -204,7 +205,7 @@ class Auth extends BaseController
             'login_time'      => date('Y-m-d H:i:s'),
         ]);
 
-        log_message('error', 'DEBUG LOGIN:APP - role: ' . $userRole);
+        log_message('error', 'DEBUG LOGIN:APP - profile_photo: ' . ($user->profile_photo ?? 'NULL') . ', hak_akses: ' . ($user->hak_akses ?? 'NULL'));
 
         return redirect()->to('/siimut/dashboard');
     }
@@ -225,9 +226,11 @@ class Auth extends BaseController
         session()->set([
             'logged_in'       => true,
             'login_source'    => 'HRIS',
+            'last_activity'   => time(),
             'hris_user_id'    => $user->id,
             'hris_nip'        => $user->nip,
             'hris_full_name'  => $user->nama_lengkap ?? $user->nama,
+            'nama_lengkap'    => $user->nama_lengkap ?? $user->nama,
             'department_name' => $user->department_name ?? '',
             'user_role'       => $role,
             'login_time'      => date('Y-m-d H:i:s'),
@@ -414,6 +417,39 @@ class Auth extends BaseController
         ]);
 
         return $this->response->setJSON(['status' => 'ok']);
+    }
+
+    public function ping()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        
+        $loggedIn = session('logged_in');
+        $lastActivity = session('last_activity');
+        $currentTime = time();
+        $timeDiff = $lastActivity ? ($currentTime - $lastActivity) : null;
+
+        if ($loggedIn) {
+            $timeout = 1800; // 30 menit
+
+            if ($lastActivity && $timeDiff > $timeout) {
+                session()->destroy();
+                http_response_code(401);
+                echo json_encode([
+                    'status' => 'timeout',
+                    'message' => 'Session expired'
+                ]);
+                return;
+            }
+
+            session()->set('last_activity', $currentTime);
+            echo json_encode(['status' => 'ok']);
+            return;
+        }
+
+        http_response_code(401);
+        echo json_encode([
+            'status' => 'unauthorized'
+        ]);
     }
 
     public function resend_verification()
@@ -935,11 +971,13 @@ class Auth extends BaseController
                     'logged_in'       => true,
                     'login_source'    => 'APP',
                     'auth_method'     => 'GOOGLE',
+                    'last_activity'   => time(),
 
                     'profile_id'      => $user->profile_id,
                     'nama_lengkap'    => $user->profile_fullname,
                     'profile_email'   => $user->profile_email,
-                    'profile_picture' => $picture,
+                    // Use Google photo first, fallback to database photo
+                    'profile_picture' => $picture ?: ($user->profile_photo ?? null),
 
                     'department_id'   => $user->department_id,
                     'department_name' => $user->lokasi,
@@ -949,7 +987,7 @@ class Auth extends BaseController
                     'login_time'      => date('Y-m-d H:i:s'),
                 ]);
 
-                log_message('error', 'GOOGLE CALLBACK: Login success - ' . $email . ' role: ' . $userRole);
+                log_message('error', 'GOOGLE CALLBACK: Login success - ' . $email . ' role: ' . $userRole . ', photo: ' . ($picture ?: 'db:' . ($user->profile_photo ?? 'none')));
 
                 return redirect()->to('/siimut/dashboard');
             } else {

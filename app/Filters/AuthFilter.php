@@ -8,26 +8,6 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class AuthFilter implements FilterInterface
 {
-    // public function before(RequestInterface $request, $arguments = null)
-    // {
-    //     $session = session();
-
-    //     if (! $session->get('logged_in')) {
-    //         return redirect()->to('/auth')->with('error', 'Silakan login dulu');
-    //     }
-
-    //     $timeout = 3600;  // 1 JAM (3600 detik)
-    //     $last = $session->get('last_activity');
-
-    //     if ($last && (time() - $last) > $timeout) {
-    //         $session->destroy();
-    //         return redirect()->to('/auth?timeout=1');
-    //     }
-
-    //     $session->set('last_activity', time());
-    // }
-
-
     public function before(RequestInterface $request, $arguments = null)
     {
         $session = session();
@@ -39,7 +19,7 @@ class AuthFilter implements FilterInterface
         }
 
         // 🔥 JIKA AJAX → JANGAN SENTUH SESSION
-        if ($request->isAJAX()) {
+        if ($request->header('x-requested-with') === 'XMLHttpRequest') {
 
             if (! $session->get('logged_in')) {
                 return service('response')
@@ -59,7 +39,7 @@ class AuthFilter implements FilterInterface
             return redirect()->to('/auth')->with('error', 'Silakan login dulu');
         }
 
-        $timeout = 3600;
+        $timeout = 1800; // 30 menit untuk production
         $last = $session->get('last_activity');
 
         if ($last && (time() - $last) > $timeout) {
@@ -67,6 +47,9 @@ class AuthFilter implements FilterInterface
             return redirect()->to('/auth?timeout=1');
         }
 
+        // Update last_activity on every page load to keep session alive
+        // This ensures normal browsing activity keeps the user logged in
+        // The JavaScript only handles the case when user is completely idle
         $session->set('last_activity', time());
 
         // 🔥 CEK LOGIN SOURCE - APP tidak boleh akses IKPRS
@@ -82,43 +65,42 @@ class AuthFilter implements FilterInterface
     //     $session = session();
 
     //     // ================= AJAX REQUEST =================
-    //     if ($request->isAJAX()) {
+    //     // if ($request->header('x-requested-with') === 'XMLHttpRequest') {
+    //     //     if (
+    //     //         ! $session->get('logged_in') ||
+    //     //         ! $session->get('hris_user_id')
+    //     //     ) {
+    //     //         return service('response')
+    //     //             ->setStatusCode(401)
+    //     //             ->setJSON([
+    //     //                 'status'  => 'unauthorized',
+    //     //                 'message' => 'Session habis, silakan login ulang'
+    //     //             ]);
+    //     //     }
 
-    //         if (
-    //             ! $session->get('logged_in') ||
-    //             ! $session->get('hris_user_id')
-    //         ) {
-    //             return service('response')
-    //                 ->setStatusCode(401)
-    //                 ->setJSON([
-    //                     'status'  => 'unauthorized',
-    //                     'message' => 'Session habis, silakan login ulang'
-    //                 ]);
-    //         }
-
-    //         return; // 🔥 STOP — JANGAN update last_activity
-    //     }
+    //     //     return; // 🔥 STOP — JANGAN update last_activity
+    //     // }
 
     //     // ================= PAGE LOAD =================
 
-    //     if (
-    //         ! $session->get('logged_in') ||
-    //         ! $session->get('hris_user_id')
-    //     ) {
-    //         return redirect()->to('/auth')->with('error', 'Silakan login dulu');
-    //     }
+    //     // if (
+    //     //     ! $session->get('logged_in') ||
+    //     //     ! $session->get('hris_user_id')
+    //     // ) {
+    //     //     return redirect()->to('/auth')->with('error', 'Silakan login dulu');
+    //     // }
 
-    //     $timeout = 3600; // 1 jam
-    //     $last = $session->get('last_activity');
+    //     // $timeout = 3600; // 1 jam
+    //     // $last = $session->get('last_activity');
 
-    //     if ($last && (time() - $last) > $timeout) {
-    //         $session->destroy();
-    //         return redirect()->to('/auth?timeout=1');
-    //     }
+    //     // if ($last && (time() - $last) > $timeout) {
+    //     //     $session->destroy();
+    //     //     return redirect()->to('/auth?timeout=1');
+    //     // }
 
-    //     // ✅ update activity HANYA untuk page load
-    //     $session->set('last_activity', time());
-    // }
+    //     // // ✅ update activity HANYA untuk page load
+    //     // $session->set('last_activity', time());
+    //     // }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {

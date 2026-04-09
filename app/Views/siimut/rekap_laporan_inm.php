@@ -92,6 +92,16 @@
         display: none !important;
     }
 
+    /* Table loading state - prevent white/black flash during data load */
+    table.dataTable {
+        opacity: 1;
+        transition: opacity 0.1s ease;
+    }
+    
+    table.dataTable.loading {
+        opacity: 0.2;
+    }
+
     .table-responsive {
         position: relative;
     }
@@ -102,6 +112,8 @@
         left: 0;
         right: 0;
         bottom: 0;
+        background: transparent;
+        z-index: 9999;
     }
 
     .overlay {
@@ -110,7 +122,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(255, 255, 255, 0.8);
+        background: transparent;
         display: flex;
         justify-content: center;
         align-items: center;

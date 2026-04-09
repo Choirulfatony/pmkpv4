@@ -18,4 +18,42 @@
     if (performance.getEntriesByType("navigation")[0]?.type === "back_forward") {
       window.location.href = '<?= site_url('auth') ?>';
     }
+
+    let activityTimeout;
+    const TIMEOUT_MS = 1800000; // 30 menit
+
+    function resetActivityTimer() {
+      clearTimeout(activityTimeout);
+      activityTimeout = setTimeout(() => {
+        fetch('<?= site_url('auth/ping') ?>', {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+          },
+          credentials: 'same-origin'
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.status === 'timeout') {
+            window.location.href = '<?= site_url('auth?timeout=1') ?>';
+          }
+          resetActivityTimer();
+        })
+        .catch(error => {
+          window.location.href = '<?= site_url('auth?timeout=1') ?>';
+        });
+      }, TIMEOUT_MS);
+    }
+
+    document.addEventListener('mousemove', resetActivityTimer);
+    document.addEventListener('keypress', resetActivityTimer);
+    document.addEventListener('click', resetActivityTimer);
+    document.addEventListener('scroll', resetActivityTimer);
+    resetActivityTimer();
   </script>

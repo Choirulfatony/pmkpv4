@@ -30,6 +30,19 @@
     .dataTables_wrapper .dataTables_processing {
         display: none !important;
     }
+
+    /* Table loading state - prevent white/black flash */
+    table.dataTable.loading {
+        opacity: 0.2;
+    }
+
+    /* Prevent white flash in dark mode */
+    .dataTables_scrollBody {
+        background-color: transparent !important;
+    }
+    [data-bs-theme="dark"] .dataTables_scrollBody {
+        background-color: transparent !important;
+    }
     .table-responsive {
         position: relative;
     }
@@ -39,6 +52,7 @@
         left: 0;
         right: 0;
         bottom: 0;
+        background: transparent;
     }
     .overlay {
         position: absolute;
@@ -46,7 +60,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(255, 255, 255, 0.8);
+        background: transparent;
         display: flex;
         justify-content: center;
         align-items: center;

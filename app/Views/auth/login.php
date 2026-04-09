@@ -6,7 +6,6 @@
 
     .login-wallpaper {
         min-height: 100vh;
-        /* Memaksa lebar 100% dan tinggi 100% */
         background: url("<?= base_url('assets/img/rsud.png') ?>") no-repeat;
         background-size: 100% 100%;
     }
@@ -44,14 +43,46 @@
     }
 
     .captcha-box {
-        min-width: 120px;
-        text-align: center;
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 10px;
-        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 5px;
         font-size: 18px;
-        color: #0d6efd;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .captcha-box br {
+        display: none;
+    }
+
+    .captcha-input {
+        border-radius: 8px;
+        font-size: 14px;
+        padding: 6px;
+    }
+
+    .captcha-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .captcha-box {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 38px;
+        padding: 0 10px;
+        font-size: 18px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .captcha-input {
+        height: 38px;
+        width: 130px;
+        border-radius: 8px;
     }
 </style>
 
@@ -64,8 +95,7 @@
 
             <?php if (session()->getFlashdata('error')) : ?>
                 <div class="alert alert-danger text-center">
-                    <?= session()->getFlashdata('error', false) // HTML diizinkan untuk link 
-                    ?>
+                    <?= session()->getFlashdata('error', false) ?>
                 </div>
             <?php endif; ?>
 
@@ -100,7 +130,6 @@
                     <label class="form-label">Password</label>
                 </div>
 
-                <!-- CAPTCHA MATH -->
                 <div class="mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <small class="text-muted">Verifikasi</small>
@@ -111,16 +140,14 @@
                         </button>
                     </div>
 
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2 captcha-wrapper">
 
-                        <!-- Soal captcha -->
                         <div id="captcha_container" class="captcha-box">
                             <?= $captcha_html ?? session()->get('captcha_html') ?>
                         </div>
 
-                        <!-- Input jawaban -->
-                        <input type="number"
-                            class="form-control text-center"
+                        <input type="text"
+                            class="form-control text-center captcha-input"
                             name="captcha"
                             placeholder="Jawaban"
                             required>
@@ -144,14 +171,12 @@
 
             </form>
 
-            <!-- Divider -->
             <div class="divider d-flex align-items-center my-3">
                 <hr class="flex-grow-1">
                 <span class="px-3 text-muted small">atau</span>
                 <hr class="flex-grow-1">
             </div>
 
-            <!-- Google Login Button -->
             <div class="text-center">
                 <a href="<?= site_url('auth/google-login') ?>" class="btn btn-outline-danger btn-lg w-100 d-flex align-items-center justify-content-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
@@ -169,7 +194,6 @@
     </div>
 </section>
 
-<!-- Register Modal -->
 <?php
 $registerEmail = session('register_email');
 $registerName = session('register_name');
@@ -204,7 +228,6 @@ $registerName = session('register_name');
 
                 <form action="<?= site_url('auth/register/process') ?>" method="post" id="registerForm">
                     <div class="row g-3">
-                        <!-- Nama Lengkap -->
                         <div class="col-12">
                             <div class="form-group">
                                 <label class="form-label fw-semibold">
@@ -220,7 +243,6 @@ $registerName = session('register_name');
                             </div>
                         </div>
 
-                        <!-- Email Google -->
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label fw-semibold">
@@ -238,7 +260,6 @@ $registerName = session('register_name');
                             </div>
                         </div>
 
-                        <!-- Jenis Kelamin -->
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label fw-semibold">
@@ -252,7 +273,6 @@ $registerName = session('register_name');
                             </div>
                         </div>
 
-                        <!-- Tempat Lahir -->
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label fw-semibold">
@@ -265,7 +285,6 @@ $registerName = session('register_name');
                             </div>
                         </div>
 
-                        <!-- Tanggal Lahir -->
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label fw-semibold">
@@ -277,7 +296,6 @@ $registerName = session('register_name');
                             </div>
                         </div>
 
-                        <!-- Nomor HP 1 -->
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label fw-semibold">
@@ -293,7 +311,6 @@ $registerName = session('register_name');
                             </div>
                         </div>
 
-                        <!-- Nomor HP 2 -->
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label fw-semibold">
@@ -309,7 +326,6 @@ $registerName = session('register_name');
                             </div>
                         </div>
 
-                        <!-- Info Password -->
                         <div class="col-12">
                             <div class="alert alert-light border mb-0">
                                 <i class="bi bi-shield-lock-fill text-success me-2"></i>
@@ -339,13 +355,11 @@ $registerName = session('register_name');
 </div>
 
 <script>
-    // Function to close register modal and show login
     function closeRegisterModal() {
         const modal = bootstrap.Modal.getInstance(document.getElementById('registerModal'));
         if (modal) {
             modal.hide();
         }
-        // Clear registration session data
         fetch("<?= site_url('auth/clear_register_session') ?>", {
             method: 'POST',
             headers: {
@@ -354,20 +368,19 @@ $registerName = session('register_name');
         });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function() {
         const btn = document.getElementById('btnRefreshCaptcha');
         if (btn) {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', function() {
                 fetch("<?= site_url('auth/refresh-captcha') ?>")
                     .then(res => res.json())
-                    .then(data => {
+                    .then(function(data) {
                         document.getElementById('captcha_container').innerHTML = data.captcha_html;
                         document.querySelector("input[name='captcha']").value = '';
                     });
             });
         }
 
-        // Show register modal if registration data exists or show_register param is set
         const urlParams = new URLSearchParams(window.location.search);
         const showRegister = urlParams.get('show_register');
         const registerEmail = "<?= session('register_email') ?? '' ?>";
@@ -376,14 +389,10 @@ $registerName = session('register_name');
             const registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
             registerModal.show();
 
-            // Clear URL parameter
             const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-            window.history.replaceState({
-                path: cleanUrl
-            }, '', cleanUrl);
+            window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
         }
 
-        // Form validation
         const registerForm = document.getElementById('registerForm');
         if (registerForm) {
             registerForm.addEventListener('submit', function(event) {
@@ -397,14 +406,12 @@ $registerName = session('register_name');
     });
 
     (function() {
-        // Cegah BFCache
         window.addEventListener('pageshow', function(event) {
             if (event.persisted) {
                 window.location.replace("<?= site_url('auth') ?>");
             }
         });
 
-        // Cegah tombol back
         if (window.history && window.history.pushState) {
             window.history.pushState(null, '', window.location.href);
             window.addEventListener('popstate', function() {

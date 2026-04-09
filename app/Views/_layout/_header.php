@@ -1,4 +1,8 @@
 <style>
+    /* Prevent white flash on dark mode load */
+    html[data-bs-theme="dark"] { background-color: #1a1a1a; }
+    html[data-bs-theme="light"] { background-color: #f8f9fa; }
+    
     /* =========================
     NAVBAR GLOBAL
     ========================= */
@@ -362,20 +366,41 @@
             </li>
 
             <!-- USER MENU -->
+            <?php 
+            $profilePic = session('profile_picture');
+            $namaLengkap = session('nama_lengkap');
+            
+            // Debug info - remove after testing
+            // echo "<!-- DEBUG: profile_picture = " . print_r($profilePic, true) . " -->";
+            
+            // Jika ada foto dan berupa URL Google yang valid
+            if ($profilePic && strpos($profilePic, 'googleusercontent') !== false) {
+                $displayPic = $profilePic;
+            } 
+            // Jika foto ada tapi bukan URL Google (path lokal)
+            elseif (!empty($profilePic)) {
+                $displayPic = base_url($profilePic);
+            }
+            // Jika tidak ada foto
+            else {
+                $displayPic = base_url('assets/adminlte/img/logorssmnew.png');
+            }
+            ?>
             <li class="nav-item dropdown user-menu">
                 <a href="#"
                     class="nav-link dropdown-toggle d-flex align-items-center gap-2"
                     data-bs-toggle="dropdown">
-                    <img src="<?= session('profile_picture') ?: base_url('assets/adminlte/img/logorssmnew.png') ?>"
-                        class="user-image rounded-circle shadow">
+                    <img src="<?= $displayPic ?>"
+                        class="user-image rounded-circle shadow"
+                        onerror="this.src='<?= base_url('assets/adminlte/img/logorssmnew.png') ?>'">
                 </a>
 
                 <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
                     <li class="user-header text-bg-success">
-                        <img src="<?= session('profile_picture') ?: base_url('assets/adminlte/img/logorssmnew.png') ?>"
-                            class="rounded-circle shadow">
+                        <img src="<?= $displayPic ?>"
+                            class="rounded-circle shadow"
+                            onerror="this.src='<?= base_url('assets/adminlte/img/logorssmnew.png') ?>'">
                         <p>
-                        <h5 class="fw-bold mb-0">
                             <?= esc(session('nama_lengkap')) ?>
                         </h5>
                         <h5 class="fw-bold mb-0">

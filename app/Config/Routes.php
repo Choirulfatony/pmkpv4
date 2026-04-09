@@ -15,6 +15,7 @@ $routes->post('auth/process', 'Auth::process');
 $routes->get('auth/refresh-captcha', 'Auth::refresh_captcha');
 $routes->get('auth/logout', 'Auth::logout');
 $routes->post('auth/clear_register_session', 'Auth::clear_register_session');
+$routes->post('auth/ping', 'Auth::ping');
 $routes->get('auth/resend_verification', 'Auth::resend_verification');
 $routes->get('auth/cek_session', 'Auth::cek_session');
 $routes->get('auth/google-login', 'Auth::googleLogin');

@@ -1,6 +1,5 @@
 <!doctype html>
 <html lang="id">
-
 <head>
     <!-- 🔥 Dark Mode Engine — HARUS paling atas -->
     <script>
@@ -9,6 +8,8 @@
             const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             const theme = saved ?? (systemDark ? 'dark' : 'light');
             document.documentElement.setAttribute('data-bs-theme', theme);
+            // Apply background immediately to prevent white flash
+            document.documentElement.style.backgroundColor = (theme === 'dark' ? '#1a1a1a' : '#f8f9fa');
         })();
     </script>
 
@@ -21,7 +22,7 @@
 
 <!-- <body class="layout-fixed fixed-header fixed-footer sidebar-expand-lg sidebar-mini sidebar-collapse bg-body-tertiary"> -->
 
-<body class="layout-fixed fixed-header fixed-footer sidebar-expand-lg sidebar-mini sidebar-collapse">
+<body class="layout-fixed fixed-header fixed-footer sidebar-expand-lg sidebar-mini sidebar-collapse" style="background-color: inherit;">
 
     <div class="app-wrapper">
 
