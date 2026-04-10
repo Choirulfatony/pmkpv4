@@ -198,8 +198,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script>
-var lineChart, triwulanChart, semesterChart, perTahunChart;
+    Chart.register(ChartDataLabels);
+    var lineChart, triwulanChart, semesterChart, perTahunChart;
 var currentIndicatorData = null;
 
 window.addEventListener('themechange', function(e) {
@@ -350,7 +352,18 @@ function renderLineChart(bulanan, indicator) {
                 tension: 0.4,
                 pointRadius: 0,
                 pointBackgroundColor: '#28a745',
-                pointBorderColor: '#28a745'
+                pointBorderColor: '#28a745',
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'top',
+                    offset: -20,
+                    font: { size: 10, weight: 'bold' },
+                    color: '#28a745',
+                    formatter: function(value) {
+                        return value > 0 ? value : '';
+                    }
+                }
             }, {
                 label: 'Target (' + target + units + ')',
                 data: Array(12).fill(target),
