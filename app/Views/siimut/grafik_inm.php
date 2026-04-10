@@ -266,7 +266,6 @@ function loadGrafik() {
                 renderLineChart(response.bulanan, response.indicator);
                 renderTriwulanChart(response.triwulan, response.indicator);
                 renderSemesterChart(response.semester, response.indicator);
-                renderTahunanChart(response.tahunan, response.indicator);
                 renderPerTahunChart(response.per_tahun, response.indicator);
                 // renderTahunanChart removed - now shown as summary cards
             } else {
@@ -415,57 +414,6 @@ function renderSemesterChart(semester, indicator) {
             maintainAspectRatio: false,
             plugins: { legend: { display: true, position: 'top' } },
             scales: { y: { beginAtZero: true, max: maxScale, title: { display: true, text: 'Nilai ' + units } } }
-        }
-    });
-}
-
-function renderTahunanChart(tahunan, indicator) {
-    var ctx = document.getElementById('tahunanChart').getContext('2d');
-    var target = parseFloat(indicator.indicator_target || 0);
-    var nilai = tahunan.nilai || 0;
-    var tercap = tahunan.tercap || false;
-    var units = indicator.indicator_units || '';
-    var percent = target > 0 ? Math.round((nilai / target) * 100) : 0;
-    var capaiColor = nilai > 0 ? (tercap ? '#28a745' : '#dc3545') : '#6c757d';
-
-    if (tahunanChart) tahunanChart.destroy();
-    tahunanChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Capaian', 'Target'],
-            datasets: [{
-                label: 'Nilai',
-                data: [nilai, target],
-                backgroundColor: [capaiColor, '#ffc107'],
-                barThickness: 40
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                title: {
-                    display: true,
-                    text: 'Capaian: ' + nilai + ' ' + units + ' (' + percent + '%)  |  Target: ' + target + ' ' + units + '  |  Status: ' + (tercap ? 'TERCAPAI' : 'TIDAK TERCAPAI'),
-                    font: { size: 14, weight: 'bold' },
-                    color: '#333'
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return context.raw + ' ' + units;
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: { 
-                    beginAtZero: true,
-                    title: { display: true, text: 'Nilai ' + units }
-                }
-            }
         }
     });
 }
