@@ -1,17 +1,22 @@
 <!doctype html>
 <html lang="id">
 <head>
-    <!-- 🔥 Dark Mode Engine — HARUS paling atas -->
     <script>
         (function() {
-            const saved = localStorage.getItem('theme');
-            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const theme = saved ?? (systemDark ? 'dark' : 'light');
+            var theme = localStorage.getItem('theme');
+            if (!theme) {
+                theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
             document.documentElement.setAttribute('data-bs-theme', theme);
-            // Apply background immediately to prevent white flash
-            document.documentElement.style.backgroundColor = (theme === 'dark' ? '#1a1a1a' : '#f8f9fa');
+            var bg = theme === 'dark' ? '#000000' : '#ffffff';
+            var color = theme === 'dark' ? '#ffffff' : '#000000';
+            var style = document.getElementById('theme-styles');
+            if (style) {
+                style.textContent = 'html, body { background-color: ' + bg + ' !important; color: ' + color + ' !important; }';
+            }
         })();
     </script>
+    <style id="theme-styles"></style>
 
     <title><?= isset($judul) ? $judul : '' ?></title>
     <?= @$_meta ?>

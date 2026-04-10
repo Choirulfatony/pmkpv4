@@ -849,6 +849,8 @@
         }
 
         localStorage.setItem('theme', theme);
+        
+        window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: theme } }));
     }
 
     document.addEventListener('DOMContentLoaded', () => {

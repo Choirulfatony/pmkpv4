@@ -883,4 +883,36 @@ class RekapLaporanInmModel extends Model
 
         return ['nilai' => $nilai, 'num' => $totalNum, 'denum' => $totalDenum, 'tercap' => $tercap, 'target' => $target];
     }
+
+    /**
+     * Ambil nilai per tahun (5 tahun terakhir)
+     */
+    public function getNilaiPerTahun(int $indicatorId, int $tahun): array
+    {
+        $indicator = $this->getDetailByIdInm($indicatorId);
+        $target = (float) ($indicator->indicator_target ?? 0);
+        $factors = (float) ($indicator->indicator_factors ?? 1);
+        $operator = $indicator->indicator_target_calculation ?? '>=';
+
+        $perTahun = [];
+        $tahunMulai = $tahun - 4;
+
+        for ($th = $tahunMulai; $th <= $tahun; $th++) {
+            $monthly = $this->getMonthlyDataByIndicator($indicatorId, $th);
+            
+            $totalNum = 0;
+            $totalDenum = 0;
+            for ($i = 1; $i <= 12; $i++) {
+                $totalNum += $monthly[$i]['num'];
+                $totalDenum += $monthly[$i]['denum'];
+            }
+
+            $nilai = $totalDenum > 0 ? round(($totalNum / $totalDenum) * $factors, 2) : null;
+            $tercap = $this->cekTercapai($nilai, $target, $operator);
+
+            $perTahun[$th] = ['nilai' => $nilai, 'num' => $totalNum, 'denum' => $totalDenum, 'tercap' => $tercap];
+        }
+
+        return $perTahun;
+    }
 }

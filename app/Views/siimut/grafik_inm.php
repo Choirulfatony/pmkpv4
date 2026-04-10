@@ -2,7 +2,7 @@
     .chart-container {
         position: relative;
         height: 350px;
-        background: #fff;
+        background: var(--bs-body-bg);
         border-radius: 8px;
         padding: 15px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -28,11 +28,10 @@
     .status-tercap { background: #28a745; color: white; }
     .status-tidak { background: #dc3545; color: white; }
     .card-grafik { border: none; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    .card-grafik .card-header { background: #f8f9fa; border-bottom: 2px solid #28a745; font-weight: bold; }
+    .card-grafik .card-header { background: var(--bs-tertiary-bg); border-bottom: 2px solid #28a745; font-weight: bold; color: var(--bs-body-color); }
     .table-responsive { position: relative; }
     .overlay-wrapper { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
-    .overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--bs-body-bg, rgba(255,255,255,0.8)); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-    [data-bs-theme="dark"] .overlay { background: var(--bs-body-bg, rgba(33,37,41,0.9)); }
+    .overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--bs-body-bg); display: flex; justify-content: center; align-items: center; z-index: 9999; }
     .loader { width: 3em; height: 3em; transform: rotate(165deg); }
     .loader:before, .loader:after { content:""; position: absolute; top: 50%; left: 50%; display: block; width: 1em; height: 1em; border-radius: 0.5em; transform: translate(-50%, -50%); }
     .loader:before { animation: before8 2s infinite; }
@@ -85,6 +84,15 @@
         <div class="row">
             <div class="col-12">
                 <div class="card card-grafik">
+                    <div class="card-header"><i class="bi bi-calendar-range me-2"></i>Tren Per Tahun</div>
+                    <div class="card-body"><div class="chart-container" style="height: 300px;"><canvas id="perTahunChart"></canvas></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-grafik">
                     <div class="card-header"><i class="bi bi-graph-up me-2"></i>Tren Bulanan (Line Chart)</div>
                     <div class="card-body"><div class="chart-container"><canvas id="lineChart"></canvas></div></div>
                 </div>
@@ -129,7 +137,18 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-var lineChart, triwulanChart, semesterChart, tahunanChart;
+var lineChart, triwulanChart, semesterChart, tahunanChart, perTahunChart;
+var currentIndicatorData = null;
+
+window.addEventListener('themechange', function(e) {
+    if (currentIndicatorData && currentIndicatorData.bulanan && currentIndicatorData.indicator) {
+        renderLineChart(currentIndicatorData.bulanan, currentIndicatorData.indicator);
+        renderTriwulanChart(currentIndicatorData.triwulan, currentIndicatorData.indicator);
+        renderSemesterChart(currentIndicatorData.semester, currentIndicatorData.indicator);
+        renderTahunanChart(currentIndicatorData.tahunan, currentIndicatorData.indicator);
+        renderPerTahunChart(currentIndicatorData.per_tahun, currentIndicatorData.indicator);
+    }
+});
 
 function getMaxScale(target, units, dataArray) {
     var maxData = Math.max.apply(null, dataArray.filter(function(x) { return x > 0; }));
@@ -175,6 +194,7 @@ function loadGrafik() {
             document.getElementById('loadingGrafik').style.display = 'none';
             if (xhr.status === 200) {
                 var response = JSON.parse(xhr.responseText);
+                currentIndicatorData = response;
                 document.getElementById('grafikContainer').style.display = 'block';
                 document.getElementById('indicatorInfo').style.display = 'block';
                 document.getElementById('indicatorName').textContent = response.indicator.indicator_element;
@@ -192,6 +212,7 @@ function loadGrafik() {
                 renderTriwulanChart(response.triwulan, response.indicator);
                 renderSemesterChart(response.semester, response.indicator);
                 renderTahunanChart(response.tahunan, response.indicator);
+                renderPerTahunChart(response.per_tahun, response.indicator);
             } else {
                 alert('Error mengambil data');
             }
@@ -386,6 +407,57 @@ function renderTahunanChart(tahunan, indicator) {
                     title: { display: true, text: 'Nilai ' + units }
                 }
             }
+        }
+    });
+}
+
+function renderPerTahunChart(perTahun, indicator) {
+    var ctx = document.getElementById('perTahunChart').getContext('2d');
+    var labels = [];
+    var data = [];
+    var colors = [];
+    
+    for (var year in perTahun) {
+        if (perTahun.hasOwnProperty(year)) {
+            labels.push(year);
+            data.push(perTahun[year].nilai);
+            colors.push(perTahun[year].tercap ? '#28a745' : '#dc3545');
+        }
+    }
+    
+    var target = parseFloat(indicator.indicator_target || 0);
+    var units = indicator.indicator_units || '';
+    var maxData = data.length > 0 ? Math.max.apply(null, data.filter(function(x) { return x > 0; })) : 0;
+    var maxScale = Math.max(maxData * 1.3, target * 1.3);
+
+    if (perTahunChart) perTahunChart.destroy();
+    perTahunChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Nilai',
+                data: data,
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 6,
+                pointBackgroundColor: colors
+            }, {
+                label: 'Target (' + target + ' ' + units + ')',
+                data: Array(labels.length).fill(target),
+                borderColor: '#ffc107',
+                borderDash: [8, 4],
+                fill: false,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: true, position: 'top' } },
+            scales: { y: { beginAtZero: true, max: maxScale, title: { display: true, text: 'Nilai ' + units } } }
         }
     });
 }

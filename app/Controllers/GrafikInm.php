@@ -64,6 +64,7 @@ class GrafikInm extends AppController
         $triwulan = $this->rekapModel->getNilaiTriwulan($indicatorId, $tahun);
         $semester = $this->rekapModel->getNilaiSemester($indicatorId, $tahun);
         $tahunan = $this->rekapModel->getNilaiTahun($indicatorId, $tahun);
+        $perTahun = $this->rekapModel->getNilaiPerTahun($indicatorId, $tahun);
 
         return $this->response->setJSON([
             'indicator'  => $indicator,
@@ -71,6 +72,7 @@ class GrafikInm extends AppController
             'triwulan'   => $triwulan,
             'semester'   => $semester,
             'tahunan'    => $tahunan,
+            'per_tahun'  => $perTahun,
             'tahun'      => $tahun
         ]);
     }
