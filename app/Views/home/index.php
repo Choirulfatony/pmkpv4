@@ -80,12 +80,12 @@
                  <div class="col-lg-4 col-md-6">
                      <div class="card border-0 shadow-sm h-100">
                          <div class="card-body">
-                             <div class="d-flex align-items-center mb-3">
-                                 <div class="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
-                                     <i class="fas fa-info-circle text-primary"></i>
-                                 </div>
-                                 <h6 class="mb-0 fw-bold">Tentang Aplikasi</h6>
-                             </div>
+<div class="d-flex align-items-center mb-3">
+                                  <div class="rounded-circle p-3 me-3" style="background-color: var(--bs-primary-bg-subtle, #e3f2fd);">
+                                      <i class="fas fa-info-circle" style="color: var(--bs-primary, #0d6efd);"></i>
+                                  </div>
+                                  <h6 class="mb-0 fw-bold">Tentang Aplikasi</h6>
+                              </div>
                              <p class="text-muted mb-0 small">
                                  PMKPV4 adalah sistem pengelolaan Indikator Mutu Nasional (INM) 
                                  untuk rumah sakit. Aplikasi ini membantu dalam pemantauan dan 
@@ -97,12 +97,12 @@
                  <div class="col-lg-4 col-md-6">
                      <div class="card border-0 shadow-sm h-100">
                          <div class="card-body">
-                             <div class="d-flex align-items-center mb-3">
-                                 <div class="bg-success bg-opacity-10 rounded-circle p-3 me-3">
-                                     <i class="fas fa-cogs text-success"></i>
-                                 </div>
-                                 <h6 class="mb-0 fw-bold">Fitur Utama</h6>
-                             </div>
+<div class="d-flex align-items-center mb-3">
+                                  <div class="rounded-circle p-3 me-3" style="background-color: var(--bs-success-bg-subtle, #d1e7dd);">
+                                      <i class="fas fa-cogs" style="color: var(--bs-success, #198754);"></i>
+                                  </div>
+                                  <h6 class="mb-0 fw-bold">Fitur Utama</h6>
+                              </div>
                              <ul class="text-muted mb-0 small ps-3">
                                  <li>Input data indikator mutu per ruangan</li>
                                  <li>Rekapitulasi data bulanan & tahunan</li>
@@ -115,12 +115,12 @@
                  <div class="col-lg-4 col-md-6">
                      <div class="card border-0 shadow-sm h-100">
                          <div class="card-body">
-                             <div class="d-flex align-items-center mb-3">
-                                 <div class="bg-warning bg-opacity-10 rounded-circle p-3 me-3">
-                                     <i class="fas fa-lightbulb text-warning"></i>
-                                 </div>
-                                 <h6 class="mb-0 fw-bold">Petunjuk Penggunaan</h6>
-                             </div>
+<div class="d-flex align-items-center mb-3">
+                                  <div class="rounded-circle p-3 me-3" style="background-color: var(--bs-warning-bg-subtle, #fff3cd);">
+                                      <i class="fas fa-lightbulb" style="color: var(--bs-warning, #ffc107);"></i>
+                                  </div>
+                                  <h6 class="mb-0 fw-bold">Petunjuk Penggunaan</h6>
+                              </div>
                              <ul class="text-muted mb-0 small ps-3">
                                  <li>Pilih tahun pada dropdown untuk filter data</li>
                                  <li>Klik indikator untuk melihat detail per ruangan</li>
