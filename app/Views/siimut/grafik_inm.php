@@ -281,10 +281,10 @@ function renderTriwulanChart(triwulan, indicator) {
         triwulan[4] ? triwulan[4].nilai : 0
     ];
     var colors = [
-        triwulan[1] && triwulan[1].tercap ? '#28a745' : '#dc3545',
-        triwulan[2] && triwulan[2].tercap ? '#28a745' : '#dc3545',
-        triwulan[3] && triwulan[3].tercap ? '#28a745' : '#dc3545',
-        triwulan[4] && triwulan[4].tercap ? '#28a745' : '#dc3545'
+        triwulan[1] && triwulan[1].nilai ? (triwulan[1].tercap ? '#28a745' : '#dc3545') : '#6c757d',
+        triwulan[2] && triwulan[2].nilai ? (triwulan[2].tercap ? '#28a745' : '#dc3545') : '#6c757d',
+        triwulan[3] && triwulan[3].nilai ? (triwulan[3].tercap ? '#28a745' : '#dc3545') : '#6c757d',
+        triwulan[4] && triwulan[4].nilai ? (triwulan[4].tercap ? '#28a745' : '#dc3545') : '#6c757d'
     ];
     var target = parseFloat(indicator.indicator_target);
     var units = indicator.indicator_units || '';
@@ -326,8 +326,8 @@ function renderSemesterChart(semester, indicator) {
         semester[2] ? semester[2].nilai : 0
     ];
     var colors = [
-        semester[1] && semester[1].tercap ? '#20c997' : '#fd7e14',
-        semester[2] && semester[2].tercap ? '#20c997' : '#fd7e14'
+        semester[1] && semester[1].nilai ? (semester[1].tercap ? '#28a745' : '#dc3545') : '#6c757d',
+        semester[2] && semester[2].nilai ? (semester[2].tercap ? '#28a745' : '#dc3545') : '#6c757d'
     ];
     var target = parseFloat(indicator.indicator_target);
     var units = indicator.indicator_units || '';
@@ -368,6 +368,7 @@ function renderTahunanChart(tahunan, indicator) {
     var tercap = tahunan.tercap || false;
     var units = indicator.indicator_units || '';
     var percent = target > 0 ? Math.round((nilai / target) * 100) : 0;
+    var capaiColor = nilai > 0 ? (tercap ? '#28a745' : '#dc3545') : '#6c757d';
 
     if (tahunanChart) tahunanChart.destroy();
     tahunanChart = new Chart(ctx, {
@@ -377,7 +378,7 @@ function renderTahunanChart(tahunan, indicator) {
             datasets: [{
                 label: 'Nilai',
                 data: [nilai, target],
-                backgroundColor: [tercap ? '#28a745' : '#dc3545', '#6c757d'],
+                backgroundColor: [capaiColor, '#ffc107'],
                 barThickness: 40
             }]
         },
