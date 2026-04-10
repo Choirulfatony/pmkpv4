@@ -94,6 +94,32 @@
             </div>
         </div>
 
+        <!-- Tabel Num & Denum -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card card-grafik">
+                    <div class="card-header"><i class="bi bi-table me-2"></i>Detail Bulanan (Num & Denum)</div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm table-hover" id="tabelNumDenum">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-center">Bulan</th>
+                                        <th class="text-center">Num</th>
+                                        <th class="text-center">Denum</th>
+                                        <th class="text-center">%</th>
+                                        <th class="text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelNumDenumBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 🔥 2. Ringkasan Tahunan (Card Kecil) -->
         <div class="row mb-3">
             <div class="col-md-4">
@@ -168,9 +194,9 @@ var currentIndicatorData = null;
 window.addEventListener('themechange', function(e) {
     if (currentIndicatorData && currentIndicatorData.bulanan && currentIndicatorData.indicator) {
         renderLineChart(currentIndicatorData.bulanan, currentIndicatorData.indicator);
+        renderTabelNumDenum(currentIndicatorData.bulanan, currentIndicatorData.indicator);
         renderTriwulanChart(currentIndicatorData.triwulan, currentIndicatorData.indicator);
         renderSemesterChart(currentIndicatorData.semester, currentIndicatorData.indicator);
-        // renderTahunanChart removed - now shown as summary cards
         renderPerTahunChart(currentIndicatorData.per_tahun, currentIndicatorData.indicator);
     }
 });
@@ -264,6 +290,7 @@ function loadGrafik() {
                 }
                 
                 renderLineChart(response.bulanan, response.indicator);
+                renderTabelNumDenum(response.bulanan, response.indicator);
                 renderTriwulanChart(response.triwulan, response.indicator);
                 renderSemesterChart(response.semester, response.indicator);
                 renderPerTahunChart(response.per_tahun, response.indicator);
@@ -416,6 +443,31 @@ function renderSemesterChart(semester, indicator) {
             scales: { y: { beginAtZero: true, max: maxScale, title: { display: true, text: 'Nilai ' + units } } }
         }
     });
+}
+
+function renderTabelNumDenum(bulanan, indicator) {
+    var bulanNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var target = parseFloat(indicator.indicator_target || 0);
+    var units = indicator.indicator_units || '';
+    var tbody = document.getElementById('tabelNumDenumBody');
+    tbody.innerHTML = '';
+    
+    for (var i = 1; i <= 12; i++) {
+        var item = bulanan[i];
+        var num = item ? (item.num || 0) : 0;
+        var denum = item ? (item.denum || 0) : 0;
+        var nilai = item ? (item.nilai || 0) : 0;
+        var tercap = item ? (item.tercap || false) : false;
+        
+        var row = document.createElement('tr');
+        row.innerHTML = 
+            '<td class="text-center">' + bulanNames[i-1] + '</td>' +
+            '<td class="text-center">' + num + '</td>' +
+            '<td class="text-center">' + denum + '</td>' +
+            '<td class="text-center fw-bold">' + nilai + '</td>' +
+            '<td class="text-center"><span class="badge ' + (tercap ? 'bg-success' : 'bg-danger') + '">' + (tercap ? '✓' : '✗') + '</span></td>';
+        tbody.appendChild(row);
+    }
 }
 
 function renderPerTahunChart(perTahun, indicator) {
