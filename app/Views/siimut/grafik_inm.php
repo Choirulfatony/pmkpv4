@@ -139,6 +139,15 @@
             </div>
         </div>
 
+        <!-- Keterangan / Penjelasan -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div id="keterangan" class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle me-1"></i> Pilih indikator untuk melihat keterangan.
+                </div>
+            </div>
+        </div>
+
         <!-- 🔥 3. Triwulan & Semester (Side by Side) -->
         <div class="row">
             <div class="col-md-6">
@@ -276,8 +285,19 @@ function loadGrafik() {
                     } else {
                         trendEl.textContent = '➡ Stabil';
                     }
+                    
+                    // Generate Keterangan
+                    var tercapStatus = response.tahunan.tercap ? 'telah melampaui target' : 'belum mencapai target';
+                    var trendText = diff < 0 
+                        ? 'mengalami penurunan ' + Math.abs(diff).toFixed(1) + '%' 
+                        : (diff > 0 ? 'mengalami peningkatan ' + diff.toFixed(1) + '%' : 'stabil');
+                    var keteranganHtml = response.tahunan.tercap 
+                        ? '<span class="text-success fw-bold">Capaian indikator ' + nilai + ' ' + units + ' ' + tercapStatus + ' ' + target + ' ' + units + '. Indikator ' + trendText + ' dibanding tahun sebelumnya.</span>'
+                        : '<span class="text-danger fw-bold">Capaian indikator ' + nilai + ' ' + units + ' ' + tercapStatus + ' ' + target + ' ' + units + '. Indikator ' + trendText + ' dibanding tahun sebelumnya. Perlu tindakan perbaikan.</span>';
+                    document.getElementById('keterangan').innerHTML = '<i class="bi bi-info-circle me-1"></i> ' + keteranganHtml;
                 } else {
                     trendEl.textContent = '-';
+                    document.getElementById('keterangan').innerHTML = '<i class="bi bi-info-circle me-1"></i> Capaian indikator: ' + nilai + ' ' + units + ' | Target: ' + target + ' ' + units;
                 }
                 
                 renderLineChart(response.bulanan, response.indicator);
