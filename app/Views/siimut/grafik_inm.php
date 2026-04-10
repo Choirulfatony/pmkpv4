@@ -449,25 +449,59 @@ function renderTabelNumDenum(bulanan, indicator) {
     var bulanNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     var target = parseFloat(indicator.indicator_target || 0);
     var units = indicator.indicator_units || '';
+    var operator = indicator.indicator_target_calculation || '>=';
     var tbody = document.getElementById('tabelNumDenumBody');
-    tbody.innerHTML = '';
+    var html = '';
+    
+    var totalNum = 0;
+    var totalDenum = 0;
     
     for (var i = 1; i <= 12; i++) {
         var item = bulanan[i];
         var num = item ? (item.num || 0) : 0;
         var denum = item ? (item.denum || 0) : 0;
         var nilai = item ? (item.nilai || 0) : 0;
-        var tercap = item ? (item.tercap || false) : false;
         
-        var row = document.createElement('tr');
-        row.innerHTML = 
+        totalNum += num;
+        totalDenum += denum;
+        
+        // Cek tercap berdasarkan operator dari indikator
+        var tercap = false;
+        if (item && item.nilai !== null && item.nilai !== undefined) {
+            if (operator === '<=') {
+                tercap = nilai <= target;
+            } else if (operator === '<') {
+                tercap = nilai < target;
+            } else if (operator === '>') {
+                tercap = nilai > target;
+            } else {
+                tercap = nilai >= target;
+            }
+        }
+        
+        var rowClass = tercap ? '' : 'table-danger';
+        var statusBadge = tercap 
+            ? '<span class="badge bg-success px-3">✔ Tercapai</span>' 
+            : '<span class="badge bg-danger px-3">✖ Tidak</span>';
+        
+        html += '<tr class="' + rowClass + '">' +
             '<td class="text-center">' + bulanNames[i-1] + '</td>' +
             '<td class="text-center">' + num + '</td>' +
             '<td class="text-center">' + denum + '</td>' +
-            '<td class="text-center fw-bold">' + nilai + '</td>' +
-            '<td class="text-center"><span class="badge ' + (tercap ? 'bg-success' : 'bg-danger') + '">' + (tercap ? '✓' : '✗') + '</span></td>';
-        tbody.appendChild(row);
+            '<td class="text-center fw-bold">' + nilai.toFixed(2) + ' ' + units + '</td>' +
+            '<td class="text-center">' + statusBadge + '</td></tr>';
     }
+    
+    // Total row
+    var totalPersen = totalDenum > 0 ? (totalNum / totalDenum) * 100 : 0;
+    html += '<tr class="table-primary fw-bold">' +
+        '<td class="text-center">Total</td>' +
+        '<td class="text-center">' + totalNum + '</td>' +
+        '<td class="text-center">' + totalDenum + '</td>' +
+        '<td class="text-center">' + totalPersen.toFixed(2) + ' ' + units + '</td>' +
+        '<td class="text-center">-</td></tr>';
+    
+    tbody.innerHTML = html;
 }
 
 function renderPerTahunChart(perTahun, indicator) {
