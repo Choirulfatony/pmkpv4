@@ -511,13 +511,13 @@ function renderTabelNumDenum(bulanan, indicator) {
         var statusBadge = '';
         if (tidakAdaData) {
             rowClass = 'table-secondary';
-            statusBadge = '<span class="badge bg-secondary px-2">⚪ Tidak ada data</span>';
+            statusBadge = '<span class="badge bg-secondary px-2" style="background-color: #6c757d !important;"></span>';
         } else if (tercap) {
             rowClass = 'table-success';
-            statusBadge = '<span class="badge bg-success px-2">🟢 Tercapai</span>';
+            statusBadge = '<span class="badge bg-success px-2" style="background-color: #28a745 !important;"></span>';
         } else {
             rowClass = 'table-danger';
-            statusBadge = '<span class="badge bg-danger px-2">🔴 Tidak</span>';
+            statusBadge = '<span class="badge bg-danger px-2" style="background-color: #dc3545 !important;"></span>';
         }
         
         html += '<tr class="' + rowClass + '">' +
@@ -537,7 +537,7 @@ function renderTabelNumDenum(bulanan, indicator) {
         '<td class="text-center">' + totalNum + '</td>' +
         '<td class="text-center">' + totalDenum + '</td>' +
         '<td class="text-center">' + totalPersen.toFixed(2) + ' ' + units + '</td>' +
-        '<td class="text-center">' + (totalTercap ? '<span class="badge bg-success">🟢 Tercapai</span>' : '<span class="badge bg-danger">🔴 Tidak</span>') + '</td></tr>' +
+        '<td class="text-center">' + (totalTercap ? '<span class="badge bg-success" style="background-color: #28a745 !important;"></span>' : '<span class="badge bg-danger" style="background-color: #dc3545 !important;"></span>') + '</td></tr>' +
         '<tr><td colspan="5" class="text-muted small text-center">*Total dihitung berdasarkan akumulasi numerator dan denominator</td></tr>';
     
     tbody.innerHTML = html;
