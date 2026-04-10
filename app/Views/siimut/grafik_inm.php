@@ -348,7 +348,7 @@ function renderLineChart(bulanan, indicator) {
                 backgroundColor: 'rgba(40, 167, 69, 0.1)',
                 fill: true,
                 tension: 0.4,
-                pointRadius: 6,
+                pointRadius: 0,
                 pointBackgroundColor: '#28a745',
                 pointBorderColor: '#28a745'
             }, {
