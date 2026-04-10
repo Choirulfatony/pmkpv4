@@ -71,34 +71,58 @@
     <div id="indicatorInfo" class="indicator-info" style="display: none;">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <h5 id="indicatorName" class="mb-1"></h5>
-                <span class="target-badge">Target: <span id="indicatorTarget"></span> <span id="indicatorUnits"></span></span>
+                <h4 id="indicatorName" class="mb-2 fw-bold"></h4>
+                <div>
+                    <span class="badge bg-secondary me-2">Target: <span id="indicatorTarget"></span> <span id="indicatorUnits"></span></span>
+                    <span class="badge bg-secondary me-2">Satuan: <span id="indicatorUnitsLabel"></span></span>
+                    <span id="statusBadge" class="badge"></span>
+                </div>
             </div>
             <div class="col-md-4 text-end">
-                <span id="statusBadge" class="status-badge"></span>
             </div>
         </div>
     </div>
 
     <div id="grafikContainer" style="display: none;">
+        <!-- 🔥 1. Grafik Bulanan (UTAMA) -->
         <div class="row">
             <div class="col-12">
                 <div class="card card-grafik">
-                    <div class="card-header"><i class="bi bi-calendar-range me-2"></i>Tren Per Tahun</div>
-                    <div class="card-body"><div class="chart-container" style="height: 300px;"><canvas id="perTahunChart"></canvas></div></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-12">
-                <div class="card card-grafik">
-                    <div class="card-header"><i class="bi bi-graph-up me-2"></i>Tren Bulanan (Line Chart)</div>
+                    <div class="card-header"><i class="bi bi-graph-up me-2"></i>Tren Bulanan</div>
                     <div class="card-body"><div class="chart-container"><canvas id="lineChart"></canvas></div></div>
                 </div>
             </div>
         </div>
 
+        <!-- 🔥 2. Ringkasan Tahunan (Card Kecil) -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h3 class="mb-1" id="summaryNilai">-</h3>
+                        <small class="text-muted">Capaian</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h3 class="mb-1" id="summaryTarget">-</h3>
+                        <small class="text-muted">Target</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h3 class="mb-1" id="summaryTrend">-</h3>
+                        <small class="text-muted">Trend</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🔥 3. Triwulan & Semester (Side by Side) -->
         <div class="row">
             <div class="col-md-6">
                 <div class="card card-grafik">
@@ -114,11 +138,12 @@
             </div>
         </div>
 
+        <!-- 🔥 4. Per Tahun (History - di bawah) -->
         <div class="row">
             <div class="col-12">
                 <div class="card card-grafik">
-                    <div class="card-header"><i class="bi bi-speedometer2 me-2"></i>Capaian Tahunan vs Target</div>
-                    <div class="card-body"><div class="chart-container" style="height: 250px;"><canvas id="tahunanChart"></canvas></div></div>
+                    <div class="card-header"><i class="bi bi-calendar-range me-2"></i>Tren Per Tahun</div>
+                    <div class="card-body"><div class="chart-container" style="height: 250px;"><canvas id="perTahunChart"></canvas></div></div>
                 </div>
             </div>
         </div>
@@ -137,7 +162,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-var lineChart, triwulanChart, semesterChart, tahunanChart, perTahunChart;
+var lineChart, triwulanChart, semesterChart, perTahunChart;
 var currentIndicatorData = null;
 
 window.addEventListener('themechange', function(e) {
@@ -145,7 +170,7 @@ window.addEventListener('themechange', function(e) {
         renderLineChart(currentIndicatorData.bulanan, currentIndicatorData.indicator);
         renderTriwulanChart(currentIndicatorData.triwulan, currentIndicatorData.indicator);
         renderSemesterChart(currentIndicatorData.semester, currentIndicatorData.indicator);
-        renderTahunanChart(currentIndicatorData.tahunan, currentIndicatorData.indicator);
+        // renderTahunanChart removed - now shown as summary cards
         renderPerTahunChart(currentIndicatorData.per_tahun, currentIndicatorData.indicator);
     }
 });
@@ -199,8 +224,14 @@ function loadGrafik() {
                 document.getElementById('indicatorInfo').style.display = 'block';
                 document.getElementById('indicatorName').textContent = response.indicator.indicator_element;
                 document.getElementById('indicatorTarget').textContent = response.indicator.indicator_target;
-                document.getElementById('indicatorUnits').textContent = response.indicator.indicator_units;
+                var units = response.indicator.indicator_units || '';
+                document.getElementById('indicatorUnits').textContent = units;
+                document.getElementById('indicatorUnitsLabel').textContent = units;
                 var statusBadge = document.getElementById('statusBadge');
+                var target = parseFloat(response.indicator.indicator_target || 0);
+                var units = response.indicator.indicator_units || '';
+                var nilai = response.tahunan.nilai || 0;
+                
                 if (response.tahunan.tercap) {
                     statusBadge.textContent = 'TERCAPAI';
                     statusBadge.className = 'status-badge status-tercap';
@@ -208,11 +239,36 @@ function loadGrafik() {
                     statusBadge.textContent = 'TIDAK TERCAPAI';
                     statusBadge.className = 'status-badge status-tidak';
                 }
+                
+                // Update summary cards
+                document.getElementById('summaryNilai').textContent = nilai + ' ' + units;
+                document.getElementById('summaryTarget').textContent = target + ' ' + units;
+                
+                // Calculate trend (bandingkan dengan nilai tahun lalu)
+                var perTahun = response.per_tahun;
+                var tahunKeys = Object.keys(perTahun).sort();
+                var lastYear = tahunKeys[tahunKeys.length - 2]; // tahun lalu
+                var trendEl = document.getElementById('summaryTrend');
+                if (lastYear && perTahun[lastYear] && perTahun[lastYear].nilai) {
+                    var currentYear = tahunKeys[tahunKeys.length - 1];
+                    var diff = nilai - perTahun[lastYear].nilai;
+                    if (diff > 0) {
+                        trendEl.textContent = '⬆ +' + diff.toFixed(1) + '%';
+                    } else if (diff < 0) {
+                        trendEl.textContent = '⬇ ' + diff.toFixed(1) + '%';
+                    } else {
+                        trendEl.textContent = '➡ Stabil';
+                    }
+                } else {
+                    trendEl.textContent = '-';
+                }
+                
                 renderLineChart(response.bulanan, response.indicator);
                 renderTriwulanChart(response.triwulan, response.indicator);
                 renderSemesterChart(response.semester, response.indicator);
                 renderTahunanChart(response.tahunan, response.indicator);
                 renderPerTahunChart(response.per_tahun, response.indicator);
+                // renderTahunanChart removed - now shown as summary cards
             } else {
                 alert('Error mengambil data');
             }
