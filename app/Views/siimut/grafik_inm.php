@@ -419,9 +419,13 @@ function renderPerTahunChart(perTahun, indicator) {
     
     for (var year in perTahun) {
         if (perTahun.hasOwnProperty(year)) {
+            var nilai = perTahun[year].nilai;
+            var hasData = nilai !== null && nilai !== undefined;
+            
             labels.push(year);
-            data.push(perTahun[year].nilai);
-            colors.push(perTahun[year].tercap ? '#28a745' : '#dc3545');
+            data.push(hasData ? nilai : null);
+            // Use gray for no data, green if achieved, red if not achieved
+            colors.push(!hasData ? '#6c757d' : (perTahun[year].tercap ? '#28a745' : '#dc3545'));
         }
     }
     
