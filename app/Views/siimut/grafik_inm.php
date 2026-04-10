@@ -472,6 +472,7 @@ function renderTabelNumDenum(bulanan, indicator) {
     var target = parseFloat(indicator.indicator_target || 0);
     var units = indicator.indicator_units || '';
     var operator = indicator.indicator_target_calculation || '>=';
+    var tolerance = 0.02; // 0.02% tolerance for near-target values
     var tbody = document.getElementById('tabelNumDenumBody');
     var html = '';
     
@@ -487,9 +488,13 @@ function renderTabelNumDenum(bulanan, indicator) {
         totalNum += num;
         totalDenum += denum;
         
-        // Cek tercap berdasarkan operator dari indikator
+        // Cek tercap dengan toleransi
         var tercap = false;
-        if (item && item.nilai !== null && item.nilai !== undefined) {
+        var tidakAdaData = false;
+        
+        if (!item || denum === 0) {
+            tidakAdaData = true;
+        } else if (nilai !== null && nilai !== undefined) {
             if (operator === '<=') {
                 tercap = nilai <= target;
             } else if (operator === '<') {
@@ -497,31 +502,43 @@ function renderTabelNumDenum(bulanan, indicator) {
             } else if (operator === '>') {
                 tercap = nilai > target;
             } else {
-                tercap = nilai >= target;
+                // >= dengan toleransi
+                tercap = nilai >= target || (target - nilai) <= tolerance;
             }
         }
         
-        var rowClass = tercap ? '' : 'table-danger';
-        var statusBadge = tercap 
-            ? '<span class="badge bg-success px-3">✔ Tercapai</span>' 
-            : '<span class="badge bg-danger px-3">✖ Tidak</span>';
+        var rowClass = '';
+        var statusBadge = '';
+        if (tidakAdaData) {
+            rowClass = 'table-secondary';
+            statusBadge = '<span class="badge bg-secondary px-2">⚪ Tidak ada data</span>';
+        } else if (tercap) {
+            rowClass = 'table-success';
+            statusBadge = '<span class="badge bg-success px-2">🟢 Tercapai</span>';
+        } else {
+            rowClass = 'table-danger';
+            statusBadge = '<span class="badge bg-danger px-2">🔴 Tidak</span>';
+        }
         
         html += '<tr class="' + rowClass + '">' +
             '<td class="text-center">' + bulanNames[i-1] + '</td>' +
             '<td class="text-center">' + num + '</td>' +
             '<td class="text-center">' + denum + '</td>' +
-            '<td class="text-center fw-bold">' + nilai.toFixed(2) + ' ' + units + '</td>' +
+            '<td class="text-center fw-bold">' + (denum > 0 ? nilai.toFixed(2) : '0.00') + ' ' + units + '</td>' +
             '<td class="text-center">' + statusBadge + '</td></tr>';
     }
     
     // Total row
     var totalPersen = totalDenum > 0 ? (totalNum / totalDenum) * 100 : 0;
+    // Total dengan toleransi juga
+    var totalTercap = totalDenum > 0 && (totalPersen >= target || (target - totalPersen) <= tolerance);
     html += '<tr class="table-primary fw-bold">' +
         '<td class="text-center">Total</td>' +
         '<td class="text-center">' + totalNum + '</td>' +
         '<td class="text-center">' + totalDenum + '</td>' +
         '<td class="text-center">' + totalPersen.toFixed(2) + ' ' + units + '</td>' +
-        '<td class="text-center">-</td></tr>';
+        '<td class="text-center">' + (totalTercap ? '<span class="badge bg-success">🟢 Tercapai</span>' : '<span class="badge bg-danger">🔴 Tidak</span>') + '</td></tr>' +
+        '<tr><td colspan="5" class="text-muted small text-center">*Total dihitung berdasarkan akumulasi numerator dan denominator</td></tr>';
     
     tbody.innerHTML = html;
 }
