@@ -225,11 +225,8 @@ function renderLineChart(bulanan, indicator) {
     var ctx = document.getElementById('lineChart').getContext('2d');
     var labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     var data = [];
-    var pointColors = [];
     for (var i = 1; i <= 12; i++) {
-        var item = bulanan[i];
-        data.push(item ? item.nilai : 0);
-        pointColors.push(item && item.nilai ? (item.tercap ? '#28a745' : '#dc3545') : '#6c757d');
+        data.push(bulanan[i] ? bulanan[i].nilai : 0);
     }
     var target = parseFloat(indicator.indicator_target);
     var units = indicator.indicator_units || '';
@@ -247,9 +244,9 @@ function renderLineChart(bulanan, indicator) {
                 backgroundColor: 'rgba(40, 167, 69, 0.1)',
                 fill: true,
                 tension: 0.4,
-                pointRadius: 8,
-                pointBackgroundColor: pointColors,
-                pointBorderColor: pointColors
+                pointRadius: 6,
+                pointBackgroundColor: '#28a745',
+                pointBorderColor: '#28a745'
             }, {
                 label: 'Target (' + target + units + ')',
                 data: Array(12).fill(target),
@@ -431,7 +428,7 @@ function renderPerTahunChart(perTahun, indicator) {
             labels.push(year);
             data.push(hasData ? nilai : null);
             // Use gray for no data, green if achieved, red if not achieved
-            colors.push(!hasData ? '#6c757d' : (perTahun[year].tercap ? '#28a745' : '#dc3545'));
+            colors.push(hasData ? '#28a745' : '#6c757d');
         }
     }
     
@@ -452,9 +449,9 @@ function renderPerTahunChart(perTahun, indicator) {
                 backgroundColor: 'rgba(40, 167, 69, 0.1)',
                 fill: true,
                 tension: 0.4,
-                pointRadius: 8,
-                pointBackgroundColor: colors,
-                pointBorderColor: colors
+                pointRadius: 6,
+                pointBackgroundColor: '#28a745',
+                pointBorderColor: '#28a745'
             }, {
                 label: 'Target (' + target + ' ' + units + ')',
                 data: Array(labels.length).fill(target),
