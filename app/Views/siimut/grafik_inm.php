@@ -84,13 +84,24 @@
     </div>
 
     <div id="grafikContainer" style="display: none;">
-        <!-- 🔥 1. Grafik Bulanan + Tabel (UTAMA) -->
+        <!-- 🔥 1. Grafik Bulanan (UTAMA) -->
         <div class="row">
             <div class="col-12">
                 <div class="card card-grafik">
-                    <div class="card-header"><i class="bi bi-graph-up me-2"></i>Tren Bulanan & Detail</div>
+                    <div class="card-header"><i class="bi bi-graph-up me-2"></i>Tren Bulanan</div>
                     <div class="card-body">
-                        <div class="chart-container mb-3"><canvas id="lineChart"></canvas></div>
+                        <div class="chart-container"><canvas id="lineChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🔥 1b. Tabel Detail Bulanan -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card card-grafik">
+                    <div class="card-header"><i class="bi bi-table me-2"></i>Detail Bulanan</div>
+                    <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-bordered table-sm table-hover" id="tabelNumDenum">
                                 <thead class="table-light">
