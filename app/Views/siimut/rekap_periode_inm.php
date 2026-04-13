@@ -200,6 +200,8 @@ $(document).ready(function() {
     initTable();
 });
 
+
+
 $(document).on('keydown', function(e) {
     if (e.key === 'F5') {
         vtahun = <?= date('Y') ?>;
@@ -284,7 +286,8 @@ function initTable() {
                     }
                     
                     if (periodeData) {
-                        if (!periodeData.nilai || periodeData.nilai === 0) {
+                        // PMKP: null = tidak ada data
+                        if (periodeData.nilai === null || periodeData.nilai === undefined) {
                             $(td).addClass('cell-empty');
                         } else if (periodeData.tercap) {
                             $(td).addClass('cell-target');
@@ -396,6 +399,9 @@ function initTable() {
 }
 
 function renderCell(nilai, tercapai, num, denum, units) {
+    if (nilai === null || nilai === undefined) {
+        return '<div class="text-muted">-</div><div class="small opacity-75">0 / 0</div>';
+    }
     return '<div class="fw-semibold">' + nilai + ' ' + units + '</div>' +
            '<div class="small opacity-75">' + num + ' / ' + denum + '</div>';
 }

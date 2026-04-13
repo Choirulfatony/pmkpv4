@@ -611,12 +611,12 @@ class RekapLaporanInmModel extends Model
                     $totalDenum += $monthlyDenum[$i] ?? 0;
                 }
 
-                // 🔥 FIX: jangan return null
+                // 🔥 FIX PMKP: denominator 0 = tidak ada data, bukan 0
                 if ($totalDenum == 0) {
-                    return ['nilai' => 0, 'num' => 0, 'denum' => 0];
+                    return ['nilai' => null, 'num' => 0, 'denum' => 0];
                 }
 
-                // 🔥 FIX: jangan langsung round (biar akurat)
+                // 🔥 PMKP: gunakan akumulasi numerator & denominator
                 $nilai = round(($totalNum / $totalDenum) * $factors, 2);
                 return ['nilai' => $nilai, 'num' => $totalNum, 'denum' => $totalDenum];
             };
@@ -628,7 +628,8 @@ class RekapLaporanInmModel extends Model
                 $bulanAkhir = $tw * 3;
                 $result = $computeNilai($bulanMulai, $bulanAkhir);
                 $tercap = $this->cekTercapai($result['nilai'], $target, $operator);
-                $triwulan[$tw] = ['nilai' => $result['nilai'], 'num' => $result['num'], 'denum' => $result['denum'], 'tercap' => $tercap];
+                $status = $this->getStatusPMKP($result['nilai'], $target, $operator);
+                $triwulan[$tw] = ['nilai' => $result['nilai'], 'num' => $result['num'], 'denum' => $result['denum'], 'tercap' => $tercap, 'status' => $status];
             }
 
             // Semester (2 periods of 6 months each)
@@ -638,12 +639,14 @@ class RekapLaporanInmModel extends Model
                 $bulanAkhir = $sm * 6;
                 $result = $computeNilai($bulanMulai, $bulanAkhir);
                 $tercap = $this->cekTercapai($result['nilai'], $target, $operator);
-                $semester[$sm] = ['nilai' => $result['nilai'], 'num' => $result['num'], 'denum' => $result['denum'], 'tercap' => $tercap];
+                $status = $this->getStatusPMKP($result['nilai'], $target, $operator);
+                $semester[$sm] = ['nilai' => $result['nilai'], 'num' => $result['num'], 'denum' => $result['denum'], 'tercap' => $tercap, 'status' => $status];
             }
 
             // Tahunan (1-12)
             $resultTahun = $computeNilai(1, 12);
             $tercap = $this->cekTercapai($resultTahun['nilai'], $target, $operator);
+            $status = $this->getStatusPMKP($resultTahun['nilai'], $target, $operator);
 
             $tercapTw = count(array_filter($triwulan, fn($t) => $t['tercap']));
             $tercapSm = count(array_filter($semester, fn($s) => $s['tercap']));
@@ -655,7 +658,7 @@ class RekapLaporanInmModel extends Model
                 'indicator_units' => $units,
                 'triwulan' => $triwulan,
                 'semester' => $semester,
-                'tahun' => ['nilai' => $resultTahun['nilai'], 'num' => $resultTahun['num'], 'denum' => $resultTahun['denum'], 'tercap' => $tercap],
+                'tahun' => ['nilai' => $resultTahun['nilai'], 'num' => $resultTahun['num'], 'denum' => $resultTahun['denum'], 'tercap' => $tercap, 'status' => $status],
                 'tercap_tw' => $tercapTw,
                 'tercap_sm' => $tercapSm,
                 'tercap_tgl' => $tercap
@@ -700,7 +703,7 @@ class RekapLaporanInmModel extends Model
     }
 
     /**
-     * Cek apakah tercapai berdasarkan operator
+     * Cek apakah tercapai berdasarkan operator (boolean)
      */
     private function cekTercapai($nilai, float $target, string $operator): bool
     {
@@ -721,6 +724,32 @@ class RekapLaporanInmModel extends Model
                 return $angka == $target;
             default:
                 return $angka >= $target;
+        }
+    }
+
+    /**
+     * Get status PMKP (TERCAPAI/TIDAK TERCAPAI/TIDAK ADA DATA)
+     */
+    private function getStatusPMKP($nilai, float $target, string $operator): string
+    {
+        if ($nilai === null) {
+            return 'TIDAK ADA DATA';
+        }
+
+        $angka = (float) preg_replace('/[^0-9.]/', '', $nilai);
+        switch ($operator) {
+            case '>=':
+                return $angka >= $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            case '>':
+                return $angka > $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            case '<=':
+                return $angka <= $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            case '<':
+                return $angka < $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            case '=':
+                return $angka == $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            default:
+                return $angka >= $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
         }
     }
 
