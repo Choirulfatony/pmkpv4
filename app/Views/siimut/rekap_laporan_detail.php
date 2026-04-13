@@ -102,6 +102,11 @@
                 <div class="flex-grow-1">
                     <h5 class="mb-1"><strong>Detail Rekap Indikator Nasional Mutu (INM)</strong></h5>
                     <p class="mb-0">Indikator: <strong><?= isset($detail->indicator_element) ? esc($detail->indicator_element) : 'Data Detail' ?></strong></p>
+                    <p class="mb-0">Target: <strong><?= isset($detail->indicator_target) ? esc($detail->indicator_target) : '-' ?></strong> 
+                    <span class="text-muted"><?= isset($detail->indicator_units) ? esc($detail->indicator_units) : '' ?></span></p>
+                    <input type="hidden" id="target_det" value="<?= isset($detail->indicator_target) ? esc($detail->indicator_target) : '' ?>">
+                    <input type="hidden" id="factor_det" value="<?= isset($detail->indicator_factors) ? esc($detail->indicator_factors) : '' ?>">
+                    <input type="hidden" id="operator_det" value="<?= isset($detail->indicator_target_calculation) ? esc($detail->indicator_target_calculation) : '>=' ?>">
                 </div>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -202,7 +207,9 @@
 var table_detail;
 var vtahun = '<?= $tahun ?>';
 var indicatorId = '<?= $indicatorId ?>';
-var target, factor, operator;
+var target = '<?= isset($detail->indicator_target) ? $detail->indicator_target : 0 ?>';
+var factor = '<?= isset($detail->indicator_factors) ? $detail->indicator_factors : 1 ?>';
+var operator = '<?= isset($detail->indicator_target_calculation) ? $detail->indicator_target_calculation : '>=' ?>';
 
 $(document).ready(function() {
     // Init DataTable
@@ -265,7 +272,8 @@ $(document).ready(function() {
                             if (num == 0 && denum == 0) {
                                 $(td).addClass('cell-empty');
                             } else {
-                                var nilai = Math.floor((num / denum) * (factor || 1) || 0);
+                                var totalEl = doc.getElementById('total_det');
+                                var nilai = totalEl ? parseFloat(totalEl.innerText) || 0 : 0;
                                 var tgt = parseInt(target) || 0;
 
                                 if (operator == "<=") {

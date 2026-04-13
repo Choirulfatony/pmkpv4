@@ -517,21 +517,12 @@ class RekapLaporanInmModel extends Model
     }
 
     /**
-     * Ambil data rekap per Triwulan, Semester, dan Tahun (OPTIMIZED + CACHE)
+     * Ambil data rekap per Triwulan, Semester, dan Tahun
      */
     public function getRekapPeriode(int $tahun)
     {
-        // Check cache first
-        $cache = \Config\Services::cache();
-        $cacheKey = 'rekap_periode_' . $tahun;
-
-        if ($cached = $cache->get($cacheKey)) {
-            return $cached;
-        }
-
         $db = db_connect();
 
-        // Get all indicators
         $indicators = $db->table('quality_indicator')
             ->select('indicator_id, indicator_element, indicator_target, indicator_factors, indicator_units, indicator_target_calculation')
             ->where('indicator_category_id', '4')
@@ -539,134 +530,118 @@ class RekapLaporanInmModel extends Model
             ->get()
             ->getResult();
 
-        if (empty($indicators)) {
-            return [];
-        }
+        if (empty($indicators)) return [];
 
-        // Get ALL monthly data for all indicators in ONE query
         $indicatorIds = array_column($indicators, 'indicator_id');
-        
-        log_message('error', 'getRekapPeriode: tahun=' . $tahun . ', indicatorIds=' . json_encode($indicatorIds));
-        
         $allMonthlyData = $this->getAllMonthlyData($indicatorIds, $tahun);
 
-        log_message('error', 'getRekapPeriode: monthlyDataCount=' . count($allMonthlyData) . ', keys=' . json_encode(array_keys($allMonthlyData)));
-
-        // Organize monthly data by indicator_id -> bulan -> data
+        // mapping
         $monthlyByIndicator = [];
         foreach ($allMonthlyData as $key => $data) {
-            // Parse key: "indicatorId_bulan"
-            if (strpos($key, '_') !== false) {
-                $parts = explode('_', $key);
-                $indicatorId = (int)$parts[0];
-                $bulan = (int)$parts[1];
-                $monthlyByIndicator[$indicatorId][$bulan] = $data;
-            }
+            [$id, $bulan] = explode('_', $key);
+            $monthlyByIndicator[$id][$bulan] = $data;
         }
 
         $results = [];
 
         foreach ($indicators as $indicator) {
-            $indicatorId = $indicator->indicator_id;
-            $target = (float) $indicator->indicator_target;
-            $factors = (float) $indicator->indicator_factors;
+
+            $id       = $indicator->indicator_id;
+            $target   = (float) $indicator->indicator_target;
+            $factor   = (float) $indicator->indicator_factors;
             $operator = $indicator->indicator_target_calculation ?? '>=';
-            $units = $indicator->indicator_units;
 
-            // Get monthly data for this indicator (default to null arrays)
-            $indicatorMonthly = $monthlyByIndicator[$indicatorId] ?? [];
+            $monthly = $monthlyByIndicator[$id] ?? [];
 
-            // Initialize monthly num/denum arrays (1-12)
-            $monthlyNum = array_fill(1, 12, 0);
-            $monthlyDenum = array_fill(1, 12, 0);
+            // init
+            $num = array_fill(1, 12, 0);
+            $den = array_fill(1, 12, 0);
 
-            // Fill actual data
-            for ($bulan = 1; $bulan <= 12; $bulan++) {
-                if (isset($indicatorMonthly[$bulan])) {
-                    $monthlyNum[$bulan] = (float)($indicatorMonthly[$bulan]->num ?? 0);
-                    $monthlyDenum[$bulan] = (float)($indicatorMonthly[$bulan]->denum ?? 0);
-                }
+            foreach ($monthly as $b => $val) {
+                $num[$b] = (float) ($val->num ?? 0);
+                $den[$b] = (float) ($val->denum ?? 0);
             }
 
-            // Helper to compute nilai from num/denum range
-            // $computeNilai = function ($startBulan, $endBulan) use ($monthlyNum, $monthlyDenum, $factors) {
-            //     $totalNum = array_sum(array_slice($monthlyNum, $startBulan - 1, $endBulan - $startBulan + 1));
-            //     $totalDenum = array_sum(array_slice($monthlyDenum, $startBulan - 1, $endBulan - $startBulan + 1));
-
-            //     if ($totalDenum == 0) {
-            //         return null;
-            //     }
-
-            //     $nilai = round(($totalNum / $totalDenum) * $factors, 2);
-            //     return $nilai;
-            // };
-
-            $computeNilai = function ($startBulan, $endBulan) use ($monthlyNum, $monthlyDenum, $factors) {
+            // ================= CORE PMKP =================
+            $hitung = function ($start, $end) use ($num, $den, $factor) {
 
                 $totalNum = 0;
-                $totalDenum = 0;
+                $totalDen = 0;
 
-                for ($i = $startBulan; $i <= $endBulan; $i++) {
-                    $totalNum += $monthlyNum[$i] ?? 0;
-                    $totalDenum += $monthlyDenum[$i] ?? 0;
+                for ($i = $start; $i <= $end; $i++) {
+                    $totalNum += $num[$i];
+                    $totalDen += $den[$i];
                 }
 
-                // 🔥 FIX PMKP: denominator 0 = tidak ada data, bukan 0
-                if ($totalDenum == 0) {
-                    return ['nilai' => null, 'num' => 0, 'denum' => 0];
+                if ($totalDen == 0) {
+                    return [
+                        'nilai' => null,
+                        'num' => $totalNum,
+                        'denum' => $totalDen
+                    ];
                 }
 
-                // 🔥 PMKP: gunakan akumulasi numerator & denominator
-                $nilai = round(($totalNum / $totalDenum) * $factors, 2);
-                return ['nilai' => $nilai, 'num' => $totalNum, 'denum' => $totalDenum];
+                return [
+                    'nilai' => round(($totalNum / $totalDen) * $factor, 2),
+                    'num' => $totalNum,
+                    'denum' => $totalDen
+                ];
             };
 
-            // Triwulan (4 periods of 3 months each)
+            // ================= TRI WULAN =================
             $triwulan = [];
-            for ($tw = 1; $tw <= 4; $tw++) {
-                $bulanMulai = ($tw - 1) * 3 + 1;
-                $bulanAkhir = $tw * 3;
-                $result = $computeNilai($bulanMulai, $bulanAkhir);
-                $tercap = $this->cekTercapai($result['nilai'], $target, $operator);
-                $status = $this->getStatusPMKP($result['nilai'], $target, $operator);
-                $triwulan[$tw] = ['nilai' => $result['nilai'], 'num' => $result['num'], 'denum' => $result['denum'], 'tercap' => $tercap, 'status' => $status];
+            for ($i = 1; $i <= 4; $i++) {
+                $start = ($i - 1) * 3 + 1;
+                $end   = $i * 3;
+
+                $r = $hitung($start, $end);
+
+                $triwulan[$i] = [
+                    ...$r,
+                    'status' => $this->getStatusPMKP($r['nilai'], $target, $operator)
+                ];
             }
 
-            // Semester (2 periods of 6 months each)
+            // ================= SEMESTER =================
             $semester = [];
-            for ($sm = 1; $sm <= 2; $sm++) {
-                $bulanMulai = ($sm - 1) * 6 + 1;
-                $bulanAkhir = $sm * 6;
-                $result = $computeNilai($bulanMulai, $bulanAkhir);
-                $tercap = $this->cekTercapai($result['nilai'], $target, $operator);
-                $status = $this->getStatusPMKP($result['nilai'], $target, $operator);
-                $semester[$sm] = ['nilai' => $result['nilai'], 'num' => $result['num'], 'denum' => $result['denum'], 'tercap' => $tercap, 'status' => $status];
+            for ($i = 1; $i <= 2; $i++) {
+                $start = ($i - 1) * 6 + 1;
+                $end   = $i * 6;
+
+                $r = $hitung($start, $end);
+
+                $semester[$i] = [
+                    ...$r,
+                    'status' => $this->getStatusPMKP($r['nilai'], $target, $operator)
+                ];
             }
 
-            // Tahunan (1-12)
-            $resultTahun = $computeNilai(1, 12);
-            $tercap = $this->cekTercapai($resultTahun['nilai'], $target, $operator);
-            $status = $this->getStatusPMKP($resultTahun['nilai'], $target, $operator);
+            // ================= TAHUN =================
+            $tahunR = $hitung(1, 12);
 
-            $tercapTw = count(array_filter($triwulan, fn($t) => $t['tercap']));
-            $tercapSm = count(array_filter($semester, fn($s) => $s['tercap']));
+            // ================= REKAP CAPAIAN =================
+            $tercapTw = count(array_filter($triwulan, fn($t) => $t['status'] === 'TERCAPAI'));
+            $tercapSm = count(array_filter($semester, fn($s) => $s['status'] === 'TERCAPAI'));
 
             $results[] = [
-                'indicator_id' => $indicator->indicator_id,
+                'indicator_id' => $id,
                 'indicator_element' => $indicator->indicator_element,
-                'indicator_target' => $indicator->indicator_target,
-                'indicator_units' => $units,
+                'target' => $target,
+                'satuan' => $indicator->indicator_units,
+
                 'triwulan' => $triwulan,
                 'semester' => $semester,
-                'tahun' => ['nilai' => $resultTahun['nilai'], 'num' => $resultTahun['num'], 'denum' => $resultTahun['denum'], 'tercap' => $tercap, 'status' => $status],
-                'tercap_tw' => $tercapTw,
-                'tercap_sm' => $tercapSm,
-                'tercap_tgl' => $tercap
+                'tahun' => [
+                    ...$tahunR,
+                    'status' => $this->getStatusPMKP($tahunR['nilai'], $target, $operator)
+                ],
+
+                'summary' => [
+                    'tw_tercapai' => $tercapTw,
+                    'sm_tercapai' => $tercapSm
+                ]
             ];
         }
-
-        // Save to cache for 10 minutes
-        $cache->save($cacheKey, $results, 600);
 
         return $results;
     }
@@ -800,7 +775,7 @@ class RekapLaporanInmModel extends Model
         $results = $builder->get()->getResult();
 
         $data = array_fill(1, 12, ['num' => 0, 'denum' => 0, 'nilai' => null]);
-        
+
         $indicator = $this->getDetailByIdInm($indicatorId);
         $target = (float) ($indicator->indicator_target ?? 0);
         $factors = (float) ($indicator->indicator_factors ?? 1);
@@ -809,9 +784,9 @@ class RekapLaporanInmModel extends Model
             $bulan = (int) $row->bulan;
             $num = (float) $row->num;
             $denum = (float) $row->denum;
-            
+
             $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
-            
+
             $data[$bulan] = [
                 'num'    => $num,
                 'denum'  => $denum,
@@ -828,7 +803,7 @@ class RekapLaporanInmModel extends Model
     public function getNilaiTriwulan(int $indicatorId, int $tahun): array
     {
         $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
-        
+
         $indicator = $this->getDetailByIdInm($indicatorId);
         $target = (float) ($indicator->indicator_target ?? 0);
         $factors = (float) ($indicator->indicator_factors ?? 1);
@@ -861,7 +836,7 @@ class RekapLaporanInmModel extends Model
     public function getNilaiSemester(int $indicatorId, int $tahun): array
     {
         $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
-        
+
         $indicator = $this->getDetailByIdInm($indicatorId);
         $target = (float) ($indicator->indicator_target ?? 0);
         $factors = (float) ($indicator->indicator_factors ?? 1);
@@ -894,7 +869,7 @@ class RekapLaporanInmModel extends Model
     public function getNilaiTahun(int $indicatorId, int $tahun): array
     {
         $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
-        
+
         $indicator = $this->getDetailByIdInm($indicatorId);
         $target = (float) ($indicator->indicator_target ?? 0);
         $factors = (float) ($indicator->indicator_factors ?? 1);
@@ -928,7 +903,7 @@ class RekapLaporanInmModel extends Model
 
         for ($th = $tahunMulai; $th <= $tahun; $th++) {
             $monthly = $this->getMonthlyDataByIndicator($indicatorId, $th);
-            
+
             $totalNum = 0;
             $totalDenum = 0;
             for ($i = 1; $i <= 12; $i++) {

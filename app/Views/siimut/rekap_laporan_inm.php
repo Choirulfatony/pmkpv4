@@ -256,6 +256,9 @@
                         <button type="button" class="btn btn-outline-secondary" onclick="reload_table()" title="Refresh">
                             <i class="fas fa-sync-alt"></i>
                         </button>
+                        <a href="<?= site_url('siimut/rekap-laporan-inm/export?tahun=' . $tahun) ?>" class="btn btn-outline-success" title="Download Excel">
+                            <i class="fas fa-file-excel"></i>
+                        </a>
                         <button type="button" class="btn btn-outline-secondary" onclick="maximizeCard(this)" title="Fullscreen">
                             <i class="fas fa-expand"></i>
                         </button>
@@ -417,7 +420,8 @@
                                 if (num == 0 && denum == 0) {
                                     $(td).addClass('cell-empty');
                                 } else {
-                                    var nilai = Math.floor((num / denum) * (factor || 1) || 0);
+                                    var totalEl = doc.getElementById('total');
+                                    var nilai = totalEl ? parseFloat(totalEl.innerText) || 0 : 0;
                                     var tgt = parseInt(target) || 0;
 
                                     if (operator == "<=") {

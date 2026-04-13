@@ -286,10 +286,10 @@ function initTable() {
                     }
                     
                     if (periodeData) {
-                        // PMKP: null = tidak ada data
-                        if (periodeData.nilai === null || periodeData.nilai === undefined) {
+                        var status = periodeData.status || '';
+                        if (status === 'TIDAK ADA DATA' || periodeData.nilai === null) {
                             $(td).addClass('cell-empty');
-                        } else if (periodeData.tercap) {
+                        } else if (status === 'TERCAPAI') {
                             $(td).addClass('cell-target');
                         } else {
                             $(td).addClass('cell-fail');
@@ -312,96 +312,97 @@ function initTable() {
                 }
             },
             { 
-                data: 'indicator_target',
+                data: 'target',
                 render: function(data, type, row) {
-                    return data + ' ' + row.indicator_units;
+                    return data + ' ' + row.satuan;
                 }
             },
             { 
                 data: 'triwulan.1.nilai',
                 render: function(data, type, row) {
                     var tw = row.triwulan && row.triwulan[1] ? row.triwulan[1] : {};
-                    var tercapai = tw.tercap || false;
+                    var status = tw.status || '';
                     var num = tw.num || 0;
                     var denum = tw.denum || 0;
-                    var units = row.indicator_units || '';
-                    return renderCell(data, tercapai, num, denum, units);
+                    var units = row.satuan || '';
+                    return renderCell(data, status, num, denum, units);
                 }
             },
             { 
                 data: 'triwulan.2.nilai',
                 render: function(data, type, row) {
                     var tw = row.triwulan && row.triwulan[2] ? row.triwulan[2] : {};
-                    var tercapai = tw.tercap || false;
+                    var status = tw.status || '';
                     var num = tw.num || 0;
                     var denum = tw.denum || 0;
-                    var units = row.indicator_units || '';
-                    return renderCell(data, tercapai, num, denum, units);
+                    var units = row.satuan || '';
+                    return renderCell(data, status, num, denum, units);
                 }
             },
             { 
                 data: 'triwulan.3.nilai',
                 render: function(data, type, row) {
                     var tw = row.triwulan && row.triwulan[3] ? row.triwulan[3] : {};
-                    var tercapai = tw.tercap || false;
+                    var status = tw.status || '';
                     var num = tw.num || 0;
                     var denum = tw.denum || 0;
-                    var units = row.indicator_units || '';
-                    return renderCell(data, tercapai, num, denum, units);
+                    var units = row.satuan || '';
+                    return renderCell(data, status, num, denum, units);
                 }
             },
             { 
                 data: 'triwulan.4.nilai',
                 render: function(data, type, row) {
                     var tw = row.triwulan && row.triwulan[4] ? row.triwulan[4] : {};
-                    var tercapai = tw.tercap || false;
+                    var status = tw.status || '';
                     var num = tw.num || 0;
                     var denum = tw.denum || 0;
-                    var units = row.indicator_units || '';
-                    return renderCell(data, tercapai, num, denum, units);
+                    var units = row.satuan || '';
+                    return renderCell(data, status, num, denum, units);
                 }
             },
             { 
                 data: 'semester.1.nilai',
                 render: function(data, type, row) {
                     var sm = row.semester && row.semester[1] ? row.semester[1] : {};
-                    var tercapai = sm.tercap || false;
+                    var status = sm.status || '';
                     var num = sm.num || 0;
                     var denum = sm.denum || 0;
-                    var units = row.indicator_units || '';
-                    return renderCell(data, tercapai, num, denum, units);
+                    var units = row.satuan || '';
+                    return renderCell(data, status, num, denum, units);
                 }
             },
             { 
                 data: 'semester.2.nilai',
                 render: function(data, type, row) {
                     var sm = row.semester && row.semester[2] ? row.semester[2] : {};
-                    var tercapai = sm.tercap || false;
+                    var status = sm.status || '';
                     var num = sm.num || 0;
                     var denum = sm.denum || 0;
-                    var units = row.indicator_units || '';
-                    return renderCell(data, tercapai, num, denum, units);
+                    var units = row.satuan || '';
+                    return renderCell(data, status, num, denum, units);
                 }
             },
             { 
                 data: 'tahun.nilai',
                 render: function(data, type, row) {
                     var th = row.tahun || {};
-                    var tercapai = th.tercap || false;
+                    var status = th.status || '';
                     var num = th.num || 0;
                     var denum = th.denum || 0;
-                    var units = row.indicator_units || '';
-                    return renderCell(data, tercapai, num, denum, units);
+                    var units = row.satuan || '';
+                    return renderCell(data, status, num, denum, units);
                 }
             }
         ]
     });
 }
 
-function renderCell(nilai, tercapai, num, denum, units) {
+function renderCell(nilai, status, num, denum, units) {
     if (nilai === null || nilai === undefined) {
         return '<div class="text-muted">-</div><div class="small opacity-75">0 / 0</div>';
     }
+    
     return '<div class="fw-semibold">' + nilai + ' ' + units + '</div>' +
            '<div class="small opacity-75">' + num + ' / ' + denum + '</div>';
 }

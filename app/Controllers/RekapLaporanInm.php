@@ -4,6 +4,11 @@ namespace App\Controllers;
 
 use App\Models\SiimutMenuModel;
 use App\Models\RekapLaporanInmModel;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class RekapLaporanInm extends AppController
 {
@@ -168,10 +173,12 @@ class RekapLaporanInm extends AppController
             
             // Ambil info indicator
             $indicatorInfo = $this->rekapModel->getDetailByIdInm($indicatorId);
-            $target = $indicatorInfo->indicator_target ?? 0;
-            $factors = $indicatorInfo->indicator_factors ?? 1;
-            $units = $indicatorInfo->indicator_units ?? '%';
-            log_message('error', 'DETAIL: indicatorInfo found=' . ($indicatorInfo ? 'yes' : 'no'));
+            $target = $indicatorInfo ? ($indicatorInfo->indicator_target ?? 0) : 0;
+            $factors = $indicatorInfo ? ($indicatorInfo->indicator_factors ?? 1) : 1;
+            $operatorCalc = $indicatorInfo ? ($indicatorInfo->indicator_target_calculation ?? '>=') : '>=';
+            $units = $indicatorInfo ? ($indicatorInfo->indicator_units ?? '%') : '%';
+            
+            log_message('error', 'DETAIL: indicatorInfo target=' . $target . ', factor=' . $factors . ', operator=' . $operatorCalc);
 
             $data = [];
             $no = isset($post['start']) ? (int) $post['start'] : 0;
@@ -186,11 +193,12 @@ class RekapLaporanInm extends AppController
                 // Ruangan
                 $row[] = '<div class="py-1 text-start ps-2">' . esc($dept->department_name) . '</div>';
 
-                // Target
+                // Target - tampilkan dengan units
                 $row[] = '<div class="py-1">
-                    <span id="target_det">' . $target . '</span>
-                    <span id="factor_det" style="display:none">' . $factors . '</span>
-                    <span id="operator_det" style="display:none">>=</span>
+                    <span id="target_det">' . esc($target) . '</span>
+                    <span class="small text-muted ms-1">' . esc($units) . '</span>
+                    <span id="factor_det" style="display:none">' . esc($factors) . '</span>
+                    <span id="operator_det" style="display:none">' . esc($operatorCalc) . '</span>
                 </div>';
 
                 // Bulan 1-12
@@ -249,5 +257,107 @@ class RekapLaporanInm extends AppController
             return $this->response->setJSON($data);
         }
         return $this->response->setJSON(['status' => false]);
+    }
+
+/**
+     * Export Excel Rekap INM
+     */
+    public function exportExcel()
+    {
+        $tahun = $this->request->getGet('tahun') ?? date('Y');
+        
+        // Clean any previous output
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        try {
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            
+            // Header
+            $sheet->setCellValue('A1', 'LAPORAN INDIKATOR NASIONAL MUTU (INM)');
+            $sheet->setCellValue('A2', 'Tahun: ' . $tahun);
+            $sheet->setCellValue('A3', 'RSUD Dr. Soetomo');
+            
+            // Style header
+            $sheet->mergeCells('A1:O1');
+            $sheet->mergeCells('A2:O2');
+            $sheet->mergeCells('A3:O3');
+            $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+            $sheet->getStyle('A2')->getFont()->setSize(12);
+            $sheet->getStyle('A3')->getFont()->setSize(12);
+            $sheet->getStyle('A1:O3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            
+            // Headers tabel - tanpa TOTAL
+            $headers = ['No', 'Indikator', 'Target', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+            $col = 'A';
+            foreach ($headers as $header) {
+                $sheet->setCellValue($col . '5', $header);
+                $col++;
+            }
+            
+            // Style header tabel
+            $sheet->getStyle('A5:O5')->getFont()->setBold(true);
+            $sheet->getStyle('A5:O5')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+            $sheet->getStyle('A5:O5')->getFill()->getStartColor()->setRGB('28A745');
+            $sheet->getStyle('A5:O5')->getFont()->getColor()->setRGB('FFFFFF');
+            $sheet->getStyle('A5:O5')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            
+            // Border header
+            $sheet->getStyle('A5:O5')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            
+            // Data
+            $indicators = $this->rekapModel->getIndicatorInm(['vtahun' => $tahun]);
+            $indicatorIds = array_column($indicators, 'indicator_id');
+            $allData = $this->rekapModel->getAllMonthlyData($indicatorIds, $tahun);
+            
+            $no = 1;
+            $row = 6;
+            foreach ($indicators as $ind) {
+                $sheet->setCellValue('A' . $row, $no);
+                $sheet->setCellValue('B' . $row, $ind->indicator_element);
+                $sheet->setCellValue('C' . $row, $ind->indicator_target . ' ' . $ind->indicator_units);
+                
+                // Data bulan
+                for ($bulan = 1; $bulan <= 12; $bulan++) {
+                    $key = $ind->indicator_id . '_' . $bulan;
+                    $val = isset($allData[$key]) ? $allData[$key] : null;
+                    $col = chr(67 + $bulan); // D=4, E=5, F=6, ... O=15
+                    
+                    if ($val && $val->num > 0 && $val->denum > 0) {
+                        $nilai = $val->total_value ?? 0;
+                        $sheet->setCellValue($col . $row, $nilai);
+                    } else {
+                        $sheet->setCellValue($col . $row, '-');
+                    }
+                }
+                
+                // Border row
+                $sheet->getStyle('A' . $row . ':O' . $row)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                
+                $no++;
+                $row++;
+            }
+            
+            // Auto size columns
+            foreach (range('A', 'O') as $colID) {
+                $sheet->getColumnDimension($colID)->setAutoSize(true);
+            }
+            
+            // Download
+            $filename = 'INM_' . $tahun . '_' . date('YmdHis');
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment;filename="' . $filename . '.xlsx"');
+            header('Cache-Control: max-age=0');
+            
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer->save('php://output');
+            exit;
+        } catch (\Exception $e) {
+            log_message('error', 'Export Excel Error: ' . $e->getMessage());
+            echo 'Error: ' . $e->getMessage();
+            exit;
+        }
     }
 }
