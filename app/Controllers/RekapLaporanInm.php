@@ -259,8 +259,8 @@ class RekapLaporanInm extends AppController
         return $this->response->setJSON(['status' => false]);
     }
 
-/**
-     * Export Excel Rekap INM
+    /**
+     * Export Excel Rekap INM - Format PMKP
      */
     public function exportExcel()
     {
@@ -275,78 +275,259 @@ class RekapLaporanInm extends AppController
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
             
-            // Header
-            $sheet->setCellValue('A1', 'LAPORAN INDIKATOR NASIONAL MUTU (INM)');
-            $sheet->setCellValue('A2', 'Tahun: ' . $tahun);
-            $sheet->setCellValue('A3', 'RSUD Dr. Soetomo');
+            // Fungsi helper untuk get column letter dari index
+            $getColLetter = function($colIdx) {
+                $letter = '';
+                while ($colIdx > 0) {
+                    $mod = ($colIdx - 1) % 26;
+                    $letter = chr(65 + $mod) . $letter;
+                    $colIdx = (int)(($colIdx - $mod) / 26);
+                }
+                return $letter;
+            };
             
-            // Style header
-            $sheet->mergeCells('A1:O1');
-            $sheet->mergeCells('A2:O2');
-            $sheet->mergeCells('A3:O3');
+            // ==================== HEADER LAPORAN ====================
+            // Baris 1: Judul Utama
+            $sheet->setCellValue('A1', 'CAPAIAN INDIKATOR NASIONAL MUTU');
+            $sheet->mergeCells('A1:AB1');
             $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
-            $sheet->getStyle('A2')->getFont()->setSize(12);
-            $sheet->getStyle('A3')->getFont()->setSize(12);
-            $sheet->getStyle('A1:O3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('A1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
             
-            // Headers tabel - tanpa TOTAL
-            $headers = ['No', 'Indikator', 'Target', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
-            $col = 'A';
-            foreach ($headers as $header) {
-                $sheet->setCellValue($col . '5', $header);
-                $col++;
+            // Baris 2: Nama Rumah Sakit
+            $sheet->setCellValue('A2', 'RSUD dr. SOEDONO PROVINSI JAWA TIMUR');
+            $sheet->mergeCells('A2:AB2');
+            $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(12);
+            $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('A2')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            
+            // Baris 3: Tahun
+            $sheet->setCellValue('A3', 'TAHUN ' . $tahun);
+            $sheet->mergeCells('A3:AB3');
+            $sheet->getStyle('A3')->getFont()->setBold(true)->setSize(12);
+            $sheet->getStyle('A3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('A3')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            
+            // ==================== HEADER TABEL - BARIS 5 & 6 (Multi-level) ====================
+            // Baris 5: Kolom utama
+            $sheet->setCellValue('A5', 'No.');
+            $sheet->setCellValue('B5', 'Judul Indikator Nasional Mutu');
+            $sheet->setCellValue('C5', 'Standar');
+            $sheet->setCellValue('D5', 'Num/Denum');
+            $sheet->setCellValue('E5', 'BULAN');
+            
+            // Merge sel E5 untuk span 24 kolom (12 bulan x 2)
+            $sheet->mergeCells('E5:AB5');
+            
+            // Merge kolom A-D (No, Judul, Standar, Num/Denum) - 2 baris
+            $sheet->mergeCells('A5:A6');
+            $sheet->mergeCells('B5:B6');
+            $sheet->mergeCells('C5:C6');
+            $sheet->mergeCells('D5:D6');
+            
+            // Style header baris 5 - Semua center
+            foreach (['A5', 'B5', 'C5', 'D5'] as $cell) {
+                $sheet->getStyle($cell)->getFont()->setBold(true);
+                $sheet->getStyle($cell)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle($cell)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                $sheet->getStyle($cell)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
             }
             
-            // Style header tabel
-            $sheet->getStyle('A5:O5')->getFont()->setBold(true);
-            $sheet->getStyle('A5:O5')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
-            $sheet->getStyle('A5:O5')->getFill()->getStartColor()->setRGB('28A745');
-            $sheet->getStyle('A5:O5')->getFont()->getColor()->setRGB('FFFFFF');
-            $sheet->getStyle('A5:O5')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            // Wrap text untuk D5
+            $sheet->getStyle('D5')->getAlignment()->setWrapText(true);
             
-            // Border header
-            $sheet->getStyle('A5:O5')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            $sheet->getStyle('E5')->getFont()->setBold(true);
+            $sheet->getStyle('E5')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('E5')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
             
-            // Data
+            // ==================== HEADER TABEL - BARIS 6 (Sub-header bulan) ====================
+            $bulanNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            $colStart = 5; // Kolom E (index 5)
+            
+            // Baris 6: Nama bulan dan Capaian (kolom E onwards)
+            for ($i = 0; $i < count($bulanNames); $i++) {
+                $colIdx = $colStart + ($i * 2); // 5, 7, 9, 11...
+                $colIdx2 = $colIdx + 1; // 6, 8, 10, 12...
+                
+                $col1 = $getColLetter($colIdx);
+                $col2 = $getColLetter($colIdx2);
+                
+                // Kolom 1: Nama Bulan (Nilai)
+                $sheet->setCellValue($col1 . '6', $bulanNames[$i]);
+                $sheet->getStyle($col1 . '6')->getFont()->setBold(true);
+                $sheet->getStyle($col1 . '6')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+                $sheet->getStyle($col1 . '6')->getFill()->getStartColor()->setRGB('8FBC8F');
+                $sheet->getStyle($col1 . '6')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle($col1 . '6')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                
+                // Kolom 2: Capaian
+                $sheet->setCellValue($col2 . '6', 'Capaian');
+                $sheet->getStyle($col2 . '6')->getFont()->setBold(true);
+                $sheet->getStyle($col2 . '6')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+                $sheet->getStyle($col2 . '6')->getFill()->getStartColor()->setRGB('8FBC8F');
+                $sheet->getStyle($col2 . '6')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle($col2 . '6')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            }
+            
+            // ==================== DATA ====================
             $indicators = $this->rekapModel->getIndicatorInm(['vtahun' => $tahun]);
             $indicatorIds = array_column($indicators, 'indicator_id');
             $allData = $this->rekapModel->getAllMonthlyData($indicatorIds, $tahun);
             
             $no = 1;
-            $row = 6;
+            $row = 7;
+            
             foreach ($indicators as $ind) {
+                // Baris pertama: Num (Numerator)
                 $sheet->setCellValue('A' . $row, $no);
                 $sheet->setCellValue('B' . $row, $ind->indicator_element);
-                $sheet->setCellValue('C' . $row, $ind->indicator_target . ' ' . $ind->indicator_units);
                 
-                // Data bulan
+                // Format Standar
+                $targetVal = $ind->indicator_target ?? '';
+                $operatorRaw = $ind->operator ?? '';
+                $operator = trim($operatorRaw);
+                $factorsVal = $ind->factors ?? '';
+                
+                // Jika operator "=" gunakan factor, selain itu gunakan target
+                if ($operator === '=' && !empty($factorsVal)) {
+                    $displayVal = $factorsVal;
+                } else {
+                    $displayVal = $targetVal;
+                }
+                
+                $units = $ind->indicator_units ?? '%';
+                $standar = $operator . ' ' . $displayVal . ' ' . $units;
+                $sheet->setCellValue('C' . $row, trim($standar));
+                $sheet->setCellValue('D' . $row, 'Num');
+                
+                // Merge Judul Indikator (kolom B) - rata kiri
+                $sheet->mergeCells('B' . $row . ':B' . ($row + 1));
+                $sheet->getStyle('B' . $row)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                $sheet->getStyle('B' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+                $sheet->getStyle('B' . $row)->getAlignment()->setWrapText(true);
+                
+                // Merge Standar (kolom C) - center
+                $sheet->mergeCells('C' . $row . ':C' . ($row + 1));
+                $sheet->getStyle('C' . $row)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                $sheet->getStyle('C' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('C' . $row)->getAlignment()->setWrapText(true);
+                
+                // Merge No (kolom A) - center
+                $sheet->mergeCells('A' . $row . ':A' . ($row + 1));
+                $sheet->getStyle('A' . $row)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('A' . $row)->getAlignment()->setWrapText(true);
+                
+                // Data bulan untuk Num
+                $capaianData = []; // Simpan data capaian untuk merge nanti
                 for ($bulan = 1; $bulan <= 12; $bulan++) {
                     $key = $ind->indicator_id . '_' . $bulan;
                     $val = isset($allData[$key]) ? $allData[$key] : null;
-                    $col = chr(67 + $bulan); // D=4, E=5, F=6, ... O=15
                     
-                    if ($val && $val->num > 0 && $val->denum > 0) {
-                        $nilai = $val->total_value ?? 0;
-                        $sheet->setCellValue($col . $row, $nilai);
+                    $colIdx = 5 + (($bulan - 1) * 2);
+                    $colIdx2 = $colIdx + 1;
+                    $col1 = $getColLetter($colIdx);
+                    $col2 = $getColLetter($colIdx2);
+                    
+                    // Nilai Num
+                    if ($val && $val->num > 0) {
+                        $sheet->setCellValue($col1 . $row, $val->num);
                     } else {
-                        $sheet->setCellValue($col . $row, '-');
+                        $sheet->setCellValue($col1 . $row, '-');
+                    }
+                    $sheet->getStyle($col1 . $row)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                    
+                    // Simpan data capaian untuk ditampilkan di merged cell
+                    $capaianData[$col2] = null;
+                    if ($val && $val->num > 0 && $val->denum > 0) {
+                        $nilai = number_format($val->total_value ?? 0, 2);
+                        $target = $ind->indicator_target;
+                        $capaianData[$col2] = $nilai . '%';
                     }
                 }
                 
-                // Border row
-                $sheet->getStyle('A' . $row . ':O' . $row)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                // Style baris Num
+                $sheet->getStyle('A' . $row . ':D' . $row)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                $sheet->getStyle('A' . $row . ':D' . $row)->getFont()->setBold(true);
+                
+                // Baris kedua: Denum
+                $row++;
+                $sheet->setCellValue('D' . $row, 'Denum');
+                $sheet->getStyle('D' . $row)->getFont()->setBold(true);
+                
+                // Data bulan untuk Denum
+                for ($bulan = 1; $bulan <= 12; $bulan++) {
+                    $key = $ind->indicator_id . '_' . $bulan;
+                    $val = isset($allData[$key]) ? $allData[$key] : null;
+                    
+                    $colIdx = 5 + (($bulan - 1) * 2);
+                    $colIdx2 = $colIdx + 1;
+                    $col1 = $getColLetter($colIdx);
+                    $col2 = $getColLetter($colIdx2);
+                    
+                    // Nilai Denum
+                    if ($val && $val->denum > 0) {
+                        $sheet->setCellValue($col1 . $row, $val->denum);
+                    } else {
+                        $sheet->setCellValue($col1 . $row, '-');
+                    }
+                    $sheet->getStyle($col1 . $row)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                    
+                    // Merge dan center kolom Capaian (Num/Denum jadi satu)
+                    $sheet->mergeCells($col2 . ($row - 1) . ':' . $col2 . $row);
+                    $sheet->getStyle($col2 . ($row - 1))->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                    $sheet->getStyle($col2 . ($row - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                    
+                    // Isi nilai Capaian di merged cell
+                    if ($capaianData[$col2] !== null) {
+                        $sheet->setCellValue($col2 . ($row - 1), $capaianData[$col2]);
+                    } else {
+                        $sheet->setCellValue($col2 . ($row - 1), '-');
+                    }
+                    $sheet->getStyle($col2 . ($row - 1))->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                }
+                
+                // Style baris Denum
+                $sheet->getStyle('A' . $row . ':D' . $row)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                $sheet->getStyle('A' . $row . ':D' . $row)->getFont()->setBold(true);
                 
                 $no++;
                 $row++;
             }
             
-            // Auto size columns
-            foreach (range('A', 'O') as $colID) {
-                $sheet->getColumnDimension($colID)->setAutoSize(true);
+            // ==================== SET COLUMN WIDTH ====================
+            $sheet->getColumnDimension('A')->setWidth(5);
+            $sheet->getColumnDimension('B')->setWidth(70);
+            $sheet->getColumnDimension('C')->setWidth(12);
+            $sheet->getColumnDimension('D')->setWidth(10);
+            
+            // Set row height untuk wrap text
+            for ($r = 6; $r < $row; $r++) {
+                $sheet->getRowDimension($r)->setRowHeight(30);
             }
             
+            // Kolom bulan (E-AB)
+            for ($i = 5; $i <= 28; $i++) {
+                $colLetter = $getColLetter($i);
+                $sheet->getColumnDimension($colLetter)->setWidth(12);
+            }
+            
+            // ==================== FULL BORDER ALL ====================
+            // Border untuk seluruh area tabel (semua border)
+            $lastRow = $row - 1;
+            if ($lastRow >= 5) {
+                $sheet->getStyle('A5:' . $getColLetter(28) . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            }
+            
+            // ==================== SET FONT ====================
+            $sheet->getStyle('A1:' . $getColLetter(28) . $lastRow)->getFont()->setName('Arial');
+            $sheet->getStyle('A1:' . $getColLetter(28) . $lastRow)->getFont()->setSize(11);
+            
+            // ==================== SET ZOOM ====================
+            $sheet->getSheetView()->setZoomScale(70);
+            
             // Download
-            $filename = 'INM_' . $tahun . '_' . date('YmdHis');
+            $filename = 'CAPAIAN INDIKATOR NASIONAL MUTU ' . $tahun . ' ' . date('YmdHis');
             header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             header('Content-Disposition: attachment;filename="' . $filename . '.xlsx"');
             header('Cache-Control: max-age=0');

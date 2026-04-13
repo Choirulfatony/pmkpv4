@@ -256,7 +256,7 @@
                         <button type="button" class="btn btn-outline-secondary" onclick="reload_table()" title="Refresh">
                             <i class="fas fa-sync-alt"></i>
                         </button>
-                        <a href="<?= site_url('siimut/rekap-laporan-inm/export?tahun=' . $tahun) ?>" class="btn btn-outline-success" title="Download Excel">
+                        <a href="#" id="btn-export" class="btn btn-outline-success" title="Download Excel">
                             <i class="fas fa-file-excel"></i>
                         </a>
                         <button type="button" class="btn btn-outline-secondary" onclick="maximizeCard(this)" title="Fullscreen">
@@ -359,6 +359,9 @@
     $(document).ready(function() {
         // Set dropdown tahun ke tahun saat ini
         $('#tahun').val(vtahun);
+        
+        // Init export link dengan tahun saat ini
+        $('#btn-export').attr('href', '<?= site_url('siimut/rekap-laporan-inm/export') ?>?tahun=' + vtahun);
 
         // Init DataTable
         table_loquin = $('#ajax_data_rekap').DataTable({
@@ -462,8 +465,9 @@
 
     function gantiTahun() {
         vtahun = $('#tahun').val();
+        // Update export link dengan tahun yang dipilih
+        $('#btn-export').attr('href', '<?= site_url('siimut/rekap-laporan-inm/export') ?>?tahun=' + vtahun);
         if (table_loquin) {
-            // Reset URL tanpa query param, data di-pass via POST body
             table_loquin.ajax.url('<?= site_url('siimut/rekap-laporan-inm/ajax_rekap_inm') ?>').load();
         }
     }
