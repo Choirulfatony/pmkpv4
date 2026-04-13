@@ -211,10 +211,25 @@ $(document).on('keydown', function(e) {
 });
 
 function refreshPage() {
-    var selectedYear = $('#tahun').val();
+    vtahun = $('#tahun').val();
     var url = new URL(window.location.href);
-    url.searchParams.set('tahun', selectedYear);
-    window.location.href = url.toString();
+    url.searchParams.set('tahun', vtahun);
+    window.history.pushState({}, '', url);
+    
+    var tableWrapper = $('#ajax_data_periode_inm').closest('.table-responsive');
+    tableWrapper.find('.overlay-wrapper').remove();
+    
+    tableWrapper.append(
+        '<div class="overlay-wrapper" id="loading_overlay_periode">' +
+        '<div class="overlay">' +
+        '<i class="loader"></i>' +
+        '</div>' +
+        '</div>'
+    );
+    
+    table_periode.ajax.reload(function() {
+        $('#loading_overlay_periode').remove();
+    }, false);
 }
 
 function initTable() {
@@ -392,20 +407,19 @@ function gantiTahun() {
     window.history.pushState({}, '', url);
     
     var tableWrapper = $('#ajax_data_periode_inm').closest('.table-responsive');
+    tableWrapper.find('.overlay-wrapper').remove();
     
-    if ($('#loading_overlay_periode').length === 0) {
-        tableWrapper.append(
-            '<div class="overlay-wrapper" id="loading_overlay_periode">' +
-            '<div class="overlay">' +
-            '<i class="loader"></i>' +
-            '</div>' +
-            '</div>'
-        );
-    }
+    tableWrapper.append(
+        '<div class="overlay-wrapper" id="loading_overlay_periode">' +
+        '<div class="overlay">' +
+        '<i class="loader"></i>' +
+        '</div>' +
+        '</div>'
+    );
     
     table_periode.ajax.reload(function() {
         $('#loading_overlay_periode').remove();
-    });
+    }, false);
 }
 
 function filterPeriode(type) {

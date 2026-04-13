@@ -45,15 +45,33 @@ class RekapPeriodeInm extends AppController
 
         log_message('error', 'REKAP PERIODE INM: tahun=' . $tahun);
 
-        $data = $this->rekapModel->getRekapPeriode($tahun);
+        try {
+            $data = $this->rekapModel->getRekapPeriode($tahun);
 
-        log_message('error', 'REKAP PERIODE INM: data count=' . count($data));
+            log_message('error', 'REKAP PERIODE INM: data count=' . count($data));
 
-        return $this->response->setJSON([
-            'draw' => $post['draw'] ?? 1,
-            'recordsTotal' => count($data),
-            'recordsFiltered' => count($data),
-            'data' => $data,
-        ]);
+            if (empty($data)) {
+                log_message('error', 'REKAP PERIODE INM: WARNING - No data returned');
+            } else {
+                $firstIndicator = $data[0];
+                log_message('error', 'REKAP PERIODE INM: first indicator=' . json_encode($firstIndicator));
+            }
+
+            return $this->response->setJSON([
+                'draw' => $post['draw'] ?? 1,
+                'recordsTotal' => count($data),
+                'recordsFiltered' => count($data),
+                'data' => $data,
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'REKAP PERIODE INM ERROR: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'draw' => $post['draw'] ?? 1,
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }
