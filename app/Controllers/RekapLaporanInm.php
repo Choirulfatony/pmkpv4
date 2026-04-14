@@ -355,16 +355,12 @@ class RekapLaporanInm extends AppController
                 // Kolom 1: Nama Bulan (Nilai)
                 $sheet->setCellValue($col1 . '6', $bulanNames[$i]);
                 $sheet->getStyle($col1 . '6')->getFont()->setBold(true);
-                $sheet->getStyle($col1 . '6')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
-                $sheet->getStyle($col1 . '6')->getFill()->getStartColor()->setRGB('8FBC8F');
                 $sheet->getStyle($col1 . '6')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
                 $sheet->getStyle($col1 . '6')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-                
+
                 // Kolom 2: Capaian
                 $sheet->setCellValue($col2 . '6', 'Capaian');
                 $sheet->getStyle($col2 . '6')->getFont()->setBold(true);
-                $sheet->getStyle($col2 . '6')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
-                $sheet->getStyle($col2 . '6')->getFill()->getStartColor()->setRGB('8FBC8F');
                 $sheet->getStyle($col2 . '6')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
                 $sheet->getStyle($col2 . '6')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
             }
@@ -387,16 +383,21 @@ class RekapLaporanInm extends AppController
                 $operatorRaw = $ind->operator ?? '';
                 $operator = trim($operatorRaw);
                 $factorsVal = $ind->factors ?? '';
-                
+
                 // Jika operator "=" gunakan factor, selain itu gunakan target
                 if ($operator === '=' && !empty($factorsVal)) {
                     $displayVal = $factorsVal;
                 } else {
                     $displayVal = $targetVal;
                 }
-                
+
                 $units = $ind->indicator_units ?? '%';
-                $standar = $operator . ' ' . $displayVal . ' ' . $units;
+                // Jika operator "=" tidak ditampilkan, langsung tampilkan value
+                if ($operator === '=') {
+                    $standar = $displayVal . ' ' . $units;
+                } else {
+                    $standar = $operator . ' ' . $displayVal . ' ' . $units;
+                }
                 $sheet->setCellValue('C' . $row, trim($standar));
                 $sheet->setCellValue('D' . $row, 'Num');
                 
@@ -500,6 +501,7 @@ class RekapLaporanInm extends AppController
             $sheet->getColumnDimension('B')->setWidth(70);
             $sheet->getColumnDimension('C')->setWidth(12);
             $sheet->getColumnDimension('D')->setWidth(10);
+            $sheet->getStyle('D')->getAlignment()->setWrapText(true);
             
             // Set row height untuk wrap text
             for ($r = 6; $r < $row; $r++) {
@@ -580,7 +582,7 @@ class RekapLaporanInm extends AppController
             $factorsVal = $indicator->factors ?? '';
             $units = $indicator->indicator_units ?? '%';
 
-            if ($operator === '=' && !empty($factorsVal)) {
+            if ($operator === '=') {
                 $standar = $factorsVal . ' ' . $units;
             } else {
                 $standar = $operator . ' ' . $targetVal . ' ' . $units;
@@ -588,7 +590,7 @@ class RekapLaporanInm extends AppController
 
             // ==================== SHEET: DETAIL ====================
             $sheet = $spreadsheet->getActiveSheet();
-            $sheet->setTitle('Detail Peruangan');
+            $sheet->setTitle('Detail ' . substr($indicatorName, 0, 20)); // Set title sheet dengan nama indikator (max 31 char)
 
             $sheet->setCellValue('A1', 'CAPAIAN INDIKATOR NASIONAL MUTU (INM)');
             $sheet->mergeCells('A1:AB1');
@@ -600,43 +602,55 @@ class RekapLaporanInm extends AppController
             $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(12);
             $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 
-            $sheet->setCellValue('A3', $indicatorName);
+            $sheet->setCellValue('A3', 'TAHUN ' . $tahun);
             $sheet->mergeCells('A3:AB3');
-            $sheet->getStyle('A3')->getFont()->setBold(true)->setSize(11);
+            $sheet->getStyle('A3')->getFont()->setBold(true)->setSize(12);
             $sheet->getStyle('A3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 
-            $sheet->setCellValue('A4', 'TAHUN ' . $tahun);
+            $sheet->setCellValue('A4', '');
             $sheet->mergeCells('A4:AB4');
-            $sheet->getStyle('A4')->getFont()->setBold(true)->setSize(12);
-            $sheet->getStyle('A4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+            $sheet->setCellValue('A6', 'INDIKATOR: ' . $indicatorName);
+            $sheet->mergeCells('A6:AB6');
+            $sheet->getStyle('A6')->getFont()->setBold(true)->setSize(11);
+            $sheet->getStyle('A6')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+            $sheet->getStyle('A6')->getAlignment()->setIndent(0);
+            $sheet->getRowDimension(6)->setRowHeight(20);
 
             // Header Tabel
-            $sheet->setCellValue('A7', 'No.');
-            $sheet->setCellValue('B7', 'Ruangan');
-            $sheet->setCellValue('C7', 'Standar');
-            $sheet->setCellValue('D7', 'Num/Denum');
-            $sheet->setCellValue('E7', 'BULAN');
-            $sheet->mergeCells('E7:AB7');
-            $sheet->mergeCells('A7:A8');
-            $sheet->mergeCells('B7:B8');
-            $sheet->mergeCells('C7:C8');
-            $sheet->mergeCells('D7:D8');
+            $sheet->setCellValue('A8', 'No.');
+            $sheet->setCellValue('B8', 'Ruangan');
+            $sheet->setCellValue('C8', 'Standar');
+            $sheet->setCellValue('D8', 'Num/Denum');
+            $sheet->setCellValue('E8', 'BULAN');
+            $sheet->mergeCells('E8:AB8');
+            $sheet->mergeCells('A8:A9');
+            $sheet->mergeCells('B8:B9');
+            $sheet->mergeCells('C8:C9');
+            $sheet->mergeCells('D8:D9');
 
-            foreach (['A7', 'B7', 'C7', 'D7'] as $cell) {
+            foreach (['A8', 'B8', 'C8', 'D8'] as $cell) {
                 $sheet->getStyle($cell)->getFont()->setBold(true);
                 $sheet->getStyle($cell)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
                 $sheet->getStyle($cell)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                 $sheet->getStyle($cell)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
             }
 
-            $sheet->getStyle('E7')->getFont()->setBold(true);
-            $sheet->getStyle('E7')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-            $sheet->getStyle('E7')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            $sheet->getStyle('E8')->getFont()->setBold(true);
+            $sheet->getStyle('E8')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('E8')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
-            // Beri border untuk range E7:AB7
-            $sheet->getStyle('E7:AB8')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            // Beri border untuk range E8:AB9
+            $sheet->getStyle('E8:AB9')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
-            // Sub-header bulan
+            // Hapus warna background (no fill) untuk header BULAN
+            $sheet->getStyle('E8:AB9')->applyFromArray([
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_NONE,
+                ],
+            ]);
+
+            // Sub-header bulan - Row 9
             $bulanNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
             for ($i = 0; $i < count($bulanNames); $i++) {
                 $colIdx = 5 + ($i * 2);
@@ -644,20 +658,20 @@ class RekapLaporanInm extends AppController
                 $col1 = $getColLetter($colIdx);
                 $col2 = $getColLetter($colIdx2);
 
-                $sheet->setCellValue($col1 . '8', $bulanNames[$i]);
-                $sheet->getStyle($col1 . '8')->getFont()->setBold(true);
-                $sheet->getStyle($col1 . '8')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-                $sheet->getStyle($col1 . '8')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                $sheet->setCellValue($col1 . '9', $bulanNames[$i]);
+                $sheet->getStyle($col1 . '9')->getFont()->setBold(true);
+                $sheet->getStyle($col1 . '9')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle($col1 . '9')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
-                $sheet->setCellValue($col2 . '8', 'Capaian');
-                $sheet->getStyle($col2 . '8')->getFont()->setBold(true);
-                $sheet->getStyle($col2 . '8')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-                $sheet->getStyle($col2 . '8')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                $sheet->setCellValue($col2 . '9', 'Capaian');
+                $sheet->getStyle($col2 . '9')->getFont()->setBold(true);
+                $sheet->getStyle($col2 . '9')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle($col2 . '9')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
             }
 
             // Data Detail
             $no = 1;
-            $row = 9;
+            $row = 10;
 
             foreach ($departments as $dept) {
                 $sheet->setCellValue('A' . $row, $no);
@@ -759,6 +773,9 @@ class RekapLaporanInm extends AppController
             $sheet->getStyle('A8:' . $getColLetter(28) . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
             $sheet->getStyle('A1:' . $getColLetter(28) . $lastRow)->getFont()->setName('Arial');
             $sheet->getStyle('A1:' . $getColLetter(28) . $lastRow)->getFont()->setSize(11);
+            
+            // Ensure A6 is left aligned
+            $sheet->getStyle('A6')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
             
             // Set zoom scale to 70%
             $sheet->getSheetView()->setZoomScale(70);

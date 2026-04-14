@@ -143,7 +143,7 @@
                         <button type="button" class="btn btn-outline-secondary" onclick="reload_table()" title="Refresh">
                             <i class="fas fa-sync-alt"></i>
                         </button>
-                        <a href="<?= site_url('siimut/rekap-laporan-inm/export-indicator/' . $indicatorId) ?>" id="btn-export" class="btn btn-outline-success" title="Download Excel">
+                        <a href="<?= site_url('siimut/rekap-laporan-inm/export-indicator/' . $indicatorId) ?>?tahun=<?= $tahun ?>" id="btn-export" class="btn btn-outline-success" title="Download Excel">
                             <i class="fas fa-file-excel"></i>
                         </a>
                     </div>
@@ -208,7 +208,7 @@
 <!-- ==================== SCRIPT ==================== -->
 <script>
 var table_detail;
-var vtahun = '<?= $tahun ?>';
+var vtahun = <?= json_encode($tahun) ?>;
 var indicatorId = '<?= $indicatorId ?>';
 var target = '<?= isset($detail->indicator_target) ? $detail->indicator_target : 0 ?>';
 var factor = '<?= isset($detail->indicator_factors) ? $detail->indicator_factors : 1 ?>';
@@ -316,11 +316,13 @@ $(document).ready(function() {
 function gantiTahun() {
     vtahun = $('#tahun').val();
     if (table_detail) {
-        table_detail.ajax.url('<?= site_url('siimut/rekap-laporan-inm/ajax-detail-inm') ?>').load();
+        table_detail.ajax.reload();
     }
 }
 
 function reload_table() {
-    table_detail.ajax.reload();
+    if (table_detail) {
+        table_detail.ajax.reload();
+    }
 }
 </script>
