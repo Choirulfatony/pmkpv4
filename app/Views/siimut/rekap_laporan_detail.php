@@ -143,6 +143,9 @@
                         <button type="button" class="btn btn-outline-secondary" onclick="reload_table()" title="Refresh">
                             <i class="fas fa-sync-alt"></i>
                         </button>
+                        <a href="<?= site_url('siimut/rekap-laporan-inm/export-indicator/' . $indicatorId) ?>" id="btn-export" class="btn btn-outline-success" title="Download Excel">
+                            <i class="fas fa-file-excel"></i>
+                        </a>
                     </div>
                 </div>
             </div>

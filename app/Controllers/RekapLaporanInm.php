@@ -541,4 +541,282 @@ class RekapLaporanInm extends AppController
             exit;
         }
     }
+
+    /**
+     * Export Excel per Indikator INM - Detail per Ruangan
+     */
+    public function exportExcelIndicator($indicatorId)
+    {
+        $tahun = $this->request->getGet('tahun') ?? date('Y');
+        
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        try {
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            
+            $getColLetter = function($colIdx) {
+                $letter = '';
+                while ($colIdx > 0) {
+                    $mod = ($colIdx - 1) % 26;
+                    $letter = chr(65 + $mod) . $letter;
+                    $colIdx = (int)(($colIdx - $mod) / 26);
+                }
+                return $letter;
+            };
+            
+            // Get indicator detail
+            $indicator = $this->rekapModel->getDetailByIdInm((int) $indicatorId);
+            $indicatorName = $indicator->indicator_element ?? 'Detail';
+            
+            // Get data per department
+            $departments = $this->rekapModel->getDepartmentsByIndicator((int) $indicatorId, $tahun, []);
+            $allDetailData = $this->rekapModel->getAllDetailData((int) $indicatorId, $tahun);
+
+            // Format Standar
+            $targetVal = $indicator->indicator_target ?? '';
+            $operator = trim($indicator->operator ?? '');
+            $factorsVal = $indicator->factors ?? '';
+            $units = $indicator->indicator_units ?? '%';
+
+            if ($operator === '=' && !empty($factorsVal)) {
+                $standar = $factorsVal . ' ' . $units;
+            } else {
+                $standar = $operator . ' ' . $targetVal . ' ' . $units;
+            }
+
+            // ==================== SHEET: DETAIL ====================
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Detail Peruangan');
+
+            $sheet->setCellValue('A1', 'CAPAIAN INDIKATOR NASIONAL MUTU (INM)');
+            $sheet->mergeCells('A1:AB1');
+            $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+            $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+            $sheet->setCellValue('A2', 'RSUD dr. SOEDONO PROVINSI JAWA TIMUR');
+            $sheet->mergeCells('A2:AB2');
+            $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(12);
+            $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+            $sheet->setCellValue('A3', $indicatorName);
+            $sheet->mergeCells('A3:AB3');
+            $sheet->getStyle('A3')->getFont()->setBold(true)->setSize(11);
+            $sheet->getStyle('A3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+            $sheet->setCellValue('A4', 'TAHUN ' . $tahun);
+            $sheet->mergeCells('A4:AB4');
+            $sheet->getStyle('A4')->getFont()->setBold(true)->setSize(12);
+            $sheet->getStyle('A4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+            // Header Tabel
+            $sheet->setCellValue('A7', 'No.');
+            $sheet->setCellValue('B7', 'Ruangan');
+            $sheet->setCellValue('C7', 'Standar');
+            $sheet->setCellValue('D7', 'Num/Denum');
+            $sheet->setCellValue('E7', 'BULAN');
+            $sheet->mergeCells('E7:AB7');
+            $sheet->mergeCells('A7:A8');
+            $sheet->mergeCells('B7:B8');
+            $sheet->mergeCells('C7:C8');
+            $sheet->mergeCells('D7:D8');
+
+            foreach (['A7', 'B7', 'C7', 'D7'] as $cell) {
+                $sheet->getStyle($cell)->getFont()->setBold(true);
+                $sheet->getStyle($cell)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle($cell)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                $sheet->getStyle($cell)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            }
+
+            $sheet->getStyle('E7')->getFont()->setBold(true);
+            $sheet->getStyle('E7')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('E7')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+            // Beri border untuk range E7:AB7
+            $sheet->getStyle('E7:AB8')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+            // Sub-header bulan
+            $bulanNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            for ($i = 0; $i < count($bulanNames); $i++) {
+                $colIdx = 5 + ($i * 2);
+                $colIdx2 = $colIdx + 1;
+                $col1 = $getColLetter($colIdx);
+                $col2 = $getColLetter($colIdx2);
+
+                $sheet->setCellValue($col1 . '8', $bulanNames[$i]);
+                $sheet->getStyle($col1 . '8')->getFont()->setBold(true);
+                $sheet->getStyle($col1 . '8')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle($col1 . '8')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+                $sheet->setCellValue($col2 . '8', 'Capaian');
+                $sheet->getStyle($col2 . '8')->getFont()->setBold(true);
+                $sheet->getStyle($col2 . '8')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle($col2 . '8')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            }
+
+            // Data Detail
+            $no = 1;
+            $row = 9;
+
+            foreach ($departments as $dept) {
+                $sheet->setCellValue('A' . $row, $no);
+                $sheet->setCellValue('B' . $row, $dept->department_name);
+                $sheet->setCellValue('C' . $row, $standar);
+                $sheet->setCellValue('D' . $row, 'Num');
+
+                $sheet->mergeCells('B' . $row . ':B' . ($row + 1));
+                $sheet->getStyle('B' . $row)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                $sheet->getStyle('B' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+                $sheet->mergeCells('C' . $row . ':C' . ($row + 1));
+                $sheet->getStyle('C' . $row)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+                $sheet->mergeCells('A' . $row . ':A' . ($row + 1));
+                $sheet->getStyle('A' . $row)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+                $capaianData = [];
+                for ($bulan = 1; $bulan <= 12; $bulan++) {
+                    $key = $dept->department_id . '_' . $bulan;
+                    $val = isset($allDetailData[$key]) ? $allDetailData[$key] : null;
+
+                    $colIdx = 5 + (($bulan - 1) * 2);
+                    $colIdx2 = $colIdx + 1;
+                    $col1 = $getColLetter($colIdx);
+                    $col2 = $getColLetter($colIdx2);
+
+                    if ($val && $val->num > 0) {
+                        $sheet->setCellValue($col1 . $row, $val->num);
+                    } else {
+                        $sheet->setCellValue($col1 . $row, '-');
+                    }
+                    $sheet->getStyle($col1 . $row)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+                    $capaianData[$col2] = null;
+                    if ($val && $val->num > 0 && $val->denum > 0) {
+                        $capaianData[$col2] = number_format($val->total_value ?? 0, 2) . '%';
+                    }
+                }
+
+                $sheet->getStyle('A' . $row . ':D' . $row)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                $sheet->getStyle('A' . $row . ':D' . $row)->getFont()->setBold(true);
+
+                $row++;
+                $sheet->setCellValue('D' . $row, 'Denum');
+                $sheet->getStyle('D' . $row)->getFont()->setBold(true);
+
+                for ($bulan = 1; $bulan <= 12; $bulan++) {
+                    $key = $dept->department_id . '_' . $bulan;
+                    $val = isset($allDetailData[$key]) ? $allDetailData[$key] : null;
+
+                    $colIdx = 5 + (($bulan - 1) * 2);
+                    $colIdx2 = $colIdx + 1;
+                    $col1 = $getColLetter($colIdx);
+                    $col2 = $getColLetter($colIdx2);
+
+                    if ($val && $val->denum > 0) {
+                        $sheet->setCellValue($col1 . $row, $val->denum);
+                    } else {
+                        $sheet->setCellValue($col1 . $row, '-');
+                    }
+                    $sheet->getStyle($col1 . $row)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+                    $sheet->mergeCells($col2 . ($row - 1) . ':' . $col2 . $row);
+                    $sheet->getStyle($col2 . ($row - 1))->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                    $sheet->getStyle($col2 . ($row - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+                    if ($capaianData[$col2] !== null) {
+                        $sheet->setCellValue($col2 . ($row - 1), $capaianData[$col2]);
+                    } else {
+                        $sheet->setCellValue($col2 . ($row - 1), '-');
+                    }
+                    $sheet->getStyle($col2 . ($row - 1))->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                }
+
+                $sheet->getStyle('A' . $row . ':D' . $row)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                $sheet->getStyle('A' . $row . ':D' . $row)->getFont()->setBold(true);
+
+                $no++;
+                $row++;
+            }
+
+            $sheet->getColumnDimension('A')->setWidth(5);
+            $sheet->getStyle('A')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getColumnDimension('B')->setWidth(30);
+            $sheet->getColumnDimension('C')->setWidth(12);
+            $sheet->getColumnDimension('D')->setWidth(10);
+            $sheet->getStyle('C')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('D')->getAlignment()->setWrapText(true);
+            for ($i = 5; $i <= 28; $i++) {
+                $sheet->getColumnDimension($getColLetter($i))->setWidth(12);
+            }
+            
+            for ($r = 8; $r < $row; $r++) {
+                $sheet->getRowDimension($r)->setRowHeight(25);
+            }
+
+            $lastRow = $row - 1;
+            $sheet->getStyle('A8:' . $getColLetter(28) . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            $sheet->getStyle('A1:' . $getColLetter(28) . $lastRow)->getFont()->setName('Arial');
+            $sheet->getStyle('A1:' . $getColLetter(28) . $lastRow)->getFont()->setSize(11);
+            
+            // Set zoom scale to 70%
+            $sheet->getSheetView()->setZoomScale(70);
+            
+            // Download
+            $filename = 'INM_' . $indicatorName . '_' . $tahun . '_' . date('YmdHis');
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment;filename="' . $filename . '.xlsx"');
+            header('Cache-Control: max-age=0');
+            
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer->save('php://output');
+            exit;
+        } catch (\Exception $e) {
+            log_message('error', 'Export Excel Indicator Error: ' . $e->getMessage());
+            echo 'Error: ' . $e->getMessage();
+            exit;
+        }
+    }
+    
+    private function hitungPeriode($num, $den, $start, $end) {
+        $totalNum = 0;
+        $totalDen = 0;
+        for ($i = $start; $i <= $end; $i++) {
+            $totalNum += $num[$i];
+            $totalDen += $den[$i];
+        }
+        if ($totalDen == 0) return null;
+        return ($totalNum / $totalDen) * 100;
+    }
+
+    /**
+     * Menentukan status capaian PMKP berdasarkan nilai realisasi, target, dan operator.
+     *
+     * @param float|null $capaian Nilai capaian tahunan (dalam persen)
+     * @param float $target Nilai target
+     * @param string $operator Operator perbandingan ('>=', '<=', '>', '<', '=')
+     * @return string 'TERCAPAI', 'TIDAK TERCAPAI', atau 'TIDAK ADA DATA'
+     */
+    private function getStatusPMKP(?float $capaian, float $target, string $operator): string
+    {
+        if ($capaian === null) {
+            return 'TIDAK ADA DATA';
+        }
+
+        switch ($operator) {
+            case '>=':
+                return $capaian >= $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            case '<=':
+                return $capaian <= $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            case '>':
+                return $capaian > $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            case '<':
+                return $capaian < $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            case '=':
+                return $capaian == $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            default:
+                return 'TIDAK ADA DATA';
+        }
+    }
 }
