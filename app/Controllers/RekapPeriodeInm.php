@@ -132,7 +132,18 @@ class RekapPeriodeInm extends AppController
     private function buildSheet($sheet, $data, $type, $tahun)
     {
         // HEADER
-        $sheet->setCellValue('A1', 'REKAP INDIKATOR NASIONAL MUTU (INM) - TRIWULAN');
+        // Tentukan judul berdasarkan type
+        if ($type === 'triwulan') {
+            $judul = 'TRIWULAN';
+        } elseif ($type === 'semester') {
+            $judul = 'SEMESTER';
+        } else {
+            $judul = 'TAHUNAN';
+        }
+
+        // Set judul
+        $sheet->setCellValue('A1', 'REKAP INDIKATOR NASIONAL MUTU (INM) - ' . $judul);
+        // $sheet->setCellValue('A1', 'REKAP INDIKATOR NASIONAL MUTU (INM) - TRIWULAN');
         $sheet->mergeCells('A1:O1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
         $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
@@ -474,6 +485,19 @@ class RekapPeriodeInm extends AppController
                 $sheet->setCellValue('I' . $row2, '');
 
                 $lastCol = 'I';
+            } elseif ($type === 'tahun') {
+                // Tahun: D=Num/Denum label, E=num value, F=%(merged)
+                $th = $item['tahun'] ?? [];
+                $sheet->setCellValue('D' . $row, 'Num');
+                $sheet->setCellValue('E' . $row, $this->val($th['num'] ?? null));
+                $sheet->setCellValue('F' . $row, isset($th['nilai']) ? $th['nilai'] . '%' : '-');
+
+                // Row 8 - Denum
+                $sheet->setCellValue('D' . $row2, 'Denum');
+                $sheet->setCellValue('E' . $row2, $this->val($th['denum'] ?? null));
+                $sheet->setCellValue('F' . $row2, '');
+
+                $lastCol = 'F';
             }
 
             // =========================
