@@ -39,7 +39,8 @@ $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
     $routes->get('rekap-laporan-inm/export', 'RekapLaporanInm::exportExcel'); // Export Excel
     $routes->get('rekap-laporan-inm/export-indicator/(:num)', 'RekapLaporanInm::exportExcelIndicator/$1'); // Export Excel per indicator
     $routes->get('rekap-periode-inm', 'RekapPeriodeInm::index'); // Rekap Triwulan/Semester/Tahun
-    $routes->post('rekap-periode-inm/ajax', 'RekapPeriodeInm::getAjaxRekapPeriode'); // AJAX Rekap Periode INM
+    $routes->post('rekap-periode-inm/ajax_inm-(:num)', 'RekapPeriodeInm::getAjaxRekapPeriode/$1'); // AJAX Rekap Periode INM
+    $routes->get('rekap-periode-inm/export', 'RekapPeriodeInm::exportExcel'); // Export Excel
     $routes->get('rekap-laporan-inm/detail/(:num)', 'RekapLaporanInm::viewDetailInm/$1'); // Detail
 
     // Grafik INM

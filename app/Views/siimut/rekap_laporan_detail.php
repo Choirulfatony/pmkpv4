@@ -143,7 +143,7 @@
                         <button type="button" class="btn btn-outline-secondary" onclick="reload_table()" title="Refresh">
                             <i class="fas fa-sync-alt"></i>
                         </button>
-                        <a href="<?= site_url('siimut/rekap-laporan-inm/export-indicator/' . $indicatorId) ?>?tahun=<?= $tahun ?>" id="btn-export" class="btn btn-outline-success" title="Download Excel">
+                        <a href="#" id="btn-export" class="btn btn-outline-success" title="Download Excel">
                             <i class="fas fa-file-excel"></i>
                         </a>
                     </div>
@@ -208,13 +208,20 @@
 <!-- ==================== SCRIPT ==================== -->
 <script>
 var table_detail;
-var vtahun = <?= json_encode($tahun) ?>;
+var urlParams = new URLSearchParams(window.location.search);
+var vtahun = urlParams.get('tahun') || <?= json_encode($tahun) ?>;
 var indicatorId = '<?= $indicatorId ?>';
 var target = '<?= isset($detail->indicator_target) ? $detail->indicator_target : 0 ?>';
 var factor = '<?= isset($detail->indicator_factors) ? $detail->indicator_factors : 1 ?>';
 var operator = '<?= isset($detail->indicator_target_calculation) ? $detail->indicator_target_calculation : '>=' ?>';
 
+// Sync dropdown with URL parameter on load
 $(document).ready(function() {
+    if (urlParams.get('tahun')) {
+        $('#tahun').val(urlParams.get('tahun'));
+        vtahun = urlParams.get('tahun');
+    }
+    
     // Init DataTable
     table_detail = $('#ajax_detail').DataTable({
         processing: false,
@@ -325,4 +332,10 @@ function reload_table() {
         table_detail.ajax.reload();
     }
 }
+
+$(document).on('click', '#btn-export', function(e) {
+    e.preventDefault();
+    var exportUrl = '<?= site_url('siimut/rekap-laporan-inm/export-indicator/' . $indicatorId) ?>?tahun=' + vtahun;
+    window.location.href = exportUrl;
+});
 </script>
