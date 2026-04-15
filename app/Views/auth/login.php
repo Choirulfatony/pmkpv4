@@ -118,7 +118,17 @@
                         id="identityInput"
                         class="form-control form-control-lg"
                         placeholder="Email atau NIP"
-                        value="<?= isset($_COOKIE['remember_credential']) ? esc(explode('|', base64_decode($_COOKIE['remember_credential']))[0]) : '' ?>"
+                        value="<?php 
+                        $savedIdentity = '';
+                        if (isset($_COOKIE['remember_credential'])) {
+                            $decoded = base64_decode($_COOKIE['remember_credential']);
+                            $parts = explode('|', $decoded);
+                            if (isset($parts[0])) {
+                                $savedIdentity = esc($parts[0]);
+                            }
+                        }
+                        echo $savedIdentity;
+                        ?>"
                         required>
                     <label class="form-label" id="identityLabel">
                         Email / NIP
@@ -158,7 +168,7 @@
 
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="form-check mb-0">
-                        <input class="form-check-input me-2" type="checkbox" name="remember" id="rememberMe" <?= isset($_COOKIE['remember_credential']) ? 'checked' : '' ?>>
+                        <input class="form-check-input me-2" type="checkbox" name="remember" id="rememberMe" <?= (isset($_COOKIE['remember_credential']) && $_COOKIE['remember_credential']) ? 'checked' : '' ?>>
                         <label class="form-check-label">Remember me</label>
                     </div>
                 </div>

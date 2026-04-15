@@ -175,16 +175,14 @@ class Auth extends BaseController
 
         if ($remember) {
             $rememberData = base64_encode($email . '|' . md5($password));
-            set_cookie([
-                'name'   => 'remember_credential',
-                'value'  => $rememberData,
-                'expire' => 86400 * 30,
-                'path'   => '/',
+            log_message('error', 'REMEMBER: Setting cookie with data length ' . strlen($rememberData));
+            setcookie('remember_credential', $rememberData, [
+                'expires' => time() + 86400 * 30,
+                'path' => '/',
                 'secure' => false,
                 'httponly' => false,
+                'samesite' => 'Lax',
             ]);
-        } else {
-            delete_cookie('remember_credential');
         }
 
         session()->set([
@@ -231,16 +229,13 @@ class Auth extends BaseController
 
         if ($remember) {
             $rememberData = base64_encode($nip . '|' . md5($password) . '|HRIS');
-            set_cookie([
-                'name'   => 'remember_credential',
-                'value'  => $rememberData,
-                'expire' => 86400 * 30,
-                'path'   => '/',
+            setcookie('remember_credential', $rememberData, [
+                'expires' => time() + 86400 * 30,
+                'path' => '/',
                 'secure' => false,
                 'httponly' => false,
+                'samesite' => 'Lax',
             ]);
-        } else {
-            delete_cookie('remember_credential');
         }
 
         session()->set([
