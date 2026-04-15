@@ -335,30 +335,48 @@ function loadGrafik() {
                     }
                     
                     // Generate Keterangan (Bahasa PMKP)
-                    var tercapStatus = response.tahunan.tercap ? 'telah melampaui target yang ditetapkan' : 'belum mencapai target yang ditetapkan';
-                    var trendDesc = '';
-                    if (diff > 0) {
-                        trendDesc = 'Terdapat peningkatan sebesar ' + diff.toFixed(1) + '% dibandingkan tahun sebelumnya, ';
-                    } else if (diff < 0) {
-                        trendDesc = 'Terdapat penurunan sebesar ' + Math.abs(diff).toFixed(1) + '% dibandingkan tahun sebelumnya, ';
-                    } else {
-                        trendDesc = 'Capaian relatif stabil dibandingkan tahun sebelumnya, ';
-                    }
-                    
-                    var analisasHtml = '<div class="mt-2 p-3 bg-light rounded"><strong>Analisis:</strong><br>';
+                    var lastYearNilai = perTahun[lastYear].nilai;
+                    var analisasHtml = '<div class="mt-2 p-3 bg-light rounded"><strong>Analisis:</strong><br><br>';
                     
                     if (response.tahunan.tercap) {
                         analisasHtml += '<span class="text-success">';
-                        analisasHtml += 'Capaian indikator sebesar ' + nilai + ' ' + units + ' (' + target + '% standar) ' + tercapStatus + '.<br>';
-                        analisasHtml += trendDesc;
-                        analisasHtml += 'namun capaian masih berada di atas standar dan menunjukkan kinerja yang tetap baik.<br>';
-                        analisasHtml += 'Perlu dilakukan monitoring untuk menjaga konsistensi capaian indikator.</span>';
+                        analisasHtml += 'Capaian indikator sebesar ' + nilai.toFixed(2) + ' ' + units + ' telah melampaui target ' + target + '% yang ditetapkan.<br><br>';
+                        
+                        if (diff > 0) {
+                            analisasHtml += 'Jika dibandingkan dengan tahun sebelumnya (' + lastYearNilai.toFixed(2) + '%), ';
+                            analisasHtml += 'terdapat peningkatan sebesar ' + diff.toFixed(2) + '%.<br>';
+                            analisasHtml += 'Peningkatan ini menunjukkan adanya perbaikan kinerja yang perlu dipertahankan.<br><br>';
+                            analisasHtml += '<strong>Kesimpulan:</strong> Capaian indikator tetap baik dan berada di atas standar. ';
+                            analisasHtml += 'Perlu dilakukan monitoring untuk menjaga konsistensi capaian indikator.</span>';
+                        } else if (diff < 0) {
+                            analisasHtml += 'Jika dibandingkan dengan tahun sebelumnya (' + lastYearNilai.toFixed(2) + '%), ';
+                            analisasHtml += 'terdapat penurunan sebesar ' + Math.abs(diff).toFixed(2) + '%.<br>';
+                            analisasHtml += 'Meskipun demikian, capaian masih berada di atas standar yang ditetapkan.<br><br>';
+                            analisasHtml += '<strong>Kesimpulan:</strong> Capaian indikator masih dalam batas aman. ';
+                            analisasHtml += 'Penurunan ini perlu dimonitor untuk menjaga konsistensi mutu pelayanan.</span>';
+                        } else {
+                            analisasHtml += 'Capaian relatif stabil dibandingkan tahun sebelumnya.<br><br>';
+                            analisasHtml += '<strong>Kesimpulan:</strong> Capaian indikator tetap baik dan stabil. ';
+                            analisasHtml += 'Perlu dilakukan monitoring untuk menjaga konsistensi capaian indikator.</span>';
+                        }
                     } else {
                         analisasHtml += '<span class="text-danger">';
-                        analisasHtml += 'Capaian indikator sebesar ' + nilai + ' ' + units + ' (' + target + '% standar) ' + tercapStatus + '.<br>';
-                        analisasHtml += trendDesc;
-                        analisasHtml += 'diperlukan upaya perbaikan dan evaluasi untuk meningkatkan capaian indikator.<br>';
-                        analisasHtml += 'Perlu dilakukan analisis root cause dan rencana perbaikan.</span>';
+                        analisasHtml += 'Capaian indikator sebesar ' + nilai.toFixed(2) + ' ' + units + ' belum mencapai target ' + target + '% yang ditetapkan.<br><br>';
+                        
+                        if (diff > 0) {
+                            analisasHtml += 'Jika dibandingkan dengan tahun sebelumnya (' + lastYearNilai.toFixed(2) + '%), ';
+                            analisasHtml += 'terdapat peningkatan sebesar ' + diff.toFixed(2) + '%. ';
+                            analisasHtml += 'Namun capaian belum memenuhi standar yang ditetapkan.<br><br>';
+                            analisasHtml += '<strong>Kesimpulan:</strong> Diperlukan evaluasi dan perencanaan perbaikan untuk meningkatkan capaian indikator.</span>';
+                        } else if (diff < 0) {
+                            analisasHtml += 'Jika dibandingkan dengan tahun sebelumnya (' + lastYearNilai.toFixed(2) + '%), ';
+                            analisasHtml += 'terdapat penurunan sebesar ' + Math.abs(diff).toFixed(2) + '%.<br>';
+                            analisasHtml += 'Penurunan ini memerlukan perhatian serius dan segera.<br><br>';
+                            analisasHtml += '<strong>Kesimpulan:</strong> Diperlukan analisis root cause dan rencana perbaikan segera untuk meningkatkan capaian indikator.</span>';
+                        } else {
+                            analisasHtml += 'Capaian stagnan dibandingkan tahun sebelumnya dan masih di bawah standar.<br><br>';
+                            analisasHtml += '<strong>Kesimpulan:</strong> Diperlukan analisis root cause dan rencana perbaikan untuk meningkatkan capaian indikator.</span>';
+                        }
                     }
                     analisasHtml += '</div>';
                     document.getElementById('keterangan').innerHTML = analisasHtml;
