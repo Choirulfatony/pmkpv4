@@ -22,10 +22,77 @@ class Auth extends BaseController
         helper(['url']);
     }
 
+    private function setRememberCookie(int $profileId, string $token): void
+    {
+        $value = $profileId . ':' . $token;
+        set_cookie([
+            'name'   => 'remember_token',
+            'value'  => $value,
+            'expire' => 86400 * 30,
+            'path'   => '/',
+            'secure' => false,
+            'httponly' => true,
+        ]);
+    }
+
+    private function clearRememberCookie(): void
+    {
+        delete_cookie('remember_token');
+    }
+
     public function index()
     {
         if ($this->session->get('logged_in')) {
             return redirect()->to('/ikprs');
+        }
+
+        $rememberToken = get_cookie('remember_token');
+        if ($rememberToken) {
+            $parts = explode(':', $rememberToken, 2);
+            if (count($parts) === 2) {
+                [$profileId, $token] = $parts;
+                $user = $this->sessionApps->select('user_profile.*, user_group.group_name as hak_akses, master_institution_department.department_name as lokasi, master_institution_department.department_id as department_id')
+                    ->join('user_group', 'user_group.group_id = user_profile.profile_group_id', 'left')
+                    ->join('master_institution_department', 'master_institution_department.department_id = user_profile.profile_department_id', 'left')
+                    ->where('user_profile.profile_id', $profileId)
+                    ->where('user_profile.profile_remember_token', $token)
+                    ->where('user_profile.profile_record_status', 'A')
+                    ->first();
+
+                if ($user) {
+                    $roleMap = [
+                        'Kendali Mutu dan Tim Pokja' => 'KENDALI_MUTU',
+                        'Komite'                    => 'KOMITE',
+                        'Administrator'             => 'ADMINISTRATOR'
+                    ];
+                    $userRole = $roleMap[$user->hak_akses] ?? 'APP';
+
+                    $db = db_connect();
+                    $db->table('user_profile')
+                        ->where('profile_id', $user->profile_id)
+                        ->update([
+                            'profile_online_status' => 1,
+                            'profile_last_login' => date('Y-m-d H:i:s'),
+                        ]);
+
+                    session()->set([
+                        'logged_in'       => true,
+                        'login_source'    => 'APP',
+                        'last_activity'   => time(),
+                        'profile_id'      => $user->profile_id,
+                        'nama_lengkap'    => $user->profile_fullname,
+                        'profile_email'   => $user->profile_email,
+                        'profile_picture' => $user->profile_photo ?? null,
+                        'department_id'   => $user->department_id,
+                        'department_name' => $user->lokasi,
+                        'user_role'       => $userRole,
+                        'role_asli'       => $user->hak_akses,
+                        'login_time'      => date('Y-m-d H:i:s'),
+                    ]);
+
+                    return redirect()->to('/siimut/dashboard');
+                }
+            }
         }
 
         if ($this->request->getGet('timeout')) {
@@ -78,10 +145,10 @@ class Auth extends BaseController
         $identity = trim($this->request->getPost('identity'));
         $password = $this->request->getPost('password');
         $captcha  = strtoupper($this->request->getPost('captcha'));
+        $remember = $this->request->getPost('remember') ? true : false;
 
         // CAPTCHA
         if (!Captcha::validate($captcha, session()->get('captcha_word'))) {
-            // Regenerate CAPTCHA
             $newCaptcha = $this->captcha->generate(['min' => 1, 'max' => 20]);
             $this->session->set([
                 'captcha_word'  => $newCaptcha['word'],
@@ -94,19 +161,10 @@ class Auth extends BaseController
             return redirect()->back()->with('error', 'Data login tidak lengkap');
         }
 
-        /**
-         * ============================================
-         * AUTO DETECT LOGIN TYPE
-         * ============================================
-         */
         if (filter_var($identity, FILTER_VALIDATE_EMAIL)) {
-
-            // 🔐 LOGIN APLIKASI (DB 1)
-            return $this->loginAplikasi($identity, $password);
+            return $this->loginAplikasi($identity, $password, $remember);
         } else {
-
-            // 🔐 LOGIN HRIS (DB 2)
-            return $this->loginHris($identity, $password);
+            return $this->loginHris($identity, $password, $remember);
         }
     }
 
@@ -146,7 +204,7 @@ class Auth extends BaseController
     //     return redirect()->to('dashboard');
     // }
 
-    private function loginAplikasi(string $email, string $password)
+    private function loginAplikasi(string $email, string $password, bool $remember = false)
     {
         $user = $this->sessionApps->checkLogin([
             'user_profile.profile_email'    => $email,
@@ -158,7 +216,6 @@ class Auth extends BaseController
             return redirect()->back()->with('error', 'Email atau password salah');
         }
 
-        // Cek apakah user memiliki token verifikasi
         if (!empty($user->profile_verification_token) && $user->profile_is_verified == 0) {
             session()->set([
                 'resend_verification_email' => $email,
@@ -176,12 +233,23 @@ class Auth extends BaseController
         $userRole = $roleMap[$user->hak_akses] ?? 'APP';
 
         $db = db_connect();
+        $updateData = [
+            'profile_online_status' => 1,
+            'profile_last_login' => date('Y-m-d H:i:s'),
+        ];
+
+        if ($remember) {
+            $rememberToken = bin2hex(random_bytes(32));
+            $updateData['profile_remember_token'] = $rememberToken;
+            $this->setRememberCookie($user->profile_id, $rememberToken);
+        } else {
+            $updateData['profile_remember_token'] = null;
+            $this->clearRememberCookie();
+        }
+
         $db->table('user_profile')
             ->where('profile_id', $user->profile_id)
-            ->update([
-                'profile_online_status' => 1,
-                'profile_last_login' => date('Y-m-d H:i:s'),
-            ]);
+            ->update($updateData);
 
         session()->set([
             'logged_in'       => true,
@@ -206,7 +274,7 @@ class Auth extends BaseController
         return redirect()->to('/siimut/dashboard');
     }
 
-    private function loginHris(string $nip, string $password)
+    private function loginHris(string $nip, string $password, bool $remember = false)
     {
         $hrisModel = new \App\Models\HrisUserModel();
         $user = $hrisModel->checkLoginHris($nip, $password);
@@ -218,12 +286,25 @@ class Auth extends BaseController
         $role = $this->detectRoleByHrisId($user->id);
 
         $db = db_connect();
-        $db->table('user_profile')
-            ->where('profile_id', $user->profile_id)
-            ->update([
-                'profile_online_status' => 1,
-                'profile_last_login' => date('Y-m-d H:i:s'),
-            ]);
+        $updateData = [
+            'profile_online_status' => 1,
+            'profile_last_login' => date('Y-m-d H:i:s'),
+        ];
+
+        if ($remember && isset($user->profile_id)) {
+            $rememberToken = bin2hex(random_bytes(32));
+            $updateData['profile_remember_token'] = $rememberToken;
+            $this->setRememberCookie($user->profile_id, $rememberToken);
+        } else {
+            $updateData['profile_remember_token'] = null;
+            $this->clearRememberCookie();
+        }
+
+        if (isset($user->profile_id)) {
+            $db->table('user_profile')
+                ->where('profile_id', $user->profile_id)
+                ->update($updateData);
+        }
 
         session()->set([
             'logged_in'       => true,
@@ -403,9 +484,13 @@ class Auth extends BaseController
             $db = db_connect();
             $db->table('user_profile')
                 ->where('profile_id', $profileId)
-                ->update(['profile_online_status' => 0]);
+                ->update([
+                    'profile_online_status' => 0,
+                    'profile_remember_token' => null,
+                ]);
         }
 
+        delete_cookie('remember_token');
         session()->destroy();
 
         $this->response
