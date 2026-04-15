@@ -124,10 +124,6 @@ class RekapPeriodeInm extends AppController
         }
     }
 
-    private function val($value)
-    {
-        return ($value === null || $value === '' || $value == 0) ? '-' : $value;
-    }
 
     private function buildSheet($sheet, $data, $type, $tahun)
     {
@@ -422,7 +418,8 @@ class RekapPeriodeInm extends AppController
                 $sheet->setCellValue('D' . $row, 'Num');
                 $sheet->setCellValue('E' . $row, $this->val($tw1['num'] ?? null));
                 $sheet->getStyle('E' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-                $sheet->setCellValue('F' . $row, isset($tw1['nilai']) ? $tw1['nilai'] . '%' : '-');
+                // $sheet->setCellValue('F' . $row, isset($tw1['nilai']) ? $tw1['nilai'] . '%' : '-');
+                $sheet->setCellValue('F' . $row, $this->persen($tw1['nilai'] ?? null));
 
                 // Row 8 - Denum
                 $sheet->setCellValue('D' . $row2, 'Denum');
@@ -435,7 +432,7 @@ class RekapPeriodeInm extends AppController
                 $sheet->setCellValue('G' . $row, 'Num');
                 $sheet->setCellValue('H' . $row, $this->val($tw2['num'] ?? null));
                 $sheet->getStyle('H' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-                $sheet->setCellValue('I' . $row, isset($tw2['nilai']) ? $tw2['nilai'] . '%' : '-');
+                $sheet->setCellValue('I' . $row, $this->persen($tw2['nilai'] ?? null));
 
                 $sheet->setCellValue('G' . $row2, 'Denum');
                 $sheet->setCellValue('H' . $row2, $this->val($tw2['denum'] ?? null));
@@ -447,7 +444,7 @@ class RekapPeriodeInm extends AppController
                 $sheet->setCellValue('J' . $row, 'Num');
                 $sheet->setCellValue('K' . $row, $this->val($tw3['num'] ?? null));
                 $sheet->getStyle('K' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-                $sheet->setCellValue('L' . $row, isset($tw3['nilai']) ? $tw3['nilai'] . '%' : '-');
+                $sheet->setCellValue('L' . $row, $this->persen($tw3['nilai'] ?? null));
 
                 $sheet->setCellValue('J' . $row2, 'Denum');
                 $sheet->setCellValue('K' . $row2, $this->val($tw3['denum'] ?? null));
@@ -459,7 +456,7 @@ class RekapPeriodeInm extends AppController
                 $sheet->setCellValue('M' . $row, 'Num');
                 $sheet->setCellValue('N' . $row, $this->val($tw4['num'] ?? null));
                 $sheet->getStyle('N' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-                $sheet->setCellValue('O' . $row, isset($tw4['nilai']) ? $tw4['nilai'] . '%' : '-');
+                $sheet->setCellValue('O' . $row, $this->persen($tw4['nilai'] ?? null));
 
                 $sheet->setCellValue('M' . $row2, 'Denum');
                 $sheet->setCellValue('N' . $row2, $this->val($tw4['denum'] ?? null));
@@ -595,5 +592,15 @@ class RekapPeriodeInm extends AppController
         if ($lastRow >= 5) {
             $sheet->getStyle('A1:' . $lastCol . $lastRow)->getFont()->setName('Arial')->setSize(10);
         }
+    }
+
+    private function val($value)
+    {
+        return ($value === null || $value === '' || $value == 0) ? '-' : $value;
+    }
+
+    private function persen($value)
+    {
+        return ($value === null || $value == 0) ? '-' : $value . '%';
     }
 }

@@ -911,6 +911,8 @@ class Auth extends BaseController
      */
     public function googleCallback()
     {
+        log_message('error', 'GOOGLE CALLBACK: Method called');
+        
         $code = $this->request->getGet('code');
 
         if (!$code) {
@@ -944,7 +946,7 @@ class Auth extends BaseController
             }
 
             // Cek apakah email terdaftar di database aplikasi
-            $user = $this->sessionApps->select('*, user_group.group_name as hak_akses, master_institution_department.department_name as lokasi')
+            $user = $this->sessionApps->select('user_profile.*, user_group.group_name as hak_akses, master_institution_department.department_name as lokasi')
                 ->join('master_institution_department', 'master_institution_department.department_id = user_profile.profile_department_id', 'left')
                 ->join('user_group', 'user_group.group_id = user_profile.profile_group_id', 'left')
                 ->where('user_profile.profile_email', $email)
@@ -952,10 +954,85 @@ class Auth extends BaseController
                 ->first();
 
             if ($user) {
-                // Cek apakah email telah diverifikasi melalui sistem kami
-                if ($user->profile_is_verified == 0) {
-                    log_message('error', 'GOOGLE CALLBACK: Email not verified in system - ' . $email);
-                    return redirect()->to(site_url('auth'))->with('error', 'Email Anda belum terverifikasi. Silakan periksa email Anda untuk link verifikasi.');
+                // Auto-verify untuk user Google OAuth (karena Google sudah memvalidasi email)
+                // Cek apakah property profile_is_verified ada dan bernilai 0
+                // Juga cek profile_insert_by untuk memastikan ini user Google (bisa 'GOOGLE', 'GOOGL', dll)
+                $isVerified = isset($user->profile_is_verified) ? $user->profile_is_verified : 1; // Default to 1 (verified) if column doesn't exist
+
+                // Juga fix profile_insert_by jika tidak standar
+                $insertBy = isset($user->profile_insert_by) ? strtoupper($user->profile_insert_by) : '';
+                $isGoogleUser = ($insertBy === 'GOOGLE' || $insertBy === 'GOOGL' || $insertBy === 'GOOG' || strpos($insertBy, 'GOOGLE') !== false);
+                
+                // Cek apakah ada data yang perlu diperbaiki
+                $needsFix = false;
+                $fixData = [];
+                
+                // Fix 1: User belum verified
+                if ($isVerified == 0 && $isGoogleUser) {
+                    $needsFix = true;
+                    $fixData['profile_is_verified'] = 1;
+                    $fixData['profile_verification_token'] = null;
+                    $fixData['profile_verification_sent_at'] = null;
+                    log_message('error', 'GOOGLE CALLBACK: Auto-verifying email - ' . $email);
+                }
+                // Fix 2: User sudah verified tapi masih punya token
+                elseif ($isVerified == 1 && !empty($user->profile_verification_token)) {
+                    $needsFix = true;
+                    $fixData['profile_verification_token'] = null;
+                    $fixData['profile_verification_sent_at'] = null;
+                    log_message('error', 'GOOGLE CALLBACK: Clearing verification token for verified user - ' . $email);
+                }
+                
+                // Fix 3: profile_insert_by tidak standar
+                if ($isGoogleUser && $insertBy !== 'GOOGLE') {
+                    $needsFix = true;
+                    $fixData['profile_insert_by'] = 'GOOGLE';
+                    log_message('error', 'GOOGLE CALLBACK: Fixing profile_insert_by from ' . $insertBy . ' to GOOGLE');
+                }
+                
+                // Update database jika ada yang perlu difix
+                if ($needsFix && !empty($fixData)) {
+                    log_message('error', 'GOOGLE CALLBACK: Updating user profile_id=' . $user->profile_id . ' with data: ' . json_encode($fixData));
+                    
+                    try {
+                        $this->sessionApps->where('user_profile.profile_id', $user->profile_id)
+                            ->update($fixData);
+
+                        // Update data user untuk session
+                        $user->profile_is_verified = 1;
+                        $user->profile_insert_by = 'GOOGLE';
+                        $user->profile_verification_token = null;
+                        
+                        log_message('error', 'GOOGLE CALLBACK: Update successful');
+                    } catch (\Exception $e) {
+                        log_message('error', 'GOOGLE CALLBACK: Update failed - ' . $e->getMessage());
+                        // Continue anyway, user is already verified
+                    }
+                } else {
+                    log_message('error', 'GOOGLE CALLBACK: No fix needed, user data is already correct');
+                }
+                
+                // Update profile_photo dengan foto dari Google jika ada
+                if (!empty($picture)) {
+                    try {
+                        log_message('error', 'GOOGLE CALLBACK: Attempting to update profile_photo');
+                        log_message('error', 'GOOGLE CALLBACK: Photo URL = ' . $picture);
+                        log_message('error', 'GOOGLE CALLBACK: Current photo = ' . ($user->profile_photo ?? 'NULL'));
+                        log_message('error', 'GOOGLE CALLBACK: User ID = ' . $user->profile_id);
+                        
+                        // Always update photo on Google login (in case user changed photo)
+                        $this->sessionApps->where('user_profile.profile_id', $user->profile_id)
+                            ->update(['profile_photo' => $picture]);
+                        
+                        $user->profile_photo = $picture;
+                        log_message('error', 'GOOGLE CALLBACK: profile_photo updated successfully');
+                    } catch (\Exception $e) {
+                        log_message('error', 'GOOGLE CALLBACK: Failed to update profile_photo - ' . $e->getMessage());
+                        log_message('error', 'GOOGLE CALLBACK: Error code: ' . $e->getCode());
+                        // Continue anyway
+                    }
+                } else {
+                    log_message('error', 'GOOGLE CALLBACK: No photo URL from Google, skipping photo update');
                 }
 
                 // Login berhasil - user terdaftar
@@ -979,15 +1056,15 @@ class Auth extends BaseController
                     // Use Google photo first, fallback to database photo
                     'profile_picture' => $picture ?: ($user->profile_photo ?? null),
 
-                    'department_id'   => $user->department_id,
-                    'department_name' => $user->lokasi,
+                    'department_id'   => $user->department_id ?? null,
+                    'department_name' => $user->lokasi ?? '',
                     'user_role'       => $userRole,
                     'role_asli'       => $user->hak_akses,
 
                     'login_time'      => date('Y-m-d H:i:s'),
                 ]);
 
-                log_message('error', 'GOOGLE CALLBACK: Login success - ' . $email . ' role: ' . $userRole . ', photo: ' . ($picture ?: 'db:' . ($user->profile_photo ?? 'none')));
+                log_message('error', 'GOOGLE CALLBACK: Login success - ' . $email . ' role: ' . $userRole . ', photo: ' . ($picture ?: 'db:' . ($user->profile_photo ?? 'none')) . ', verified: ' . $user->profile_is_verified);
 
                 return redirect()->to('/siimut/dashboard');
             } else {
@@ -1004,7 +1081,9 @@ class Auth extends BaseController
             }
         } catch (\Exception $e) {
             log_message('error', 'Google Login Error: ' . $e->getMessage());
-            return redirect()->to(site_url('auth'))->with('error', 'Terjadi kesalahan saat login Google');
+            log_message('error', 'Google Login Error Trace: ' . $e->getTraceAsString());
+            log_message('error', 'Google Login Error File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+            return redirect()->to(site_url('auth'))->with('error', 'Terjadi kesalahan saat login Google - ' . $e->getMessage());
         }
     }
 }

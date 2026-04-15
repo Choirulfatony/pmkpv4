@@ -149,7 +149,7 @@
 </style>
 
 <div class="container-fluid py-4">
-    <div class="row mb-3">
+    <!-- <div class="row mb-3">
         <div class="col-md-4 d-flex align-items-center">
             <label class="form-label fw-bold me-2">Pilih Tahun</label>
             <div class="input-group input-group-sm" style="width: 200px;">
@@ -162,21 +162,92 @@
                     <i class="bi bi-arrow-clockwise"></i>
                 </button>
             </div>
-            <!-- <a href="#" id="btn-export-periode" class="btn btn-outline-success ms-2" title="Download Excel">
-                <i class="bi bi-file-earmark-excel"></i>
-            </a> -->
         </div>
         <div class="col-md-8">
-            <label class="form-label fw-bold">Filter Periode</label>
-            <div>
-                <button class="btn btn-primary me-1" onclick="filterPeriode('all')">Semua</button>
-                <button class="btn btn-success me-1" onclick="filterPeriode('triwulan')">Triwulan</button>
-                <button class="btn btn-warning" onclick="filterPeriode('semester')">Semester</button>
-                <button class="btn btn-info me-1" onclick="filterPeriode('tahun')">Tahun</button>
-                <button class="btn btn-info me-1" id="btn-export-periode" title="Download Excel"><i class="bi bi-file-earmark-excel"></i></button>
+            <label class="form-label fw-bold mb-2">Filter Periode</label>
+
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <button type="button" class="btn btn-outline-primary" onclick="filterPeriode('all')">
+                    Semua
+                </button>
+
+                <button type="button" class="btn btn-outline-success" onclick="filterPeriode('triwulan')">
+                    Triwulan
+                </button>
+
+                <button type="button" class="btn btn-outline-warning" onclick="filterPeriode('semester')">
+                    Semester
+                </button>
+
+                <button type="button" class="btn btn-outline-info" onclick="filterPeriode('tahun')">
+                    Tahun
+                </button>
+
+                <div class="vr mx-1"></div>
+
+                <a href="#" id="btn-export-periode" class="btn btn-success" title="Download Excel">
+                    <i class="bi bi-file-earmark-excel me-1"></i> Export
+                </a>
             </div>
         </div>
+    </div> -->
+    <div class="row mb-3 align-items-end">
+
+        <!-- PILIH TAHUN -->
+        <div class="col-md-4">
+            <label class="form-label fw-semibold mb-1">Pilih Tahun</label>
+
+            <div class="input-group input-group-sm" style="max-width: 220px;">
+                <select class="form-select" id="tahun" onchange="gantiTahun()">
+                    <?php for ($y = date('Y'); $y >= date('Y') - 5; $y--): ?>
+                        <option value="<?= $y ?>" <?= ($y == $tahun) ? 'selected' : '' ?>>
+                            <?= $y ?>
+                        </option>
+                    <?php endfor; ?>
+                </select>
+
+                <button class="btn btn-outline-secondary" type="button" onclick="refreshPage()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- FILTER PERIODE -->
+        <div class="col-md-8">
+            <label class="form-label fw-semibold mb-1">Filter Periode</label>
+
+            <div class="d-flex flex-wrap align-items-center gap-2">
+
+                <button type="button" class="btn btn-outline-primary btn-filter" data-type="all"
+                    onclick="filterPeriode('all')">
+                    Semua
+                </button>
+
+                <button type="button" class="btn btn-outline-success btn-filter" data-type="triwulan"
+                    onclick="filterPeriode('triwulan')">
+                    Triwulan
+                </button>
+
+                <button type="button" class="btn btn-outline-warning btn-filter" data-type="semester"
+                    onclick="filterPeriode('semester')">
+                    Semester
+                </button>
+
+                <button type="button" class="btn btn-outline-info btn-filter" data-type="tahun"
+                    onclick="filterPeriode('tahun')">
+                    Tahun
+                </button>
+
+                <div class="vr mx-2"></div>
+
+                <a href="#" id="btn-export-periode" class="btn btn-success" title="Download Excel">
+                    <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
+                </a>
+            </div>
+        </div>
+
     </div>
+
 
     <div class="row mb-3">
         <div class="col-12">
@@ -261,6 +332,14 @@
             table_periode.ajax.reload();
         }
     });
+
+    function filterPeriode(type) {
+        document.querySelectorAll('.btn-filter').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        document.querySelector(`[data-type="${type}"]`).classList.add('active');
+    }
 
     function refreshPage() {
         vtahun = $('#tahun').val();
