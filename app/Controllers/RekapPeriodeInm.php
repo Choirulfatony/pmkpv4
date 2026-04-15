@@ -141,20 +141,32 @@ class RekapPeriodeInm extends AppController
             $judul = 'TAHUNAN';
         }
 
+        // Tentukan kolom terakhir berdasarkan type
+        if ($type === 'triwulan') {
+            $lastCol = 'O';
+        } elseif ($type === 'semester') {
+            $lastCol = 'I';
+        } else {
+            $lastCol = 'F';
+        }
+
         // Set judul
         $sheet->setCellValue('A1', 'REKAP INDIKATOR NASIONAL MUTU (INM) - ' . $judul);
-        // $sheet->setCellValue('A1', 'REKAP INDIKATOR NASIONAL MUTU (INM) - TRIWULAN');
-        $sheet->mergeCells('A1:O1');
+        // $sheet->mergeCells('A1:O1');
+        $sheet->mergeCells('A1:' . $lastCol . '1');
+
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
         $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 
         $sheet->setCellValue('A2', 'RSUD dr. SOEDONO PROVINSI JAWA TIMUR');
-        $sheet->mergeCells('A2:O2');
+        // $sheet->mergeCells('A2:O2');
+        $sheet->mergeCells('A2:' . $lastCol . '2');
         $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(12);
         $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 
         $sheet->setCellValue('A3', 'TAHUN ' . $tahun);
-        $sheet->mergeCells('A3:O3');
+        // $sheet->mergeCells('A3:O3');
+        $sheet->mergeCells('A3:' . $lastCol . '3');
         $sheet->getStyle('A3')->getFont()->setBold(true)->setSize(12);
         $sheet->getStyle('A3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 
