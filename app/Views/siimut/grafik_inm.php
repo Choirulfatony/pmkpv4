@@ -159,7 +159,7 @@
     <div class="row mb-4">
         <div class="col-md-4">
             <label class="form-label fw-bold">Pilih Tahun</label>
-            <select class="form-select" id="tahun" onchange="loadGrafik()">
+            <select class="form-select" id="tahun" onchange="loadGrafik(true)">
                 <?php for ($y = date('Y'); $y >= date('Y') - 5; $y--): ?>
                     <option value="<?= $y ?>" <?= ($y == $tahun) ? 'selected' : '' ?>><?= $y ?></option>
                 <?php endfor; ?>
@@ -366,14 +366,38 @@
         return Math.max(maxData * 1.2, target * 1.3);
     }
 
-    function loadGrafik() {
+    function resetSummaryCards() {
+        document.getElementById('summaryNilai').textContent = '-';
+        document.getElementById('summaryTarget').textContent = '-';
+        document.getElementById('summaryTrend').textContent = '-';
+        document.getElementById('summaryTrend').className = 'mb-1';
+        document.getElementById('summaryStatus').textContent = '-';
+        document.getElementById('summaryStatus').className = 'mb-1';
+        document.getElementById('summaryStatus').parentElement.parentElement.className = 'card border-2 shadow-sm h-100';
+        document.getElementById('keterangan').innerHTML = '<i class="bi bi-info-circle me-1"></i> Pilih indikator untuk melihat keterangan.';
+        document.getElementById('tabelNumDenumBody').innerHTML = '';
+    }
+
+    function loadGrafik(isYearChange = false) {
         var tahun = document.getElementById('tahun').value;
         var indicatorId = document.getElementById('indicator_id').value;
+
+        // Reset indicator dropdown when year changes
+        if (isYearChange) {
+            document.getElementById('indicator_id').value = '';
+            indicatorId = '';
+            document.getElementById('indicatorInfo').style.display = 'none';
+            document.getElementById('grafikContainer').style.display = 'none';
+            document.getElementById('loadingGrafik').style.display = 'none';
+            resetSummaryCards();
+            return;
+        }
 
         if (!indicatorId) {
             document.getElementById('indicatorInfo').style.display = 'none';
             document.getElementById('grafikContainer').style.display = 'none';
             document.getElementById('loadingGrafik').style.display = 'none';
+            resetSummaryCards();
             return;
         }
 
@@ -765,12 +789,11 @@
             '<span class="badge px-2 py-1" style="background-color: white; color: #c62828; text-transform: none; border: 1px solid #ef9a9a;">❌ Tidak Tercapai</span>';
 
         html += '<tr style="' + totalBg + '">' +
-            '<td class="text-center py-2" style="border: 2px solid #2e7d32; text-transform: none;">Total</td>' +
-            '<td class="text-center py-2" style="border: 2px solid #2e7d32;">' + totalNum + '</td>' +
-            '<td class="text-center py-2" style="border: 2px solid #2e7d32;">' + totalDenum + '</td>' +
-            '<td class="text-center py-2" style="border: 2px solid #2e7d32;">' + totalPersen.toFixed(2) + ' ' + units + '</td>' +
-            '<td class="text-center py-2" style="border: 2px solid #2e7d32;">' + totalStatusBadge + '</td></tr>';
-
+            '<td class="text-center py-2" style="border: 1px solid #dee2e6;; text-transform: none;">Total</td>' +
+            '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + totalNum + '</td>' +
+            '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + totalDenum + '</td>' +
+            '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + totalPersen.toFixed(2) + ' ' + units + '</td>' +
+            '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + totalStatusBadge + '</td></tr>';
         tbody.innerHTML = html;
     }
 
