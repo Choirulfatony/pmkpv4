@@ -1012,27 +1012,17 @@ class Auth extends BaseController
                     log_message('error', 'GOOGLE CALLBACK: No fix needed, user data is already correct');
                 }
                 
-                // Update profile_photo dengan foto dari Google jika ada
                 if (!empty($picture)) {
                     try {
-                        log_message('error', 'GOOGLE CALLBACK: Attempting to update profile_photo');
-                        log_message('error', 'GOOGLE CALLBACK: Photo URL = ' . $picture);
-                        log_message('error', 'GOOGLE CALLBACK: Current photo = ' . ($user->profile_photo ?? 'NULL'));
-                        log_message('error', 'GOOGLE CALLBACK: User ID = ' . $user->profile_id);
-                        
-                        // Always update photo on Google login (in case user changed photo)
-                        $this->sessionApps->where('user_profile.profile_id', $user->profile_id)
+                        $db = db_connect();
+                        $db->table('user_profile')
+                            ->where('profile_id', $user->profile_id)
                             ->update(['profile_photo' => $picture]);
                         
                         $user->profile_photo = $picture;
-                        log_message('error', 'GOOGLE CALLBACK: profile_photo updated successfully');
                     } catch (\Exception $e) {
                         log_message('error', 'GOOGLE CALLBACK: Failed to update profile_photo - ' . $e->getMessage());
-                        log_message('error', 'GOOGLE CALLBACK: Error code: ' . $e->getCode());
-                        // Continue anyway
                     }
-                } else {
-                    log_message('error', 'GOOGLE CALLBACK: No photo URL from Google, skipping photo update');
                 }
 
                 // Login berhasil - user terdaftar
