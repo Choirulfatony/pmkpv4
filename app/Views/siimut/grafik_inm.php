@@ -789,11 +789,11 @@
             '<span class="badge px-2 py-1" style="background-color: white; color: #c62828; text-transform: none; border: 1px solid #ef9a9a;">❌ Tidak Tercapai</span>';
 
         html += '<tr style="' + totalBg + '">' +
-            '<td class="text-center py-2" style="border: 1px solid #dee2e6;; text-transform: none;">Total</td>' +
-            '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + totalNum + '</td>' +
-            '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + totalDenum + '</td>' +
-            '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + totalPersen.toFixed(2) + ' ' + units + '</td>' +
-            '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + totalStatusBadge + '</td></tr>';
+            '<td class="text-center py-2" style="border: 1px solid #dee2e6; font-weight: bold;">Total</td>' +
+            '<td class="text-center py-2" style="border: 1px solid #dee2e6; font-weight: bold;">' + totalNum + '</td>' +
+            '<td class="text-center py-2" style="border: 1px solid #dee2e6; font-weight: bold;">' + totalDenum + '</td>' +
+            '<td class="text-center py-2" style="border: 1px solid #dee2e6; font-weight: bold;">' + totalPersen.toFixed(2) + ' ' + units + '</td>' +
+            '<td class="text-center py-2" style="border: 1px solid #dee2e6; font-weight: bold;">' + totalStatusBadge + '</td></tr>';
         tbody.innerHTML = html;
     }
 

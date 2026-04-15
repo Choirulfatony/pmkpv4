@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(vendor\\bin\\phpunit *)",
+      "Bash(dir *)",
+      "Bash(findstr *)",
+      "Bash(del *)",
+      "Bash(select-string *)"
+    ]
+  },
+  "$version": 3
+}
