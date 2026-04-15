@@ -78,7 +78,7 @@ class Auth extends BaseController
         $identity = trim($this->request->getPost('identity'));
         $password = $this->request->getPost('password');
         $captcha  = strtoupper($this->request->getPost('captcha'));
-        $remember = $this->request->getPost('remember') ? true : false;
+        $remember = $this->request->getPost('remember') === 'on' || $this->request->getPost('remember') === '1' || $this->request->getPost('remember') === 'true';
 
         // CAPTCHA
         if (!Captcha::validate($captcha, session()->get('captcha_word'))) {
