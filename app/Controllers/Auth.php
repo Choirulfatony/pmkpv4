@@ -158,13 +158,8 @@ class Auth extends BaseController
             return redirect()->back()->with('error', 'Email atau password salah');
         }
 
-        // Debug logging
-        log_message('error', 'LOGIN DEBUG: profile_insert_by = ' . ($user->profile_insert_by ?? 'NULL') . ', profile_is_verified = ' . ($user->profile_is_verified ?? 'NULL') . ', profile_verification_token = ' . ($user->profile_verification_token ?? 'NULL'));
-
-        // Cek apakah user memiliki token verifikasi (artinya perlu verifikasi email)
-        // Jika profile_verification_token ada dan profile_is_verified = 0, tidak boleh login
+        // Cek apakah user memiliki token verifikasi
         if (!empty($user->profile_verification_token) && $user->profile_is_verified == 0) {
-            // Simpan email untuk bisa kirim ulang verifikasi
             session()->set([
                 'resend_verification_email' => $email,
                 'resend_verification_name' => $user->profile_fullname,
@@ -172,20 +167,21 @@ class Auth extends BaseController
             return redirect()->back()->with('error', 'Akun Anda belum terverifikasi. Silakan verifikasi email terlebih dahulu. <a href="' . site_url('auth/resend_verification') . '" class="alert-link">Kirim Ulang Link Verifikasi</a>');
         }
 
-        // ✅ Mapping role dari database ke sistem menu
         $roleMap = [
             'Kendali Mutu dan Tim Pokja' => 'KENDALI_MUTU',
             'Komite'                    => 'KOMITE',
             'Administrator'             => 'ADMINISTRATOR'
         ];
 
-        // ✅ Tentukan role final
         $userRole = $roleMap[$user->hak_akses] ?? 'APP';
 
         $db = db_connect();
         $db->table('user_profile')
             ->where('profile_id', $user->profile_id)
-            ->update(['profile_online_status' => 1]);
+            ->update([
+                'profile_online_status' => 1,
+                'profile_last_login' => date('Y-m-d H:i:s'),
+            ]);
 
         session()->set([
             'logged_in'       => true,
@@ -224,7 +220,10 @@ class Auth extends BaseController
         $db = db_connect();
         $db->table('user_profile')
             ->where('profile_id', $user->profile_id)
-            ->update(['profile_online_status' => 1]);
+            ->update([
+                'profile_online_status' => 1,
+                'profile_last_login' => date('Y-m-d H:i:s'),
+            ]);
 
         session()->set([
             'logged_in'       => true,
@@ -857,6 +856,7 @@ class Auth extends BaseController
                 'profile_verified_at'        => date('Y-m-d H:i:s'),
                 'profile_verification_token' => null,
                 'profile_online_status'      => 1,
+                'profile_last_login'         => date('Y-m-d H:i:s'),
             ]);
 
         log_message('info', 'EMAIL VERIFIED: ' . $user->profile_email);
@@ -1030,6 +1030,7 @@ class Auth extends BaseController
                     ->update([
                         'profile_photo' => $picture,
                         'profile_online_status' => 1,
+                        'profile_last_login' => date('Y-m-d H:i:s'),
                     ]);
                 
                 $user->profile_photo = $picture;
