@@ -104,18 +104,26 @@
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-bordered table-sm table-hover" id="tabelNumDenum">
-                                <thead class="table-light">
+                                <thead class="table-dark">
                                     <tr>
                                         <th class="text-center">Bulan</th>
-                                        <th class="text-center">Num</th>
-                                        <th class="text-center">Denum</th>
-                                        <th class="text-center">%</th>
+                                        <th class="text-center">Numerator</th>
+                                        <th class="text-center">Denominator</th>
+                                        <th class="text-center">Capaian (%)</th>
                                         <th class="text-center">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tabelNumDenumBody">
                                 </tbody>
                             </table>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <strong>Keterangan:</strong><br>
+                                    <span class="badge bg-success me-1">✅</span> = Tercapai | 
+                                    <span class="badge bg-danger me-1">❌</span> = Tidak Tercapai |
+                                    <span class="badge" style="background-color: #9e9e9e;">N/A</span> = Tidak Ada Data
+                                </small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -125,34 +133,34 @@
         <!-- 🔥 2. Ringkasan Tahunan (Card Kecil) -->
         <div class="row mb-3">
             <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body text-center">
-                        <h3 class="mb-1" id="summaryNilai">-</h3>
-                        <small class="text-muted">Capaian</small>
+                <div class="card border-success border-2 shadow-sm h-100" style="border-width: 2px;">
+                    <div class="card-body text-center py-3">
+                        <h2 class="mb-1 text-success fw-bold" id="summaryNilai">-</h2>
+                        <small class="text-muted fw-semibold">Capaian</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body text-center">
-                        <h3 class="mb-1" id="summaryTarget">-</h3>
-                        <small class="text-muted">Target</small>
+                <div class="card border-primary border-2 shadow-sm h-100" style="border-width: 2px;">
+                    <div class="card-body text-center py-3">
+                        <h2 class="mb-1 text-primary fw-bold" id="summaryTarget">-</h2>
+                        <small class="text-muted fw-semibold">Target</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body text-center">
-                        <h3 class="mb-1" id="summaryTrend">-</h3>
-                        <small class="text-muted">Trend</small>
+                <div class="card border-warning border-2 shadow-sm h-100" style="border-width: 2px;">
+                    <div class="card-body text-center py-3">
+                        <h2 class="mb-1" id="summaryTrend">-</h2>
+                        <small class="text-muted fw-semibold">Trend</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body text-center">
-                        <h3 class="mb-1" id="summaryStatus">-</h3>
-                        <small class="text-muted">Status</small>
+                <div class="card border-2 shadow-sm h-100" style="border-width: 2px;">
+                    <div class="card-body text-center py-3">
+                        <h2 class="mb-1 fw-bold" id="summaryStatus">-</h2>
+                        <small class="text-muted fw-semibold">Status</small>
                     </div>
                 </div>
             </div>
@@ -306,12 +314,12 @@ function loadGrafik() {
                         trendEl.className = 'mb-1 text-success fw-bold';
                         trendText = 'mengalami peningkatan ' + diff.toFixed(1) + '%';
                     } else if (diff < 0) {
-                        trendEl.textContent = '⬇ ' + diff.toFixed(1) + '%';
+                        trendEl.textContent = '⬇ ' + Math.abs(diff).toFixed(1) + '%';
                         trendEl.className = 'mb-1 text-danger fw-bold';
                         trendText = 'mengalami penurunan ' + Math.abs(diff).toFixed(1) + '%';
                     } else {
                         trendEl.textContent = '➡ Stabil';
-                        trendEl.className = 'mb-1 text-muted';
+                        trendEl.className = 'mb-1 text-muted fw-bold';
                         trendText = 'stabil';
                     }
                     
@@ -319,17 +327,41 @@ function loadGrafik() {
                     if (response.tahunan.tercap) {
                         statusEl.textContent = 'TERCAPAI ✓';
                         statusEl.className = 'mb-1 text-success fw-bold';
+                        statusEl.parentElement.parentElement.classList.add('border-success');
                     } else {
                         statusEl.textContent = 'TIDAK TERCAPAI ✗';
                         statusEl.className = 'mb-1 text-danger fw-bold';
+                        statusEl.parentElement.parentElement.classList.add('border-danger');
                     }
                     
-                    // Generate Keterangan
-                    var tercapStatus = response.tahunan.tercap ? 'telah melampaui target' : 'belum mencapai target';
-                    var keteranganHtml = response.tahunan.tercap 
-                        ? '<span class="text-success fw-bold">Capaian indikator ' + nilai + ' ' + units + ' ' + tercapStatus + ' ' + target + ' ' + units + '. Indikator ' + trendText + ' dibanding tahun sebelumnya.</span>'
-                        : '<span class="text-danger fw-bold">Capaian indikator ' + nilai + ' ' + units + ' ' + tercapStatus + ' ' + target + ' ' + units + '. Indikator ' + trendText + ' dibanding tahun sebelumnya. Perlu tindakan perbaikan.</span>';
-                    document.getElementById('keterangan').innerHTML = '<i class="bi bi-info-circle me-1"></i> ' + keteranganHtml;
+                    // Generate Keterangan (Bahasa PMKP)
+                    var tercapStatus = response.tahunan.tercap ? 'telah melampaui target yang ditetapkan' : 'belum mencapai target yang ditetapkan';
+                    var trendDesc = '';
+                    if (diff > 0) {
+                        trendDesc = 'Terdapat peningkatan sebesar ' + diff.toFixed(1) + '% dibandingkan tahun sebelumnya, ';
+                    } else if (diff < 0) {
+                        trendDesc = 'Terdapat penurunan sebesar ' + Math.abs(diff).toFixed(1) + '% dibandingkan tahun sebelumnya, ';
+                    } else {
+                        trendDesc = 'Capaian relatif stabil dibandingkan tahun sebelumnya, ';
+                    }
+                    
+                    var analisasHtml = '<div class="mt-2 p-3 bg-light rounded"><strong>Analisis:</strong><br>';
+                    
+                    if (response.tahunan.tercap) {
+                        analisasHtml += '<span class="text-success">';
+                        analisasHtml += 'Capaian indikator sebesar ' + nilai + ' ' + units + ' (' + target + '% standar) ' + tercapStatus + '.<br>';
+                        analisasHtml += trendDesc;
+                        analisasHtml += 'namun capaian masih berada di atas standar dan menunjukkan kinerja yang tetap baik.<br>';
+                        analisasHtml += 'Perlu dilakukan monitoring untuk menjaga konsistensi capaian indikator.</span>';
+                    } else {
+                        analisasHtml += '<span class="text-danger">';
+                        analisasHtml += 'Capaian indikator sebesar ' + nilai + ' ' + units + ' (' + target + '% standar) ' + tercapStatus + '.<br>';
+                        analisasHtml += trendDesc;
+                        analisasHtml += 'diperlukan upaya perbaikan dan evaluasi untuk meningkatkan capaian indikator.<br>';
+                        analisasHtml += 'Perlu dilakukan analisis root cause dan rencana perbaikan.</span>';
+                    }
+                    analisasHtml += '</div>';
+                    document.getElementById('keterangan').innerHTML = analisasHtml;
                 } else {
                     trendEl.textContent = '-';
                     trendEl.className = 'mb-1';
@@ -495,11 +527,10 @@ function renderSemesterChart(semester, indicator) {
 }
 
 function renderTabelNumDenum(bulanan, indicator) {
-    var bulanNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var bulanNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
     var target = parseFloat(indicator.indicator_target || 0);
     var units = indicator.indicator_units || '';
     var operator = indicator.indicator_target_calculation || '>=';
-    var tolerance = 0.02; // 0.02% tolerance for near-target values
     var tbody = document.getElementById('tabelNumDenumBody');
     var html = '';
     
@@ -515,7 +546,7 @@ function renderTabelNumDenum(bulanan, indicator) {
         totalNum += num;
         totalDenum += denum;
         
-        // Cek tercap dengan toleransi
+        // Cek tercap
         var tercap = false;
         var tidakAdaData = false;
         
@@ -529,43 +560,54 @@ function renderTabelNumDenum(bulanan, indicator) {
             } else if (operator === '>') {
                 tercap = nilai > target;
             } else {
-                // >= dengan toleransi
-                tercap = nilai >= target || (target - nilai) <= tolerance;
+                tercap = nilai >= target;
             }
         }
         
+        // Warna sesuai standar PMKP
         var rowClass = '';
+        var statusText = '';
         var statusBadge = '';
+        
         if (tidakAdaData) {
             rowClass = 'table-secondary';
-            statusBadge = '<span class="badge bg-secondary px-2" style="background-color: #6c757d !important;"></span>';
+            statusText = 'Tidak Ada Data';
+            statusBadge = '<span class="badge" style="background-color: #9e9e9e;">N/A</span>';
+        } else if (nilai >= 100) {
+            rowClass = 'table-success';
+            statusText = 'Tercapai (100%)';
+            statusBadge = '<span class="badge bg-success">✅ Tercapai</span>';
         } else if (tercap) {
             rowClass = 'table-success';
-            statusBadge = '<span class="badge bg-success px-2" style="background-color: #28a745 !important;"></span>';
+            statusText = '✅ Tercapai';
+            statusBadge = '<span class="badge bg-success">✅ Tercapai</span>';
         } else {
             rowClass = 'table-danger';
-            statusBadge = '<span class="badge bg-danger px-2" style="background-color: #dc3545 !important;"></span>';
+            statusText = '❌ Tidak Tercapai';
+            statusBadge = '<span class="badge bg-danger">❌ Tidak</span>';
         }
         
         html += '<tr class="' + rowClass + '">' +
-            '<td class="text-center">' + bulanNames[i-1] + '</td>' +
+            '<td class="text-center fw-semibold">' + bulanNames[i-1] + '</td>' +
             '<td class="text-center">' + num + '</td>' +
             '<td class="text-center">' + denum + '</td>' +
             '<td class="text-center fw-bold">' + (denum > 0 ? nilai.toFixed(2) : '0.00') + ' ' + units + '</td>' +
-            '<td class="text-center">' + statusBadge + '</td></tr>';
+            '<td class="text-center fw-semibold">' + statusBadge + '</td></tr>';
     }
     
     // Total row
     var totalPersen = totalDenum > 0 ? (totalNum / totalDenum) * 100 : 0;
-    // Total dengan toleransi juga
-    var totalTercap = totalDenum > 0 && (totalPersen >= target || (target - totalPersen) <= tolerance);
-    html += '<tr class="table-primary fw-bold">' +
-        '<td class="text-center">Total</td>' +
+    var totalTercap = totalDenum > 0 && totalPersen >= target;
+    
+    var totalRowClass = totalTercap ? 'table-success' : 'table-danger';
+    var totalStatusBadge = totalTercap ? '<span class="badge bg-success fw-bold">✅ TERCAAPAI</span>' : '<span class="badge bg-danger fw-bold">❌ TIDAK TERCAAPAI</span>';
+    
+    html += '<tr class="table-dark fw-bold ' + totalRowClass + '">' +
+        '<td class="text-center">TOTAL</td>' +
         '<td class="text-center">' + totalNum + '</td>' +
         '<td class="text-center">' + totalDenum + '</td>' +
         '<td class="text-center">' + totalPersen.toFixed(2) + ' ' + units + '</td>' +
-        '<td class="text-center">' + (totalTercap ? '<span class="badge bg-success" style="background-color: #28a745 !important;"></span>' : '<span class="badge bg-danger" style="background-color: #dc3545 !important;"></span>') + '</td></tr>' +
-        '<tr><td colspan="5" class="text-muted small text-center">*Total dihitung berdasarkan akumulasi numerator dan denominator</td></tr>';
+        '<td class="text-center">' + totalStatusBadge + '</td></tr>';
     
     tbody.innerHTML = html;
 }
