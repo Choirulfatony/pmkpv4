@@ -398,6 +398,15 @@ class Auth extends BaseController
 
     public function logout()
     {
+        $profileId = session('profile_id');
+
+        if ($profileId) {
+            $db = db_connect();
+            $db->table('user_profile')
+                ->where('profile_id', $profileId)
+                ->update(['profile_online_status' => 0]);
+        }
+
         session()->destroy();
 
         $this->response
