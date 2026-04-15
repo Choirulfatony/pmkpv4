@@ -19,7 +19,7 @@ class Auth extends BaseController
         $this->session = session();
         $this->sessionApps = new SessionAppsModel();
         $this->captcha = new Captcha();
-        helper(['url']);
+        helper(['url', 'cookie']);
     }
 
     private function setRememberCookie(int $profileId, string $token): void
