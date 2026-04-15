@@ -626,4 +626,285 @@ class RekapLaporanImprsModel extends Model
 
         return $results;
     }
+
+    // ==================== FORM METHODS (CI4) ====================
+
+    public function get_form_imprs($post = [])
+    {
+        $db = db_connect();
+        $builder = $db->table('local_quality_indicator');
+
+        $builder->select('local_quality_indicator.indicator_id, local_quality_indicator.indicator_element');
+        $builder->where("local_quality_indicator.indicator_category_id", '5');
+        $builder->where("local_quality_indicator.indicator_record_status", 'A');
+
+        $userGroupId = session('user_role') ?? '';
+        $userDepartmentId = session('department_id') ?? 0;
+        if ($userGroupId !== 'ADMINISTRATOR' && $userDepartmentId > 0) {
+            $builder->where("master_institution_department.department_id", $userDepartmentId);
+        }
+
+        $i = 0;
+        foreach ($this->column_search as $item) {
+            if (isset($post['search']['value']) && !empty($post['search']['value'])) {
+                if ($i === 0) {
+                    $builder->groupStart();
+                    $builder->like($item, $post['search']['value']);
+                } else {
+                    $builder->orLike($item, $post['search']['value']);
+                }
+                if (count($this->column_search) - 1 == $i) {
+                    $builder->groupEnd();
+                }
+            }
+            $i++;
+        }
+
+        if (isset($post['order'])) {
+            $col = $this->column_order[$post['order'][0]['column']] ?? 'indicator_element';
+            $dir = $post['order'][0]['dir'] ?? 'ASC';
+            $builder->orderBy($col, $dir);
+        }
+
+        return $builder->get()->getResult();
+    }
+
+    private function _get_form_loquin_imprs($post = [])
+    {
+        $db = db_connect();
+        $builder = $db->table('local_quality_indicator_group');
+
+        $builder->distinct();
+        $builder->select('
+            local_quality_indicator_group.group_indicator_id,
+            local_quality_indicator_group.group_department_id,
+            local_quality_indicator_group.group_period,
+            local_quality_indicator_group.group_days,
+            local_quality_indicator.indicator_id,
+            local_quality_indicator.indicator_element,
+            local_quality_indicator.indicator_target,
+            master_institution_department.department_id,
+            master_institution_department.department_name,
+            local_quality_indicator.indicator_units,
+            local_quality_indicator.indicator_target_unit,
+            local_quality_indicator.indicator_target_calculation
+        ');
+
+        $builder->join('local_quality_indicator', 'local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id', 'left');
+        $builder->join('master_institution_department', 'master_institution_department.department_id = local_quality_indicator_group.group_department_id', 'left');
+
+        $builder->where("local_quality_indicator.indicator_category_id", '5');
+        $builder->where("local_quality_indicator.indicator_record_status", 'A');
+
+        $vtahun = $post['vtahun'] ?? date('Y');
+        $builder->groupStart();
+        $builder->where("local_quality_indicator_group.group_period", $vtahun);
+        $builder->orWhere("local_quality_indicator_group.group_period", $vtahun - 1);
+        $builder->orWhere("local_quality_indicator_group.group_period", $vtahun - 2);
+        $builder->orWhere("local_quality_indicator_group.group_period", '');
+        $builder->groupEnd();
+
+        $userGroupId = session('role_asli') ?? session('user_role') ?? '';
+        $userDepartmentId = session('department_id') ?? 0;
+        if (!in_array($userGroupId, ['Administrator', 'Kendali Mutu dan Tim Pokja']) && $userDepartmentId > 0) {
+            $builder->where('master_institution_department.department_id', $userDepartmentId);
+        }
+
+        $i = 0;
+        foreach ($this->column_search as $item) {
+            if (isset($post['search']['value']) && !empty($post['search']['value'])) {
+                if ($i === 0) {
+                    $builder->groupStart();
+                    $builder->like($item, $post['search']['value']);
+                } else {
+                    $builder->orLike($item, $post['search']['value']);
+                }
+                if (count($this->column_search) - 1 == $i) {
+                    $builder->groupEnd();
+                }
+            }
+            $i++;
+        }
+
+        if (isset($post['order'])) {
+            $col = $this->column_order[$post['order'][0]['column']] ?? 'indicator_element';
+            $dir = $post['order'][0]['dir'] ?? 'ASC';
+            $builder->orderBy($col, $dir);
+        }
+
+        return $builder;
+    }
+
+    public function get_form_indicator_imprs($post = [])
+    {
+        $builder = $this->_get_form_loquin_imprs($post);
+        if (isset($post['length']) && $post['length'] != -1) {
+            $builder->limit($post['length'], $post['start'] ?? 0);
+        }
+        return $builder->get()->getResult();
+    }
+
+    public function count_all_form_imprs($post = [])
+    {
+        $builder = $this->_get_form_loquin_imprs($post);
+        return $builder->countAllResults(false);
+    }
+
+    public function count_filtered_form_imprs($post = [])
+    {
+        $builder = $this->_get_form_loquin_imprs($post);
+        return $builder->get()->getNumRows();
+    }
+
+    public function get_ajax_data_form_imprs($indikator, $department_id, $tahun, $bulan, $tanggal)
+    {
+        $db = db_connect();
+        $builder = $db->table('local_quality_indicator_result');
+
+        $tanggal = str_pad($tanggal, 2, '0', STR_PAD_LEFT);
+
+        $builder->select('
+            local_quality_indicator.indicator_id,
+            local_quality_indicator.indicator_element,
+            master_institution_department.department_id,
+            master_institution_department.department_name,
+            local_quality_indicator_result.result_numerator_value as num,
+            local_quality_indicator_result.result_denumerator_value as denum,
+            CONCAT(
+                ROUND(
+                    local_quality_indicator_result.result_numerator_value / local_quality_indicator_result.result_denumerator_value * local_quality_indicator.indicator_factors,
+                1),
+                local_quality_indicator.indicator_units
+            ) as total,
+            local_quality_indicator_result.result_period
+        ');
+
+        $builder->join('local_quality_indicator', 'local_quality_indicator.indicator_id = local_quality_indicator_result.result_indicator_id', 'left');
+        $builder->join('master_institution_department', 'master_institution_department.department_id = local_quality_indicator_result.result_department_id', 'left');
+
+        $builder->where("local_quality_indicator_result.result_period", "{$tahun}-{$bulan}-{$tanggal}");
+        $builder->where("local_quality_indicator.indicator_category_id", '5');
+        $builder->where("local_quality_indicator.indicator_record_status", 'A');
+        $builder->where("local_quality_indicator.indicator_id", $indikator);
+        $builder->where("local_quality_indicator_result.result_department_id", $department_id);
+
+        $builder->orderBy("local_quality_indicator.indicator_id, local_quality_indicator_result.result_period");
+
+        return $builder->get()->getRow();
+    }
+
+    public function get_ajax_data_total_imprs($indikator, $department_id, $tahun, $bulan, $tanggal)
+    {
+        $db = db_connect();
+        $builder = $db->table('local_quality_indicator_result');
+
+        $builder->select('
+            local_quality_indicator.indicator_category_id,
+            local_quality_indicator.indicator_id,
+            local_quality_indicator.indicator_element,
+            master_institution_department.department_id,
+            master_institution_department.department_name,
+            SUM(local_quality_indicator_result.result_numerator_value) AS num,
+            SUM(local_quality_indicator_result.result_denumerator_value) AS denum,
+            CONCAT(
+                ROUND(
+                    SUM(local_quality_indicator_result.result_numerator_value) / SUM(local_quality_indicator_result.result_denumerator_value) * local_quality_indicator.indicator_factors,
+                2),
+                local_quality_indicator.indicator_units
+            ) as total
+        ');
+
+        $builder->join('local_quality_indicator', 'local_quality_indicator_result.result_indicator_id = local_quality_indicator.indicator_id', 'left');
+        $builder->join('master_institution_department', 'master_institution_department.department_id = local_quality_indicator_result.result_department_id', 'left');
+
+        $builder->where("local_quality_indicator_result.result_period LIKE", "{$tahun}-{$bulan}-%");
+        $builder->where("local_quality_indicator.indicator_category_id", '5');
+        $builder->where("local_quality_indicator.indicator_record_status", 'A');
+        $builder->where("local_quality_indicator.indicator_id", $indikator);
+        $builder->where("local_quality_indicator_result.result_department_id", $department_id);
+
+        $builder->groupBy("local_quality_indicator.indicator_id");
+
+        return $builder->get()->getRow();
+    }
+
+    public function get_by_id_ipmrs($indicator_id)
+    {
+        $db = db_connect();
+        $builder = $db->table('local_quality_indicator_variable');
+
+        $builder->select('
+            local_quality_indicator.indicator_id,
+            local_quality_indicator.indicator_element,
+            local_quality_indicator.indicator_units,
+            local_quality_indicator_variable.variable_id,
+            local_quality_indicator_variable.variable_name,
+            local_quality_indicator_variable.variable_type,
+            local_quality_indicator_variable.variable_unit_name,
+            local_quality_indicator_variable.variable_record_status,
+            local_quality_indicator_variable.variable_institution_code,
+            local_quality_indicator_group.group_indicator_id,
+            master_institution_department.department_id
+        ');
+
+        $builder->join('local_quality_indicator', 'local_quality_indicator.indicator_id = local_quality_indicator_variable.variable_indicator_id', 'left');
+        $builder->join('local_quality_indicator_group', 'local_quality_indicator_group.group_indicator_id = local_quality_indicator_variable.variable_indicator_id', 'left');
+        $builder->join('master_institution_department', 'master_institution_department.department_id = local_quality_indicator_group.group_department_id', 'left');
+
+        $builder->where("local_quality_indicator.indicator_id", $indicator_id);
+        $builder->groupBy("local_quality_indicator_variable.variable_id");
+
+        $userGroupId = session('role_asli') ?? session('user_role') ?? '';
+        $userDepartmentId = session('department_id') ?? 0;
+        if (!in_array($userGroupId, ['Administrator']) && $userDepartmentId > 0) {
+            $builder->where('master_institution_department.department_id', $userDepartmentId);
+        }
+
+        return $builder->get()->getResult();
+    }
+
+    public function get_perba_id_imprs($indicator_id, $tanggal)
+    {
+        $db = db_connect();
+        $tanggal = str_pad($tanggal, 2, '0', STR_PAD_LEFT);
+
+        // Get indicator data
+        $builder1 = $db->table('local_quality_indicator_variable');
+        $builder1->select('
+            local_quality_indicator_result.result_id,
+            local_quality_indicator.indicator_element,
+            local_quality_indicator.indicator_units,
+            local_quality_indicator_variable.variable_indicator_id,
+            local_quality_indicator_variable.variable_name,
+            local_quality_indicator_variable.variable_unit_name,
+            local_quality_indicator_variable.variable_type,
+            local_quality_indicator_result.result_numerator_value,
+            local_quality_indicator_result.result_denumerator_value
+        ');
+        $builder1->join('local_quality_indicator_result', 'local_quality_indicator_result.result_indicator_id = local_quality_indicator_variable.variable_indicator_id', 'left');
+        $builder1->join('local_quality_indicator', 'local_quality_indicator.indicator_id = local_quality_indicator_variable.variable_indicator_id', 'left');
+        $builder1->where("local_quality_indicator_result.result_indicator_id", $indicator_id);
+        $builder1->where("local_quality_indicator_result.result_period", $tanggal);
+
+        $userGroupId = session('role_asli') ?? session('user_role') ?? '';
+        $userDepartmentId = session('department_id') ?? 0;
+        if (!in_array($userGroupId, ['Administrator']) && $userDepartmentId > 0) {
+            $builder1->where("local_quality_indicator_result.result_department_id", $userDepartmentId);
+        }
+        $data_indicator = $builder1->get()->getResult();
+
+        // Get perbaikan data
+        $builder2 = $db->table('local_rencana_perbaikan');
+        $builder2->select('*');
+        $builder2->where("result_indicator_id", $indicator_id);
+        $builder2->where("result_period", $tanggal);
+        $builder2->orderBy('rencana_id', 'DESC');
+        $builder2->limit(1);
+        $data_perbaikan = $builder2->get()->getResult();
+
+        return [
+            'indicator' => $data_indicator,
+            'perbaikan' => $data_perbaikan
+        ];
+    }
 }
