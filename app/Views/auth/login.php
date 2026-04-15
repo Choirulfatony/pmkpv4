@@ -118,6 +118,7 @@
                         id="identityInput"
                         class="form-control form-control-lg"
                         placeholder="Email atau NIP"
+                        value="<?= isset($_COOKIE['remember_credential']) ? esc(explode('|', base64_decode($_COOKIE['remember_credential']))[0]) : '' ?>"
                         required>
                     <label class="form-label" id="identityLabel">
                         Email / NIP
@@ -157,10 +158,9 @@
 
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="form-check mb-0">
-                        <input class="form-check-input me-2" type="checkbox" name="remember">
+                        <input class="form-check-input me-2" type="checkbox" name="remember" id="rememberMe" <?= isset($_COOKIE['remember_credential']) ? 'checked' : '' ?>>
                         <label class="form-check-label">Remember me</label>
                     </div>
-                    <a href="#" class="text-body">Forgot password?</a>
                 </div>
 
                 <div class="text-center text-lg-start mt-4 pt-2">

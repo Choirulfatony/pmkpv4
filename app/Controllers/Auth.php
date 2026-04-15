@@ -22,77 +22,10 @@ class Auth extends BaseController
         helper(['url', 'cookie']);
     }
 
-    private function setRememberCookie(int $profileId, string $token): void
-    {
-        $value = $profileId . ':' . $token;
-        set_cookie([
-            'name'   => 'remember_token',
-            'value'  => $value,
-            'expire' => 86400 * 30,
-            'path'   => '/',
-            'secure' => false,
-            'httponly' => true,
-        ]);
-    }
-
-    private function clearRememberCookie(): void
-    {
-        delete_cookie('remember_token');
-    }
-
     public function index()
     {
         if ($this->session->get('logged_in')) {
             return redirect()->to('/ikprs');
-        }
-
-        $rememberToken = get_cookie('remember_token');
-        if ($rememberToken) {
-            $parts = explode(':', $rememberToken, 2);
-            if (count($parts) === 2) {
-                [$profileId, $token] = $parts;
-                $user = $this->sessionApps->select('user_profile.*, user_group.group_name as hak_akses, master_institution_department.department_name as lokasi, master_institution_department.department_id as department_id')
-                    ->join('user_group', 'user_group.group_id = user_profile.profile_group_id', 'left')
-                    ->join('master_institution_department', 'master_institution_department.department_id = user_profile.profile_department_id', 'left')
-                    ->where('user_profile.profile_id', $profileId)
-                    ->where('user_profile.profile_remember_token', $token)
-                    ->where('user_profile.profile_record_status', 'A')
-                    ->first();
-
-                if ($user) {
-                    $roleMap = [
-                        'Kendali Mutu dan Tim Pokja' => 'KENDALI_MUTU',
-                        'Komite'                    => 'KOMITE',
-                        'Administrator'             => 'ADMINISTRATOR'
-                    ];
-                    $userRole = $roleMap[$user->hak_akses] ?? 'APP';
-
-                    $db = db_connect();
-                    $db->table('user_profile')
-                        ->where('profile_id', $user->profile_id)
-                        ->update([
-                            'profile_online_status' => 1,
-                            'profile_last_login' => date('Y-m-d H:i:s'),
-                        ]);
-
-                    session()->set([
-                        'logged_in'       => true,
-                        'login_source'    => 'APP',
-                        'last_activity'   => time(),
-                        'profile_id'      => $user->profile_id,
-                        'nama_lengkap'    => $user->profile_fullname,
-                        'profile_email'   => $user->profile_email,
-                        'profile_picture' => $user->profile_photo ?? null,
-                        'department_id'   => $user->department_id,
-                        'department_name' => $user->lokasi,
-                        'user_role'       => $userRole,
-                        'role_asli'       => $user->hak_akses,
-                        'login_time'      => date('Y-m-d H:i:s'),
-                    ]);
-
-                    return redirect()->to('/siimut/dashboard');
-                }
-            }
         }
 
         if ($this->request->getGet('timeout')) {
@@ -233,23 +166,26 @@ class Auth extends BaseController
         $userRole = $roleMap[$user->hak_akses] ?? 'APP';
 
         $db = db_connect();
-        $updateData = [
-            'profile_online_status' => 1,
-            'profile_last_login' => date('Y-m-d H:i:s'),
-        ];
-
-        if ($remember) {
-            $rememberToken = bin2hex(random_bytes(32));
-            $updateData['profile_remember_token'] = $rememberToken;
-            $this->setRememberCookie($user->profile_id, $rememberToken);
-        } else {
-            $updateData['profile_remember_token'] = null;
-            $this->clearRememberCookie();
-        }
-
         $db->table('user_profile')
             ->where('profile_id', $user->profile_id)
-            ->update($updateData);
+            ->update([
+                'profile_online_status' => 1,
+                'profile_last_login' => date('Y-m-d H:i:s'),
+            ]);
+
+        if ($remember) {
+            $rememberData = base64_encode($email . '|' . md5($password));
+            set_cookie([
+                'name'   => 'remember_credential',
+                'value'  => $rememberData,
+                'expire' => 86400 * 30,
+                'path'   => '/',
+                'secure' => false,
+                'httponly' => false,
+            ]);
+        } else {
+            delete_cookie('remember_credential');
+        }
 
         session()->set([
             'logged_in'       => true,
@@ -286,24 +222,25 @@ class Auth extends BaseController
         $role = $this->detectRoleByHrisId($user->id);
 
         $db = db_connect();
-        $updateData = [
-            'profile_online_status' => 1,
-            'profile_last_login' => date('Y-m-d H:i:s'),
-        ];
+        $db->table('user_profile')
+            ->where('profile_id', $user->profile_id)
+            ->update([
+                'profile_online_status' => 1,
+                'profile_last_login' => date('Y-m-d H:i:s'),
+            ]);
 
-        if ($remember && isset($user->profile_id)) {
-            $rememberToken = bin2hex(random_bytes(32));
-            $updateData['profile_remember_token'] = $rememberToken;
-            $this->setRememberCookie($user->profile_id, $rememberToken);
+        if ($remember) {
+            $rememberData = base64_encode($nip . '|' . md5($password) . '|HRIS');
+            set_cookie([
+                'name'   => 'remember_credential',
+                'value'  => $rememberData,
+                'expire' => 86400 * 30,
+                'path'   => '/',
+                'secure' => false,
+                'httponly' => false,
+            ]);
         } else {
-            $updateData['profile_remember_token'] = null;
-            $this->clearRememberCookie();
-        }
-
-        if (isset($user->profile_id)) {
-            $db->table('user_profile')
-                ->where('profile_id', $user->profile_id)
-                ->update($updateData);
+            delete_cookie('remember_credential');
         }
 
         session()->set([
@@ -490,7 +427,7 @@ class Auth extends BaseController
                 ]);
         }
 
-        delete_cookie('remember_token');
+        delete_cookie('remember_credential');
         session()->destroy();
 
         $this->response
