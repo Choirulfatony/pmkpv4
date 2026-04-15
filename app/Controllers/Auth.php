@@ -182,7 +182,11 @@ class Auth extends BaseController
         // ✅ Tentukan role final
         $userRole = $roleMap[$user->hak_akses] ?? 'APP';
 
-        // ✅ Set session (SATU KALI SAJA)
+        $db = db_connect();
+        $db->table('user_profile')
+            ->where('profile_id', $user->profile_id)
+            ->update(['profile_online_status' => 1]);
+
         session()->set([
             'logged_in'       => true,
             'login_source'    => 'APP',
@@ -196,16 +200,12 @@ class Auth extends BaseController
             'department_id'   => $user->department_id,
             'department_name' => $user->lokasi,
 
-            // ✅ INI YANG DIPAKAI MENU
             'user_role'       => $userRole,
 
-            // (opsional kalau mau simpan asli)
             'role_asli'       => $user->hak_akses,
 
             'login_time'      => date('Y-m-d H:i:s'),
         ]);
-
-        log_message('error', 'DEBUG LOGIN:APP - profile_photo: ' . ($user->profile_photo ?? 'NULL') . ', hak_akses: ' . ($user->hak_akses ?? 'NULL'));
 
         return redirect()->to('/siimut/dashboard');
     }
@@ -219,10 +219,13 @@ class Auth extends BaseController
             return redirect()->back()->with('error', 'NIP atau password salah');
         }
 
-        // 🔹 DETEKSI ROLE BERDASARKAN unit_karu
         $role = $this->detectRoleByHrisId($user->id);
 
-        // 🔹 SET SESSION LOGIN
+        $db = db_connect();
+        $db->table('user_profile')
+            ->where('profile_id', $user->profile_id)
+            ->update(['profile_online_status' => 1]);
+
         session()->set([
             'logged_in'       => true,
             'login_source'    => 'HRIS',
@@ -838,13 +841,13 @@ class Auth extends BaseController
                 ->with('error', 'Link verifikasi telah kadaluarsa');
         }
 
-        // ✅ Update status verified
         $db->table('user_profile')
             ->where('profile_id', $user->profile_id)
             ->update([
                 'profile_is_verified'        => 1,
                 'profile_verified_at'        => date('Y-m-d H:i:s'),
                 'profile_verification_token' => null,
+                'profile_online_status'      => 1,
             ]);
 
         log_message('info', 'EMAIL VERIFIED: ' . $user->profile_email);
@@ -1012,20 +1015,16 @@ class Auth extends BaseController
                     log_message('error', 'GOOGLE CALLBACK: No fix needed, user data is already correct');
                 }
                 
-                if (!empty($picture)) {
-                    try {
-                        $db = db_connect();
-                        $db->table('user_profile')
-                            ->where('profile_id', $user->profile_id)
-                            ->update(['profile_photo' => $picture]);
-                        
-                        $user->profile_photo = $picture;
-                    } catch (\Exception $e) {
-                        log_message('error', 'GOOGLE CALLBACK: Failed to update profile_photo - ' . $e->getMessage());
-                    }
-                }
+                $db = db_connect();
+                $db->table('user_profile')
+                    ->where('profile_id', $user->profile_id)
+                    ->update([
+                        'profile_photo' => $picture,
+                        'profile_online_status' => 1,
+                    ]);
+                
+                $user->profile_photo = $picture;
 
-                // Login berhasil - user terdaftar
                 $roleMap = [
                     'Kendali Mutu dan Tim Pokja' => 'KENDALI_MUTU',
                     'Komite' => 'KOMITE',
@@ -1043,7 +1042,6 @@ class Auth extends BaseController
                     'profile_id'      => $user->profile_id,
                     'nama_lengkap'    => $user->profile_fullname,
                     'profile_email'   => $user->profile_email,
-                    // Use Google photo first, fallback to database photo
                     'profile_picture' => $picture ?: ($user->profile_photo ?? null),
 
                     'department_id'   => $user->department_id ?? null,
@@ -1054,7 +1052,7 @@ class Auth extends BaseController
                     'login_time'      => date('Y-m-d H:i:s'),
                 ]);
 
-                log_message('error', 'GOOGLE CALLBACK: Login success - ' . $email . ' role: ' . $userRole . ', photo: ' . ($picture ?: 'db:' . ($user->profile_photo ?? 'none')) . ', verified: ' . $user->profile_is_verified);
+                log_message('error', 'GOOGLE CALLBACK: Login success - ' . $email . ' role: ' . $userRole);
 
                 return redirect()->to('/siimut/dashboard');
             } else {
