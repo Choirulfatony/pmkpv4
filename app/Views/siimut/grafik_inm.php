@@ -124,7 +124,7 @@
 
         <!-- 🔥 2. Ringkasan Tahunan (Card Kecil) -->
         <div class="row mb-3">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body text-center">
                         <h3 class="mb-1" id="summaryNilai">-</h3>
@@ -132,7 +132,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body text-center">
                         <h3 class="mb-1" id="summaryTarget">-</h3>
@@ -140,11 +140,19 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body text-center">
                         <h3 class="mb-1" id="summaryTrend">-</h3>
                         <small class="text-muted">Trend</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h3 class="mb-1" id="summaryStatus">-</h3>
+                        <small class="text-muted">Status</small>
                     </div>
                 </div>
             </div>
@@ -286,28 +294,47 @@ function loadGrafik() {
                 var tahunKeys = Object.keys(perTahun).sort();
                 var lastYear = tahunKeys[tahunKeys.length - 2]; // tahun lalu
                 var trendEl = document.getElementById('summaryTrend');
+                var statusEl = document.getElementById('summaryStatus');
+                
                 if (lastYear && perTahun[lastYear] && perTahun[lastYear].nilai) {
                     var currentYear = tahunKeys[tahunKeys.length - 1];
                     var diff = nilai - perTahun[lastYear].nilai;
+                    var trendText = '';
+                    
                     if (diff > 0) {
                         trendEl.textContent = '⬆ +' + diff.toFixed(1) + '%';
+                        trendEl.className = 'mb-1 text-success fw-bold';
+                        trendText = 'mengalami peningkatan ' + diff.toFixed(1) + '%';
                     } else if (diff < 0) {
                         trendEl.textContent = '⬇ ' + diff.toFixed(1) + '%';
+                        trendEl.className = 'mb-1 text-danger fw-bold';
+                        trendText = 'mengalami penurunan ' + Math.abs(diff).toFixed(1) + '%';
                     } else {
                         trendEl.textContent = '➡ Stabil';
+                        trendEl.className = 'mb-1 text-muted';
+                        trendText = 'stabil';
+                    }
+                    
+                    // Status badge
+                    if (response.tahunan.tercap) {
+                        statusEl.textContent = 'TERCAPAI ✓';
+                        statusEl.className = 'mb-1 text-success fw-bold';
+                    } else {
+                        statusEl.textContent = 'TIDAK TERCAPAI ✗';
+                        statusEl.className = 'mb-1 text-danger fw-bold';
                     }
                     
                     // Generate Keterangan
                     var tercapStatus = response.tahunan.tercap ? 'telah melampaui target' : 'belum mencapai target';
-                    var trendText = diff < 0 
-                        ? 'mengalami penurunan ' + Math.abs(diff).toFixed(1) + '%' 
-                        : (diff > 0 ? 'mengalami peningkatan ' + diff.toFixed(1) + '%' : 'stabil');
                     var keteranganHtml = response.tahunan.tercap 
                         ? '<span class="text-success fw-bold">Capaian indikator ' + nilai + ' ' + units + ' ' + tercapStatus + ' ' + target + ' ' + units + '. Indikator ' + trendText + ' dibanding tahun sebelumnya.</span>'
                         : '<span class="text-danger fw-bold">Capaian indikator ' + nilai + ' ' + units + ' ' + tercapStatus + ' ' + target + ' ' + units + '. Indikator ' + trendText + ' dibanding tahun sebelumnya. Perlu tindakan perbaikan.</span>';
                     document.getElementById('keterangan').innerHTML = '<i class="bi bi-info-circle me-1"></i> ' + keteranganHtml;
                 } else {
                     trendEl.textContent = '-';
+                    trendEl.className = 'mb-1';
+                    statusEl.textContent = '-';
+                    statusEl.className = 'mb-1';
                     document.getElementById('keterangan').innerHTML = '<i class="bi bi-info-circle me-1"></i> Capaian indikator: ' + nilai + ' ' + units + ' | Target: ' + target + ' ' + units;
                 }
                 
