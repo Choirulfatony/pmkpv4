@@ -55,6 +55,22 @@ $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
     $routes->get('rekap-periode-imprs', 'RekapPeriodeImprs::index'); // Rekap Triwulan/Semester/Tahun
     $routes->post('rekap-periode-imprs/ajax_imprs-(:num)', 'RekapPeriodeImprs::getAjaxRekapPeriode/$1'); // AJAX Rekap Periode IMPRS
     $routes->get('rekap-periode-imprs/export', 'RekapPeriodeImprs::exportExcel'); // Export Excel
+
+    // Form Input IMPRS
+    $routes->get('form-imprs', 'FormImprs::index'); // Halaman Form Input
+    $routes->post('form-imprs/ajax-list', 'FormImprs::ajax_list'); // AJAX DataTables
+    $routes->get('form-imprs/get-indicators', 'FormImprs::get_indicators'); // AJAX Get Indicators
+    $routes->get('form-imprs/get-indicator-detail', 'FormImprs::get_indicator_detail'); // AJAX Get Detail
+    $routes->post('form-imprs/save', 'FormImprs::save'); // Save Data
+    $routes->post('form-imprs/save-perbaikan', 'FormImprs::save_perbaikan'); // Save Perbaikan
+
+    // Rekap Laporan IMPRS
+    $routes->get('rekap-laporan-imprs', 'RekapLaporanImprs::index'); // Halaman Rekap
+    $routes->post('rekap-laporan-imprs/ajax_rekap_imprs', 'RekapLaporanImprs::getAjaxDataRekapImprs'); // AJAX
+    $routes->post('rekap-laporan-imprs/ajax-detail-imprs', 'RekapLaporanImprs::getAjaxDataRekapImprsDetail'); // AJAX Detail
+    $routes->get('rekap-laporan-imprs/export', 'RekapLaporanImprs::exportExcel'); // Export Excel
+    $routes->get('rekap-laporan-imprs/export-indicator/(:num)', 'RekapLaporanImprs::exportExcelIndicator/$1'); // Export Excel per indicator
+    $routes->get('rekap-laporan-imprs/detail/(:num)', 'RekapLaporanImprs::viewDetailImprs/$1'); // Detail
 });
 
 $routes->get('test-email', 'Ikprs::kirimEmailTest');
