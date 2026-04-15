@@ -46,6 +46,10 @@ $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
     // Grafik INM
     $routes->get('grafik-inm', 'GrafikInm::index'); // Halaman Grafik
     $routes->post('grafik-inm/data', 'GrafikInm::getDataGrafik'); // AJAX Data Grafik
+
+    // Grafik IMPRS
+    $routes->get('grafik-imprs', 'GrafikImprs::index'); // Halaman Grafik
+    $routes->post('grafik-imprs/data', 'GrafikImprs::getDataGrafik'); // AJAX Data Grafik
 });
 
 $routes->get('test-email', 'Ikprs::kirimEmailTest');
