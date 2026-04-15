@@ -169,7 +169,7 @@
         <!-- Keterangan / Penjelasan -->
         <div class="row mb-3">
             <div class="col-12">
-                <div id="keterangan" class="alert alert-info mb-0">
+                <div id="keterangan" class="alert alert-light border mb-0">
                     <i class="bi bi-info-circle me-1"></i> Pilih indikator untuk melihat keterangan.
                 </div>
             </div>
@@ -336,7 +336,7 @@ function loadGrafik() {
                     
                     // Generate Keterangan (Bahasa PMKP)
                     var lastYearNilai = perTahun[lastYear].nilai;
-                    var analisasHtml = '<div class="mt-2 p-3 bg-light rounded"><strong>Analisis:</strong><br><br>';
+                    var analisasHtml = '<strong>Analisis:</strong><br><br>';
                     
                     if (response.tahunan.tercap) {
                         analisasHtml += '<span class="text-success">';
@@ -378,7 +378,6 @@ function loadGrafik() {
                             analisasHtml += '<strong>Kesimpulan:</strong> Diperlukan analisis root cause dan rencana perbaikan untuk meningkatkan capaian indikator.</span>';
                         }
                     }
-                    analisasHtml += '</div>';
                     document.getElementById('keterangan').innerHTML = analisasHtml;
                 } else {
                     trendEl.textContent = '-';
