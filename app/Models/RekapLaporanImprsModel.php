@@ -491,4 +491,139 @@ class RekapLaporanImprsModel extends Model
                 return $angka >= $target;
         }
     }
+
+    private function getStatusPMKP($nilai, float $target, string $operator): string
+    {
+        if ($nilai === null) {
+            return 'TIDAK ADA DATA';
+        }
+
+        $angka = (float) preg_replace('/[^0-9.]/', '', $nilai);
+        switch ($operator) {
+            case '>=':
+                return $angka >= $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            case '>':
+                return $angka > $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            case '<=':
+                return $angka <= $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            case '<':
+                return $angka < $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            case '=':
+                return $angka == $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            default:
+                return $angka >= $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+        }
+    }
+
+    public function getRekapPeriode(int $tahun): array
+    {
+        $db = db_connect();
+
+        $indicators = $db->table('local_quality_indicator')
+            ->select('indicator_id, indicator_element, indicator_target, indicator_factors, indicator_units, indicator_target_calculation')
+            ->where('indicator_category_id', '5')
+            ->where('indicator_record_status', 'A')
+            ->get()
+            ->getResult();
+
+        if (empty($indicators)) return [];
+
+        $indicatorIds = array_column($indicators, 'indicator_id');
+        $allMonthlyData = $this->getAllMonthlyData($indicatorIds, $tahun);
+
+        $monthlyByIndicator = [];
+        foreach ($allMonthlyData as $key => $data) {
+            [$id, $bulan] = explode('_', $key);
+            $monthlyByIndicator[$id][$bulan] = $data;
+        }
+
+        $results = [];
+
+        foreach ($indicators as $indicator) {
+            $id       = $indicator->indicator_id;
+            $target   = (float) $indicator->indicator_target;
+            $factor   = (float) $indicator->indicator_factors;
+            $operator = $indicator->indicator_target_calculation ?? '>=';
+
+            $monthly = $monthlyByIndicator[$id] ?? [];
+
+            $num = array_fill(1, 12, 0);
+            $den = array_fill(1, 12, 0);
+
+            foreach ($monthly as $b => $val) {
+                $num[$b] = (float) ($val->num ?? 0);
+                $den[$b] = (float) ($val->denum ?? 0);
+            }
+
+            $hitung = function ($start, $end) use ($num, $den, $factor) {
+                $totalNum = 0;
+                $totalDen = 0;
+
+                for ($i = $start; $i <= $end; $i++) {
+                    $totalNum += $num[$i];
+                    $totalDen += $den[$i];
+                }
+
+                if ($totalDen == 0) {
+                    return [
+                        'nilai' => null,
+                        'num' => $totalNum,
+                        'denum' => $totalDen
+                    ];
+                }
+
+                return [
+                    'nilai' => round(($totalNum / $totalDen) * $factor, 2),
+                    'num' => $totalNum,
+                    'denum' => $totalDen
+                ];
+            };
+
+            $triwulan = [];
+            for ($i = 1; $i <= 4; $i++) {
+                $start = ($i - 1) * 3 + 1;
+                $end   = $i * 3;
+                $r = $hitung($start, $end);
+                $triwulan[$i] = [
+                    ...$r,
+                    'status' => $this->getStatusPMKP($r['nilai'], $target, $operator)
+                ];
+            }
+
+            $semester = [];
+            for ($i = 1; $i <= 2; $i++) {
+                $start = ($i - 1) * 6 + 1;
+                $end   = $i * 6;
+                $r = $hitung($start, $end);
+                $semester[$i] = [
+                    ...$r,
+                    'status' => $this->getStatusPMKP($r['nilai'], $target, $operator)
+                ];
+            }
+
+            $tahunR = $hitung(1, 12);
+
+            $tercapTw = count(array_filter($triwulan, fn($t) => $t['status'] === 'TERCAPAI'));
+            $tercapSm = count(array_filter($semester, fn($s) => $s['status'] === 'TERCAPAI'));
+
+            $results[] = [
+                'indicator_id' => $id,
+                'indicator_element' => $indicator->indicator_element,
+                'target' => $target,
+                'satuan' => $indicator->indicator_units,
+                'triwulan' => $triwulan,
+                'semester' => $semester,
+                'tahun' => [
+                    ...$tahunR,
+                    'status' => $this->getStatusPMKP($tahunR['nilai'], $target, $operator)
+                ],
+                'summary' => [
+                    'tw_tercapai' => $tercapTw,
+                    'sm_tercapai' => $tercapSm
+                ]
+            ];
+        }
+
+        return $results;
+    }
 }

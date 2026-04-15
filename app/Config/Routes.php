@@ -50,6 +50,11 @@ $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
     // Grafik IMPRS
     $routes->get('grafik-imprs', 'GrafikImprs::index'); // Halaman Grafik
     $routes->post('grafik-imprs/data', 'GrafikImprs::getDataGrafik'); // AJAX Data Grafik
+
+    // Rekap Periode IMPRS
+    $routes->get('rekap-periode-imprs', 'RekapPeriodeImprs::index'); // Rekap Triwulan/Semester/Tahun
+    $routes->post('rekap-periode-imprs/ajax_imprs-(:num)', 'RekapPeriodeImprs::getAjaxRekapPeriode/$1'); // AJAX Rekap Periode IMPRS
+    $routes->get('rekap-periode-imprs/export', 'RekapPeriodeImprs::exportExcel'); // Export Excel
 });
 
 $routes->get('test-email', 'Ikprs::kirimEmailTest');
