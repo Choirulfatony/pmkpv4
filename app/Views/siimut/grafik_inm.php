@@ -611,11 +611,11 @@ function renderTabelNumDenum(bulanan, indicator) {
     
     var totalBg = totalTercap ? 'background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;' : 'background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white;';
     var totalStatusBadge = totalTercap 
-        ? '<span class="badge px-2 py-1 fw-bold" style="background-color: white; color: #28a745;">✅ TERCAPAI</span>' 
-        : '<span class="badge px-2 py-1 fw-bold" style="background-color: white; color: #dc3545;">❌ TIDAK TERCAPAI</span>';
+        ? '<span class="badge px-2 py-1 fw-bold" style="background-color: white; color: #28a745; text-transform: none;">✅ Tercapai</span>' 
+        : '<span class="badge px-2 py-1 fw-bold" style="background-color: white; color: #dc3545; text-transform: none;">❌ Tidak Tercapai</span>';
     
     html += '<tr style="' + totalBg + '">' +
-        '<td class="text-center py-2 fw-bold" style="border: 2px solid #155724;">TOTAL</td>' +
+        '<td class="text-center py-2 fw-bold" style="border: 2px solid #155724; text-transform: none;">Total</td>' +
         '<td class="text-center py-2 fw-bold" style="border: 2px solid #155724;">' + totalNum + '</td>' +
         '<td class="text-center py-2 fw-bold" style="border: 2px solid #155724;">' + totalDenum + '</td>' +
         '<td class="text-center py-2 fw-bold" style="border: 2px solid #155724;">' + totalPersen.toFixed(2) + ' ' + units + '</td>' +
