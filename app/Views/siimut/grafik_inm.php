@@ -106,11 +106,11 @@
                             <table class="table table-bordered table-sm" id="tabelNumDenum" style="border-collapse: collapse;">
                                 <thead>
                                     <tr class="text-white" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);">
-                                        <th class="text-center py-2" style="width: 20%;">Bulan</th>
-                                        <th class="text-center py-2" style="width: 15%;">Num</th>
-                                        <th class="text-center py-2" style="width: 15%;">Denum</th>
-                                        <th class="text-center py-2" style="width: 20%;">Capaian (%)</th>
-                                        <th class="text-center py-2" style="width: 30%;">Status</th>
+                                        <th class="text-center py-2">Bulan</th>
+                                        <th class="text-center py-2">Num</th>
+                                        <th class="text-center py-2">Denum</th>
+                                        <th class="text-center py-2">Capaian (%)</th>
+                                        <th class="text-center py-2">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tabelNumDenumBody">
@@ -599,10 +599,10 @@ function renderTabelNumDenum(bulanan, indicator) {
         }
         
         html += '<tr style="' + bgColor + textColor + '">' +
-            '<td class="text-center py-2 fw-semibold" style="border: 1px solid #dee2e6;">' + bulanNames[i-1] + '</td>' +
+            '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + bulanNames[i-1] + '</td>' +
             '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + num + '</td>' +
             '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + denum + '</td>' +
-            '<td class="text-center py-2 fw-bold" style="border: 1px solid #dee2e6;">' + (denum > 0 ? nilai.toFixed(2) : '0.00') + ' ' + units + '</td>' +
+            '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + (denum > 0 ? nilai.toFixed(2) : '0.00') + ' ' + units + '</td>' +
             '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + statusBadge + '</td></tr>';
     }
     
