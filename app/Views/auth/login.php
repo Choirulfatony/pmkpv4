@@ -136,13 +136,8 @@
                 </div>
 
                 <div class="form-outline mb-3">
-                    <div class="input-group">
-                        <input type="password" name="password" id="passwordInput" class="form-control form-control-lg"
-                            placeholder="Password" required>
-                        <button type="button" class="btn btn-outline-secondary" id="togglePassword" title="Tampilkan password">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                    </div>
+                    <input type="password" name="password" class="form-control form-control-lg"
+                        placeholder="Password" required>
                     <label class="form-label">Password</label>
                 </div>
 
@@ -393,16 +388,6 @@ $registerName = session('register_name');
                         document.getElementById('captcha_container').innerHTML = data.captcha_html;
                         document.querySelector("input[name='captcha']").value = '';
                     });
-            });
-        }
-
-        const togglePassword = document.getElementById('togglePassword');
-        const passwordInput = document.getElementById('passwordInput');
-        if (togglePassword && passwordInput) {
-            togglePassword.addEventListener('click', function() {
-                const type = passwordInput.type === 'password' ? 'text' : 'password';
-                passwordInput.type = type;
-                this.querySelector('i').className = type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
             });
         }
 
