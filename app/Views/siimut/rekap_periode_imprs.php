@@ -20,7 +20,7 @@
     }
 
     .cell-target {
-        background-color: rgba(13, 110, 253, 0.9) !important;
+        background-color: rgba(25, 135, 84, 0.9) !important;
         color: #fff !important;
     }
 
@@ -181,7 +181,7 @@
                 <div class="card-body">
                     <div class="d-flex gap-3 flex-wrap">
                         <div class="d-flex align-items-center">
-                            <span class="badge bg-primary me-2">Terjadi</span>
+                            <span class="badge bg-success me-2">Tercapai</span>
                             <small class="text-muted">Target Tercapai</small>
                         </div>
                         <div class="d-flex align-items-center">
