@@ -615,10 +615,10 @@ function renderTabelNumDenum(bulanan, indicator) {
         : '<span class="badge px-2 py-1 fw-bold" style="background-color: white; color: #dc3545; text-transform: none;">❌ Tidak Tercapai</span>';
     
     html += '<tr style="' + totalBg + '">' +
-        '<td class="text-center py-2 fw-bold" style="border: 2px solid #155724; text-transform: none;">Total</td>' +
-        '<td class="text-center py-2 fw-bold" style="border: 2px solid #155724;">' + totalNum + '</td>' +
-        '<td class="text-center py-2 fw-bold" style="border: 2px solid #155724;">' + totalDenum + '</td>' +
-        '<td class="text-center py-2 fw-bold" style="border: 2px solid #155724;">' + totalPersen.toFixed(2) + ' ' + units + '</td>' +
+        '<td class="text-center py-2" style="border: 2px solid #155724; text-transform: none;">Total</td>' +
+        '<td class="text-center py-2" style="border: 2px solid #155724;">' + totalNum + '</td>' +
+        '<td class="text-center py-2" style="border: 2px solid #155724;">' + totalDenum + '</td>' +
+        '<td class="text-center py-2" style="border: 2px solid #155724;">' + totalPersen.toFixed(2) + ' ' + units + '</td>' +
         '<td class="text-center py-2" style="border: 2px solid #155724;">' + totalStatusBadge + '</td></tr>';
     
     tbody.innerHTML = html;
