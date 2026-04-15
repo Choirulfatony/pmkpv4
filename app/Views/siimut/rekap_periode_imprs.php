@@ -162,13 +162,13 @@
             <label class="form-label fw-semibold mb-1">Filter Periode</label>
             <div class="d-flex flex-wrap align-items-center gap-2">
                 <button type="button" class="btn btn-outline-primary btn-filter" data-type="all" onclick="filterPeriode('all')">Semua</button>
-                <button type="button" class="btn btn-outline-primary btn-filter" data-type="triwulan" onclick="filterPeriode('triwulan')">Triwulan</button>
-                <button type="button" class="btn btn-outline-primary btn-filter" data-type="semester" onclick="filterPeriode('semester')">Semester</button>
-                <button type="button" class="btn btn-outline-primary btn-filter" data-type="tahun" onclick="filterPeriode('tahun')">Tahun</button>
+                <button type="button" class="btn btn-outline-success btn-filter" data-type="triwulan" onclick="filterPeriode('triwulan')">Triwulan</button>
+                <button type="button" class="btn btn-outline-warning btn-filter" data-type="semester" onclick="filterPeriode('semester')">Semester</button>
+                <button type="button" class="btn btn-outline-info btn-filter" data-type="tahun" onclick="filterPeriode('tahun')">Tahun</button>
 
                 <div class="vr mx-2"></div>
 
-                <a href="#" id="btn-export-periode" class="btn btn-primary" title="Download Excel">
+                <a href="#" id="btn-export-periode" class="btn btn-success" title="Download Excel">
                     <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
                 </a>
             </div>
