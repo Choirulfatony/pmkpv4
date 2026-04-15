@@ -103,26 +103,26 @@
                     <div class="card-header"><i class="bi bi-table me-2"></i>Detail Bulanan</div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-bordered table-sm table-hover" id="tabelNumDenum">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th class="text-center">Bulan</th>
-                                        <th class="text-center">Numerator</th>
-                                        <th class="text-center">Denominator</th>
-                                        <th class="text-center">Capaian (%)</th>
-                                        <th class="text-center">Status</th>
+                            <table class="table table-bordered table-sm" id="tabelNumDenum" style="border-collapse: collapse;">
+                                <thead>
+                                    <tr class="text-white" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);">
+                                        <th class="text-center py-2" style="width: 20%;">Bulan</th>
+                                        <th class="text-center py-2" style="width: 15%;">Num</th>
+                                        <th class="text-center py-2" style="width: 15%;">Denum</th>
+                                        <th class="text-center py-2" style="width: 20%;">Capaian (%)</th>
+                                        <th class="text-center py-2" style="width: 30%;">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tabelNumDenumBody">
                                 </tbody>
                             </table>
-                            <div class="mt-2">
-                                <small class="text-muted">
-                                    <strong>Keterangan:</strong><br>
-                                    <span class="badge bg-success me-1">✅</span> = Tercapai | 
-                                    <span class="badge bg-danger me-1">❌</span> = Tidak Tercapai |
-                                    <span class="badge" style="background-color: #9e9e9e;">N/A</span> = Tidak Ada Data
-                                </small>
+                            <div class="mt-3 p-3 bg-light rounded border">
+                                <strong class="text-muted"><i class="bi bi-info-circle me-1"></i> Keterangan:</strong>
+                                <div class="d-flex flex-wrap gap-2 mt-2">
+                                    <span><span class="badge px-2 py-1" style="background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;">✅ Tercapai</span></span>
+                                    <span><span class="badge px-2 py-1" style="background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;">❌ Tidak</span></span>
+                                    <span><span class="badge px-2 py-1" style="background-color: #e9ecef; color: #6c757d; border: 1px solid #dee2e6;">N/A</span></span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -563,7 +563,6 @@ function renderTabelNumDenum(bulanan, indicator) {
         totalNum += num;
         totalDenum += denum;
         
-        // Cek tercap
         var tercap = false;
         var tidakAdaData = false;
         
@@ -581,50 +580,46 @@ function renderTabelNumDenum(bulanan, indicator) {
             }
         }
         
-        // Warna sesuai standar PMKP
-        var rowClass = '';
-        var statusText = '';
+        var bgColor = '';
+        var textColor = '';
         var statusBadge = '';
         
         if (tidakAdaData) {
-            rowClass = 'table-secondary';
-            statusText = 'Tidak Ada Data';
-            statusBadge = '<span class="badge" style="background-color: #9e9e9e;">N/A</span>';
-        } else if (nilai >= 100) {
-            rowClass = 'table-success';
-            statusText = 'Tercapai (100%)';
-            statusBadge = '<span class="badge bg-success">✅ Tercapai</span>';
+            bgColor = 'background-color: #f8f9fa;';
+            textColor = 'color: #6c757d;';
+            statusBadge = '<span class="badge px-2 py-1" style="background-color: #e9ecef; color: #6c757d; border: 1px solid #dee2e6;">N/A</span>';
         } else if (tercap) {
-            rowClass = 'table-success';
-            statusText = '✅ Tercapai';
-            statusBadge = '<span class="badge bg-success">✅ Tercapai</span>';
+            bgColor = 'background-color: #d4edda;';
+            textColor = 'color: #155724;';
+            statusBadge = '<span class="badge px-2 py-1" style="background-color: #28a745; color: white;">✅ Tercapai</span>';
         } else {
-            rowClass = 'table-danger';
-            statusText = '❌ Tidak Tercapai';
-            statusBadge = '<span class="badge bg-danger">❌ Tidak</span>';
+            bgColor = 'background-color: #f8d7da;';
+            textColor = 'color: #721c24;';
+            statusBadge = '<span class="badge px-2 py-1" style="background-color: #dc3545; color: white;">❌ Tidak</span>';
         }
         
-        html += '<tr class="' + rowClass + '">' +
-            '<td class="text-center fw-semibold">' + bulanNames[i-1] + '</td>' +
-            '<td class="text-center">' + num + '</td>' +
-            '<td class="text-center">' + denum + '</td>' +
-            '<td class="text-center fw-bold">' + (denum > 0 ? nilai.toFixed(2) : '0.00') + ' ' + units + '</td>' +
-            '<td class="text-center fw-semibold">' + statusBadge + '</td></tr>';
+        html += '<tr style="' + bgColor + textColor + '">' +
+            '<td class="text-center py-2 fw-semibold" style="border: 1px solid #dee2e6;">' + bulanNames[i-1] + '</td>' +
+            '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + num + '</td>' +
+            '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + denum + '</td>' +
+            '<td class="text-center py-2 fw-bold" style="border: 1px solid #dee2e6;">' + (denum > 0 ? nilai.toFixed(2) : '0.00') + ' ' + units + '</td>' +
+            '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + statusBadge + '</td></tr>';
     }
     
-    // Total row
     var totalPersen = totalDenum > 0 ? (totalNum / totalDenum) * 100 : 0;
     var totalTercap = totalDenum > 0 && totalPersen >= target;
     
-    var totalRowClass = totalTercap ? 'table-success' : 'table-danger';
-    var totalStatusBadge = totalTercap ? '<span class="badge bg-success fw-bold">✅ TERCAAPAI</span>' : '<span class="badge bg-danger fw-bold">❌ TIDAK TERCAAPAI</span>';
+    var totalBg = totalTercap ? 'background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;' : 'background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white;';
+    var totalStatusBadge = totalTercap 
+        ? '<span class="badge px-2 py-1 fw-bold" style="background-color: white; color: #28a745;">✅ TERCAAPAI</span>' 
+        : '<span class="badge px-2 py-1 fw-bold" style="background-color: white; color: #dc3545;">❌ TIDAK TERCAAPAI</span>';
     
-    html += '<tr class="table-dark fw-bold ' + totalRowClass + '">' +
-        '<td class="text-center">TOTAL</td>' +
-        '<td class="text-center">' + totalNum + '</td>' +
-        '<td class="text-center">' + totalDenum + '</td>' +
-        '<td class="text-center">' + totalPersen.toFixed(2) + ' ' + units + '</td>' +
-        '<td class="text-center">' + totalStatusBadge + '</td></tr>';
+    html += '<tr style="' + totalBg + '">' +
+        '<td class="text-center py-2 fw-bold" style="border: 2px solid #155724;">TOTAL</td>' +
+        '<td class="text-center py-2 fw-bold" style="border: 2px solid #155724;">' + totalNum + '</td>' +
+        '<td class="text-center py-2 fw-bold" style="border: 2px solid #155724;">' + totalDenum + '</td>' +
+        '<td class="text-center py-2 fw-bold" style="border: 2px solid #155724;">' + totalPersen.toFixed(2) + ' ' + units + '</td>' +
+        '<td class="text-center py-2" style="border: 2px solid #155724;">' + totalStatusBadge + '</td></tr>';
     
     tbody.innerHTML = html;
 }
