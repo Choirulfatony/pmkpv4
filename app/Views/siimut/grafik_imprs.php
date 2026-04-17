@@ -220,8 +220,8 @@
                         'Ident'
                     ], $nama);
 
-                    // potong jika masih panjang
-                    $short = strlen($nama) > 38 ? substr($nama, 0, 38) . '...' : $nama;
+                     // potong jika masih panjang
+                     $short = strlen($nama) > 25 ? substr($nama, 0, 25) . '...' : $nama;
                     ?>
 
                     <option
