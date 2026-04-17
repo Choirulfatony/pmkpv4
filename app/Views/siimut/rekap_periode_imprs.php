@@ -9,7 +9,7 @@
     }
 
     #ajax_data_periode_imprs th {
-        background-color: #0d6efd !important;
+        background-color: #6C757D !important;
         color: #fff;
         white-space: nowrap;
     }
@@ -168,7 +168,7 @@
 
                 <div class="vr mx-2"></div>
 
-                <a href="#" id="btn-export-periode" class="btn btn-success" title="Download Excel">
+                <a href="#" id="btn-export-periode" class="btn btn-secondary" title="Download Excel">
                     <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
                 </a>
             </div>
@@ -177,7 +177,7 @@
 
     <div class="row mb-3">
         <div class="col-12">
-            <div class="card">
+            <div class="card card-outline card-secondary">
                 <div class="card-body">
                     <div class="d-flex gap-3 flex-wrap">
                         <div class="d-flex align-items-center">
@@ -200,7 +200,7 @@
 
     <div class="row">
         <div class="col-12">
-            <div class="card">
+            <div class="card card-outline card-secondary">
                 <div class="card-body">
                     <div class="table-responsive">
                         <table id="ajax_data_periode_imprs" class="table table-bordered table-striped" style="width: 100%;">

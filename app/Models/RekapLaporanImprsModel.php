@@ -633,10 +633,29 @@ public function getIndicatorImprs($post)
     {
         $db = db_connect();
 
-        $indicators = $db->table('local_quality_indicator')
-            ->select('indicator_id, indicator_element, indicator_target, indicator_factors, indicator_units, indicator_target_calculation')
-            ->where('indicator_category_id', '5')
-            ->where('indicator_record_status', 'A')
+        // Samakan filter dengan getIndicatorImprs - pakai local_quality_indicator_group
+        $availablePeriods = $this->getAvailableGroupPeriods();
+        $usePeriod = in_array($tahun, $availablePeriods) ? $tahun : min($availablePeriods);
+
+        $indicators = $db->table('local_quality_indicator_group')
+            ->select('
+                local_quality_indicator.indicator_id,
+                local_quality_indicator.indicator_element,
+                local_quality_indicator.indicator_target,
+                local_quality_indicator.indicator_factors,
+                local_quality_indicator.indicator_units,
+                local_quality_indicator.indicator_target_calculation
+            ')
+            ->join('local_quality_indicator', 'local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id')
+            ->where('local_quality_indicator.indicator_category_id', '5')
+            ->where('local_quality_indicator.indicator_record_status', 'A')
+            ->where('local_quality_indicator_group.group_record_status', 'A')
+            ->groupStart()
+            ->where('local_quality_indicator_group.group_period', $usePeriod)
+            ->orWhere('local_quality_indicator_group.group_period', $usePeriod - 1)
+            ->orWhere('local_quality_indicator_group.group_period', $usePeriod - 2)
+            ->groupEnd()
+            ->groupBy('local_quality_indicator.indicator_id')
             ->get()
             ->getResult();
 
@@ -752,6 +771,33 @@ public function getIndicatorImprs($post)
                 ]
             ];
         }
+
+        // Urutin: yang punya data di atas, yang tidak di bawah
+        $withData = [];
+        $withoutData = [];
+
+        foreach ($results as $row) {
+            // Cek apakah indicator punya data (ada nilai di bulan manapun)
+            $hasData = false;
+            for ($b = 1; $b <= 12; $b++) {
+                if (isset($monthlyByIndicator[$row['indicator_id']][$b])) {
+                    $val = $monthlyByIndicator[$row['indicator_id']][$b];
+                    if ($val->num > 0 || $val->denum > 0) {
+                        $hasData = true;
+                        break;
+                    }
+                }
+            }
+
+            if ($hasData) {
+                $withData[] = $row;
+            } else {
+                $withoutData[] = $row;
+            }
+        }
+
+        // Gabungkan: yang punya data di atas
+        $results = array_merge($withData, $withoutData);
 
         return $results;
     }
