@@ -55,6 +55,12 @@ class GrafikImprs extends AppController
 
         $monthlyData = $this->rekapModel->getMonthlyDataByIndicator($indicatorId, $tahun);
         $indicator = $this->rekapModel->getDetailByIdImprs($indicatorId);
+
+        // Handle case where indicator is not found
+        if (!$indicator) {
+            return $this->response->setJSON(['error' => 'Data indikator tidak ditemukan']);
+        }
+
         $triwulan = $this->rekapModel->getNilaiTriwulan($indicatorId, $tahun);
         $semester = $this->rekapModel->getNilaiSemester($indicatorId, $tahun);
         $tahunan = $this->rekapModel->getNilaiTahun($indicatorId, $tahun);
