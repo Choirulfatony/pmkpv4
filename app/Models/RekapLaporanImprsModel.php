@@ -777,15 +777,12 @@ public function getIndicatorImprs($post)
         $withoutData = [];
 
         foreach ($results as $row) {
-            // Cek apakah indicator punya data (ada nilai di bulan manapun)
+            // Cek apakah indicator punya data (ada entry di bulan manapun)
             $hasData = false;
             for ($b = 1; $b <= 12; $b++) {
                 if (isset($monthlyByIndicator[$row['indicator_id']][$b])) {
-                    $val = $monthlyByIndicator[$row['indicator_id']][$b];
-                    if ($val->num > 0 || $val->denum > 0) {
-                        $hasData = true;
-                        break;
-                    }
+                    $hasData = true;
+                    break;
                 }
             }
 
