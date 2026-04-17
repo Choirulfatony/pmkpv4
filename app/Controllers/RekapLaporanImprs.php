@@ -279,6 +279,7 @@ class RekapLaporanImprs extends AppController
         try {
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('IMPRS Rekap ' . $tahun);
 
             // Fungsi helper untuk get column letter dari index
             $getColLetter = function ($colIdx) {
@@ -293,7 +294,7 @@ class RekapLaporanImprs extends AppController
 
             // ==================== HEADER LAPORAN ====================
             // Baris 1: Judul Utama
-            $sheet->setCellValue('A1', 'CAPAIAN INDIKATOR MUTU RS (IMPRS)');
+            $sheet->setCellValue('A1', 'Capaian Indikator Mutu Prioritas RS (IMPRS)');
             $sheet->mergeCells('A1:AB1');
             $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
             $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
@@ -534,7 +535,7 @@ class RekapLaporanImprs extends AppController
             $sheet->getSheetView()->setZoomScale(70);
 
             // Download
-            $filename = 'CAPAIAN INDIKATOR NASIONAL MUTU ' . $tahun . ' ' . date('YmdHis');
+            $filename = 'Capaian Indikator Mutu Prioritas RS (IMPRS) ' . $tahun . ' ' . date('YmdHis');
             header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             header('Content-Disposition: attachment;filename="' . $filename . '.xlsx"');
             header('Cache-Control: max-age=0');

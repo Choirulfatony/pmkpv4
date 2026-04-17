@@ -295,10 +295,12 @@ public function getIndicatorImprs($post)
         // Simpan total untuk pagination
         $this->_totalRecords = count($sortedResults);
 
-        // Apply pagination manual
+        // Apply pagination manual - jika tidak ada length di post, ambil semua
         $start = (int) ($post['start'] ?? 0);
-        $length = (int) ($post['length'] ?? 10);
-        if ($length == -1) {
+        if (isset($post['length']) && $post['length'] != -1) {
+            $length = (int) $post['length'];
+        } else {
+            // Jika tidak ada pagination (export), ambil semua
             $length = count($sortedResults);
         }
         $results = array_slice($sortedResults, $start, $length);

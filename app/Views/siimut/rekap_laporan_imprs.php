@@ -40,7 +40,7 @@
     }
 
     #ajax_data_rekap th {
-        background-color: #007bff !important;
+        background-color: #6C757D !important;
         color: #fff;
         text-align: center;
         font-weight: 600;
@@ -53,7 +53,7 @@
     }
 
     #ajax_data_rekap td a:hover {
-        color: #0056b3;
+        color: #6C757D;
         text-decoration: underline;
     }
 
@@ -199,10 +199,10 @@
 
 <div class="row mb-3">
     <div class="col-12">
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <div class="alert alert-light border alert-dismissible fade show" role="alert">
             <div class="d-flex align-items-start">
                 <div class="me-3">
-                    <i class="fas fa-info-circle fa-2x text-primary"></i>
+                    <i class="fas fa-info-circle fa-2x text-secondary"></i>
                 </div>
                 <div class="flex-grow-1">
                     <h5 class="mb-1"><strong>Informasi Rekap Indikator Mutu Prioritas RS (IMPRS)</strong></h5>
@@ -230,7 +230,7 @@
 
 <div class="row">
     <div class="col-12">
-        <div class="card card-outline card-primary" id="detail_satu">
+        <div class="card card-outline card-secondary" id="detail_satu">
             <div class="card-header">
                 <h3 class="card-title">
                     <i class="fas fa-chart-bar me-2"></i>
@@ -246,10 +246,10 @@
                         </select>
                     </div>
                     <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-outline-secondary" onclick="reload_table()" title="Refresh">
+                        <button type="button" class="btn btn-outline-secondary" onclick="reload_table_imprs()" title="Refresh">
                             <i class="fas fa-sync-alt"></i>
                         </button>
-                        <a href="#" id="btn-export" class="btn btn-outline-primary" title="Download Excel">
+                        <a href="#" id="btn-export" class="btn btn-outline-secondary" title="Download Excel">
                             <i class="fas fa-file-excel"></i>
                         </a>
                         <button type="button" class="btn btn-outline-secondary" onclick="maximizeCard(this)" title="Fullscreen">
@@ -271,7 +271,7 @@
                             <tr class="align-middle">
                                 <th style="width: 50px;" class="text-center">#</th>
                                 <th style="min-width: 250px; text-align: left !important; padding-left: 15px !important;">Indikator</th>
-                                <th class="text-center">Target</th>
+                                <th style="min-width: 80px;" class="text-center">Target</th>
                                 <th class="text-center">Jan</th>
                                 <th class="text-center">Feb</th>
                                 <th class="text-center">Mar</th>
@@ -429,9 +429,9 @@
         }
     }
 
-    function reload_table() {
+    function reload_table_imprs() {
         vtahun = $('#tahun').val();
-        console.log('reload_table called, vtahun:', vtahun);
+        console.log('reload_table_imprs called, vtahun:', vtahun);
         table_loquin.ajax.reload(null, false);
     }
 
