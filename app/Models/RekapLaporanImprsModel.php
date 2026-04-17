@@ -32,40 +32,62 @@ class RekapLaporanImprsModel extends Model
         null,
     ];
 
+    // ==================== PRIVATE QUERY BUILDERS ====================
+
     private function _getAjaxDataRekapImprs(int $indicator, int $tahun, int $bulan)
     {
         $db = db_connect();
+
+        // Hitung jumlah hari dalam bulan
         $day = $this->getDaysInMonth($bulan, $tahun);
+
+        // Format bulan jadi 2 digit
         $bulanx = str_pad($bulan, 2, '0', STR_PAD_LEFT);
+
+        // Tanggal awal & akhir
+        $startDate = "{$tahun}-{$bulanx}-01";
+        $endDate   = "{$tahun}-{$bulanx}-{$day}";
+
         $builder = $db->table('local_quality_indicator_result lqir');
 
         $builder->select("
-            lqi.indicator_category_id,
-            lqi.indicator_id,
-            lqi.indicator_element,
+                    lqi.indicator_category_id,
+                    lqi.indicator_id,
+                    lqi.indicator_element,
 
-            SUM(lqir.result_numerator_value) AS num,
-            SUM(lqir.result_denumerator_value) AS denum,
+                    SUM(lqir.result_numerator_value) AS num,
+                    SUM(lqir.result_denumerator_value) AS denum,
 
-            ROUND(
-                SUM(lqir.result_numerator_value) 
-                / NULLIF(SUM(lqir.result_denumerator_value), 0)
-                * lqi.indicator_factors, 
-            4) AS total_value,
+                    CASE 
+                        WHEN SUM(lqir.result_denumerator_value) = 0 THEN NULL
+                        ELSE ROUND(
+                            (SUM(lqir.result_numerator_value) / SUM(lqir.result_denumerator_value)) 
+                            * lqi.indicator_factors
+                        , 4)
+                    END AS total_value,
 
-            CONCAT(
-                ROUND(
-                    SUM(lqir.result_numerator_value) 
-                    / NULLIF(SUM(lqir.result_denumerator_value), 0)
-                    * lqi.indicator_factors, 
-                2),
-                lqi.indicator_units
-            ) AS total
-        ");
+                    CASE 
+                        WHEN SUM(lqir.result_denumerator_value) = 0 THEN 'TIDAK ADA DATA'
+                        ELSE CONCAT(
+                            ROUND(
+                                (SUM(lqir.result_numerator_value) / SUM(lqir.result_denumerator_value)) 
+                                * lqi.indicator_factors
+                            , 2),
+                            ' ',
+                            lqi.indicator_units
+                        )
+                    END AS total
+                ");
+        $builder->join(
+            'local_quality_indicator lqi',
+            'lqir.result_indicator_id = lqi.indicator_id',
+            'LEFT'
+        );
 
-        $builder->join('local_quality_indicator lqi', 'lqir.result_indicator_id = lqi.indicator_id', 'LEFT');
+        // ✅ gunakan where terpisah (lebih aman & terbaca)
+        $builder->where('lqir.result_period >=', $startDate);
+        $builder->where('lqir.result_period <=', $endDate);
 
-        $builder->where("lqir.result_period BETWEEN '{$tahun}-{$bulanx}-01' AND '{$tahun}-{$bulanx}-{$day}'");
         $builder->where('lqi.indicator_category_id', '5');
         $builder->where('lqi.indicator_record_status', 'A');
         $builder->where('lqi.indicator_id', $indicator);
@@ -81,44 +103,66 @@ class RekapLaporanImprsModel extends Model
         return $builder;
     }
 
+    // ==================== PUBLIC METHODS ====================
+
+    /**
+     * Ambil data rekap IMPRS per bulan
+     */
+
     public function getAjaxDataRekapImprs(int $indicator, int $tahun, int $bulan)
     {
         $builder = $this->_getAjaxDataRekapImprs($indicator, $tahun, $bulan);
-        return $builder->get()->getRow();
+
+        // gunakan getRowArray biar lebih aman dipakai di view/json
+        return $builder->get()->getRowArray();
     }
 
+    // ==================== PUBLIC METHODS ====================
+
+
+    /**
+     * Ambil SEMUA data bulanan dalam 1 query (OPTIMIZED + CACHE)
+     */
     public function getAllMonthlyData(array $indicatorIds, int $tahun)
     {
         if (empty($indicatorIds)) {
             return [];
         }
 
+        // Query database
         $db = db_connect();
         $builder = $db->table('local_quality_indicator_result lqir');
 
         $builder->select("
-        lqi.indicator_id,
-        MONTH(lqir.result_period) AS bulan,
+            lqi.indicator_id,
+            MONTH(lqir.result_period) AS bulan,
 
-        SUM(lqir.result_numerator_value) AS num,
-        SUM(lqir.result_denumerator_value) AS denum,
+            SUM(lqir.result_numerator_value) AS num,
+            SUM(lqir.result_denumerator_value) AS denum,
 
-        ROUND(
-            SUM(lqir.result_numerator_value) 
-            / NULLIF(SUM(lqir.result_denumerator_value), 0)
-            * lqi.indicator_factors, 
-        4) AS total_value,
+            CASE 
+                WHEN SUM(lqir.result_denumerator_value) = 0 THEN NULL
+                ELSE ROUND(
+                    SUM(lqir.result_numerator_value) /
+                    SUM(lqir.result_denumerator_value) *
+                    lqi.indicator_factors
+                , 4)
+            END AS total_value,
 
-        CONCAT(
-            ROUND(
-                SUM(lqir.result_numerator_value) 
-                / NULLIF(SUM(lqir.result_denumerator_value), 0)
-                * lqi.indicator_factors, 
-            2),
-            lqi.indicator_units
-        ) AS total,
+            CASE 
+                WHEN SUM(lqir.result_denumerator_value) = 0 THEN 'TIDAK ADA DATA'
+                ELSE CONCAT(
+                    ROUND(
+                        SUM(lqir.result_numerator_value) /
+                        SUM(lqir.result_denumerator_value) *
+                        lqi.indicator_factors
+                    , 2),
+                    ' ',
+                    lqi.indicator_units
+                )
+            END AS total,
 
-        lqi.indicator_units AS units
+            lqi.indicator_units AS units
         ");
 
         $builder->join('local_quality_indicator lqi', 'lqir.result_indicator_id = lqi.indicator_id', 'LEFT');
@@ -137,6 +181,9 @@ class RekapLaporanImprsModel extends Model
 
         $results = $builder->get()->getResult();
 
+        log_message('error', 'DEBUG getAllMonthlyData: tahun=' . $tahun . ', indicators=' . json_encode($indicatorIds) . ', result_count=' . count($results));
+
+        // Convert ke array associative: indicator_id_bulan => data
         $data = [];
         foreach ($results as $row) {
             $key = $row->indicator_id . '_' . $row->bulan;
@@ -146,10 +193,19 @@ class RekapLaporanImprsModel extends Model
         return $data;
     }
 
-    public function getIndicatorImprs($post)
+    /**
+     * Ambil indikator dengan pagination
+     */
+public function getIndicatorImprs($post)
     {
         $db = db_connect();
         $builder = $db->table('local_quality_indicator_group');
+
+        $vtahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
+
+        // Cek available group_period
+        $availablePeriods = $this->getAvailableGroupPeriods();
+        $usePeriod = in_array($vtahun, $availablePeriods) ? $vtahun : min($availablePeriods);
 
         $builder->select("
             local_quality_indicator_group.group_indicator_id,
@@ -171,11 +227,7 @@ class RekapLaporanImprsModel extends Model
 
         $builder->where("local_quality_indicator.indicator_category_id", '5');
         $builder->where("local_quality_indicator.indicator_record_status", 'A');
-
-        $vtahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
-
-        $availablePeriods = $this->getAvailableGroupPeriods();
-        $usePeriod = in_array($vtahun, $availablePeriods) ? $vtahun : min($availablePeriods);
+        $builder->where("local_quality_indicator_group.group_record_status", 'A');
 
         $builder->groupStart();
         $builder->where("local_quality_indicator_group.group_period", $usePeriod);
@@ -183,15 +235,17 @@ class RekapLaporanImprsModel extends Model
         $builder->orWhere('local_quality_indicator_group.group_period', $usePeriod - 2);
         $builder->groupEnd();
 
+        // Filter by user role
         $userRole = session('user_role') ?? '';
         $userDepartmentId = session('department_id') ?? 0;
 
         if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
-            $builder->where('master_institution_department.department_id', $userDepartmentId);
+            $builder->where('local_quality_indicator_group.group_department_id', $userDepartmentId);
         }
 
         $builder->groupBy('local_quality_indicator.indicator_id');
 
+        // Search filter
         if (isset($post['search']['value']) && !empty($post['search']['value'])) {
             $builder->groupStart();
             foreach ($this->column_search as $i => $item) {
@@ -204,6 +258,7 @@ class RekapLaporanImprsModel extends Model
             $builder->groupEnd();
         }
 
+        // Order default
         if (isset($post['order'])) {
             $col = $this->column_order[$post['order'][0]['column']] ?? 'indicator_element';
             $dir = $post['order'][0]['dir'] ?? 'ASC';
@@ -214,13 +269,173 @@ class RekapLaporanImprsModel extends Model
             $builder->orderBy('indicator_element', 'ASC');
         }
 
-        if (isset($post['length']) && $post['length'] != -1) {
-            $builder->limit($post['length'], $post['start'] ?? 0);
+// Ambil SEMUA data dulu (tanpa limit) agar bisa diurutkan dengan benar
+        $allBuilder = clone $builder;
+        $allBuilder->limit(10000, 0);
+        $allResults = $allBuilder->get()->getResult();
+
+        // Ambil semua indicator yang punya data (sekali query saja)
+        $indicatorsWithData = $this->getIndicatorsWithData($vtahun);
+
+        // Urutin manual: yang punya data di atas, yang tidak di bawah
+        $withData = [];
+        $withoutData = [];
+
+        foreach ($allResults as $row) {
+            if (in_array($row->indicator_id, $indicatorsWithData)) {
+                $withData[] = $row;
+            } else {
+                $withoutData[] = $row;
+            }
         }
 
-        return $builder->get()->getResult();
+        // Gabungkan: yang punya data di atas
+        $sortedResults = array_merge($withData, $withoutData);
+
+        // Simpan total untuk pagination
+        $this->_totalRecords = count($sortedResults);
+
+        // Apply pagination manual
+        $start = (int) ($post['start'] ?? 0);
+        $length = (int) ($post['length'] ?? 10);
+        if ($length == -1) {
+            $length = count($sortedResults);
+        }
+        $results = array_slice($sortedResults, $start, $length);
+
+        return $results;
     }
 
+    private $_totalRecords = 0;
+
+    /**
+     * Cek apakah indicator punya data di tahun tertentu
+     */
+    private function checkIndicatorHasData(int $indicatorId, int $tahun): bool
+    {
+        $db = db_connect();
+        $query = $db->query("
+            SELECT 1 FROM local_quality_indicator_result 
+            WHERE result_indicator_id = ? 
+            AND YEAR(result_period) = ? 
+            LIMIT 1
+        ", [$indicatorId, $tahun]);
+
+        return $query->getNumRows() > 0;
+    }
+
+    /**
+     * Ambil semua indicator yang punya data di tahun tertentu (sekali query)
+     */
+    private function getIndicatorsWithData(int $tahun): array
+    {
+        $db = db_connect();
+        $query = $db->query("
+            SELECT DISTINCT result_indicator_id 
+            FROM local_quality_indicator_result 
+            WHERE YEAR(result_period) = ?
+        ", [$tahun]);
+
+        $result = $query->getResult();
+        return array_column($result, 'result_indicator_id');
+    }
+
+    public function getTotalRecords(): int
+    {
+        return $this->_totalRecords;
+    }
+
+/**
+     * Hitung semua rekap IMPRS (CACHE)
+     */
+    public function countAllRekapImprs($post = [])
+    {
+        $vtahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
+        $userRole = session('user_role') ?? '';
+        $userDepartmentId = session('department_id') ?? 0;
+
+        // Cek cache
+        $cache = \Config\Services::cache();
+        $cacheKey = 'count_all_' . $vtahun . '_' . $userRole . '_' . $userDepartmentId;
+
+        if ($cached = $cache->get($cacheKey)) {
+            return $cached;
+        }
+
+        $db = db_connect();
+
+        // Query sama dengan getIndicatorImprs tapi hanya COUNT
+        $query = $db->query("
+            SELECT COUNT(*) as total FROM (
+                SELECT DISTINCT local_quality_indicator.indicator_id
+                FROM local_quality_indicator_group
+                JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id
+                JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_group.group_department_id
+                WHERE local_quality_indicator.indicator_category_id = '5'
+                AND local_quality_indicator.indicator_record_status = 'A'
+                AND local_quality_indicator_group.group_record_status = 'A'
+                AND (local_quality_indicator_group.group_period = ? 
+                     OR local_quality_indicator_group.group_period = ? 
+                     OR local_quality_indicator_group.group_period = ?)
+                " . ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? "AND local_quality_indicator_group.group_department_id = " . $userDepartmentId : "") . "
+                GROUP BY local_quality_indicator.indicator_id
+            ) as counted
+        ", [$vtahun, $vtahun - 1, $vtahun - 2]);
+
+        $count = $query->getRow()->total ?? 0;
+
+        // Cache 10 menit
+        $cache->save($cacheKey, $count, 600);
+
+        return $count;
+    }
+
+    /**
+     * Ambil semua ruangan untuk indicator tertentu
+     */
+    public function getDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [])
+    {
+        $db = db_connect();
+
+        $searchCondition = '';
+        if (isset($post['search']['value']) && !empty($post['search']['value'])) {
+            $searchValue = addslashes($post['search']['value']);
+            $searchCondition = "AND master_institution_department.department_name LIKE '%{$searchValue}%'";
+        }
+
+        $limit = '';
+        if (isset($post['length']) && $post['length'] != -1) {
+            $start = isset($post['start']) ? (int) $post['start'] : 0;
+            $length = (int) $post['length'];
+            $limit = "LIMIT {$length} OFFSET {$start}";
+        }
+
+        $query = $db->query("
+            SELECT DISTINCT 
+                local_quality_indicator.indicator_id,
+                local_quality_indicator.indicator_element,
+                master_institution_department.department_id,
+                master_institution_department.department_name,
+                local_quality_indicator_group.group_indicator_id
+            FROM local_quality_indicator_group
+            JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id
+            JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_group.group_department_id
+            WHERE local_quality_indicator.indicator_category_id = '5' 
+            AND local_quality_indicator.indicator_record_status = 'A' 
+            AND local_quality_indicator_group.group_record_status = 'A'
+            AND local_quality_indicator_group.group_indicator_id = ?
+            {$searchCondition}
+            GROUP BY master_institution_department.department_id
+            ORDER BY master_institution_department.department_name ASC
+            {$limit}
+        ", [$indicatorId]);
+
+        return $query->getResult();
+    }
+
+    /**
+     * Ambil detail indicator by ID (CI4 version of get_detail_byid_imprs)
+     */
     public function getDetailByIdImprs(int $indicatorId)
     {
         $db = db_connect();
@@ -242,32 +457,48 @@ class RekapLaporanImprsModel extends Model
         return $query->getRow();
     }
 
+    /**
+     * Ambil semua data detail per ruangan dalam 1 query
+     */
     public function getAllDetailData(int $indicatorId, int $tahun)
     {
+        $cache = \Config\Services::cache();
+        $cacheKey = 'detail_data_' . $indicatorId . '_' . $tahun;
+
         $db = db_connect();
         $builder = $db->table('local_quality_indicator_result lqir');
 
         $builder->select("
-            lqir.result_department_id,
-            MONTH(lqir.result_period) AS bulan,
+        lqir.result_department_id,
+        MONTH(lqir.result_period) AS bulan,
 
-            SUM(lqir.result_numerator_value) AS num,
-            SUM(lqir.result_denumerator_value) AS denum,
+        SUM(lqir.result_numerator_value) AS num,
+        SUM(lqir.result_denumerator_value) AS denum,
 
-            ROUND(
-                SUM(lqir.result_numerator_value) 
-                / NULLIF(SUM(lqir.result_denumerator_value), 0)
-                * 100,
-            4) AS total_value,
+       CASE 
+        WHEN SUM(lqir.result_denumerator_value) = 0 THEN NULL
+        ELSE ROUND(
+            SUM(lqir.result_numerator_value) /
+            SUM(lqir.result_denumerator_value) *
+            lqi.indicator_factors
+        , 4)
+        END AS total_value,
 
-            CONCAT(
+        CASE 
+            WHEN SUM(lqir.result_denumerator_value) = 0 THEN 'TIDAK ADA DATA'
+            ELSE CONCAT(
                 ROUND(
-                    SUM(lqir.result_numerator_value) 
-                    / NULLIF(SUM(lqir.result_denumerator_value), 0)
-                    * 100,
-                2),
-            '%') AS total
-        ");
+                    SUM(lqir.result_numerator_value) /
+                    SUM(lqir.result_denumerator_value) *
+                    lqi.indicator_factors
+                , 2),
+                ' ',
+                lqi.indicator_units
+            )
+        END AS total
+    ");
+
+        $builder->join('local_quality_indicator lqi', 'lqir.result_indicator_id = lqi.indicator_id', 'LEFT');
 
         $builder->where('YEAR(lqir.result_period)', $tahun);
         $builder->where('lqir.result_indicator_id', $indicatorId);
@@ -279,21 +510,333 @@ class RekapLaporanImprsModel extends Model
 
         $results = $builder->get()->getResult();
 
+        // DEBUG
+        log_message('error', 'getAllDetailData: indicatorId=' . $indicatorId . ', tahun=' . $tahun . ', count=' . count($results));
+
         $data = [];
         foreach ($results as $row) {
             $key = $row->result_department_id . '_' . $row->bulan;
             $data[$key] = $row;
         }
 
+        $cache->save($cacheKey, $data, 600);
+
         return $data;
     }
 
-    private function getAvailableGroupPeriods(): array
+    /**
+     * Hitung jumlah ruangan untuk indicator tertentu
+     */
+    public function countDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [])
     {
         $db = db_connect();
-        $query = $db->query("SELECT DISTINCT group_period FROM local_quality_indicator_group WHERE group_record_status = 'A' ORDER BY group_period DESC");
-        return array_column($query->getResult(), 'group_period');
+
+        $searchCondition = '';
+        if (isset($post['search']['value']) && !empty($post['search']['value'])) {
+            $searchValue = addslashes($post['search']['value']);
+            $searchCondition = "AND master_institution_department.department_name LIKE '%{$searchValue}%'";
+        }
+
+        $query = $db->query("
+            SELECT COUNT(DISTINCT master_institution_department.department_id) as total
+            FROM local_quality_indicator_group
+            JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id
+            JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_group.group_department_id
+            WHERE local_quality_indicator_group.group_indicator_id = ?
+            AND local_quality_indicator.indicator_category_id = '5' 
+            AND local_quality_indicator.indicator_record_status = 'A'
+            {$searchCondition}
+        ", [$indicatorId]);
+
+        return $query->getRow()->total ?? 0;
     }
+
+    /**
+     * Hitung rekap IMPRS dengan filter
+     */
+    public function countFilteredRekapImprs($post = [])
+    {
+        $vtahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
+        $userRole = session('user_role') ?? '';
+        $userDepartmentId = session('department_id') ?? 0;
+
+        $db = db_connect();
+
+        // Search condition
+        $searchCondition = '';
+        if (isset($post['search']['value']) && !empty($post['search']['value'])) {
+            $searchValue = $post['search']['value'];
+            $searchCondition = "AND (local_quality_indicator.indicator_element LIKE '%{$searchValue}%' 
+                               OR local_quality_indicator.indicator_name_id LIKE '%{$searchValue}%')";
+        }
+
+        // Query sama dengan getIndicatorImprs tapi hanya COUNT
+        $query = $db->query("
+            SELECT COUNT(*) as total FROM (
+                SELECT DISTINCT local_quality_indicator.indicator_id
+                FROM local_quality_indicator_group
+                JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id
+                JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_group.group_department_id
+                WHERE local_quality_indicator.indicator_category_id = '5'
+                AND local_quality_indicator.indicator_record_status = 'A'
+                AND local_quality_indicator_group.group_record_status = 'A'
+                AND (local_quality_indicator_group.group_period = ? 
+                     OR local_quality_indicator_group.group_period = ? 
+                     OR local_quality_indicator_group.group_period = ?)
+                " . ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? "AND local_quality_indicator_group.group_department_id = " . $userDepartmentId : "") . "
+                {$searchCondition}
+                GROUP BY local_quality_indicator.indicator_id
+            ) as counted
+        ", [$vtahun, $vtahun - 1, $vtahun - 2]);
+
+        return $query->getRow()->total ?? 0;
+    }
+
+    /**
+     * Clear cache untuk refresh data
+     */
+    public function clearCache()
+    {
+        $cache = \Config\Services::cache();
+        // Clear cache keys yang relevan
+        $cache->delete('count_all_');
+        $cache->delete('available_group_periods');
+        return true;
+    }
+
+    /**
+     * Ambil available group_period dari database
+     */
+    private function getAvailableGroupPeriods(): array
+    {
+        $cache = \Config\Services::cache();
+        $cacheKey = 'available_group_periods';
+
+        if ($cached = $cache->get($cacheKey)) {
+            return $cached;
+        }
+
+        $db = db_connect();
+        $query = $db->query("SELECT DISTINCT group_period FROM local_quality_indicator_group WHERE group_record_status = 'A' ORDER BY group_period DESC");
+        $periods = array_column($query->getResult(), 'group_period');
+
+        $cache->save($cacheKey, $periods, 3600);
+        return $periods;
+    }
+
+    /**
+     * Ambil data rekap per Triwulan, Semester, dan Tahun
+     */
+    public function getRekapPeriode(int $tahun)
+    {
+        $db = db_connect();
+
+        $indicators = $db->table('local_quality_indicator')
+            ->select('indicator_id, indicator_element, indicator_target, indicator_factors, indicator_units, indicator_target_calculation')
+            ->where('indicator_category_id', '5')
+            ->where('indicator_record_status', 'A')
+            ->get()
+            ->getResult();
+
+        if (empty($indicators)) return [];
+
+        $indicatorIds = array_column($indicators, 'indicator_id');
+        $allMonthlyData = $this->getAllMonthlyData($indicatorIds, $tahun);
+
+        // mapping
+        $monthlyByIndicator = [];
+        foreach ($allMonthlyData as $key => $data) {
+            [$id, $bulan] = explode('_', $key);
+            $monthlyByIndicator[$id][$bulan] = $data;
+        }
+
+        $results = [];
+
+        foreach ($indicators as $indicator) {
+
+            $id       = $indicator->indicator_id;
+            $target   = (float) $indicator->indicator_target;
+            $factor   = (float) $indicator->indicator_factors;
+            $operator = $indicator->indicator_target_calculation ?? '>=';
+
+            $monthly = $monthlyByIndicator[$id] ?? [];
+
+            // init
+            $num = array_fill(1, 12, 0);
+            $den = array_fill(1, 12, 0);
+
+            foreach ($monthly as $b => $val) {
+                $num[$b] = (float) ($val->num ?? 0);
+                $den[$b] = (float) ($val->denum ?? 0);
+            }
+
+            // ================= CORE PMKP =================
+            $hitung = function ($start, $end) use ($num, $den, $factor) {
+
+                $totalNum = 0;
+                $totalDen = 0;
+
+                for ($i = $start; $i <= $end; $i++) {
+                    $totalNum += $num[$i];
+                    $totalDen += $den[$i];
+                }
+
+                if ($totalDen == 0) {
+                    return [
+                        'nilai' => null,
+                        'num' => $totalNum,
+                        'denum' => $totalDen
+                    ];
+                }
+
+                return [
+                    'nilai' => round(($totalNum / $totalDen) * $factor, 2),
+                    'num' => $totalNum,
+                    'denum' => $totalDen
+                ];
+            };
+
+            // ================= TRI WULAN =================
+            $triwulan = [];
+            for ($i = 1; $i <= 4; $i++) {
+                $start = ($i - 1) * 3 + 1;
+                $end   = $i * 3;
+
+                $r = $hitung($start, $end);
+
+                $triwulan[$i] = [
+                    ...$r,
+                    'status' => $this->getStatusPMKP($r['nilai'], $target, $operator)
+                ];
+            }
+
+            // ================= SEMESTER =================
+            $semester = [];
+            for ($i = 1; $i <= 2; $i++) {
+                $start = ($i - 1) * 6 + 1;
+                $end   = $i * 6;
+
+                $r = $hitung($start, $end);
+
+                $semester[$i] = [
+                    ...$r,
+                    'status' => $this->getStatusPMKP($r['nilai'], $target, $operator)
+                ];
+            }
+
+            // ================= TAHUN =================
+            $tahunR = $hitung(1, 12);
+
+            // ================= REKAP CAPAIAN =================
+            $tercapTw = count(array_filter($triwulan, fn($t) => $t['status'] === 'TERCAPAI'));
+            $tercapSm = count(array_filter($semester, fn($s) => $s['status'] === 'TERCAPAI'));
+
+            $results[] = [
+                'indicator_id' => $id,
+                'indicator_element' => $indicator->indicator_element,
+                'target' => $target,
+                'satuan' => $indicator->indicator_units,
+
+                'triwulan' => $triwulan,
+                'semester' => $semester,
+                'tahun' => [
+                    ...$tahunR,
+                    'status' => $this->getStatusPMKP($tahunR['nilai'], $target, $operator)
+                ],
+
+                'summary' => [
+                    'tw_tercapai' => $tercapTw,
+                    'sm_tercapai' => $tercapSm
+                ]
+            ];
+        }
+
+        return $results;
+    }
+
+    /**
+     * Ambil nilai rata-rata untuk periode tertentu
+     */
+    private function getNilaiPeriode(int $indicatorId, int $tahun, int $bulanMulai, int $bulanAkhir, float $factors)
+    {
+        $db = db_connect();
+        $bulanMulaiStr = str_pad($bulanMulai, 2, '0', STR_PAD_LEFT);
+        $bulanAkhirStr = str_pad($bulanAkhir, 2, '0', STR_PAD_LEFT);
+        $dayAkhir = $this->getDaysInMonth($bulanAkhir, $tahun);
+
+        $query = $db->query("
+            SELECT 
+                SUM(lqir.result_numerator_value) AS num,
+                SUM(lqir.result_denumerator_value) AS denum,
+                lqi.indicator_units
+            FROM local_quality_indicator_result lqir
+            JOIN local_quality_indicator lqi ON lqir.result_indicator_id = lqi.indicator_id
+            WHERE lqir.result_indicator_id = ?
+            AND lqir.result_period BETWEEN '{$tahun}-{$bulanMulaiStr}-01' 
+                AND '{$tahun}-{$bulanAkhirStr}-{$dayAkhir}'
+        ", [$indicatorId]);
+
+        $row = $query->getRow();
+        if (!$row || $row->denum == 0) {
+            return null;
+        }
+
+        $nilai = round(($row->num / $row->denum) * $factors, 2);
+        return $nilai . $row->indicator_units;
+    }
+
+    /**
+     * Cek apakah tercapai berdasarkan operator (boolean)
+     */
+    private function cekTercapai($nilai, float $target, string $operator): bool
+    {
+        if ($nilai === null) {
+            return false;
+        }
+        $angka = (float) preg_replace('/[^0-9.]/', '', $nilai);
+        switch ($operator) {
+            case '>=':
+                return $angka >= $target;
+            case '>':
+                return $angka > $target;
+            case '<=':
+                return $angka <= $target;
+            case '<':
+                return $angka < $target;
+            case '=':
+                return $angka == $target;
+            default:
+                return $angka >= $target;
+        }
+    }
+
+    /**
+     * Get status PMKP (TERCAPAI/TIDAK TERCAPAI/TIDAK ADA DATA)
+     */
+    private function getStatusPMKP($nilai, float $target, string $operator): string
+    {
+        if ($nilai === null) {
+            return 'TIDAK ADA DATA';
+        }
+
+        $angka = (float) preg_replace('/[^0-9.]/', '', $nilai);
+        switch ($operator) {
+            case '>=':
+                return $angka >= $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            case '>':
+                return $angka > $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            case '<=':
+                return $angka <= $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            case '<':
+                return $angka < $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            case '=':
+                return $angka == $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+            default:
+                return $angka >= $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
+        }
+    }
+
+    // ==================== HELPER ====================
 
     private function getDaysInMonth(int $bulan, int $tahun): int
     {
@@ -318,6 +861,9 @@ class RekapLaporanImprsModel extends Model
         }
     }
 
+    /**
+     * Ambil data bulanan untuk satu indikator
+     */
     public function getMonthlyDataByIndicator(int $indicatorId, int $tahun): array
     {
         $db = db_connect();
@@ -359,6 +905,9 @@ class RekapLaporanImprsModel extends Model
         return $data;
     }
 
+    /**
+     * Ambil nilai triwulan
+     */
     public function getNilaiTriwulan(int $indicatorId, int $tahun): array
     {
         $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
@@ -389,6 +938,9 @@ class RekapLaporanImprsModel extends Model
         return $triwulan;
     }
 
+    /**
+     * Ambil nilai semester
+     */
     public function getNilaiSemester(int $indicatorId, int $tahun): array
     {
         $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
@@ -419,6 +971,9 @@ class RekapLaporanImprsModel extends Model
         return $semester;
     }
 
+    /**
+     * Ambil nilai tahunan
+     */
     public function getNilaiTahun(int $indicatorId, int $tahun): array
     {
         $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
@@ -441,6 +996,9 @@ class RekapLaporanImprsModel extends Model
         return ['nilai' => $nilai, 'num' => $totalNum, 'denum' => $totalDenum, 'tercap' => $tercap, 'target' => $target];
     }
 
+    /**
+     * Ambil nilai per tahun (5 tahun terakhir)
+     */
     public function getNilaiPerTahun(int $indicatorId, int $tahun): array
     {
         $indicator = $this->getDetailByIdImprs($indicatorId);
@@ -468,273 +1026,5 @@ class RekapLaporanImprsModel extends Model
         }
 
         return $perTahun;
-    }
-
-    private function cekTercapai($nilai, float $target, string $operator): bool
-    {
-        if ($nilai === null) {
-            return false;
-        }
-        $angka = (float) preg_replace('/[^0-9.]/', '', $nilai);
-        switch ($operator) {
-            case '>=':
-                return $angka >= $target;
-            case '>':
-                return $angka > $target;
-            case '<=':
-                return $angka <= $target;
-            case '<':
-                return $angka < $target;
-            case '=':
-                return $angka == $target;
-            default:
-                return $angka >= $target;
-        }
-    }
-
-    private function getStatusPMKP($nilai, float $target, string $operator): string
-    {
-        if ($nilai === null) {
-            return 'TIDAK ADA DATA';
-        }
-
-        $angka = (float) preg_replace('/[^0-9.]/', '', $nilai);
-        switch ($operator) {
-            case '>=':
-                return $angka >= $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
-            case '>':
-                return $angka > $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
-            case '<=':
-                return $angka <= $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
-            case '<':
-                return $angka < $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
-            case '=':
-                return $angka == $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
-            default:
-                return $angka >= $target ? 'TERCAPAI' : 'TIDAK TERCAPAI';
-        }
-    }
-
-    public function getRekapPeriode(int $tahun): array
-    {
-        $db = db_connect();
-
-        $indicators = $db->table('local_quality_indicator')
-            ->select('indicator_id, indicator_element, indicator_target, indicator_factors, indicator_units, indicator_target_calculation')
-            ->where('indicator_category_id', '5')
-            ->where('indicator_record_status', 'A')
-            ->get()
-            ->getResult();
-
-        if (empty($indicators)) return [];
-
-        $indicatorIds = array_column($indicators, 'indicator_id');
-        $allMonthlyData = $this->getAllMonthlyData($indicatorIds, $tahun);
-
-        $monthlyByIndicator = [];
-        foreach ($allMonthlyData as $key => $data) {
-            [$id, $bulan] = explode('_', $key);
-            $monthlyByIndicator[$id][$bulan] = $data;
-        }
-
-        $results = [];
-
-        foreach ($indicators as $indicator) {
-            $id       = $indicator->indicator_id;
-            $target   = (float) $indicator->indicator_target;
-            $factor   = (float) $indicator->indicator_factors;
-            $operator = $indicator->indicator_target_calculation ?? '>=';
-
-            $monthly = $monthlyByIndicator[$id] ?? [];
-
-            $num = array_fill(1, 12, 0);
-            $den = array_fill(1, 12, 0);
-
-            foreach ($monthly as $b => $val) {
-                $num[$b] = (float) ($val->num ?? 0);
-                $den[$b] = (float) ($val->denum ?? 0);
-            }
-
-            $hitung = function ($start, $end) use ($num, $den, $factor) {
-                $totalNum = 0;
-                $totalDen = 0;
-
-                for ($i = $start; $i <= $end; $i++) {
-                    $totalNum += $num[$i];
-                    $totalDen += $den[$i];
-                }
-
-                if ($totalDen == 0) {
-                    return [
-                        'nilai' => null,
-                        'num' => $totalNum,
-                        'denum' => $totalDen
-                    ];
-                }
-
-                return [
-                    'nilai' => round(($totalNum / $totalDen) * $factor, 2),
-                    'num' => $totalNum,
-                    'denum' => $totalDen
-                ];
-            };
-
-            $triwulan = [];
-            for ($i = 1; $i <= 4; $i++) {
-                $start = ($i - 1) * 3 + 1;
-                $end   = $i * 3;
-                $r = $hitung($start, $end);
-                $triwulan[$i] = [
-                    ...$r,
-                    'status' => $this->getStatusPMKP($r['nilai'], $target, $operator)
-                ];
-            }
-
-            $semester = [];
-            for ($i = 1; $i <= 2; $i++) {
-                $start = ($i - 1) * 6 + 1;
-                $end   = $i * 6;
-                $r = $hitung($start, $end);
-                $semester[$i] = [
-                    ...$r,
-                    'status' => $this->getStatusPMKP($r['nilai'], $target, $operator)
-                ];
-            }
-
-            $tahunR = $hitung(1, 12);
-
-            $tercapTw = count(array_filter($triwulan, fn($t) => $t['status'] === 'TERCAPAI'));
-            $tercapSm = count(array_filter($semester, fn($s) => $s['status'] === 'TERCAPAI'));
-
-            $results[] = [
-                'indicator_id' => $id,
-                'indicator_element' => $indicator->indicator_element,
-                'target' => $target,
-                'satuan' => $indicator->indicator_units,
-                'triwulan' => $triwulan,
-                'semester' => $semester,
-                'tahun' => [
-                    ...$tahunR,
-                    'status' => $this->getStatusPMKP($tahunR['nilai'], $target, $operator)
-                ],
-                'summary' => [
-                    'tw_tercapai' => $tercapTw,
-                    'sm_tercapai' => $tercapSm
-                ]
-            ];
-        }
-
-        return $results;
-    }
-
-    public function countAllRekapImprs($post = [])
-    {
-        $db = db_connect();
-        $builder = $db->table('local_quality_indicator_group');
-
-        $builder->join('local_quality_indicator', 'local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id');
-        $builder->join('master_institution_department', 'master_institution_department.department_id = local_quality_indicator_group.group_department_id');
-
-        $builder->where("local_quality_indicator.indicator_category_id", '5');
-        $builder->where("local_quality_indicator.indicator_record_status", 'A');
-
-        $vtahun = $post['vtahun'] ?? date('Y');
-        $availablePeriods = $this->getAvailableGroupPeriods();
-        $usePeriod = in_array($vtahun, $availablePeriods) ? $vtahun : min($availablePeriods);
-
-        $builder->groupStart();
-        $builder->where("local_quality_indicator_group.group_period", $usePeriod);
-        $builder->orWhere('local_quality_indicator_group.group_period', $usePeriod - 1);
-        $builder->orWhere('local_quality_indicator_group.group_period', $usePeriod - 2);
-        $builder->groupEnd();
-
-        $userRole = session('user_role') ?? '';
-        $userDepartmentId = session('department_id') ?? 0;
-        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
-            $builder->where('master_institution_department.department_id', $userDepartmentId);
-        }
-
-        $builder->groupBy('local_quality_indicator.indicator_id');
-
-        return $builder->countAllResults();
-    }
-
-    public function countFilteredRekapImprs($post = [])
-    {
-        $db = db_connect();
-        $builder = $db->table('local_quality_indicator_group');
-
-        $builder->join('local_quality_indicator', 'local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id');
-        $builder->join('master_institution_department', 'master_institution_department.department_id = local_quality_indicator_group.group_department_id');
-
-        $builder->where("local_quality_indicator.indicator_category_id", '5');
-        $builder->where("local_quality_indicator.indicator_record_status", 'A');
-
-        $vtahun = $post['vtahun'] ?? date('Y');
-        $availablePeriods = $this->getAvailableGroupPeriods();
-        $usePeriod = in_array($vtahun, $availablePeriods) ? $vtahun : min($availablePeriods);
-
-        $builder->groupStart();
-        $builder->where("local_quality_indicator_group.group_period", $usePeriod);
-        $builder->orWhere('local_quality_indicator_group.group_period', $usePeriod - 1);
-        $builder->orWhere('local_quality_indicator_group.group_period', $usePeriod - 2);
-        $builder->groupEnd();
-
-        $userRole = session('user_role') ?? '';
-        $userDepartmentId = session('department_id') ?? 0;
-        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
-            $builder->where('master_institution_department.department_id', $userDepartmentId);
-        }
-
-        $builder->groupBy('local_quality_indicator.indicator_id');
-
-        if (isset($post['search']['value']) && !empty($post['search']['value'])) {
-            $builder->groupStart();
-            foreach ($this->column_search as $i => $item) {
-                if ($i === 0) {
-                    $builder->like($item, $post['search']['value']);
-                } else {
-                    $builder->orLike($item, $post['search']['value']);
-                }
-            }
-            $builder->groupEnd();
-        }
-
-        return $builder->get()->getNumRows();
-    }
-
-    public function getDepartmentsByIndicatorImprs(int $indicatorId, int $tahun, $post = [])
-    {
-        $db = db_connect();
-        $builder = $db->table('local_quality_indicator_group');
-
-        $builder->select('
-            local_quality_indicator_group.group_department_id,
-            master_institution_department.department_id,
-            master_institution_department.department_name
-        ');
-
-        $builder->join('local_quality_indicator', 'local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id', 'left');
-        $builder->join('master_institution_department', 'master_institution_department.department_id = local_quality_indicator_group.group_department_id', 'left');
-
-        $builder->where("local_quality_indicator.indicator_category_id", '5');
-        $builder->where("local_quality_indicator.indicator_record_status", 'A');
-        $builder->where('local_quality_indicator.indicator_id', $indicatorId);
-
-        $builder->groupStart();
-        $builder->where("local_quality_indicator_group.group_period", $tahun);
-        $builder->orWhere('local_quality_indicator_group.group_period', $tahun - 1);
-        $builder->orWhere('local_quality_indicator_group.group_period', $tahun - 2);
-        $builder->groupEnd();
-
-        $userRole = session('user_role') ?? '';
-        $userDepartmentId = session('department_id') ?? 0;
-        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
-            $builder->where('master_institution_department.department_id', $userDepartmentId);
-        }
-
-        $builder->groupBy('local_quality_indicator_group.group_department_id');
-
-        return $builder->get()->getResult();
     }
 }

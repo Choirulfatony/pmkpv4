@@ -226,12 +226,21 @@ class Auth extends BaseController
         $role = $this->detectRoleByHrisId($user->id);
 
         $db = db_connect();
-        $db->table('user_profile')
-            ->where('profile_id', $user->profile_id)
-            ->update([
-                'profile_online_status' => 1,
-                'profile_last_login' => date('Y-m-d H:i:s'),
-            ]);
+        $profile = $db->table('user_profile')
+            ->where('profile_employee_id', $user->nip)
+            ->where('profile_record_status', 'A')
+            ->get()
+            ->getRow();
+
+        if ($profile) {
+            $db->table('user_profile')
+                ->where('profile_id', $profile->profile_id)
+                ->update([
+                    'profile_online_status' => 1,
+                    'profile_last_login' => date('Y-m-d H:i:s'),
+                ]);
+            $user->profile_id = $profile->profile_id;
+        }
 
         if ($remember) {
             $rememberData = base64_encode($nip . '|' . md5($password) . '|HRIS');
