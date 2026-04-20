@@ -428,6 +428,10 @@
         if (isYearChange) {
             if (document.getElementById('indicator_id')) {
                 document.getElementById('indicator_id').value = '0';
+                // Trigger Select2 update
+                if (typeof $.fn.select2 !== 'undefined') {
+                    $('#indicator_id').val('0').trigger('change');
+                }
             }
             indicatorId = '0';
             if (document.getElementById('indicatorInfo')) {
