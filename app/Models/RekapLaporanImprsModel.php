@@ -277,12 +277,17 @@ public function getIndicatorImprs($post)
         // Ambil semua indicator yang punya data (sekali query saja)
         $indicatorsWithData = $this->getIndicatorsWithData($vtahun);
 
+        // Debug: log jika perlu
+        // log_message('error', 'vtahun: ' . $vtahun . ' - indicators: ' . json_encode($indicatorsWithData));
+
         // Urutin manual: yang punya data di atas, yang tidak di bawah
         $withData = [];
         $withoutData = [];
 
         foreach ($allResults as $row) {
-            if (in_array($row->indicator_id, $indicatorsWithData)) {
+            // Cast ke int untuk确保 perbandingan benar
+            $rowId = (int) $row->indicator_id;
+            if (in_array($rowId, array_map('intval', $indicatorsWithData))) {
                 $withData[] = $row;
             } else {
                 $withoutData[] = $row;
@@ -333,13 +338,13 @@ public function getIndicatorImprs($post)
     {
         $db = db_connect();
         $query = $db->query("
-            SELECT DISTINCT result_indicator_id 
+            SELECT DISTINCT CAST(result_indicator_id AS UNSIGNED) AS result_indicator_id
             FROM local_quality_indicator_result 
             WHERE YEAR(result_period) = ?
         ", [$tahun]);
 
         $result = $query->getResult();
-        return array_column($result, 'result_indicator_id');
+        return array_map('intval', array_column($result, 'result_indicator_id'));
     }
 
     public function getTotalRecords(): int
