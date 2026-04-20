@@ -395,6 +395,13 @@
         $indicator.on('change', function() {
             loadGrafik(false);
         });
+        
+        // Clear indicator selection on page load if no URL indicator_id param
+        // This fixes F5 keeping the previous selection
+        var urlParams = new URLSearchParams(window.location.search);
+        if (!urlParams.has('indicator_id')) {
+            $indicator.val('').trigger('change');
+        }
     });
 
     window.addEventListener('themechange', function(e) {
