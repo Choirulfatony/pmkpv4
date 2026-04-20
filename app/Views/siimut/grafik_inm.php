@@ -146,7 +146,46 @@
             box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
         }
     }
+
+    /* Select2 dark mode support */
+    [data-bs-theme="dark"] .select2-selection,
+    [data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection,
+    [data-bs-theme="dark"] .select2-container--open .select2-selection {
+        background-color: #2b3035 !important;
+        border-color: #495057 !important;
+    }
+    
+    [data-bs-theme="dark"] .select2-selection__rendered,
+    [data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection__rendered,
+    [data-bs-theme="dark"] #select2-indicator_id-container,
+    [data-bs-theme="dark"] #select2-tahun-container {
+        color: #dee2e6 !important;
+        background-color: transparent !important;
+    }
+    
+    [data-bs-theme="dark"] .select2-dropdown,
+    [data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-dropdown {
+        background-color: #2b3035 !important;
+        border-color: #495057 !important;
+    }
+    
+    [data-bs-theme="dark"] .select2-results__option,
+    [data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-results__option {
+        color: #dee2e6 !important;
+    }
+    
+    [data-bs-theme="dark"] .select2-results__option--highlighted,
+    [data-bs-theme="dark"] .select2-results__option--highlighted[aria-selected] {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+    
+    [data-bs-theme="dark"] .select2-selection__arrow b,
+    [data-bs-theme="dark"] .select2-selection--single .select2-selection__arrow::after {
+        border-color: #dee2e6 transparent transparent transparent !important;
+    }
 </style>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" rel="stylesheet" />
 
 <div class="container-fluid py-4">
     <div class="row mb-4">
@@ -159,7 +198,7 @@
     <div class="row mb-4">
         <div class="col-md-4">
             <label class="form-label fw-bold">Pilih Tahun</label>
-            <select class="form-select" id="tahun" onchange="loadGrafik(true)">
+            <select class="form-select select2" id="tahun" placeholder="Pilih Tahun">
                 <?php for ($y = date('Y'); $y >= date('Y') - 5; $y--): ?>
                     <option value="<?= $y ?>" <?= ($y == $tahun) ? 'selected' : '' ?>><?= $y ?></option>
                 <?php endfor; ?>
@@ -167,10 +206,10 @@
         </div>
         <div class="col-md-6">
             <label class="form-label fw-bold">Pilih Indikator</label>
-            <select class="form-select" id="indicator_id" onchange="loadGrafik()">
-                <option value="">-- Pilih Indikator --</option>
+            <select class="form-select select2" id="indicator_id" style="width: 100%;">
+                <option value="">--Pilih Indikator--</option>
                 <?php foreach ($indicators as $ind): ?>
-                    <option value="<?= $ind->indicator_id ?>" <?= ($ind->indicator_id == $indicatorId) ? 'selected' : '' ?>><?= esc($ind->indicator_element) ?></option>
+                    <option value="<?= $ind->indicator_id ?>" title="<?= esc($ind->indicator_element) ?>" <?= ($ind->indicator_id == $indicatorId) ? 'selected' : '' ?>><?= esc($ind->indicator_element) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -328,9 +367,43 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     var lineChart, triwulanChart, semesterChart, perTahunChart;
     var currentIndicatorData = null;
+
+    $(document).ready(function() {
+        // Initialize Select2 for both dropdowns
+        var $tahun = $('#tahun').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Pilih Tahun',
+            allowClear: false,
+            width: '100%'
+        });
+        
+        var $indicator = $('#indicator_id').select2({
+            theme: 'bootstrap-5',
+            placeholder: '--Pilih Indikator--',
+            allowClear: true,
+            width: '100%'
+        });
+        
+        // Handle tahun change - reload graph without resetting indicator
+        $tahun.on('change', function() {
+            loadGrafik(true);
+        });
+        
+        // Handle indicator change
+        $indicator.on('change', function() {
+            loadGrafik(false);
+        });
+        
+        // Clear indicator selection on page load if no URL indicator_id param
+        var urlParams = new URLSearchParams(window.location.search);
+        if (!urlParams.has('indicator_id')) {
+            $indicator.val('').trigger('change');
+        }
+    });
 
     window.addEventListener('themechange', function(e) {
         if (currentIndicatorData && currentIndicatorData.bulanan && currentIndicatorData.indicator) {
@@ -382,26 +455,25 @@
         var tahun = document.getElementById('tahun').value;
         var indicatorId = document.getElementById('indicator_id').value;
 
-        // Reset indicator dropdown when year changes
-        if (isYearChange) {
-            document.getElementById('indicator_id').value = '';
-            indicatorId = '';
-            document.getElementById('indicatorInfo').style.display = 'none';
-            document.getElementById('grafikContainer').style.display = 'none';
-            document.getElementById('loadingGrafik').style.display = 'none';
+        // When year changes, keep indicator selection and reload graph
+        // Only hide graph if no indicator is selected
+        if (!indicatorId || indicatorId === '') {
+            if (document.getElementById('indicatorInfo')) {
+                document.getElementById('indicatorInfo').style.display = 'none';
+            }
+            if (document.getElementById('grafikContainer')) {
+                document.getElementById('grafikContainer').style.display = 'none';
+            }
+            if (document.getElementById('loadingGrafik')) {
+                document.getElementById('loadingGrafik').style.display = 'none';
+            }
             resetSummaryCards();
             return;
         }
 
-        if (!indicatorId) {
-            document.getElementById('indicatorInfo').style.display = 'none';
-            document.getElementById('grafikContainer').style.display = 'none';
-            document.getElementById('loadingGrafik').style.display = 'none';
-            resetSummaryCards();
-            return;
+        if (document.getElementById('loadingGrafik')) {
+            document.getElementById('loadingGrafik').style.display = 'block';
         }
-
-        document.getElementById('loadingGrafik').style.display = 'block';
         document.getElementById('grafikContainer').style.display = 'none';
 
         var xhr = new XMLHttpRequest();
@@ -872,6 +944,8 @@
     <?php if ($indicatorId): ?>
         loadGrafik();
     <?php else: ?>
-        document.getElementById('loadingGrafik').style.display = 'block';
+        if (document.getElementById('loadingGrafik')) {
+            document.getElementById('loadingGrafik').style.display = 'none';
+        }
     <?php endif; ?>
 </script>

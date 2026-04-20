@@ -30,7 +30,7 @@ class GrafikInm extends AppController
         $indicatorId = $this->request->getGet('indicator_id');
 
         // Ambil semua indikator untuk dropdown
-        $indicators = $this->rekapModel->getIndicatorInm([]);
+        $indicators = $this->rekapModel->getIndicatorInm(['vtahun' => (int) $tahun]);
 
         return $this->render('siimut/grafik_inm', [
             'judul'    => 'Grafik Tren INM',

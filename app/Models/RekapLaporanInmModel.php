@@ -37,37 +37,57 @@ class RekapLaporanInmModel extends Model
     private function _getAjaxDataRekapInm(int $indicator, int $tahun, int $bulan)
     {
         $db = db_connect();
+
+        // Hitung jumlah hari dalam bulan
         $day = $this->getDaysInMonth($bulan, $tahun);
+
+        // Format bulan jadi 2 digit
         $bulanx = str_pad($bulan, 2, '0', STR_PAD_LEFT);
+
+        // Tanggal awal & akhir
+        $startDate = "{$tahun}-{$bulanx}-01";
+        $endDate   = "{$tahun}-{$bulanx}-{$day}";
+
         $builder = $db->table('quality_indicator_result qir');
 
         $builder->select("
-            qi.indicator_category_id,
-            qi.indicator_id,
-            qi.indicator_element,
+                    qi.indicator_category_id,
+                    qi.indicator_id,
+                    qi.indicator_element,
 
-            SUM(qir.result_numerator_value) AS num,
-            SUM(qir.result_denumerator_value) AS denum,
+                    SUM(qir.result_numerator_value) AS num,
+                    SUM(qir.result_denumerator_value) AS denum,
 
-            ROUND(
-                SUM(qir.result_numerator_value) 
-                / NULLIF(SUM(qir.result_denumerator_value), 0)
-                * qi.indicator_factors, 
-            4) AS total_value,
+                    CASE 
+                        WHEN SUM(qir.result_denumerator_value) = 0 THEN NULL
+                        ELSE ROUND(
+                            (SUM(qir.result_numerator_value) / SUM(qir.result_denumerator_value)) 
+                            * qi.indicator_factors
+                        , 4)
+                    END AS total_value,
 
-            CONCAT(
-                ROUND(
-                    SUM(qir.result_numerator_value) 
-                    / NULLIF(SUM(qir.result_denumerator_value), 0)
-                    * qi.indicator_factors, 
-                2),
-                qi.indicator_units
-            ) AS total
-        ");
+                    CASE 
+                        WHEN SUM(qir.result_denumerator_value) = 0 THEN 'TIDAK ADA DATA'
+                        ELSE CONCAT(
+                            ROUND(
+                                (SUM(qir.result_numerator_value) / SUM(qir.result_denumerator_value)) 
+                                * qi.indicator_factors
+                            , 2),
+                            ' ',
+                            qi.indicator_units
+                        )
+                    END AS total
+                ");
+        $builder->join(
+            'quality_indicator qi',
+            'qir.result_indicator_id = qi.indicator_id',
+            'LEFT'
+        );
 
-        $builder->join('quality_indicator qi', 'qir.result_indicator_id = qi.indicator_id', 'LEFT');
+        // ✅ gunakan where terpisah (lebih aman & terbaca)
+        $builder->where('qir.result_period >=', $startDate);
+        $builder->where('qir.result_period <=', $endDate);
 
-        $builder->where("qir.result_period BETWEEN '{$tahun}-{$bulanx}-01' AND '{$tahun}-{$bulanx}-{$day}'");
         $builder->where('qi.indicator_category_id', '4');
         $builder->where('qi.indicator_record_status', 'A');
         $builder->where('qi.indicator_id', $indicator);
@@ -88,11 +108,17 @@ class RekapLaporanInmModel extends Model
     /**
      * Ambil data rekap INM per bulan
      */
-    public function getAjaxDataRekapInmm(int $indicator, int $tahun, int $bulan)
+
+    public function getAjaxDataRekapInm(int $indicator, int $tahun, int $bulan)
     {
         $builder = $this->_getAjaxDataRekapInm($indicator, $tahun, $bulan);
-        return $builder->get()->getRow();
+
+        // gunakan getRowArray biar lebih aman dipakai di view/json
+        return $builder->get()->getRowArray();
     }
+
+    // ==================== PUBLIC METHODS ====================
+
 
     /**
      * Ambil SEMUA data bulanan dalam 1 query (OPTIMIZED + CACHE)
@@ -108,28 +134,35 @@ class RekapLaporanInmModel extends Model
         $builder = $db->table('quality_indicator_result qir');
 
         $builder->select("
-        qi.indicator_id,
-        MONTH(qir.result_period) AS bulan,
+            qi.indicator_id,
+            MONTH(qir.result_period) AS bulan,
 
-        SUM(qir.result_numerator_value) AS num,
-        SUM(qir.result_denumerator_value) AS denum,
+            SUM(qir.result_numerator_value) AS num,
+            SUM(qir.result_denumerator_value) AS denum,
 
-        ROUND(
-            SUM(qir.result_numerator_value) 
-            / NULLIF(SUM(qir.result_denumerator_value), 0)
-            * qi.indicator_factors, 
-        4) AS total_value,
+            CASE 
+                WHEN SUM(qir.result_denumerator_value) = 0 THEN NULL
+                ELSE ROUND(
+                    SUM(qir.result_numerator_value) /
+                    SUM(qir.result_denumerator_value) *
+                    qi.indicator_factors
+                , 4)
+            END AS total_value,
 
-        CONCAT(
-            ROUND(
-                SUM(qir.result_numerator_value) 
-                / NULLIF(SUM(qir.result_denumerator_value), 0)
-                * qi.indicator_factors, 
-            2),
-            qi.indicator_units
-        ) AS total,
+            CASE 
+                WHEN SUM(qir.result_denumerator_value) = 0 THEN 'TIDAK ADA DATA'
+                ELSE CONCAT(
+                    ROUND(
+                        SUM(qir.result_numerator_value) /
+                        SUM(qir.result_denumerator_value) *
+                        qi.indicator_factors
+                    , 2),
+                    ' ',
+                    qi.indicator_units
+                )
+            END AS total,
 
-        qi.indicator_units AS units
+            qi.indicator_units AS units
         ");
 
         $builder->join('quality_indicator qi', 'qir.result_indicator_id = qi.indicator_id', 'LEFT');
@@ -227,7 +260,7 @@ class RekapLaporanInmModel extends Model
             $builder->groupEnd();
         }
 
-        // Order
+        // Order default
         if (isset($post['order'])) {
             $col = $this->column_order[$post['order'][0]['column']] ?? 'indicator_element';
             $dir = $post['order'][0]['dir'] ?? 'ASC';
@@ -238,12 +271,56 @@ class RekapLaporanInmModel extends Model
             $builder->orderBy('indicator_element', 'ASC');
         }
 
-        // Pagination
-        if (isset($post['length']) && $post['length'] != -1) {
-            $builder->limit($post['length'], $post['start'] ?? 0);
+        // Ambil SEMUA data dulu (tanpa limit) agar bisa diurutkan dengan benar
+        $allBuilder = clone $builder;
+        $allBuilder->limit(10000, 0);
+        $allResults = $allBuilder->get()->getResult();
+
+        // Ambil semua indicator yang punya data (sekali query saja)
+        $indicatorsWithData = $this->getIndicatorsWithData($vtahun);
+
+        // Urutin manual: yang punya data di atas, yang tidak di bawah
+        $withData = [];
+        $withoutData = [];
+
+        foreach ($allResults as $row) {
+            // Cast ke int untuk確保 perbandingan benar
+            $rowId = (int) $row->indicator_id;
+            if (in_array($rowId, array_map('intval', $indicatorsWithData))) {
+                $withData[] = $row;
+            } else {
+                $withoutData[] = $row;
+            }
         }
 
-        return $builder->get()->getResult();
+        // Gabungkan: yang punya data di atas
+        $sortedResults = array_merge($withData, $withoutData);
+
+        // Apply pagination manual
+        $start = (int) ($post['start'] ?? 0);
+        $length = (int) ($post['length'] ?? -1);
+        
+        if ($length > 0) {
+            $sortedResults = array_slice($sortedResults, $start, $length);
+        }
+
+        return $sortedResults;
+    }
+
+    /**
+     * Ambil semua indicator yang punya data di tahun tertentu (sekali query)
+     */
+    private function getIndicatorsWithData(int $tahun): array
+    {
+        $db = db_connect();
+        $query = $db->query("
+            SELECT DISTINCT CAST(result_indicator_id AS UNSIGNED) AS result_indicator_id
+            FROM quality_indicator_result 
+            WHERE YEAR(result_period) = ?
+        ", [$tahun]);
+
+        $result = $query->getResult();
+        return array_map('intval', array_column($result, 'result_indicator_id'));
     }
 
     /**
@@ -365,35 +442,40 @@ class RekapLaporanInmModel extends Model
         $cache = \Config\Services::cache();
         $cacheKey = 'detail_data_' . $indicatorId . '_' . $tahun;
 
-        // Skip cache for debugging
-        // if ($cached = $cache->get($cacheKey)) {
-        //     return $cached;
-        // }
-
         $db = db_connect();
         $builder = $db->table('quality_indicator_result qir');
 
         $builder->select("
-            qir.result_department_id,
-            MONTH(qir.result_period) AS bulan,
+        qir.result_department_id,
+        MONTH(qir.result_period) AS bulan,
 
-            SUM(qir.result_numerator_value) AS num,
-            SUM(qir.result_denumerator_value) AS denum,
+        SUM(qir.result_numerator_value) AS num,
+        SUM(qir.result_denumerator_value) AS denum,
 
-            ROUND(
-                SUM(qir.result_numerator_value) 
-                / NULLIF(SUM(qir.result_denumerator_value), 0)
-                * 100,
-            4) AS total_value,
+       CASE 
+        WHEN SUM(qir.result_denumerator_value) = 0 THEN NULL
+        ELSE ROUND(
+            SUM(qir.result_numerator_value) /
+            SUM(qir.result_denumerator_value) *
+            qi.indicator_factors
+        , 4)
+        END AS total_value,
 
-            CONCAT(
+        CASE 
+            WHEN SUM(qir.result_denumerator_value) = 0 THEN 'TIDAK ADA DATA'
+            ELSE CONCAT(
                 ROUND(
-                    SUM(qir.result_numerator_value) 
-                    / NULLIF(SUM(qir.result_denumerator_value), 0)
-                    * 100,
-                2),
-            '%') AS total
-        ");
+                    SUM(qir.result_numerator_value) /
+                    SUM(qir.result_denumerator_value) *
+                    qi.indicator_factors
+                , 2),
+                ' ',
+                qi.indicator_units
+            )
+        END AS total
+    ");
+
+        $builder->join('quality_indicator qi', 'qir.result_indicator_id = qi.indicator_id', 'LEFT');
 
         $builder->where('YEAR(qir.result_period)', $tahun);
         $builder->where('qir.result_indicator_id', $indicatorId);
@@ -405,10 +487,8 @@ class RekapLaporanInmModel extends Model
 
         $results = $builder->get()->getResult();
 
+        // DEBUG
         log_message('error', 'getAllDetailData: indicatorId=' . $indicatorId . ', tahun=' . $tahun . ', count=' . count($results));
-        if (count($results) > 0) {
-            log_message('error', 'getAllDetailData sample: dept=' . $results[0]->result_department_id . ', bulan=' . $results[0]->bulan . ', total=' . ($results[0]->total ?? 'NULL') . ', num=' . $results[0]->num);
-        }
 
         $data = [];
         foreach ($results as $row) {
@@ -417,6 +497,7 @@ class RekapLaporanInmModel extends Model
         }
 
         $cache->save($cacheKey, $data, 600);
+
         return $data;
     }
 
@@ -664,8 +745,8 @@ class RekapLaporanInmModel extends Model
             FROM quality_indicator_result qir
             JOIN quality_indicator qi ON qir.result_indicator_id = qi.indicator_id
             WHERE qir.result_indicator_id = ?
-            AND qir.result_period BETWEEN '{$tahun}-{$bulanMulaiStr}-01' AND '{$tahun}-{$bulanAkhirStr}-{$dayAkhir}'
-            GROUP BY qi.indicator_units
+            AND qir.result_period BETWEEN '{$tahun}-{$bulanMulaiStr}-01' 
+                AND '{$tahun}-{$bulanAkhirStr}-{$dayAkhir}'
         ", [$indicatorId]);
 
         $row = $query->getRow();
