@@ -29,7 +29,7 @@ class GrafikImprs extends AppController
         $tahun = $this->request->getGet('tahun') ?? date('Y');
         $indicatorId = $this->request->getGet('indicator_id');
 
-        $indicators = $this->rekapModel->getIndicatorImprs([]);
+        $indicators = $this->rekapModel->getIndicatorImprs(['vtahun' => (int) $tahun]);
 
         return $this->render('siimut/grafik_imprs', [
             'judul'    => 'Grafik Tren IMPRS',
