@@ -206,8 +206,8 @@
         </div>
         <div class="col-md-6">
             <label class="form-label fw-bold">Pilih Indikator</label>
-            <select class="form-select select2" id="indicator_id" style="width: 100%;" onchange="loadGrafik()">
-                <option value="0" <?= (!$indicatorId) ? 'selected' : '' ?>>--Pilih Indikator--</option>
+            <select class="form-select select2" id="indicator_id" style="width: 100%;">
+                <option value="">--Pilih Indikator--</option>
                 <?php foreach ($indicators as $ind): ?>
                     <option value="<?= $ind->indicator_id ?>" title="<?= esc($ind->indicator_element) ?>" <?= ($ind->indicator_id == $indicatorId) ? 'selected' : '' ?>>
                         <?= esc($ind->indicator_element) ?>
@@ -369,13 +369,31 @@
     var currentIndicatorData = null;
 
     $(document).ready(function() {
-        $('.select2').select2({
+        // Initialize Select2 for both dropdowns
+        var $tahun = $('#tahun').select2({
             theme: 'bootstrap-5',
-            placeholder: function() {
-                return $(this).attr('placeholder') || 'Pilih Indikator';
-            },
+            placeholder: 'Pilih Tahun',
+            allowClear: false,
+            width: '100%'
+        });
+        
+        var $indicator = $('#indicator_id').select2({
+            theme: 'bootstrap-5',
+            placeholder: '--Pilih Indikator--',
             allowClear: true,
             width: '100%'
+        });
+        
+        // Handle tahun change - reset indicator to placeholder
+        $tahun.on('change', function() {
+            $indicator.val('').trigger('change');
+            // Also call the loadGrafik function with isYearChange = true
+            loadGrafik(true);
+        });
+        
+        // Handle indicator change
+        $indicator.on('change', function() {
+            loadGrafik(false);
         });
     });
 
@@ -428,9 +446,14 @@
         if (isYearChange) {
             if (document.getElementById('indicator_id')) {
                 document.getElementById('indicator_id').value = '0';
-                // Trigger Select2 update
+                // Trigger Select2 update - use both methods
                 if (typeof $.fn.select2 !== 'undefined') {
-                    $('#indicator_id').val('0').trigger('change');
+                    var $indicator = $('#indicator_id');
+                    $indicator.val('0').trigger('change');
+                    // Also update the displayed text
+                    setTimeout(function() {
+                        $indicator.next('.select2-container').find('.select2-selection__rendered').text('--Pilih Indikator--');
+                    }, 50);
                 }
             }
             indicatorId = '0';
@@ -447,7 +470,7 @@
             return;
         }
 
-        if (!indicatorId || indicatorId === '0') {
+        if (!indicatorId || indicatorId === '0' || indicatorId === '') {
             if (document.getElementById('indicatorInfo')) {
                 document.getElementById('indicatorInfo').style.display = 'none';
             }
