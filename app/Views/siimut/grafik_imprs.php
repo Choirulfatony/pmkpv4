@@ -198,7 +198,8 @@
     <div class="row mb-4">
         <div class="col-md-4">
             <label class="form-label fw-bold">Pilih Tahun</label>
-            <select class="form-select select2" id="tahun" placeholder="Pilih Tahun" onchange="loadGrafik(true)">
+            <!-- Using jQuery Select2 events instead of onchange attribute -->
+            <select class="form-select select2" id="tahun" placeholder="Pilih Tahun">
                 <?php for ($y = date('Y'); $y >= date('Y') - 5; $y--): ?>
                     <option value="<?= $y ?>" <?= ($y == $tahun) ? 'selected' : '' ?>><?= $y ?></option>
                 <?php endfor; ?>

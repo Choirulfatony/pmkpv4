@@ -315,9 +315,8 @@ public function getIndicatorImprs($post)
 
     private $_totalRecords = 0;
 
-    /**
-     * Cek apakah indicator punya data di tahun tertentu
-     */
+    // === UNUSED CODE (kept for reference) ===
+    /*
     private function checkIndicatorHasData(int $indicatorId, int $tahun): bool
     {
         $db = db_connect();
@@ -327,9 +326,9 @@ public function getIndicatorImprs($post)
             AND YEAR(result_period) = ? 
             LIMIT 1
         ", [$indicatorId, $tahun]);
-
         return $query->getNumRows() > 0;
     }
+    */
 
     /**
      * Ambil semua indicator yang punya data di tahun tertentu (sekali query)
