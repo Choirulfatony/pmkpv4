@@ -118,7 +118,7 @@
 
         70% {
             width: 1em;
-            box-shadow: -2em -1em rgba(225, 20, 98, 0.75), 2em 1em rgba(111, 202, 220, 0.75);
+            box-shadow: 0 -1em rgba(225, 20, 98, 0.75), 2em 1em rgba(111, 202, 220, 0.75);
         }
 
         100% {
@@ -146,12 +146,8 @@
             box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
         }
     }
-
-    .select2-results__option {
-        white-space: normal !important;
-        line-height: 18px;
-    }
 </style>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" rel="stylesheet" />
 
 <div class="container-fluid py-4">
     <div class="row mb-4">
@@ -164,7 +160,7 @@
     <div class="row mb-4">
         <div class="col-md-4">
             <label class="form-label fw-bold">Pilih Tahun</label>
-            <select class="form-select" id="tahun" onchange="loadGrafik(true)">
+            <select class="form-select select2" id="tahun" placeholder="Pilih Tahun" onchange="loadGrafik(true)">
                 <?php for ($y = date('Y'); $y >= date('Y') - 5; $y--): ?>
                     <option value="<?= $y ?>" <?= ($y == $tahun) ? 'selected' : '' ?>><?= $y ?></option>
                 <?php endfor; ?>
@@ -172,69 +168,13 @@
         </div>
         <div class="col-md-6">
             <label class="form-label fw-bold">Pilih Indikator</label>
-
-<select class="form-select" id="indicator_id" onchange="loadGrafik()">
-    <option value="0" <?= (!$indicatorId) ? 'selected' : '' ?>>--Pilih Indikator--</option>
-    <?php foreach ($indicators as $ind): ?>
-
-                    <?php
-                    $nama = $ind->indicator_element;
-
-                    // hapus kata panjang / tidak penting
-                    $nama = str_ireplace([
-                        'Kepatuhan ',
-                        'pelaksanaan ',
-                        'Pelaksanaan ',
-                        'pada ',
-                        'Pada ',
-                        'dengan ',
-                        'Dengan ',
-                        'oleh ',
-                        'Oleh ',
-                        'saat ',
-                        'Saat ',
-                        'terhadap ',
-                        'Terhadap ',
-                        'dan ',
-                        'Dan '
-                    ], '', $nama);
-
-                    // singkatan kata umum
-                    $nama = str_ireplace([
-                        'Pasien',
-                        'Pemberian',
-                        'Pelayanan',
-                        'Rumah Sakit',
-                        'Kebersihan',
-                        'Pendaftaran',
-                        'Penggunaan',
-                        'Identifikasi'
-                    ], [
-                        'Psn',
-                        'Pmb',
-                        'Lyn',
-                        'RS',
-                        'Bersih',
-                        'Daftar',
-                        'Guna',
-                        'Ident'
-                    ], $nama);
-
-                     // potong jika masih panjang
-                     $short = strlen($nama) > 25 ? substr($nama, 0, 25) . '...' : $nama;
-                    ?>
-
-                    <option
-                        value="<?= $ind->indicator_id ?>"
-                        title="<?= esc($ind->indicator_element) ?>"
-                        <?= ($ind->indicator_id == $indicatorId) ? 'selected' : '' ?>>
-
-                        <?= esc($short) ?>
-
+            <select class="form-select select2" id="indicator_id" style="width: 100%;" onchange="loadGrafik()">
+                <option value="0" <?= (!$indicatorId) ? 'selected' : '' ?>>--Pilih Indikator--</option>
+                <?php foreach ($indicators as $ind): ?>
+                    <option value="<?= $ind->indicator_id ?>" title="<?= esc($ind->indicator_element) ?>" <?= ($ind->indicator_id == $indicatorId) ? 'selected' : '' ?>>
+                        <?= esc($ind->indicator_element) ?>
                     </option>
-
                 <?php endforeach; ?>
-
             </select>
         </div>
     </div>
@@ -255,7 +195,6 @@
     </div>
 
     <div id="grafikContainer" style="display: none;">
-        <!-- 🔥 1. Grafik Bulanan (UTAMA) -->
         <div class="row">
             <div class="col-12">
                 <div class="card card-grafik">
@@ -267,7 +206,6 @@
             </div>
         </div>
 
-        <!-- 🔥 1b. Tabel Detail Bulanan -->
         <div class="row mb-3">
             <div class="col-12">
                 <div class="card card-grafik">
@@ -301,7 +239,6 @@
             </div>
         </div>
 
-        <!-- 🔥 2. Ringkasan Tahunan (Card Kecil) -->
         <div class="row mb-3">
             <div class="col-md-3">
                 <div class="card border-success border-2 shadow-sm h-100" style="border-width: 2px;">
@@ -337,7 +274,6 @@
             </div>
         </div>
 
-        <!-- Keterangan / Penjelasan -->
         <div class="row mb-3">
             <div class="col-12">
                 <div id="keterangan" class="alert alert-light border mb-0">
@@ -346,7 +282,6 @@
             </div>
         </div>
 
-        <!-- 🔥 3. Triwulan & Semester (Side by Side) -->
         <div class="row">
             <div class="col-md-6">
                 <div class="card card-grafik">
@@ -366,7 +301,6 @@
             </div>
         </div>
 
-        <!-- 🔥 4. Per Tahun (History - di bawah) -->
         <div class="row">
             <div class="col-12">
                 <div class="card card-grafik">
@@ -391,9 +325,21 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     var lineChart, triwulanChart, semesterChart, perTahunChart;
     var currentIndicatorData = null;
+
+    $(document).ready(function() {
+        $('.select2').select2({
+            theme: 'bootstrap-5',
+            placeholder: function() {
+                return $(this).attr('placeholder') || 'Pilih Indikator';
+            },
+            allowClear: true,
+            width: '100%'
+        });
+    });
 
     window.addEventListener('themechange', function(e) {
         if (currentIndicatorData && currentIndicatorData.bulanan && currentIndicatorData.indicator) {
@@ -415,17 +361,13 @@
         var isIndex = units.indexOf('indek') !== -1 || units.indexOf('indeks') !== -1 || units.indexOf('index') !== -1;
 
         if (isPercent) {
-            // Persen: target * 2 atau max data * 1.2
             var calcMax = target * 2;
             return Math.max(maxData * 1.2, calcMax);
         } else if (isTime) {
-            // Waktu: max data * 1.3 atau target * 1.3
             return Math.max(maxData * 1.3, target * 1.3);
         } else if (isIndex) {
-            // Indeks: gunakan max(data, target) * 1.3
             return Math.max(maxData, target) * 1.3;
         }
-        // Default: max(data * 1.2, target * 1.3)
         return Math.max(maxData * 1.2, target * 1.3);
     }
 
@@ -441,51 +383,81 @@
         document.getElementById('tabelNumDenumBody').innerHTML = '';
     }
 
-function loadGrafik(isYearChange = false) {
-    var tahun = document.getElementById('tahun').value;
-    var indicatorId = document.getElementById('indicator_id').value;
+    function loadGrafik(isYearChange) {
+        var tahun = document.getElementById('tahun').value;
+        var indicatorId = document.getElementById('indicator_id').value;
 
-    // Reset indicator dropdown when year changes
-    if (isYearChange) {
-        document.getElementById('indicator_id').value = '0';
-        indicatorId = '0';
-        document.getElementById('indicatorInfo').style.display = 'none';
-        document.getElementById('grafikContainer').style.display = 'none';
-        document.getElementById('loadingGrafik').style.display = 'none';
-        resetSummaryCards();
-        return;
-    }
+        if (isYearChange) {
+            if (document.getElementById('indicator_id')) {
+                document.getElementById('indicator_id').value = '0';
+            }
+            indicatorId = '0';
+            if (document.getElementById('indicatorInfo')) {
+                document.getElementById('indicatorInfo').style.display = 'none';
+            }
+            if (document.getElementById('grafikContainer')) {
+                document.getElementById('grafikContainer').style.display = 'none';
+            }
+            if (document.getElementById('loadingGrafik')) {
+                document.getElementById('loadingGrafik').style.display = 'none';
+            }
+            resetSummaryCards();
+            return;
+        }
 
-    if (!indicatorId || indicatorId === '0') {
-        document.getElementById('indicatorInfo').style.display = 'none';
-        document.getElementById('grafikContainer').style.display = 'none';
-        document.getElementById('loadingGrafik').style.display = 'none';
-        resetSummaryCards();
-        return;
-    }
+        if (!indicatorId || indicatorId === '0') {
+            if (document.getElementById('indicatorInfo')) {
+                document.getElementById('indicatorInfo').style.display = 'none';
+            }
+            if (document.getElementById('grafikContainer')) {
+                document.getElementById('grafikContainer').style.display = 'none';
+            }
+            if (document.getElementById('loadingGrafik')) {
+                document.getElementById('loadingGrafik').style.display = 'none';
+            }
+            resetSummaryCards();
+            return;
+        }
 
-        document.getElementById('loadingGrafik').style.display = 'block';
-        document.getElementById('grafikContainer').style.display = 'none';
+        if (document.getElementById('loadingGrafik')) {
+            document.getElementById('loadingGrafik').style.display = 'block';
+        }
+        if (document.getElementById('grafikContainer')) {
+            document.getElementById('grafikContainer').style.display = 'none';
+        }
 
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '<?= site_url('siimut/grafik-imprs/data') ?>', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
-                document.getElementById('loadingGrafik').style.display = 'none';
+                if (document.getElementById('loadingGrafik')) {
+                    document.getElementById('loadingGrafik').style.display = 'none';
+                }
                 if (xhr.status === 200) {
                     var response = JSON.parse(xhr.responseText);
                     currentIndicatorData = response;
-                    document.getElementById('grafikContainer').style.display = 'block';
-                    document.getElementById('indicatorInfo').style.display = 'block';
-                    document.getElementById('indicatorName').textContent = response.indicator.indicator_element;
-                    document.getElementById('indicatorTarget').textContent = response.indicator.indicator_target;
+                    if (document.getElementById('grafikContainer')) {
+                        document.getElementById('grafikContainer').style.display = 'block';
+                    }
+                    if (document.getElementById('indicatorInfo')) {
+                        document.getElementById('indicatorInfo').style.display = 'block';
+                    }
+                    if (document.getElementById('indicatorName')) {
+                        document.getElementById('indicatorName').textContent = response.indicator.indicator_element;
+                    }
+                    if (document.getElementById('indicatorTarget')) {
+                        document.getElementById('indicatorTarget').textContent = response.indicator.indicator_target;
+                    }
                     var units = response.indicator.indicator_units || '';
-                    document.getElementById('indicatorUnits').textContent = units;
-                    document.getElementById('indicatorUnitsLabel').textContent = units;
+                    if (document.getElementById('indicatorUnits')) {
+                        document.getElementById('indicatorUnits').textContent = units;
+                    }
+                    if (document.getElementById('indicatorUnitsLabel')) {
+                        document.getElementById('indicatorUnitsLabel').textContent = units;
+                    }
                     var statusBadge = document.getElementById('statusBadge');
                     var target = parseFloat(response.indicator.indicator_target || 0);
-                    var units = response.indicator.indicator_units || '';
                     var nilai = response.tahunan.nilai || 0;
 
                     if (response.tahunan.tercap) {
@@ -496,14 +468,16 @@ function loadGrafik(isYearChange = false) {
                         statusBadge.className = 'status-badge status-tidak';
                     }
 
-                    // Update summary cards
-                    document.getElementById('summaryNilai').textContent = nilai + ' ' + units;
-                    document.getElementById('summaryTarget').textContent = target + ' ' + units;
+                    if (document.getElementById('summaryNilai')) {
+                        document.getElementById('summaryNilai').textContent = nilai + ' ' + units;
+                    }
+                    if (document.getElementById('summaryTarget')) {
+                        document.getElementById('summaryTarget').textContent = target + ' ' + units;
+                    }
 
-                    // Calculate trend (bandingkan dengan nilai tahun lalu)
                     var perTahun = response.per_tahun;
                     var tahunKeys = Object.keys(perTahun).sort();
-                    var lastYear = tahunKeys[tahunKeys.length - 2]; // tahun lalu
+                    var lastYear = tahunKeys[tahunKeys.length - 2];
                     var trendEl = document.getElementById('summaryTrend');
                     var statusEl = document.getElementById('summaryStatus');
 
@@ -526,7 +500,6 @@ function loadGrafik(isYearChange = false) {
                             trendText = 'stabil';
                         }
 
-                        // Status badge
                         if (response.tahunan.tercap) {
                             statusEl.textContent = 'TERCAPAI ✓';
                             statusEl.className = 'mb-1 text-success fw-bold';
@@ -537,7 +510,6 @@ function loadGrafik(isYearChange = false) {
                             statusEl.parentElement.parentElement.classList.add('border-danger');
                         }
 
-                        // Generate Keterangan (Bahasa PMKP)
                         var lastYearNilai = perTahun[lastYear].nilai;
                         var analisasHtml = '<strong>Analisis:</strong><br><br>';
 
@@ -595,7 +567,6 @@ function loadGrafik(isYearChange = false) {
                     renderTriwulanChart(response.triwulan, response.indicator);
                     renderSemesterChart(response.semester, response.indicator);
                     renderPerTahunChart(response.per_tahun, response.indicator);
-                    // renderTahunanChart removed - now shown as summary cards
                 } else {
                     alert('Error mengambil data');
                 }
@@ -873,7 +844,6 @@ function loadGrafik(isYearChange = false) {
 
                 labels.push(year);
                 data.push(hasData ? nilai : null);
-                // Use gray for no data, green if achieved, red if not achieved
                 colors.push(hasData ? '#28a745' : '#6c757d');
             }
         }
@@ -935,6 +905,8 @@ function loadGrafik(isYearChange = false) {
 <?php if ($indicatorId): ?>
     loadGrafik();
 <?php else: ?>
-    document.getElementById('loadingGrafik').style.display = 'none';
+    if (document.getElementById('loadingGrafik')) {
+        document.getElementById('loadingGrafik').style.display = 'none';
+    }
 <?php endif; ?>
 </script>
