@@ -384,10 +384,8 @@
             width: '100%'
         });
         
-        // Handle tahun change - reset indicator to placeholder
+        // Handle tahun change - reload graph without resetting indicator
         $tahun.on('change', function() {
-            $indicator.val('').trigger('change');
-            // Also call the loadGrafik function with isYearChange = true
             loadGrafik(true);
         });
         
@@ -397,7 +395,6 @@
         });
         
         // Clear indicator selection on page load if no URL indicator_id param
-        // This fixes F5 keeping the previous selection
         var urlParams = new URLSearchParams(window.location.search);
         if (!urlParams.has('indicator_id')) {
             $indicator.val('').trigger('change');
@@ -450,33 +447,8 @@
         var tahun = document.getElementById('tahun').value;
         var indicatorId = document.getElementById('indicator_id').value;
 
-        if (isYearChange) {
-            if (document.getElementById('indicator_id')) {
-                document.getElementById('indicator_id').value = '0';
-                // Trigger Select2 update - use both methods
-                if (typeof $.fn.select2 !== 'undefined') {
-                    var $indicator = $('#indicator_id');
-                    $indicator.val('0').trigger('change');
-                    // Also update the displayed text
-                    setTimeout(function() {
-                        $indicator.next('.select2-container').find('.select2-selection__rendered').text('--Pilih Indikator--');
-                    }, 50);
-                }
-            }
-            indicatorId = '0';
-            if (document.getElementById('indicatorInfo')) {
-                document.getElementById('indicatorInfo').style.display = 'none';
-            }
-            if (document.getElementById('grafikContainer')) {
-                document.getElementById('grafikContainer').style.display = 'none';
-            }
-            if (document.getElementById('loadingGrafik')) {
-                document.getElementById('loadingGrafik').style.display = 'none';
-            }
-            resetSummaryCards();
-            return;
-        }
-
+        // When year changes, keep indicator selection and reload graph
+        // Only hide graph if no indicator is selected
         if (!indicatorId || indicatorId === '0' || indicatorId === '') {
             if (document.getElementById('indicatorInfo')) {
                 document.getElementById('indicatorInfo').style.display = 'none';
