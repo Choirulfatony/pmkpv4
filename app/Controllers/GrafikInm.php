@@ -29,7 +29,7 @@ class GrafikInm extends AppController
         $tahun = $this->request->getGet('tahun') ?? date('Y');
         $indicatorId = $this->request->getGet('indicator_id');
 
-        // Ambil semua indikator untuk dropdown
+        // Ambil semua indikator untuk dropdown - dengan sorting: indikator dengan data di atas
         $indicators = $this->rekapModel->getIndicatorInm(['vtahun' => (int) $tahun]);
 
         return $this->render('siimut/grafik_inm', [

@@ -271,20 +271,20 @@ class RekapLaporanInmModel extends Model
             $builder->orderBy('indicator_element', 'ASC');
         }
 
-        // Ambil SEMUA data dulu (tanpa limit) agar bisa diurutkan dengan benar
+        // === Ambil SEMUA data dulu (tanpa limit) agar bisa diurutkan dengan benar ===
         $allBuilder = clone $builder;
         $allBuilder->limit(10000, 0);
         $allResults = $allBuilder->get()->getResult();
 
-        // Ambil semua indicator yang punya data (sekali query saja)
+        // === Ambil semua indicator yang punya data (sekali query saja) ===
         $indicatorsWithData = $this->getIndicatorsWithData($vtahun);
 
-        // Urutin manual: yang punya data di atas, yang tidak di bawah
+        // === Urutin manual: yang punya data di atas, yang tidak di bawah ===
         $withData = [];
         $withoutData = [];
 
         foreach ($allResults as $row) {
-            // Cast ke int untuk確保 perbandingan benar
+            // Cast ke int untuk确保 perbandingan benar
             $rowId = (int) $row->indicator_id;
             if (in_array($rowId, array_map('intval', $indicatorsWithData))) {
                 $withData[] = $row;
@@ -293,10 +293,10 @@ class RekapLaporanInmModel extends Model
             }
         }
 
-        // Gabungkan: yang punya data di atas
+        // === Gabungkan: yang punya data di atas ===
         $sortedResults = array_merge($withData, $withoutData);
 
-        // Apply pagination manual
+        // === Apply pagination manual ===
         $start = (int) ($post['start'] ?? 0);
         $length = (int) ($post['length'] ?? -1);
         
@@ -305,6 +305,16 @@ class RekapLaporanInmModel extends Model
         }
 
         return $sortedResults;
+
+        // === OLD CODE (unused - replaced by sorting logic above) ===
+        /*
+        // Pagination
+        if (isset($post['length']) && $post['length'] != -1) {
+            $builder->limit($post['length'], $post['start'] ?? 0);
+        }
+
+        return $builder->get()->getResult();
+        */
     }
 
     /**
