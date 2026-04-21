@@ -1,5 +1,5 @@
 <!--begin::Sidebar-->
-<aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="">
+<aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="" id="mainSidebar">
     <!--begin::Sidebar Brand-->
     <div class="sidebar-brand sticky-top bg-body shadow-sm">
         <a href="<?= site_url('dashboard') ?>" class="brand-link">

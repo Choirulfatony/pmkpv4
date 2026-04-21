@@ -152,7 +152,23 @@
         </div>
     </div>
 
+<script>
+// Close sidebar when clicking any menu link
+var links = document.querySelectorAll('.sidebar-menu > li > a');
+for(var i=0; i<links.length; i++) {
+    links[i].onclick = function() {
+        if(this.getAttribute('href') !== '#') {
+            document.body.classList.add('sidebar-collapse');
+        }
+    };
+}
+</script>
+
 </body>
+
+
+
+
 
 <script>
     // 🔒 Anti Back - Cek session dan redirect jika tidak valid

@@ -1,42 +1,4 @@
 <style>
-    /* Select2 dark mode support - with high specificity */
-    [data-bs-theme="dark"] .select2-selection,
-    [data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection,
-    [data-bs-theme="dark"] .select2-container--open .select2-selection {
-        background-color: #2b3035 !important;
-        border-color: #495057 !important;
-    }
-
-    [data-bs-theme="dark"] .select2-selection__rendered,
-    [data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection__rendered,
-    [data-bs-theme="dark"] #select2-indicator_id-container,
-    [data-bs-theme="dark"] #select2-tahun-container {
-        color: #dee2e6 !important;
-        background-color: transparent !important;
-    }
-
-    [data-bs-theme="dark"] .select2-dropdown,
-    [data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-dropdown {
-        background-color: #2b3035 !important;
-        border-color: #495057 !important;
-    }
-
-    [data-bs-theme="dark"] .select2-results__option,
-    [data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-results__option {
-        color: #dee2e6 !important;
-    }
-
-    [data-bs-theme="dark"] .select2-results__option--highlighted,
-    [data-bs-theme="dark"] .select2-results__option--highlighted[aria-selected] {
-        background-color: #0d6efd !important;
-        color: white !important;
-    }
-
-    [data-bs-theme="dark"] .select2-selection__arrow b,
-    [data-bs-theme="dark"] .select2-selection--single .select2-selection__arrow::after {
-        border-color: #dee2e6 transparent transparent transparent !important;
-    }
-
     .chart-container {
         position: relative;
         height: 350px;
@@ -47,7 +9,7 @@
     }
 
     .indicator-info {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
         color: white;
         padding: 15px;
         border-radius: 8px;
@@ -86,7 +48,7 @@
 
     .card-grafik .card-header {
         background: var(--bs-tertiary-bg);
-        border-bottom: 2px solid #28a745;
+        border-bottom: 2px solid #007bff;
         font-weight: bold;
         color: var(--bs-body-color);
     }
@@ -156,7 +118,7 @@
 
         70% {
             width: 1em;
-            box-shadow: 0 -1em rgba(225, 20, 98, 0.75), 2em 1em rgba(111, 202, 220, 0.75);
+            box-shadow: -2em -1em rgba(225, 20, 98, 0.75), 2em 1em rgba(111, 202, 220, 0.75);
         }
 
         100% {
@@ -185,90 +147,47 @@
         }
     }
 </style>
-<!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" rel="stylesheet" /> -->
 
 <div class="container-fluid py-4">
-
-    <div class="card shadow-sm mb-4">
-        <div class="card-body py-3">
-
-            <div class="row align-items-center">
-
-                <!-- Judul -->
-                <div class="col-md-6">
-                    <h5 class="fw-semibold mb-1">
-                        <i class="bi bi-graph-up me-2"></i>
-                        Grafik Tren IMPRS
-                    </h5>
-                    <small class="text-muted">
-                        Monitoring indikator mutu Mutu Prioritas RS (IMPRS)
-                    </small>
-                </div>
-
-                <!-- Filter -->
-                <div class="col-md-6">
-                    <div class="row g-2 justify-content-end">
-
-                        <div class="col-md-4">
-                            <select class="form-select form-select-sm" id="tahun">
-                                <?php for ($y = date('Y'); $y >= date('Y') - 5; $y--): ?>
-                                    <option value="<?= $y ?>" <?= ($y == $tahun) ? 'selected' : '' ?>>
-                                        <?= $y ?>
-                                    </option>
-                                <?php endfor; ?>
-                            </select>
-                        </div>
-
-                        <div class="col-md-8">
-                            <select class="form-select form-select-sm select2" id="indicator_id" style="width:100%;">
-                                <option value="">Pilih indikator...</option>
-                                <?php foreach ($indicators as $ind): ?>
-                                    <option value="<?= $ind->indicator_id ?>"
-                                        <?= ($ind->indicator_id == $indicatorId) ? 'selected' : '' ?>>
-                                        <?= esc($ind->indicator_element) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                    </div>
-                </div>
-
-            </div>
-
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4><i class="bi bi-graph-up-arrow me-2"></i>Grafik Tren Indikator Mutu Prioritas RS</h4>
+            <p class="text-muted">Visualisasi kinerja indikator IMPRS - Tren Bulanan, Triwulan, Semester, dan Tahunan</p>
         </div>
     </div>
 
-    <!-- <div class="row mb-4">
-        <div class="col-12">
-            <h4><i class="bi bi-graph-up me-2"></i>Grafik Tren Indikator Mutu Prioritas RS (IMPRS)</h4>
-            <p class="text-muted">Visualisasi kinerja Indikator Mutu Prioritas RS - Tren Bulanan, Triwulan, Semester, dan Tahunan</p>
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Pilih Tahun</label>
+            <select class="form-select" id="tahun" onchange="loadGrafik(true)">
+                <?php for ($y = date('Y'); $y >= date('Y') - 5; $y--): ?>
+                    <option value="<?= $y ?>" <?= ($y == $tahun) ? 'selected' : '' ?>><?= $y ?></option>
+                <?php endfor; ?>
+            </select>
         </div>
-    </div> -->
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Pilih Indikator</label>
+            <select class="form-select" id="indicator_id" onchange="loadGrafik()">
+                <option value="">-- Pilih Indikator --</option>
+                <?php foreach ($indicators as $ind): ?>
+                    <option value="<?= $ind->indicator_id ?>" <?= ($ind->indicator_id == $indicatorId) ? 'selected' : '' ?>><?= esc($ind->indicator_element) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    </div>
 
-    <div id="indicatorInfo" class="card border-0 shadow-sm mb-3" style="display:none;">
-        <div class="card-body py-3">
-
-            <div class="row align-items-center">
-
-                <div class="col-12">
-                    <h3 id="indicatorName" class="fw-bold mb-3 text-primary"></h3>
-
-                    <div class="d-flex flex-wrap gap-3">
-                        <span class="badge bg-primary fs-6 py-2 px-3">
-                            <i class="bi bi-bullseye me-1"></i>Target: <span id="indicatorTarget" class="fw-bold"></span>
-                        </span>
-
-                        <span class="badge bg-secondary fs-6 py-2 px-3">
-                            <i class="bi bi-rulers me-1"></i>Satuan: <span id="indicatorUnitsLabel" class="fw-bold"></span>
-                        </span>
-
-                        <span id="statusBadge" class="badge fs-6 py-2 px-3"></span>
-                    </div>
+    <div id="indicatorInfo" class="indicator-info" style="display: none;">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h4 id="indicatorName" class="mb-2 fw-bold"></h4>
+                <div>
+                    <span class="badge bg-secondary me-2">Target: <span id="indicatorTarget"></span> <span id="indicatorUnits"></span></span>
+                    <span class="badge bg-secondary me-2">Satuan: <span id="indicatorUnitsLabel"></span></span>
+                    <span id="statusBadge" class="badge"></span>
                 </div>
-
             </div>
-
+            <div class="col-md-4 text-end">
+            </div>
         </div>
     </div>
 
@@ -292,7 +211,7 @@
                         <div class="table-responsive">
                             <table class="table table-bordered table-sm" id="tabelNumDenum" style="border-collapse: collapse;">
                                 <thead>
-                                    <tr class="text-white" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);">
+                                    <tr class="text-white" style="background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);">
                                         <th class="text-center py-2">Bulan</th>
                                         <th class="text-center py-2">Num</th>
                                         <th class="text-center py-2">Denum</th>
@@ -319,17 +238,17 @@
 
         <div class="row mb-3">
             <div class="col-md-3">
-                <div class="card border-success border-2 shadow-sm h-100" style="border-width: 2px;">
+                <div class="card border-primary border-2 shadow-sm h-100" style="border-width: 2px;">
                     <div class="card-body text-center py-3">
-                        <h1 class="mb-1 text-success fw-bold display-4" id="summaryNilai">-</h1>
+                        <h2 class="mb-1 text-primary fw-bold" id="summaryNilai">-</h2>
                         <small class="text-muted fw-semibold">Capaian</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card border-primary border-2 shadow-sm h-100" style="border-width: 2px;">
+                <div class="card border-info border-2 shadow-sm h-100" style="border-width: 2px;">
                     <div class="card-body text-center py-3">
-                        <h1 class="mb-1 text-primary fw-bold display-4" id="summaryTarget">-</h1>
+                        <h2 class="mb-1 text-info fw-bold" id="summaryTarget">-</h2>
                         <small class="text-muted fw-semibold">Target</small>
                     </div>
                 </div>
@@ -337,7 +256,7 @@
             <div class="col-md-3">
                 <div class="card border-warning border-2 shadow-sm h-100" style="border-width: 2px;">
                     <div class="card-body text-center py-3">
-                        <h1 class="mb-1 display-6" id="summaryTrend">-</h1>
+                        <h2 class="mb-1" id="summaryTrend">-</h2>
                         <small class="text-muted fw-semibold">Trend</small>
                     </div>
                 </div>
@@ -345,7 +264,7 @@
             <div class="col-md-3">
                 <div class="card border-2 shadow-sm h-100" style="border-width: 2px;">
                     <div class="card-body text-center py-3">
-                        <h1 class="mb-1 fw-bold display-6" id="summaryStatus">-</h1>
+                        <h2 class="mb-1 fw-bold" id="summaryStatus">-</h2>
                         <small class="text-muted fw-semibold">Status</small>
                     </div>
                 </div>
@@ -364,17 +283,13 @@
             <div class="col-md-6">
                 <div class="card card-grafik">
                     <div class="card-header"><i class="bi bi-bar-chart me-2"></i>Triwulan</div>
-                    <div class="card-body">
-                        <div class="chart-container"><canvas id="triwulanChart"></canvas></div>
-                    </div>
+                    <div class="card-body"><div class="chart-container"><canvas id="triwulanChart"></canvas></div></div>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="card card-grafik">
                     <div class="card-header"><i class="bi bi-bar-chart me-2"></i>Semester</div>
-                    <div class="card-body">
-                        <div class="chart-container"><canvas id="semesterChart"></canvas></div>
-                    </div>
+                    <div class="card-body"><div class="chart-container"><canvas id="semesterChart"></canvas></div></div>
                 </div>
             </div>
         </div>
@@ -383,9 +298,7 @@
             <div class="col-12">
                 <div class="card card-grafik">
                     <div class="card-header"><i class="bi bi-calendar-range me-2"></i>Tren Per Tahun</div>
-                    <div class="card-body">
-                        <div class="chart-container" style="height: 250px;"><canvas id="perTahunChart"></canvas></div>
-                    </div>
+                    <div class="card-body"><div class="chart-container" style="height: 250px;"><canvas id="perTahunChart"></canvas></div></div>
                 </div>
             </div>
         </div>
@@ -402,44 +315,10 @@
     </div>
 </div>
 
-<!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     var lineChart, triwulanChart, semesterChart, perTahunChart;
     var currentIndicatorData = null;
-
-    $(document).ready(function() {
-        // Initialize Select2 for both dropdowns
-        var $tahun = $('#tahun').select2({
-            theme: 'bootstrap-5',
-            placeholder: 'Pilih Tahun',
-            allowClear: false,
-            width: '100%'
-        });
-
-        var $indicator = $('#indicator_id').select2({
-            theme: 'bootstrap-5',
-            placeholder: '--Pilih Indikator--',
-            allowClear: true,
-            width: '100%'
-        });
-
-        // Handle tahun change - reload graph without resetting indicator
-        $tahun.on('change', function() {
-            loadGrafik(true);
-        });
-
-        // Handle indicator change
-        $indicator.on('change', function() {
-            loadGrafik(false);
-        });
-
-        // Clear indicator selection on page load if no URL indicator_id param
-        var urlParams = new URLSearchParams(window.location.search);
-        if (!urlParams.has('indicator_id')) {
-            $indicator.val('').trigger('change');
-        }
-    });
 
     window.addEventListener('themechange', function(e) {
         if (currentIndicatorData && currentIndicatorData.bulanan && currentIndicatorData.indicator) {
@@ -452,14 +331,12 @@
     });
 
     function getMaxScale(target, units, dataArray) {
-        var maxData = Math.max.apply(null, dataArray.filter(function(x) {
-            return x > 0;
-        }));
-
+        var maxData = Math.max.apply(null, dataArray.filter(function(x) { return x > 0; }));
+        
         var isPercent = units.indexOf('%') !== -1;
         var isTime = units.indexOf('menit') !== -1 || units.indexOf('mnt') !== -1 || units.indexOf('menit') !== -1 || units.indexOf('detik') !== -1 || units.indexOf('dtk') !== -1;
         var isIndex = units.indexOf('indek') !== -1 || units.indexOf('indeks') !== -1 || units.indexOf('index') !== -1;
-
+        
         if (isPercent) {
             var calcMax = target * 2;
             return Math.max(maxData * 1.2, calcMax);
@@ -472,107 +349,73 @@
     }
 
     function resetSummaryCards() {
-        var summaryNilai = document.getElementById('summaryNilai');
-        var summaryTarget = document.getElementById('summaryTarget');
-        var summaryTrend = document.getElementById('summaryTrend');
-        var summaryStatus = document.getElementById('summaryStatus');
-        var keterangan = document.getElementById('keterangan');
-        var tabelNumDenumBody = document.getElementById('tabelNumDenumBody');
-
-        if (summaryNilai) summaryNilai.textContent = '-';
-        if (summaryTarget) summaryTarget.textContent = '-';
-        if (summaryTrend) {
-            summaryTrend.textContent = '-';
-            summaryTrend.className = 'mb-1';
-        }
-        if (summaryStatus) {
-            summaryStatus.textContent = '-';
-            summaryStatus.className = 'mb-1';
-            if (summaryStatus.parentElement && summaryStatus.parentElement.parentElement) {
-                summaryStatus.parentElement.parentElement.className = 'card border-2 shadow-sm h-100';
-            }
-        }
-        if (keterangan) keterangan.innerHTML = '<i class="bi bi-info-circle me-1"></i> Pilih indikator untuk melihat keterangan.';
-        if (tabelNumDenumBody) tabelNumDenumBody.innerHTML = '';
+        document.getElementById('summaryNilai').textContent = '-';
+        document.getElementById('summaryTarget').textContent = '-';
+        document.getElementById('summaryTrend').textContent = '-';
+        document.getElementById('summaryTrend').className = 'mb-1';
+        document.getElementById('summaryStatus').textContent = '-';
+        document.getElementById('summaryStatus').className = 'mb-1';
+        document.getElementById('summaryStatus').parentElement.parentElement.className = 'card border-2 shadow-sm h-100';
+        document.getElementById('keterangan').innerHTML = '<i class="bi bi-info-circle me-1"></i> Pilih indikator untuk melihat keterangan.';
+        document.getElementById('tabelNumDenumBody').innerHTML = '';
     }
 
-    function loadGrafik(isYearChange) {
+    function loadGrafik(isYearChange = false) {
         var tahun = document.getElementById('tahun').value;
         var indicatorId = document.getElementById('indicator_id').value;
 
-        // When year changes, keep indicator selection and reload graph
-        // Only hide graph if no indicator is selected
-        if (!indicatorId || indicatorId === '0' || indicatorId === '') {
-            if (document.getElementById('indicatorInfo')) {
-                document.getElementById('indicatorInfo').style.display = 'none';
-            }
-            if (document.getElementById('grafikContainer')) {
-                document.getElementById('grafikContainer').style.display = 'none';
-            }
-            if (document.getElementById('loadingGrafik')) {
-                document.getElementById('loadingGrafik').style.display = 'none';
-            }
+        if (isYearChange) {
+            document.getElementById('indicator_id').value = '';
+            indicatorId = '';
+            document.getElementById('indicatorInfo').style.display = 'none';
+            document.getElementById('grafikContainer').style.display = 'none';
+            document.getElementById('loadingGrafik').style.display = 'none';
             resetSummaryCards();
             return;
         }
 
-        if (document.getElementById('loadingGrafik')) {
-            document.getElementById('loadingGrafik').style.display = 'block';
-        }
-        if (document.getElementById('grafikContainer')) {
+        if (!indicatorId) {
+            document.getElementById('indicatorInfo').style.display = 'none';
             document.getElementById('grafikContainer').style.display = 'none';
+            document.getElementById('loadingGrafik').style.display = 'none';
+            resetSummaryCards();
+            return;
         }
+
+        document.getElementById('loadingGrafik').style.display = 'block';
+        document.getElementById('grafikContainer').style.display = 'none';
 
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '<?= site_url('siimut/grafik-imprs/data') ?>', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
-                if (document.getElementById('loadingGrafik')) {
-                    document.getElementById('loadingGrafik').style.display = 'none';
-                }
+                document.getElementById('loadingGrafik').style.display = 'none';
                 if (xhr.status === 200) {
                     var response = JSON.parse(xhr.responseText);
                     currentIndicatorData = response;
-                    if (document.getElementById('grafikContainer')) {
-                        document.getElementById('grafikContainer').style.display = 'block';
-                    }
-                    if (document.getElementById('indicatorInfo')) {
-                        document.getElementById('indicatorInfo').style.display = 'block';
-                    }
-                    if (document.getElementById('indicatorName')) {
-                        document.getElementById('indicatorName').textContent = response.indicator.indicator_element;
-                    }
-                    if (document.getElementById('indicatorTarget')) {
-                        document.getElementById('indicatorTarget').textContent = response.indicator.indicator_target;
-                    }
+                    document.getElementById('grafikContainer').style.display = 'block';
+                    document.getElementById('indicatorInfo').style.display = 'block';
+                    document.getElementById('indicatorName').textContent = response.indicator.indicator_element;
+                    document.getElementById('indicatorTarget').textContent = response.indicator.indicator_target;
                     var units = response.indicator.indicator_units || '';
-                    if (document.getElementById('indicatorUnits')) {
-                        document.getElementById('indicatorUnits').textContent = units;
-                    }
-                    if (document.getElementById('indicatorUnitsLabel')) {
-                        document.getElementById('indicatorUnitsLabel').textContent = units;
-                    }
+                    document.getElementById('indicatorUnits').textContent = units;
+                    document.getElementById('indicatorUnitsLabel').textContent = units;
                     var statusBadge = document.getElementById('statusBadge');
                     var target = parseFloat(response.indicator.indicator_target || 0);
+                    var units = response.indicator.indicator_units || '';
                     var nilai = response.tahunan.nilai || 0;
 
-                    if (statusBadge) {
-                        if (response.tahunan.tercap) {
-                            statusBadge.textContent = 'TERCAPAI';
-                            statusBadge.className = 'status-badge status-tercap';
-                        } else {
-                            statusBadge.textContent = 'TIDAK TERCAPAI';
-                            statusBadge.className = 'status-badge status-tidak';
-                        }
+                    if (response.tahunan.tercap) {
+                        statusBadge.textContent = 'TERCAPAI';
+                        statusBadge.className = 'status-badge status-tercap';
+                    } else {
+                        statusBadge.textContent = 'TIDAK TERCAPAI';
+                        statusBadge.className = 'status-badge status-tidak';
                     }
 
-                    if (document.getElementById('summaryNilai')) {
-                        document.getElementById('summaryNilai').textContent = nilai + ' ' + units;
-                    }
-                    if (document.getElementById('summaryTarget')) {
-                        document.getElementById('summaryTarget').textContent = target + ' ' + units;
-                    }
+                    document.getElementById('summaryNilai').textContent = nilai + ' ' + units;
+                    document.getElementById('summaryTarget').textContent = target + ' ' + units;
 
                     var perTahun = response.per_tahun;
                     var tahunKeys = Object.keys(perTahun).sort();
@@ -615,7 +458,7 @@
                         if (response.tahunan.tercap) {
                             analisasHtml += '<span class="text-success">';
                             analisasHtml += 'Capaian indikator sebesar ' + nilai.toFixed(2) + ' ' + units + ' telah melampaui target ' + target + '% yang ditetapkan.<br><br>';
-
+                            
                             if (diff > 0) {
                                 analisasHtml += 'Jika dibandingkan dengan tahun sebelumnya (' + lastYearNilai.toFixed(2) + '%), ';
                                 analisasHtml += 'terdapat peningkatan sebesar ' + diff.toFixed(2) + '%.<br>';
@@ -636,7 +479,7 @@
                         } else {
                             analisasHtml += '<span class="text-danger">';
                             analisasHtml += 'Capaian indikator sebesar ' + nilai.toFixed(2) + ' ' + units + ' belum mencapai target ' + target + '% yang ditetapkan.<br><br>';
-
+                            
                             if (diff > 0) {
                                 analisasHtml += 'Jika dibandingkan dengan tahun sebelumnya (' + lastYearNilai.toFixed(2) + '%), ';
                                 analisasHtml += 'terdapat peningkatan sebesar ' + diff.toFixed(2) + '%. ';
@@ -693,13 +536,13 @@
                 datasets: [{
                     label: 'Nilai Aktual',
                     data: data,
-                    borderColor: '#28a745',
-                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
                     fill: true,
                     tension: 0.4,
                     pointRadius: 6,
-                    pointBackgroundColor: '#28a745',
-                    pointBorderColor: '#28a745'
+                    pointBackgroundColor: '#007bff',
+                    pointBorderColor: '#007bff'
                 }, {
                     label: 'Target (' + target + units + ')',
                     data: Array(12).fill(target),
@@ -713,19 +556,13 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    }
+                    legend: { display: true, position: 'top' }
                 },
                 scales: {
-                    y: {
-                        beginAtZero: true,
+                    y: { 
+                        beginAtZero: true, 
                         max: maxScale,
-                        title: {
-                            display: true,
-                            text: 'Nilai ' + units
-                        }
+                        title: { display: true, text: 'Nilai ' + units }
                     }
                 }
             }
@@ -742,10 +579,10 @@
             triwulan[4] ? triwulan[4].nilai : 0
         ];
         var colors = [
-            triwulan[1] && triwulan[1].nilai ? (triwulan[1].tercap ? '#28a745' : '#dc3545') : '#6c757d',
-            triwulan[2] && triwulan[2].nilai ? (triwulan[2].tercap ? '#28a745' : '#dc3545') : '#6c757d',
-            triwulan[3] && triwulan[3].nilai ? (triwulan[3].tercap ? '#28a745' : '#dc3545') : '#6c757d',
-            triwulan[4] && triwulan[4].nilai ? (triwulan[4].tercap ? '#28a745' : '#dc3545') : '#6c757d'
+            triwulan[1] && triwulan[1].nilai ? (triwulan[1].tercap ? '#007bff' : '#dc3545') : '#6c757d',
+            triwulan[2] && triwulan[2].nilai ? (triwulan[2].tercap ? '#007bff' : '#dc3545') : '#6c757d',
+            triwulan[3] && triwulan[3].nilai ? (triwulan[3].tercap ? '#007bff' : '#dc3545') : '#6c757d',
+            triwulan[4] && triwulan[4].nilai ? (triwulan[4].tercap ? '#007bff' : '#dc3545') : '#6c757d'
         ];
         var target = parseFloat(indicator.indicator_target);
         var units = indicator.indicator_units || '';
@@ -773,22 +610,8 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: maxScale,
-                        title: {
-                            display: true,
-                            text: 'Nilai ' + units
-                        }
-                    }
-                }
+                plugins: { legend: { display: true, position: 'top' } },
+                scales: { y: { beginAtZero: true, max: maxScale, title: { display: true, text: 'Nilai ' + units } } }
             }
         });
     }
@@ -801,8 +624,8 @@
             semester[2] ? semester[2].nilai : 0
         ];
         var colors = [
-            semester[1] && semester[1].nilai ? (semester[1].tercap ? '#28a745' : '#dc3545') : '#6c757d',
-            semester[2] && semester[2].nilai ? (semester[2].tercap ? '#28a745' : '#dc3545') : '#6c757d'
+            semester[1] && semester[1].nilai ? (semester[1].tercap ? '#007bff' : '#dc3545') : '#6c757d',
+            semester[2] && semester[2].nilai ? (semester[2].tercap ? '#007bff' : '#dc3545') : '#6c757d'
         ];
         var target = parseFloat(indicator.indicator_target);
         var units = indicator.indicator_units || '';
@@ -830,22 +653,8 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: maxScale,
-                        title: {
-                            display: true,
-                            text: 'Nilai ' + units
-                        }
-                    }
-                }
+                plugins: { legend: { display: true, position: 'top' } },
+                scales: { y: { beginAtZero: true, max: maxScale, title: { display: true, text: 'Nilai ' + units } } }
             }
         });
     }
@@ -906,7 +715,7 @@
             }
 
             html += '<tr style="' + bgColor + textColor + '">' +
-                '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + bulanNames[i - 1] + '</td>' +
+                '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + bulanNames[i-1] + '</td>' +
                 '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + num + '</td>' +
                 '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + denum + '</td>' +
                 '<td class="text-center py-2" style="border: 1px solid #dee2e6;">' + (denum > 0 ? nilai.toFixed(2) : '0.00') + ' ' + units + '</td>' +
@@ -916,17 +725,18 @@
         var totalPersen = totalDenum > 0 ? (totalNum / totalDenum) * 100 : 0;
         var totalTercap = totalDenum > 0 && totalPersen >= target;
 
-        var totalBg = totalTercap ? 'background: linear-gradient(135deg, #4caf50 0%, #43a047 100%); color: white;' : 'background: linear-gradient(135deg, #f44336 0%, #e53935 100%); color: white;';
+        var totalBg = totalTercap ? 'background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white;' : 'background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white;';
         var totalStatusBadge = totalTercap ?
-            '<span class="badge px-2 py-1" style="background-color: white; color: #2e7d32; text-transform: none; border: 1px solid #a5d6a7;">✅ Tercapai</span>' :
-            '<span class="badge px-2 py-1" style="background-color: white; color: #c62828; text-transform: none; border: 1px solid #ef9a9a;">❌ Tidak Tercapai</span>';
+            '<span class="badge px-2 py-1" style="background-color: white; color: #007bff; text-transform: none; border: 1px solid #c8e6c9;">✅ Tercapai</span>' :
+            '<span class="badge px-2 py-1" style="background-color: white; color: #dc3545; text-transform: none; border: 1px solid #ffcdd2;">❌ Tidak Tercapai</span>';
 
         html += '<tr style="' + totalBg + '">' +
-            '<td class="text-center py-2" style="border: 1px solid #dee2e6; font-weight: bold;">Total</td>' +
-            '<td class="text-center py-2" style="border: 1px solid #dee2e6; font-weight: bold;">' + totalNum + '</td>' +
-            '<td class="text-center py-2" style="border: 1px solid #dee2e6; font-weight: bold;">' + totalDenum + '</td>' +
-            '<td class="text-center py-2" style="border: 1px solid #dee2e6; font-weight: bold;">' + totalPersen.toFixed(2) + ' ' + units + '</td>' +
-            '<td class="text-center py-2" style="border: 1px solid #dee2e6; font-weight: bold;">' + totalStatusBadge + '</td></tr>';
+            '<td class="text-center py-2" style="border: 2px solid #0056b3; text-transform: none;">Total</td>' +
+            '<td class="text-center py-2" style="border: 2px solid #0056b3;">' + totalNum + '</td>' +
+            '<td class="text-center py-2" style="border: 2px solid #0056b3;">' + totalDenum + '</td>' +
+            '<td class="text-center py-2" style="border: 2px solid #0056b3;">' + totalPersen.toFixed(2) + ' ' + units + '</td>' +
+            '<td class="text-center py-2" style="border: 2px solid #0056b3;">' + totalStatusBadge + '</td></tr>';
+
         tbody.innerHTML = html;
     }
 
@@ -935,23 +745,21 @@
         var labels = [];
         var data = [];
         var colors = [];
-
+        
         for (var year in perTahun) {
             if (perTahun.hasOwnProperty(year)) {
                 var nilai = perTahun[year].nilai;
                 var hasData = nilai !== null && nilai !== undefined;
-
+                
                 labels.push(year);
                 data.push(hasData ? nilai : null);
-                colors.push(hasData ? '#28a745' : '#6c757d');
+                colors.push(hasData ? '#007bff' : '#6c757d');
             }
         }
-
+        
         var target = parseFloat(indicator.indicator_target || 0);
         var units = indicator.indicator_units || '';
-        var maxData = data.length > 0 ? Math.max.apply(null, data.filter(function(x) {
-            return x > 0;
-        })) : 0;
+        var maxData = data.length > 0 ? Math.max.apply(null, data.filter(function(x) { return x > 0; })) : 0;
         var maxScale = Math.max(maxData * 1.3, target * 1.3);
 
         if (perTahunChart) perTahunChart.destroy();
@@ -962,13 +770,13 @@
                 datasets: [{
                     label: 'Nilai',
                     data: data,
-                    borderColor: '#28a745',
-                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
                     fill: true,
                     tension: 0.4,
                     pointRadius: 6,
-                    pointBackgroundColor: '#28a745',
-                    pointBorderColor: '#28a745'
+                    pointBackgroundColor: '#007bff',
+                    pointBorderColor: '#007bff'
                 }, {
                     label: 'Target (' + target + ' ' + units + ')',
                     data: Array(labels.length).fill(target),
@@ -981,31 +789,15 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: maxScale,
-                        title: {
-                            display: true,
-                            text: 'Nilai ' + units
-                        }
-                    }
-                }
+                plugins: { legend: { display: true, position: 'top' } },
+                scales: { y: { beginAtZero: true, max: maxScale, title: { display: true, text: 'Nilai ' + units } } }
             }
         });
     }
 
     <?php if ($indicatorId): ?>
-        loadGrafik();
+    loadGrafik();
     <?php else: ?>
-        if (document.getElementById('loadingGrafik')) {
-            document.getElementById('loadingGrafik').style.display = 'none';
-        }
+    document.getElementById('loadingGrafik').style.display = 'block';
     <?php endif; ?>
 </script>
