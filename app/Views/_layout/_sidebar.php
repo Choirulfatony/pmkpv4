@@ -59,20 +59,18 @@
                                     <?php if ($hasChild): ?>
 
                                         <li class="nav-item has-treeview">
-                                            <a href="#" class="nav-link d-flex align-items-center">
+                                            <a href="#" class="nav-link">
 
                                                 <!-- ICON -->
                                                 <i class="nav-icon <?= esc($menu['icon']) ?>"></i>
 
-                                                <!-- TEXT -->
-                                                <p class="mb-0 ms-2 flex-grow-1">
+                                                <p class="mb-0 flex-grow-1">
                                                     <?= esc($menu['nama_menu']) ?>
                                                 </p>
 
                                             </a>
 
-                                            <!-- SUB MENU -->
-                                            <ul class="nav nav-treeview ms-3">
+                                            <ul class="nav nav-treeview">
                                                 <?php renderMenu($menu['children'], $level + 1); ?>
                                             </ul>
 
@@ -90,7 +88,7 @@
                                                 <i class="nav-icon <?= esc($menu['icon']) ?>"></i>
 
                                                 <!-- TEXT -->
-                                                <p class="mb-0 ms-2">
+                                                <p class="mb-0 ms-2 flex-grow-1">
                                                     <?= esc($menu['nama_menu']) ?>
                                                 </p>
 
@@ -163,28 +161,26 @@
 
 
 <style>
-    /* 🔥 RAPATKAN SUBMENU */
-    .nav-treeview .nav-link {
-        display: flex;
-        align-items: center;
-        padding-left: 1.5rem !important;
-        /* atur jarak kiri */
+    .sidebar-menu .nav-link {
+        padding-left: 1rem !important;
     }
 
-    /* ICON SUBMENU */
+    .sidebar-menu .nav-link p,
+    .nav-treeview .nav-link p {
+        white-space: normal;
+    }
+
     .nav-treeview .nav-icon {
         width: 20px;
         text-align: center;
-        margin-right: 10px;
+        margin-right: 8px;
         font-size: 14px;
     }
 
-    /* TEXT SUBMENU */
     .nav-treeview .nav-link p {
         margin: 0;
     }
 
-    /* HILANGKAN BULLET / CIRCLE ANEH */
     .nav-treeview .nav-item::before {
         display: none !important;
     }
