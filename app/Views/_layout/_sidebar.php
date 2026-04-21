@@ -25,8 +25,7 @@
                 <ul class="nav sidebar-menu flex-column"
                     data-lte-toggle="treeview"
                     role="navigation"
-                    data-accordion="false"
-                    data-lte-tree-view-init="accordion"
+                    data-accordion="true"
 
                     <!-- MENU SIIMUT -->
                     <?php if ($login_source == 'APP'): ?>
@@ -59,7 +58,7 @@
 
                                     <?php if ($hasChild): ?>
 
-                                        <li class="nav-item has-treeview menu-open">
+                                        <li class="nav-item has-treeview">
                                             <a href="#" class="nav-link d-flex align-items-center">
 
                                                 <!-- ICON -->
@@ -73,7 +72,7 @@
                                             </a>
 
                                             <!-- SUB MENU -->
-                                            <ul class="nav nav-treeview ms-3" style="display: block;">
+                                            <ul class="nav nav-treeview ms-3">
                                                 <?php renderMenu($menu['children'], $level + 1); ?>
                                             </ul>
 
@@ -164,18 +163,13 @@
 
 
 <style>
-    /* Keep submenus open by default */
-    .nav-treeview {
-        display: block !important;
+    .sidebar-wrapper {
+        overflow-y: visible !important;
     }
     
-    .has-treeview > .nav-treeview {
-        max-height: none;
-        overflow: visible;
-    }
-    
+    /* Only show open submenus */
     .has-treeview:not(.menu-open) > .nav-treeview {
-        display: none !important;
+        display: none;
     }
     
     /* 🔥 RAPATKAN SUBMENU */
@@ -183,19 +177,23 @@
         display: flex;
         align-items: center;
         padding-left: 1.5rem !important;
+        justify-content: flex-end;
     }
 
-    /* ICON SUBMENU */
+    /* ICON SUBMENU - keep icon on left */
     .nav-treeview .nav-icon {
         width: 20px;
         text-align: center;
         margin-right: 10px;
+        margin-left: 0;
         font-size: 14px;
+        order: -1;
     }
 
     /* TEXT SUBMENU */
     .nav-treeview .nav-link p {
         margin: 0;
+        order: 1;
     }
 
     /* HILANGKAN BULLET / CIRCLE ANEH */
