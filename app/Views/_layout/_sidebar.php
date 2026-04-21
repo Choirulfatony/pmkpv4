@@ -172,28 +172,29 @@
         display: none;
     }
     
-    /* 🔥 RAPATKAN SUBMENU */
-    .nav-treeview .nav-link {
+    /* 🔥 RATA KANAN SEMUA MENU */
+    .sidebar-menu .nav-link {
         display: flex;
         align-items: center;
-        padding-left: 1.5rem !important;
         justify-content: flex-end;
     }
-
-    /* ICON SUBMENU - keep icon on left */
-    .nav-treeview .nav-icon {
-        width: 20px;
-        text-align: center;
+    
+    /* ICON - tetap di kiri */
+    .sidebar-menu .nav-icon {
         margin-right: 10px;
         margin-left: 0;
-        font-size: 14px;
         order: -1;
     }
-
-    /* TEXT SUBMENU */
-    .nav-treeview .nav-link p {
-        margin: 0;
+    
+    /* TEXT */
+    .sidebar-menu .nav-link p {
         order: 1;
+    }
+    
+    /* Submenu juga rata kanan */
+    .nav-treeview .nav-link {
+        padding-left: 1.5rem !important;
+        justify-content: flex-end;
     }
 
     /* HILANGKAN BULLET / CIRCLE ANEH */
