@@ -27,7 +27,7 @@
 
 <!-- <body class="layout-fixed fixed-header fixed-footer sidebar-expand-lg sidebar-mini sidebar-collapse bg-body-tertiary"> -->
 
-<body class="layout-fixed fixed-header fixed-footer sidebar-expand-lg sidebar-mini sidebar-collapse" style="background-color: inherit;">
+<body class="layout-fixed fixed-header fixed-footer sidebar-expand-lg sidebar-open" style="background-color: inherit;">
 
     <div class="app-wrapper">
 
