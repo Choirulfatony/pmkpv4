@@ -165,6 +165,12 @@
 <style>
     .sidebar-wrapper {
         overflow-y: auto !important;
+        overflow-x: visible !important;
+    }
+    
+    .sidebar-menu {
+        overflow-x: visible !important;
+        white-space: nowrap;
     }
     
     /* Only show open submenus */
@@ -172,32 +178,30 @@
         display: none;
     }
     
-    /* 🔥 RATA KANAN + WRAP TEXT */
+    /* 🔥 RATA KANAN */
     .sidebar-menu .nav-link {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: flex-end;
-        flex-wrap: wrap;
     }
     
     /* ICON - tetap di kiri */
     .sidebar-menu .nav-icon {
         margin-right: 10px;
         margin-left: 0;
+        order: -1;
         flex-shrink: 0;
     }
     
-    /* TEXT - bisa wrap 2 baris */
+    /* TEXT */
     .sidebar-menu .nav-link p {
-        word-wrap: break-word;
-        white-space: normal;
+        order: 1;
     }
     
     /* Submenu juga sama */
     .nav-treeview .nav-link {
         padding-left: 1.5rem !important;
         justify-content: flex-end;
-        flex-wrap: wrap;
     }
 
     /* HILANGKAN BULLET */
