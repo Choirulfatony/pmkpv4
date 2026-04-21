@@ -365,34 +365,27 @@
                 </a>
             </li>
 
-<!-- USER MENU -->
-             <?php 
-             $profilePic = session('profile_picture');
-             $namaLengkap = session('nama_lengkap');
-             $userId = session('hris_user_id') ?? 0;
-             
-             // Debug info - remove after testing
-             // echo "<!-- DEBUG: profile_picture = " . print_r($profilePic, true) . " -->";
-             
-             // Use helper function to get appropriate profile picture URL
-             if (function_exists('get_profile_picture')) {
-                 $displayPic = get_profile_picture($profilePic, $userId, $namaLengkap);
-             } else {
-                 // Fallback if helper function doesn't exist
-                 // Jika ada foto dan berupa URL Google yang valid
-                 if ($profilePic && strpos($profilePic, 'googleusercontent') !== false) {
-                     $displayPic = $profilePic;
-                 } 
-                 // Jika foto ada tapi bukan URL Google (path lokal)
-                 elseif (!empty($profilePic)) {
-                     $displayPic = base_url($profilePic);
-                 }
-                 // Jika tidak ada foto
-                 else {
-                     $displayPic = base_url('assets/adminlte/img/logorssmnew.png');
-                 }
-             }
-             ?>
+            <!-- USER MENU -->
+            <?php 
+            $profilePic = session('profile_picture');
+            $namaLengkap = session('nama_lengkap');
+            
+            // Debug info - remove after testing
+            // echo "<!-- DEBUG: profile_picture = " . print_r($profilePic, true) . " -->";
+            
+            // Jika ada foto dan berupa URL Google yang valid
+            if ($profilePic && strpos($profilePic, 'googleusercontent') !== false) {
+                $displayPic = $profilePic;
+            } 
+            // Jika foto ada tapi bukan URL Google (path lokal)
+            elseif (!empty($profilePic)) {
+                $displayPic = base_url($profilePic);
+            }
+            // Jika tidak ada foto
+            else {
+                $displayPic = base_url('assets/adminlte/img/logorssmnew.png');
+            }
+            ?>
             <li class="nav-item dropdown user-menu">
                 <a href="#"
                     class="nav-link dropdown-toggle d-flex align-items-center gap-2"

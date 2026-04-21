@@ -1,5 +1,5 @@
 <!--begin::Sidebar-->
-<aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="" id="mainSidebar">
+<aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="">
     <!--begin::Sidebar Brand-->
     <div class="sidebar-brand sticky-top bg-body shadow-sm">
         <a href="<?= site_url('dashboard') ?>" class="brand-link">
@@ -59,18 +59,20 @@
                                     <?php if ($hasChild): ?>
 
                                         <li class="nav-item has-treeview">
-                                            <a href="#" class="nav-link">
+                                            <a href="#" class="nav-link d-flex align-items-center">
 
                                                 <!-- ICON -->
                                                 <i class="nav-icon <?= esc($menu['icon']) ?>"></i>
 
-                                                <p class="mb-0 flex-grow-1">
+                                                <!-- TEXT -->
+                                                <p class="mb-0 ms-2 flex-grow-1">
                                                     <?= esc($menu['nama_menu']) ?>
                                                 </p>
 
                                             </a>
 
-                                            <ul class="nav nav-treeview">
+                                            <!-- SUB MENU -->
+                                            <ul class="nav nav-treeview ms-3">
                                                 <?php renderMenu($menu['children'], $level + 1); ?>
                                             </ul>
 
@@ -88,7 +90,7 @@
                                                 <i class="nav-icon <?= esc($menu['icon']) ?>"></i>
 
                                                 <!-- TEXT -->
-                                                <p class="mb-0 ms-2 flex-grow-1">
+                                                <p class="mb-0 ms-2">
                                                     <?= esc($menu['nama_menu']) ?>
                                                 </p>
 
@@ -161,26 +163,28 @@
 
 
 <style>
-    .sidebar-menu .nav-link {
-        padding-left: 1rem !important;
+    /* 🔥 RAPATKAN SUBMENU */
+    .nav-treeview .nav-link {
+        display: flex;
+        align-items: center;
+        padding-left: 1.5rem !important;
+        /* atur jarak kiri */
     }
 
-    .sidebar-menu .nav-link p,
-    .nav-treeview .nav-link p {
-        white-space: normal;
-    }
-
+    /* ICON SUBMENU */
     .nav-treeview .nav-icon {
         width: 20px;
         text-align: center;
-        margin-right: 8px;
+        margin-right: 10px;
         font-size: 14px;
     }
 
+    /* TEXT SUBMENU */
     .nav-treeview .nav-link p {
         margin: 0;
     }
 
+    /* HILANGKAN BULLET / CIRCLE ANEH */
     .nav-treeview .nav-item::before {
         display: none !important;
     }

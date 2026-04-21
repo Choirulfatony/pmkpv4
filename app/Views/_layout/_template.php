@@ -27,7 +27,7 @@
 
 <!-- <body class="layout-fixed fixed-header fixed-footer sidebar-expand-lg sidebar-mini sidebar-collapse bg-body-tertiary"> -->
 
-<body class="layout-fixed sidebar-expand-lg sidebar-open bg-body-tertiary app-loaded">
+<body class="layout-fixed fixed-header fixed-footer sidebar-expand-lg sidebar-mini sidebar-collapse" style="background-color: inherit;">
 
     <div class="app-wrapper">
 
@@ -152,23 +152,7 @@
         </div>
     </div>
 
-<script>
-// Close sidebar when clicking any menu link
-var links = document.querySelectorAll('.sidebar-menu > li > a');
-for(var i=0; i<links.length; i++) {
-    links[i].onclick = function() {
-        if(this.getAttribute('href') !== '#') {
-            document.body.classList.add('sidebar-collapse');
-        }
-    };
-}
-</script>
-
 </body>
-
-
-
-
 
 <script>
     // 🔒 Anti Back - Cek session dan redirect jika tidak valid
