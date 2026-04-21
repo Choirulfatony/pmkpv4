@@ -27,7 +27,7 @@
 
 <!-- <body class="layout-fixed fixed-header fixed-footer sidebar-expand-lg sidebar-mini sidebar-collapse bg-body-tertiary"> -->
 
-<body class="layout-fixed sidebar-expand-lg sidebar-open bg-body-tertiary app-loaded">
+<body class="layout-fixed sidebar-expand-lg sidebar-collapse bg-body-tertiary app-loaded">
 
     <div class="app-wrapper">
 
@@ -91,6 +91,11 @@
         </div>
     </div> -->
     <style>
+        /* Force sidebar collapsed */
+        body.sidebar-collapse .app-sidebar {
+            display: none !important;
+        }
+        
         /* ===============================
             IDLE MODAL - TOP RIGHT
             ================================ */
@@ -152,16 +157,16 @@
         </div>
     </div>
 
+
+
+
+
+
+
+
+
 <script>
-// Close sidebar when clicking any menu link
-var links = document.querySelectorAll('.sidebar-menu > li > a');
-for(var i=0; i<links.length; i++) {
-    links[i].onclick = function() {
-        if(this.getAttribute('href') !== '#') {
-            document.body.classList.add('sidebar-collapse');
-        }
-    };
-}
+document.body.className = 'layout-fixed sidebar-expand-lg bg-body-tertiary app-loaded sidebar-collapse';
 </script>
 
 </body>
