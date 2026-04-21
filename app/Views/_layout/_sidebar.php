@@ -165,6 +165,11 @@
 <style>
     .sidebar-wrapper {
         overflow-y: visible !important;
+        overflow-x: visible !important;
+    }
+    
+    .sidebar-menu {
+        overflow-x: visible !important;
     }
     
     /* Only show open submenus */
@@ -172,11 +177,13 @@
         display: none;
     }
     
-    /* 🔥 RATA KANAN SEMUA MENU */
+    /* 🔥 RATA KANAN + SCROLL HORIZONTAL */
     .sidebar-menu .nav-link {
         display: flex;
         align-items: center;
         justify-content: flex-end;
+        white-space: nowrap;
+        overflow-x: visible;
     }
     
     /* ICON - tetap di kiri */
@@ -184,20 +191,29 @@
         margin-right: 10px;
         margin-left: 0;
         order: -1;
+        flex-shrink: 0;
     }
     
-    /* TEXT */
+    /* TEXT - bisa scroll */
     .sidebar-menu .nav-link p {
         order: 1;
+        overflow-x: auto;
+        max-width: none;
     }
     
-    /* Submenu juga rata kanan */
+    /* Submenu juga sama */
     .nav-treeview .nav-link {
         padding-left: 1.5rem !important;
         justify-content: flex-end;
+        white-space: nowrap;
+        overflow-x: visible;
+    }
+    
+    .nav-treeview .nav-link p {
+        overflow-x: auto;
     }
 
-    /* HILANGKAN BULLET / CIRCLE ANEH */
+    /* HILANGKAN BULLET */
     .nav-treeview .nav-item::before {
         display: none !important;
     }
