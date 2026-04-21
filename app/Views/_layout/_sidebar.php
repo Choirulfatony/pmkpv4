@@ -1,5 +1,5 @@
 <!--begin::Sidebar-->
-<aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="">
+<aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="" style="overflow-y: visible;">
     <!--begin::Sidebar Brand-->
     <div class="sidebar-brand sticky-top bg-body shadow-sm">
         <a href="<?= site_url('dashboard') ?>" class="brand-link">
@@ -25,7 +25,8 @@
                 <ul class="nav sidebar-menu flex-column"
                     data-lte-toggle="treeview"
                     role="navigation"
-                    data-accordion="false">
+                    data-accordion="false"
+                    data-lte-tree-view-init="accordion"
 
                     <!-- MENU SIIMUT -->
                     <?php if ($login_source == 'APP'): ?>
@@ -58,7 +59,7 @@
 
                                     <?php if ($hasChild): ?>
 
-                                        <li class="nav-item has-treeview">
+                                        <li class="nav-item has-treeview menu-open">
                                             <a href="#" class="nav-link d-flex align-items-center">
 
                                                 <!-- ICON -->
@@ -72,7 +73,7 @@
                                             </a>
 
                                             <!-- SUB MENU -->
-                                            <ul class="nav nav-treeview ms-3">
+                                            <ul class="nav nav-treeview ms-3" style="display: block;">
                                                 <?php renderMenu($menu['children'], $level + 1); ?>
                                             </ul>
 
@@ -163,12 +164,25 @@
 
 
 <style>
+    /* Keep submenus open by default */
+    .nav-treeview {
+        display: block !important;
+    }
+    
+    .has-treeview > .nav-treeview {
+        max-height: none;
+        overflow: visible;
+    }
+    
+    .has-treeview:not(.menu-open) > .nav-treeview {
+        display: none !important;
+    }
+    
     /* 🔥 RAPATKAN SUBMENU */
     .nav-treeview .nav-link {
         display: flex;
         align-items: center;
         padding-left: 1.5rem !important;
-        /* atur jarak kiri */
     }
 
     /* ICON SUBMENU */
