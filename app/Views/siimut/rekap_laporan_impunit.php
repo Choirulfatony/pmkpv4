@@ -40,7 +40,7 @@
     }
 
     #ajax_data_rekap th {
-        background-color: #6C757D !important;
+        background-color: #363636 !important;
         color: #fff;
         text-align: center;
         font-weight: 600;
@@ -53,7 +53,7 @@
     }
 
     #ajax_data_rekap td a:hover {
-        color: #6C757D;
+        color: #363636;
         text-decoration: underline;
     }
 
@@ -202,7 +202,7 @@
         <div class="alert alert-light border alert-dismissible fade show" role="alert">
             <div class="d-flex align-items-start">
                 <div class="me-3">
-                    <i class="fas fa-info-circle fa-2x text-secondary"></i>
+                    <i class="fas fa-info-circle fa-2x text-secondary" ></i>
                 </div>
                 <div class="flex-grow-1">
                     <h5 class="mb-1"><strong>Informasi Rekap Indikator Mutu Prioritas Unit (IMPUnit)</strong></h5>
@@ -230,7 +230,8 @@
 
 <div class="row">
     <div class="col-12">
-        <div class="card card-outline card-secondary" id="detail_satu">
+        <!-- <div class="card card-outline card-warning" id="detail_satu"> -->
+            <div class="card card-outline" style="border-top: 3px solid #363636;"  id="detail_satu">
             <div class="card-header">
                 <h3 class="card-title">
                     <i class="fas fa-chart-bar me-2"></i>
@@ -314,7 +315,7 @@
 
 <script>
     var table_loquin;
-    var vtahun = new Date().getFullYear();
+    var vtahun = <?= isset($tahun) ? $tahun : "new Date().getFullYear()" ?>;
     var target, factor, operator;
 
     $(document).ready(function() {
