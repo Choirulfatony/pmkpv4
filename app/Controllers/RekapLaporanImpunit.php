@@ -74,13 +74,13 @@ class RekapLaporanImpunit extends AppController
             return $this->response->setJSON(['error' => 'Invalid request - no POST data', 'post_data' => $post]);
         }
 
+        $tahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
+
         $indicators = $this->rekapModel->getIndicatorImpunit($post);
-        log_message('error', 'Indicators count: ' . count($indicators));
+        log_message('error', 'IMPUnit - Indicators count: ' . count($indicators) . ', tahun: ' . $tahun);
 
         // Clear cache untuk memastikan data terbaru
         $this->rekapModel->clearCache();
-
-        $tahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
 
         // Ambil SEMUA data sekaligus (1 query saja)
         $indicatorIds = array_column($indicators, 'indicator_id');
