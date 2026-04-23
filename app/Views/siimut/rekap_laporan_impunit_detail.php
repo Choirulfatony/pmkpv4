@@ -411,4 +411,11 @@
         var exportUrl = '<?= site_url('siimut/rekap-laporan-impunit/export-indicator/' . $indicatorId) ?>?tahun=' + vtahun;
         window.location.href = exportUrl;
     });
+
+    // Handle browser back button - force reload
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+            window.location.reload();
+        }
+    });
 </script>

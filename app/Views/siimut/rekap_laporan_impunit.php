@@ -449,4 +449,11 @@
     function view_detail_impunit(indicator_id) {
         window.location.href = '<?= site_url('siimut/rekap-laporan-impunit?indicator_id=') ?>' + indicator_id + '&tahun=' + vtahun;
     }
+
+    // Handle browser back button - force reload
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+            window.location.reload();
+        }
+    });
 </script>
