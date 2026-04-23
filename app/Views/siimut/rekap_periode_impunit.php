@@ -1,6 +1,6 @@
 <style>
-    #ajax_data_periode_imprs td,
-    #ajax_data_periode_imprs th {
+    #ajax_data_periode_impunit td,
+    #ajax_data_periode_impunit th {
         font-size: 12px;
         vertical-align: middle;
         text-align: center;
@@ -8,13 +8,13 @@
         white-space: nowrap;
     }
 
-    #ajax_data_periode_imprs th {
+    #ajax_data_periode_impunit th {
         background-color: #6C757D !important;
         color: #fff;
         white-space: nowrap;
     }
 
-    #ajax_data_periode_imprs td:first-child {
+    #ajax_data_periode_impunit td:first-child {
         text-align: left;
         white-space: nowrap;
     }
@@ -203,7 +203,7 @@
             <div class="card card-outline card-secondary">
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="ajax_data_periode_imprs" class="table table-bordered table-striped" style="width: 100%;">
+                        <table id="ajax_data_periode_impunit" class="table table-bordered table-striped" style="width: 100%;">
                             <thead>
                                 <tr>
                                     <th rowspan="2" class="align-middle">No</th>
@@ -248,7 +248,7 @@
             e.preventDefault();
             vtahun = <?= date('Y') ?>;
             $('#tahun').val(vtahun);
-            var newAjaxUrl = '<?= site_url('siimut/rekap-periode-imprs/ajax_imprs-') ?>' + vtahun;
+            var newAjaxUrl = '<?= site_url('siimut/rekap-periode-impunit/ajax_impunit-') ?>' + vtahun;
             table_periode.ajax.url(newAjaxUrl);
             table_periode.ajax.reload();
         }
@@ -263,19 +263,19 @@
 
     function refreshPage() {
         vtahun = $('#tahun').val();
-        var newAjaxUrl = '<?= site_url('siimut/rekap-periode-imprs/ajax_imprs-') ?>' + vtahun;
+        var newAjaxUrl = '<?= site_url('siimut/rekap-periode-impunit/ajax_impunit-') ?>' + vtahun;
         table_periode.ajax.url(newAjaxUrl);
         table_periode.ajax.reload();
     }
 
     function initTable() {
-        var tableWrapper = $('#ajax_data_periode_imprs').closest('.table-responsive');
+        var tableWrapper = $('#ajax_data_periode_impunit').closest('.table-responsive');
 
-        table_periode = $('#ajax_data_periode_imprs').DataTable({
+        table_periode = $('#ajax_data_periode_impunit').DataTable({
             processing: true,
             serverSide: false,
             ajax: {
-                url: '<?= site_url('siimut/rekap-periode-imprs/ajax_imprs-') ?>' + vtahun,
+                url: '<?= site_url('siimut/rekap-periode-impunit/ajax_impunit-') ?>' + vtahun,
                 type: 'POST',
                 data: function(d) {
                     d.tahun = vtahun;
@@ -443,10 +443,10 @@
         url.searchParams.set('tahun', vtahun);
         window.history.pushState({}, '', url);
 
-        var newAjaxUrl = '<?= site_url('siimut/rekap-periode-imprs/ajax_imprs-') ?>' + vtahun;
+        var newAjaxUrl = '<?= site_url('siimut/rekap-periode-impunit/ajax_impunit-') ?>' + vtahun;
         table_periode.ajax.url(newAjaxUrl);
 
-        var tableWrapper = $('#ajax_data_periode_imprs').closest('.table-responsive');
+        var tableWrapper = $('#ajax_data_periode_impunit').closest('.table-responsive');
         tableWrapper.find('.overlay-wrapper').remove();
 
         tableWrapper.append(
@@ -484,9 +484,16 @@
         }
     }
 
-    $(document).on('click', '#btn-export-periode', function(e) {
+$(document).on('click', '#btn-export-periode', function(e) {
         e.preventDefault();
-        var exportUrl = '<?= site_url('siimut/rekap-periode-imprs/export') ?>?tahun=' + vtahun;
+        var exportUrl = '<?= site_url('siimut/rekap-periode-impunit/export') ?>?tahun=' + vtahun;
         window.location.href = exportUrl;
+    });
+
+    // Handle browser back button - force reload
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+            window.location.reload();
+        }
     });
 </script>

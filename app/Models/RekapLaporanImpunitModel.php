@@ -630,37 +630,40 @@ class RekapLaporanImpunitModel extends Model
     {
         $db = db_connect();
 
-        // Tampilkan semua indikator yang punya data di tahun tersebut
-        $indicators = $db->table('local_quality_indicator_group')
-            ->select('
-                local_quality_indicator.indicator_id,
-                local_quality_indicator.indicator_element,
-                local_quality_indicator.indicator_target,
-                local_quality_indicator.indicator_factors,
-                local_quality_indicator.indicator_units,
-                local_quality_indicator.indicator_target_calculation
-            ')
-            ->join('local_quality_indicator', 'local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id', 'left')
-            ->where('local_quality_indicator.indicator_category_id', '6')
-            ->where('local_quality_indicator.indicator_record_status', 'A')
-            ->groupStart()
-            ->where('local_quality_indicator_group.group_record_status', 'A')
-            ->orWhere('local_quality_indicator_group.group_record_status IS NULL', null, false)
-            ->groupEnd()
-            ->groupStart()
-            ->where('local_quality_indicator.indicator_active_to IS NULL', null, false)
-            ->orWhere('local_quality_indicator.indicator_active_to >=', $tahun . '-01-01')
-            ->groupEnd()
-            ->orWhere("
-                EXISTS (
-                    SELECT 1 FROM local_quality_indicator_result lqir
-                    WHERE lqir.result_indicator_id = local_quality_indicator.indicator_id
-                    AND lqir.result_period BETWEEN '{$tahun}-01-01' AND '{$tahun}-12-31'
-                )
-            ", null, false)
-            ->groupBy('local_quality_indicator.indicator_id')
-            ->get()
-            ->getResult();
+        $builder = $db->table('local_quality_indicator lqi');
+
+        $builder->select("
+            lqi.indicator_id,
+            lqi.indicator_element,
+            lqi.indicator_target,
+            lqi.indicator_factors,
+            lqi.indicator_units,
+            lqi.indicator_target_calculation
+        ");
+
+        $builder->join('local_quality_indicator_group lqig', 'lqi.indicator_id = lqig.group_indicator_id', 'left');
+
+        $builder->where("lqi.indicator_category_id", '6');
+        $builder->where("lqi.indicator_record_status", 'A');
+        $builder->groupStart()
+            ->where('lqig.group_record_status', 'A')
+            ->orWhere('lqig.group_record_status IS NULL', null, false)
+        ->groupEnd();
+
+        $this->filterActiveOrHasData($builder, $tahun . '-01-01', $tahun . '-12-31');
+
+        $builder->groupStart();
+        $builder->where('lqi.indicator_active_from IS NULL', null, false)
+            ->orWhere("YEAR(lqi.indicator_active_from) <= {$tahun}", null, false);
+        $builder->groupEnd();
+        $builder->groupStart();
+        $builder->where('lqi.indicator_active_to IS NULL', null, false)
+            ->orWhere("YEAR(lqi.indicator_active_to) >= {$tahun}", null, false);
+        $builder->groupEnd();
+
+        $builder->groupBy('lqi.indicator_id');
+
+        $indicators = $builder->get()->getResult();
 
         if (empty($indicators)) return [];
 

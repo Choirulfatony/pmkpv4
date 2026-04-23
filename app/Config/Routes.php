@@ -65,6 +65,11 @@ $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
     $routes->post('rekap-periode-imprs/ajax_imprs-(:num)', 'RekapPeriodeImprs::getAjaxRekapPeriode/$1');
     $routes->get('rekap-periode-imprs/export', 'RekapPeriodeImprs::exportExcel');
 
+    // Rekap Periode IMPUnit
+    $routes->get('rekap-periode-impunit', 'RekapPeriodeImpunit::index');
+    $routes->post('rekap-periode-impunit/ajax_impunit-(:num)', 'RekapPeriodeImpunit::getAjaxRekapPeriode/$1');
+    $routes->get('rekap-periode-impunit/export', 'RekapPeriodeImpunit::exportExcel');
+
     // Rekap Laporan IMPRS
     $routes->get('rekap-laporan-imprs', 'RekapLaporanImprs::index');
     $routes->post('rekap-laporan-imprs/ajax_rekap_imprs', 'RekapLaporanImprs::getAjaxDataRekapImprs');
