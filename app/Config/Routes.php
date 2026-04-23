@@ -60,6 +60,10 @@ $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
     $routes->get('grafik-imprs', 'GrafikImprs::index');
     $routes->post('grafik-imprs/data', 'GrafikImprs::getDataGrafik');
 
+    // Grafik IMPUnit
+    $routes->get('grafik-impunit', 'GrafikImpunit::index');
+    $routes->post('grafik-impunit/data', 'GrafikImpunit::getDataGrafik');
+
     // Rekap Periode IMPRS
     $routes->get('rekap-periode-imprs', 'RekapPeriodeImprs::index');
     $routes->post('rekap-periode-imprs/ajax_imprs-(:num)', 'RekapPeriodeImprs::getAjaxRekapPeriode/$1');
