@@ -274,6 +274,11 @@
         table_periode = $('#ajax_data_periode_impunit').DataTable({
             processing: true,
             serverSide: false,
+            pageLength: 25,
+            lengthMenu: [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "Semua"]
+            ],
             ajax: {
                 url: '<?= site_url('siimut/rekap-periode-impunit/ajax_impunit-') ?>' + vtahun,
                 type: 'POST',
