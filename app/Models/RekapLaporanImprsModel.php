@@ -15,7 +15,7 @@ class RekapLaporanImprsModel extends Model
         'indicator_name_id',
     ];
 
-    protected $column_order = [
+protected $column_order = [
         null,
         'indicator_element',
         null,
@@ -31,6 +31,28 @@ class RekapLaporanImprsModel extends Model
         null,
         null,
     ];
+
+    // ==================== HELPER ====================
+
+    private function filterActiveOrHasData($builder, $startDate, $endDate)
+    {
+        $builder->groupStart();
+
+        $builder->groupStart()
+            ->where('lqi.indicator_active_to IS NULL', null, false)
+            ->orWhere('lqi.indicator_active_to >=', $startDate)
+        ->groupEnd();
+
+        $builder->orWhere("
+            EXISTS (
+                SELECT 1 FROM local_quality_indicator_result lqir
+                WHERE lqir.result_indicator_id = lqi.indicator_id
+                AND lqir.result_period BETWEEN '{$startDate}' AND '{$endDate}'
+            )
+        ", null, false)
+
+        ->groupEnd();
+    }
 
     // ==================== PRIVATE QUERY BUILDERS ====================
 
@@ -224,6 +246,7 @@ public function getIndicatorImprs($post)
 
         $builder->join('local_quality_indicator', 'local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id');
         $builder->join('master_institution_department', 'master_institution_department.department_id = local_quality_indicator_group.group_department_id');
+        $builder->join('local_quality_indicator lqi', 'lqi.indicator_id = local_quality_indicator_group.group_indicator_id', 'left');
 
         $builder->where("local_quality_indicator.indicator_category_id", '5');
         $builder->where("local_quality_indicator.indicator_record_status", 'A');
@@ -233,6 +256,17 @@ public function getIndicatorImprs($post)
         $builder->where("local_quality_indicator_group.group_period", $usePeriod);
         $builder->orWhere('local_quality_indicator_group.group_period', $usePeriod - 1);
         $builder->orWhere('local_quality_indicator_group.group_period', $usePeriod - 2);
+        $builder->groupEnd();
+
+        $this->filterActiveOrHasData($builder, $vtahun . '-01-01', $vtahun . '-12-31');
+
+        $builder->groupStart();
+        $builder->where('lqi.indicator_active_from IS NULL', null, false)
+            ->orWhere("YEAR(lqi.indicator_active_from) <= {$vtahun}", null, false);
+        $builder->groupEnd();
+        $builder->groupStart();
+        $builder->where('lqi.indicator_active_to IS NULL', null, false)
+            ->orWhere("YEAR(lqi.indicator_active_to) >= {$vtahun}", null, false);
         $builder->groupEnd();
 
         // Filter by user role
@@ -641,27 +675,45 @@ public function getIndicatorImprs($post)
         $availablePeriods = $this->getAvailableGroupPeriods();
         $usePeriod = in_array($tahun, $availablePeriods) ? $tahun : min($availablePeriods);
 
-        $indicators = $db->table('local_quality_indicator_group')
-            ->select('
-                local_quality_indicator.indicator_id,
-                local_quality_indicator.indicator_element,
-                local_quality_indicator.indicator_target,
-                local_quality_indicator.indicator_factors,
-                local_quality_indicator.indicator_units,
-                local_quality_indicator.indicator_target_calculation
-            ')
-            ->join('local_quality_indicator', 'local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id')
-            ->where('local_quality_indicator.indicator_category_id', '5')
-            ->where('local_quality_indicator.indicator_record_status', 'A')
-            ->where('local_quality_indicator_group.group_record_status', 'A')
-            ->groupStart()
-            ->where('local_quality_indicator_group.group_period', $usePeriod)
-            ->orWhere('local_quality_indicator_group.group_period', $usePeriod - 1)
-            ->orWhere('local_quality_indicator_group.group_period', $usePeriod - 2)
-            ->groupEnd()
-            ->groupBy('local_quality_indicator.indicator_id')
-            ->get()
-            ->getResult();
+        $builder = $db->table('local_quality_indicator lqi');
+
+        $builder->select("
+            lqi.indicator_id,
+            lqi.indicator_element,
+            lqi.indicator_target,
+            lqi.indicator_factors,
+            lqi.indicator_units,
+            lqi.indicator_target_calculation
+        ");
+
+        $builder->join('local_quality_indicator_group lqig', 'lqi.indicator_id = lqig.group_indicator_id', 'left');
+
+        $builder->where("lqi.indicator_category_id", '5');
+        $builder->where("lqi.indicator_record_status", 'A');
+        $builder->where('lqig.group_record_status', 'A');
+
+        // Filter group_period untuk IMPRS
+        $availablePeriods = $this->getAvailableGroupPeriods();
+        $usePeriod = in_array($tahun, $availablePeriods) ? $tahun : min($availablePeriods);
+        $builder->groupStart()
+            ->where('lqig.group_period', $usePeriod)
+            ->orWhere('lqig.group_period', $usePeriod - 1)
+            ->orWhere('lqig.group_period', $usePeriod - 2)
+            ->orWhere('lqig.group_period IS NULL', null, false)
+        ->groupEnd();
+
+        $builder->groupStart()
+            ->where('lqi.indicator_active_from IS NULL', null, false)
+            ->orWhere("YEAR(lqi.indicator_active_from) <= {$tahun}", null, false);
+        $builder->groupEnd();
+        $builder->groupStart()
+            ->where('lqi.indicator_active_to IS NULL', null, false)
+            ->orWhere("YEAR(lqi.indicator_active_to) >= {$tahun}", null, false);
+        $builder->groupEnd();
+
+        $builder->groupBy('lqi.indicator_id');
+
+        $indicators = $builder->get()->getResult();
 
         if (empty($indicators)) return [];
 
