@@ -649,15 +649,14 @@ class RekapLaporanImpunitModel extends Model
             ->where('lqig.group_record_status', 'A')
             ->orWhere('lqig.group_record_status IS NULL', null, false)
         ->groupEnd();
-
         $this->filterActiveOrHasData($builder, $tahun . '-01-01', $tahun . '-12-31');
 
-        $builder->groupStart();
-        $builder->where('lqi.indicator_active_from IS NULL', null, false)
+        $builder->groupStart()
+            ->where('lqi.indicator_active_from IS NULL', null, false)
             ->orWhere("YEAR(lqi.indicator_active_from) <= {$tahun}", null, false);
         $builder->groupEnd();
-        $builder->groupStart();
-        $builder->where('lqi.indicator_active_to IS NULL', null, false)
+        $builder->groupStart()
+            ->where('lqi.indicator_active_to IS NULL', null, false)
             ->orWhere("YEAR(lqi.indicator_active_to) >= {$tahun}", null, false);
         $builder->groupEnd();
 

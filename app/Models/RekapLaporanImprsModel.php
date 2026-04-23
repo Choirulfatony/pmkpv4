@@ -692,15 +692,7 @@ public function getIndicatorImprs($post)
         $builder->where("lqi.indicator_record_status", 'A');
         $builder->where('lqig.group_record_status', 'A');
 
-        // Filter group_period untuk IMPRS
-        $availablePeriods = $this->getAvailableGroupPeriods();
-        $usePeriod = in_array($tahun, $availablePeriods) ? $tahun : min($availablePeriods);
-        $builder->groupStart()
-            ->where('lqig.group_period', $usePeriod)
-            ->orWhere('lqig.group_period', $usePeriod - 1)
-            ->orWhere('lqig.group_period', $usePeriod - 2)
-            ->orWhere('lqig.group_period IS NULL', null, false)
-        ->groupEnd();
+        $this->filterActiveOrHasData($builder, $tahun . '-01-01', $tahun . '-12-31');
 
         $builder->groupStart()
             ->where('lqi.indicator_active_from IS NULL', null, false)
