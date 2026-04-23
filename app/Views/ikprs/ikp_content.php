@@ -320,37 +320,35 @@
                               </li>
 
 
-                              <li class="nav-item">
-                                  <a id="btnInbox" href="#" class="nav-link d-flex align-items-center">
-                                      <i class="bi bi-inbox me-2"></i>
-                                      Inbox
-                                      <span id="badge-inbox" class="badge bg-primary ms-auto">
-                                          0
-                                      </span>
-                                  </a>
-                              </li>
+<li class="nav-item">
+                                    <a id="btnInbox" href="#" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-inbox me-2"></i>
+                                        Inbox
+                                        <span id="badge-inbox" class="badge bg-primary ms-auto">
+                                            0
+                                        </span>
+                                    </a>
+                                </li>
 
+                                <li class="nav-item">
+                                    <a id="btnSend" href="#" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-send me-2"></i>
+                                        Sent
+                                        <span id="badge-send" class="badge bg-success ms-auto">
+                                            0
+                                        </span>
+                                    </a>
+                                </li>
 
-                              <li class="nav-item">
-                                  <a id="btnSend" href="#" class="nav-link d-flex align-items-center">
-                                      <i class="bi bi-send me-2"></i>
-                                      Sent
-                                      <span id="badge-send" class="badge bg-success ms-auto">
-                                          0
-                                      </span>
-                                  </a>
-                              </li>
-
-                              <li class="nav-item">
-                                  <a id="btnDrafts" href="#" class="nav-link d-flex align-items-center">
-                                      <i class="bi bi-file-earmark-text me-2"></i>
-                                      Drafts
-                                      <span id="badge-draft" class="badge bg-warning ms-auto">
-                                          0
-                                      </span>
-                                  </a>
-                              </li>
-                          </ul>
+                                <li class="nav-item">
+                                    <a id="btnDrafts" href="#" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-file-earmark-text me-2"></i>
+                                        Drafts
+                                        <span id="badge-draft" class="badge bg-warning ms-auto">
+                                            0
+                                        </span>
+                                    </a>
+                                </li>
 
                       </div>
                   </div>
@@ -401,6 +399,7 @@
           const hrisUserId = "<?= session('hris_user_id') ?? '' ?>";
           if (hrisUserId !== '') {
               $.get("<?= site_url('ikprs/counter-ajax') ?>", function(res) {
+                  console.log('counterAjax response:', res);
                   if (res.error && res.error === 'User belum login') {
                       console.log('User not logged in, skipping badge update');
                       return;
@@ -715,7 +714,7 @@
 
       /* ===== KLIK MENU DRAFTS ===== */
       $(document).on('click', '#btnDrafts', function(e) {
-          e.preventDefault(); // ⛔ WAJIB
+          e.preventDefault();
           loadDrafts(1);
       });
 

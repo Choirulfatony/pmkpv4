@@ -714,8 +714,7 @@ class Ikprs extends AppController
 
         if ($role == 'KARU') {
 
-            // Untuk KARU: hitung semua insiden yang pernah masuk ke KARU
-            // termasuk yang sudah selesai
+            // Untuk KARU: semua insiden yang masuk (termasuk DRAFT)
             $total_inbox = $db->table('ikprssm_insiden')
                 ->select('id')
                 ->whereIn('status_laporan', ['DRAFT', 'KARU', 'INSTALASI', 'SELESAI'])
@@ -725,6 +724,8 @@ class Ikprs extends AppController
                 ->groupEnd()
                 ->groupBy('id')
                 ->countAllResults();
+
+            log_message('error', 'KARU inbox query - user_id: ' . $user_id . ', total: ' . $total_inbox);
         } elseif ($role == 'KOMITE') {
 
             $total_inbox = $db->table('ikprssm_insiden i')
@@ -739,11 +740,11 @@ class Ikprs extends AppController
                 ->countAllResults();
         } else {
 
-            // PELAPOR - bisa lihat semua status laporan miliknya
+            // PELAPOR - hanya yang sudah dikirim (bukan DRAFT)
             $total_inbox = $db->table('ikprssm_insiden')
                 ->select('id')
                 ->where('user_id', $user_id)
-                ->whereIn('status_laporan', ['DRAFT', 'KARU', 'INSTALASI', 'SELESAI'])
+                ->whereIn('status_laporan', ['KARU', 'INSTALASI', 'SELESAI'])
                 ->countAllResults();
         }
 
@@ -783,6 +784,8 @@ class Ikprs extends AppController
         }
 
         $notif = $this->getNotifList($user_id, $role);
+
+        log_message('error', 'counterAjax response - user_id: ' . $user_id . ', role: ' . $role . ', inbox: ' . $total_inbox . ', notif: ' . $total_notif);
 
         return $this->response->setJSON([
             'total_notif' => $total_notif,

@@ -9,7 +9,7 @@
     }
 
     #ajax_data_periode_impunit th {
-        background-color: #6C757D !important;
+        background-color: #363636 !important;
         color: #fff;
         white-space: nowrap;
     }
@@ -108,14 +108,17 @@
             width: 1em;
             box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
         }
+
         35% {
             width: 4em;
             box-shadow: 0 -1em rgba(225, 20, 98, 0.75), 0 1em rgba(111, 202, 220, 0.75);
         }
+
         70% {
             width: 1em;
             box-shadow: -2em -1em rgba(225, 20, 98, 0.75), 2em 1em rgba(111, 202, 220, 0.75);
         }
+
         100% {
             box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
         }
@@ -126,14 +129,17 @@
             height: 1em;
             box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
         }
+
         35% {
             height: 4em;
             box-shadow: 1em 0 rgba(61, 184, 143, 0.75), -1em 0 rgba(233, 169, 32, 0.75);
         }
+
         70% {
             height: 1em;
             box-shadow: 1em -2em rgba(61, 184, 143, 0.75), -1em 2em rgba(233, 169, 32, 0.75);
         }
+
         100% {
             box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
         }
@@ -177,7 +183,7 @@
 
     <div class="row mb-3">
         <div class="col-12">
-            <div class="card card-outline card-secondary">
+            <div class="card card-outline" style="border-top: 3px solid #363636;">
                 <div class="card-body">
                     <div class="d-flex gap-3 flex-wrap">
                         <div class="d-flex align-items-center">
@@ -200,7 +206,7 @@
 
     <div class="row">
         <div class="col-12">
-            <div class="card card-outline card-secondary">
+            <div class="card card-outline"  style="border-top: 3px solid #363636;">
                 <div class="card-body">
                     <div class="table-responsive">
                         <table id="ajax_data_periode_impunit" class="table table-bordered table-striped" style="width: 100%;">
@@ -276,8 +282,8 @@
             serverSide: false,
             pageLength: 25,
             lengthMenu: [
-                [10, 25, 50, 100, -1],
-                [10, 25, 50, 100, "Semua"]
+                [10, 25, 50, -1],
+                [10, 25, 50, "Semua"]
             ],
             ajax: {
                 url: '<?= site_url('siimut/rekap-periode-impunit/ajax_impunit-') ?>' + vtahun,
@@ -489,7 +495,7 @@
         }
     }
 
-$(document).on('click', '#btn-export-periode', function(e) {
+    $(document).on('click', '#btn-export-periode', function(e) {
         e.preventDefault();
         var exportUrl = '<?= site_url('siimut/rekap-periode-impunit/export') ?>?tahun=' + vtahun;
         window.location.href = exportUrl;
