@@ -22,16 +22,16 @@
         display: inline-block;
     }
 
-    #ajax_detail_imprs td,
-    #ajax_detail_imprs th {
+    #ajax_detail_impunit td,
+    #ajax_detail_impunit th {
         font-size: 13px;
         vertical-align: middle;
         white-space: nowrap;
         padding: 10px 8px !important;
     }
 
-    #ajax_detail_imprs th {
-        background-color: #6C757D !important;
+    #ajax_detail_impunit th {
+        background-color: #363636 !important;
         color: #fff;
         text-align: center;
         font-weight: 600;
@@ -160,7 +160,8 @@
 <!-- ==================== CARD DETAIL ==================== -->
 <div class="row">
     <div class="col-12">
-        <div class="card card-outline card-secondary">
+        <div class="card card-outline card-secondary" style="border-top: 3px solid #363636;">
+
             <!-- HEADER -->
             <div class="card-header">
                 <h3 class="card-title">
@@ -169,7 +170,7 @@
                 </h3>
                 <div class="card-tools d-flex align-items-center gap-2">
                     <!-- Tombol Back -->
-                    <a href="<?= site_url('siimut/rekap-laporan-imprs?tahun=' . $tahun) ?>" class="btn btn-sm btn-outline-secondary">
+                    <a href="<?= site_url('siimut/rekap-laporan-impunit?tahun=' . $tahun) ?>" class="btn btn-sm btn-outline-secondary">
                         <i class="fas fa-arrow-left me-1"></i> Kembali
                     </a>
                     <!-- Tahun -->
@@ -183,7 +184,7 @@
                     </div>
                     <!-- Tombol Aksi -->
                     <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-outline-secondary" onclick="reload_table_imprs()" title="Refresh">
+                        <button type="button" class="btn btn-outline-secondary" onclick="reload_table_impunit()" title="Refresh">
                             <i class="fas fa-sync-alt"></i>
                         </button>
                         <a href="#" id="btn-export" class="btn btn-outline-secondary" title="Download Excel">
@@ -197,12 +198,12 @@
             <div class="card-body p-0">
                 <!-- Tabel -->
                 <div class="table-responsive p-3">
-                    <div class="overlay-wrapper" id="loading_overlay_detail_imprs" style="display: none;">
+                    <div class="overlay-wrapper" id="loading_overlay_detail_impunit" style="display: none;">
                         <div class="overlay">
                             <i class="loader"></i>
                         </div>
                     </div>
-                    <table id="ajax_detail_imprs" class="table table-bordered table-hover table-striped mb-0" style="width: 100%;">
+                    <table id="ajax_detail_impunit" class="table table-bordered table-hover table-striped mb-0" style="width: 100%;">
                         <thead>
                             <tr class="align-middle">
                                 <th style="width: 50px;" class="text-center">#</th>
@@ -224,6 +225,9 @@
                         </thead>
                         <tbody></tbody>
                     </table>
+                    <div id="no_data_message" class="alert alert-info mt-3 mb-0" style="display: none;">
+                        <i class="bi bi-info-circle"></i> <strong>Informasi:</strong> Indikator ini tidak memiliki ruangan terkait. Silakan hubungi administrator untuk menambahkan ruangan.
+                    </div>
                 </div>
             </div>
 
@@ -266,7 +270,7 @@
         }
 
         // Init DataTable
-        table_detail = $('#ajax_detail_imprs').DataTable({
+        table_detail = $('#ajax_detail_impunit').DataTable({
             processing: false,
             serverSide: true,
             autoWidth: false,
@@ -276,7 +280,7 @@
                 [10, 25, 50, "Semua"]
             ],
             ajax: {
-                url: '<?= site_url('siimut/rekap-laporan-imprs/ajax-detail-imprs') ?>',
+                url: '<?= site_url('siimut/rekap-laporan-impunit/ajax-detail-impunit') ?>',
                 type: 'POST',
                 data: function(d) {
                     d.vtahun = vtahun;
@@ -284,10 +288,15 @@
                     return d;
                 },
                 beforeSend: function() {
-                    $('#loading_overlay_detail_imprs').show();
+                    $('#loading_overlay_detail_impunit').show();
                 },
                 complete: function() {
-                    $('#loading_overlay_detail_imprs').hide();
+                    $('#loading_overlay_detail_impunit').hide();
+                },
+                error: function(xhr, error, thrown) {
+                    $('#loading_overlay_detail_impunit').hide();
+                    console.error('DataTables error:', error, thrown);
+                    alert('Gagal memuat data detail. Silakan refresh halaman.');
                 }
             },
             columnDefs: [{
@@ -362,6 +371,24 @@
                     next: 'Berikutnya',
                     previous: 'Sebelumnya'
                 }
+            },
+            initComplete: function(settings, json) {
+                if (json && json.recordsTotal === 0) {
+                    $('#no_data_message').show();
+                    $('#ajax_detail_impunit').hide();
+                }
+            }
+        });
+        
+        // Handle DataTables draw event
+        table_detail.on('draw.dt', function() {
+            var info = table_detail.page.info();
+            if (info.recordsTotal === 0) {
+                $('#no_data_message').show();
+                $('#ajax_detail_impunit').hide();
+            } else {
+                $('#no_data_message').hide();
+                $('#ajax_detail_impunit').show();
             }
         });
     });
@@ -373,7 +400,7 @@
         }
     }
 
-    function reload_table_imprs() {
+    function reload_table_impunit() {
         if (table_detail) {
             table_detail.ajax.reload();
         }
@@ -381,7 +408,7 @@
 
     $(document).on('click', '#btn-export', function(e) {
         e.preventDefault();
-        var exportUrl = '<?= site_url('siimut/rekap-laporan-imprs/export-indicator/' . $indicatorId) ?>?tahun=' + vtahun;
+        var exportUrl = '<?= site_url('siimut/rekap-laporan-impunit/export-indicator/' . $indicatorId) ?>?tahun=' + vtahun;
         window.location.href = exportUrl;
     });
 </script>

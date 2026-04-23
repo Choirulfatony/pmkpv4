@@ -137,12 +137,14 @@ class RekapLaporanImpunit extends AppController
             $data[] = $row;
         }
 
-        return $this->response->setJSON([
-            'draw'            => $post['draw'] ?? 1,
-            'recordsTotal'    => $this->rekapModel->getTotalRecords(),
-            'recordsFiltered' => $this->rekapModel->getTotalRecords(),
-            'data'            => $data,
-        ]);
+        return $this->response
+            ->setContentType('application/json')
+            ->setJSON([
+                'draw'            => $post['draw'] ?? 1,
+                'recordsTotal'    => $this->rekapModel->getTotalRecords(),
+                'recordsFiltered' => $this->rekapModel->getTotalRecords(),
+                'data'            => $data,
+            ]);
     }
 
     /**
@@ -234,17 +236,22 @@ class RekapLaporanImpunit extends AppController
                 $data[] = $row;
             }
 
-            return $this->response->setJSON([
-                'draw'            => $post['draw'] ?? 1,
-                'recordsTotal'    => count($departments),
-                'recordsFiltered' => count($departments),
-                'data'            => $data,
-            ]);
+            return $this->response
+                ->setContentType('application/json')
+                ->setJSON([
+                    'draw'            => $post['draw'] ?? 1,
+                    'recordsTotal'    => count($departments),
+                    'recordsFiltered' => count($departments),
+                    'data'            => $data,
+                ]);
         } catch (\Exception $e) {
             log_message('error', 'DETAIL ERROR: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-            return $this->response->setStatusCode(500)->setJSON([
-                'error' => $e->getMessage()
-            ]);
+            return $this->response
+                ->setStatusCode(500)
+                ->setContentType('application/json')
+                ->setJSON([
+                    'error' => 'Terjadi kesalahan pada server'
+                ]);
         }
     }
 
