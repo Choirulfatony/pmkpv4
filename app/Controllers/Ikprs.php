@@ -2212,17 +2212,19 @@ $notifModel->insert([
                     ]);
             } else {
 
-                // insert notif baru ke KARU
-                $db->table('ikprssm_notifikasi')->insert([
-                    'sender_id'    => $user_id,
-                    'hris_user_id' => $insiden->karu_id,
-                    'insiden_id'   => $insiden_id,
-                    'pesan'        => 'Komite telah membaca laporan',
-                    'status'       => 'INFO',
-                    'type'         => 'to_karu',
-                    'is_read'      => 0, // 🔥 harus 0 biar muncul
-                    'created_at'   => date('Y-m-d H:i:s')
-                ]);
+// insert notif baru ke KARU
+$db->table('ikprssm_notifikasi')->insert([
+    'sender_id'    => $user_id,
+    'hris_user_id' => $insiden->karu_id,
+    'insiden_id'   => $insiden_id,
+    'pesan'        => 'Komite telah membaca laporan',
+    'status'       => 'INFO',
+    'type'         => 'to_karu',
+    'is_read'      => 0, // 🔥 harus 0 biar muncul
+    'created_at'   => date('Y-m-d H:i:s')
+]);
+
+
             }
         }
 
