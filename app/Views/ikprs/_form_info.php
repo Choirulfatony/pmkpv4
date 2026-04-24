@@ -65,19 +65,18 @@
                             $warna_status = 'text-primary';
                         }
                     } elseif ($role == 'KARU') {
-                        if ($row['is_read'] == 1) {
-                            if (!empty($row['komite_read_at'])) {
-                                $status_read = 'Telah Dibaca Komite';
-                                $warna_status = 'text-success';
-                                $iconStatus = 'bi bi-check-circle-fill';
-                            } else if (!empty($row['karu_read_at'])) {
-                                $status_read = 'Sudah Dibaca';
-                                $warna_status = 'text-primary';
-                                $iconStatus = 'bi bi-eye-fill';
-                            } else {
-                                $status_read = 'Sudah Dibaca';
-                                $warna_status = 'text-primary';
-                            }
+                        // Prioritaskan berdasarkan timestamp, bukan is_read saja
+                        if (!empty($row['komite_read_at'])) {
+                            $status_read = 'Telah Dibaca Komite';
+                            $warna_status = 'text-success';
+                            $iconStatus = 'bi bi-check-circle-fill';
+                        } else if (!empty($row['karu_read_at'])) {
+                            $status_read = 'Sudah Dibaca';
+                            $warna_status = 'text-primary';
+                            $iconStatus = 'bi bi-eye-fill';
+                        } else if ($row['is_read'] == 1) {
+                            $status_read = 'Sudah Dibaca';
+                            $warna_status = 'text-primary';
                         }
                     } elseif ($role == 'KOMITE') {
                         if (!empty($row['komite_read_at'])) {
@@ -90,7 +89,14 @@
                     // Status laporan badge
                     $statusLabel = $row['status_laporan'] ?? '-';
                     $statusColor = 'secondary';
-                    if ($statusLabel == 'DRAFT') { $statusColor = 'warning'; }
+                    if ($statusLabel == 'DRAFT') {
+                        $statusColor = 'warning';
+                        // Untuk KARU, DRAFT berarti Inbox
+                        if (session('user_role') === 'KARU') {
+                            $statusLabel = 'Inbox';
+                            $statusColor = 'info';
+                        }
+                    }
                     elseif ($statusLabel == 'KARU') { $statusColor = 'info'; }
                     elseif ($statusLabel == 'INSTALASI') { $statusColor = 'primary'; }
                     elseif ($statusLabel == 'SELESAI') { $statusColor = 'success'; }

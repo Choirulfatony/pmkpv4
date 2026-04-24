@@ -109,6 +109,7 @@ $routes->group('ikprs', ['filter' => 'auth'], function ($routes) {
     $routes->match(['get', 'post'], 'tandaiDibaca', 'Ikprs::tandaiDibaca');
     $routes->post('simpanikp', 'Ikprs::simpanikp');
     $routes->post('simpan_verifikasi', 'Ikprs::verifikasi_karu');
+    $routes->post('kirim-ke-komite', 'Ikprs::kirimKeKomite');
     $routes->post('validasi_komite', 'Ikprs::validasi_komite');
     $routes->post('cari_pasien', 'Ikprs::cari_pasien');
 

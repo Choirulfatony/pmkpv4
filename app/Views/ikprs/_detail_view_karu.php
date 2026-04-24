@@ -940,10 +940,18 @@
                 </div>
                 <div id="verifikasi_error" class="text-danger mt-2"></div>
 
-                <button class="btn btn-success mt-3 btn-kirim-verifikasi"
+                <?php if ($insiden['status_laporan'] == 'DRAFT'): ?>
+                <button class="btn btn-primary mt-3 btn-kirim-komite"
                     data-id="<?= $insiden['id'] ?>">
                     <i class="bi bi-send"></i>
-                    Kirim Verifikasi
+                    Kirim ke Komite
+                </button>
+                <?php endif; ?>
+
+                <button class="btn btn-success mt-3 btn-kirim-verifikasi"
+                    data-id="<?= $insiden['id'] ?>">
+                    <i class="bi bi-check-circle"></i>
+                    Verifikasi
                 </button>
             </div>
 

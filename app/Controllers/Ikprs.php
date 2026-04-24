@@ -714,10 +714,10 @@ class Ikprs extends AppController
 
         if ($role == 'KARU') {
 
-            // Untuk KARU: semua insiden yang masuk (termasuk DRAFT)
+            // Untuk KARU: hanya insiden dengan status DRAFT (perlu diverifikasi)
             $total_inbox = $db->table('ikprssm_insiden')
                 ->select('id')
-                ->whereIn('status_laporan', ['DRAFT', 'KARU', 'INSTALASI', 'SELESAI'])
+                ->where('status_laporan', 'DRAFT')
                 ->groupStart()
                 ->where('karu_id', $user_id)
                 ->orWhere('current_receiver_id', $user_id)
@@ -740,12 +740,8 @@ class Ikprs extends AppController
                 ->countAllResults();
         } else {
 
-            // PELAPOR - hanya yang sudah dikirim (bukan DRAFT)
-            $total_inbox = $db->table('ikprssm_insiden')
-                ->select('id')
-                ->where('user_id', $user_id)
-                ->whereIn('status_laporan', ['KARU', 'INSTALASI', 'SELESAI'])
-                ->countAllResults();
+            // PELAPOR - inbox selalu kosong, karena inbox adalah untuk menerima pesan
+            $total_inbox = 0;
         }
 
         // ==========================
@@ -1509,59 +1505,17 @@ class Ikprs extends AppController
                 'penerima_laporan' => session('hris_full_name'),
                 'karu_id'          => session('hris_user_id'),
                 'tgl_terima'       => date('Y-m-d'),
-                'status_laporan'   => 'INSTALASI',
+                'status_laporan'   => 'DRAFT', // 🔥 simpan sebagai DRAFT dulu
                 // 🔥 TAMBAHAN WAJIB
                 'karu_read_at'     => date('Y-m-d H:i:s'),
-                'current_receiver_role' => 'KOMITE',
-                'current_receiver_id'   => NULL, // belum ada komite yang menangani
+                'current_receiver_role' => 'KARU',
+                'current_receiver_id'   => session('hris_user_id'),
                 'updated_at'       => date('Y-m-d H:i:s')
             ]);
-        /*
-        ==========================
-        NOTIF KE KOMITE
-        ==========================
-        */
-
-        $dataNotif = [];
-
-        foreach ($komite as $k) {
-
-            $dataNotif[] = [
-                'sender_id'    => session('hris_user_id'),
-                'hris_user_id' => $k->hris_user_id,
-                'insiden_id'   => $insiden_id,
-                'pesan'        => $insiden->jenis_insiden . ' dari ' . $insiden->department_name . ' menunggu analisa PMKP',
-                'status'       => 'NEW',
-                'type'         => 'to_komite',
-                'is_read'      => 0,
-                'created_at'   => date('Y-m-d H:i:s')
-            ];
-        }
-
-        if (!empty($dataNotif)) {
-            $notifModel->insertBatch($dataNotif);
-        }
 
         /*
         ==========================
-        NOTIF KE KARU (STATUS PROSES)
-        ==========================
-        */
-
-        $notifModel->insert([
-            'sender_id'    => session('hris_user_id'),
-            'hris_user_id' => session('hris_user_id'),
-            'insiden_id'   => $insiden_id,
-            'pesan'        => 'Laporan telah dikirim ke Komite untuk analisa',
-            'status'       => 'INFO',
-            'type'         => 'to_karu', // 🔥 TAMBAHAN
-            'is_read'      => 0, // 🔥 Baru verifikasi = belum dibaca
-            'created_at'   => date('Y-m-d H:i:s')
-        ]);
-
-        /*
-        ==========================
-        NOTIF KE PELAPOR
+        NOTIF KE PELAPOR - ubah pesannya
         ==========================
         */
 
@@ -1575,19 +1529,36 @@ class Ikprs extends AppController
                 ->update([
                     'is_read' => 1
                 ]);
-
-            // Insert notifikasi baru dengan status terbaru
-            $notifModel->insert([
-                'sender_id'    => session('hris_user_id'),
-                'hris_user_id' => $insiden->user_id,
-                'insiden_id'   => $insiden_id,
-                'pesan'        => 'Laporan Anda telah diverifikasi oleh KARU',
-                'status'       => 'INFO',
-                'type'         => 'to_pelapor',
-                'is_read'      => 0,
-                'created_at'   => date('Y-m-d H:i:s')
-            ]);
         }
+
+        // Insert notifikasi baru dengan status terbaru
+        $notifModel->insert([
+            'sender_id'    => session('hris_user_id'),
+            'hris_user_id' => $insiden->user_id,
+            'insiden_id'   => $insiden_id,
+            'pesan'        => 'Laporan menunggu analisa PMKP', // 🔥 ubah pesan
+            'status'       => 'INFO',
+            'type'         => 'to_pelapor',
+            'is_read'      => 0,
+            'created_at'   => date('Y-m-d H:i:s')
+        ]);
+
+        /*
+        ==========================
+        NOTIF KE KARU (STATUS PROSES)
+        ==========================
+        */
+
+$notifModel->insert([
+            'sender_id'    => session('hris_user_id'),
+            'hris_user_id' => session('hris_user_id'),
+            'insiden_id'   => $insiden_id,
+            'pesan'        => 'Laporan menunggu analisa PMKP',
+            'status'       => 'INFO',
+            'type'         => 'to_karu',
+            'is_read'      => 0,
+            'created_at'   => date('Y-m-d H:i:s')
+        ]);
 
 
         $db->transComplete();
@@ -1651,6 +1622,107 @@ class Ikprs extends AppController
             'insiden' => $insiden,
             'next_id' => $next->id ?? '',
             'prev_id' => $prev->id ?? ''
+        ]);
+    }
+
+    public function kirimKeKomite()
+    {
+        $db = db_connect();
+        $notifModel = new IkpNotifikasiModel();
+
+        $insiden_id = $this->request->getPost('insiden_id');
+
+        if (!$insiden_id) {
+            return $this->response->setJSON([
+                'status' => false,
+                'message' => 'ID insiden tidak ditemukan'
+            ]);
+        }
+
+        $insiden = $db->table('ikprssm_insiden i')
+            ->select('i.*, d.department_name')
+            ->join('master_institution_department d', 'd.department_id = i.tempat_insiden', 'left')
+            ->where('i.id', $insiden_id)
+            ->get()
+            ->getRow();
+
+        if (!$insiden) {
+            return $this->response->setJSON([
+                'status' => false,
+                'message' => 'Data insiden tidak ditemukan'
+            ]);
+        }
+
+        // Hanya bisa kirim jika status DRAFT
+        if ($insiden->status_laporan != 'DRAFT') {
+            return $this->response->setJSON([
+                'status' => false,
+                'message' => 'Laporan sudah dikirim, tidak bisa dikirim ulang'
+            ]);
+        }
+
+        $db->transStart();
+
+        // Get komite list
+        $komite = $db->table('ikprssm_komite')
+            ->where('is_active', 1)
+            ->get()
+            ->getResult();
+
+        // Update status ke INSTALASI
+        $db->table('ikprssm_insiden')
+            ->where('id', $insiden_id)
+            ->update([
+                'status_laporan'   => 'INSTALASI',
+                'current_receiver_role' => 'KOMITE',
+                'current_receiver_id'   => NULL,
+                'updated_at'       => date('Y-m-d H:i:s')
+            ]);
+
+        // Notif ke KOMITE
+        $dataNotif = [];
+        foreach ($komite as $k) {
+            $dataNotif[] = [
+                'sender_id'    => session('hris_user_id'),
+                'hris_user_id' => $k->hris_user_id,
+                'insiden_id'   => $insiden_id,
+                'pesan'        => $insiden->jenis_insiden . ' dari ' . $insiden->department_name . ' menunggu analisa PMKP',
+                'status'       => 'NEW',
+                'type'         => 'to_komite',
+                'is_read'      => 0,
+                'created_at'   => date('Y-m-d H:i:s')
+            ];
+        }
+
+        if (!empty($dataNotif)) {
+            $notifModel->insertBatch($dataNotif);
+        }
+
+        // Notif ke PELAPOR - sudah dikirim ke komite
+        $notifModel->insert([
+            'sender_id'    => session('hris_user_id'),
+            'hris_user_id' => $insiden->user_id,
+            'insiden_id'   => $insiden_id,
+            'pesan'        => 'Laporan telah dikirim ke Komite untuk analisa',
+            'status'       => 'INFO',
+            'type'         => 'to_pelapor',
+            'is_read'      => 0,
+            'created_at'   => date('Y-m-d H:i:s')
+        ]);
+
+        $db->transComplete();
+
+        if ($db->transStatus() === FALSE) {
+            return $this->response->setJSON([
+                'status' => false,
+                'message' => 'Gagal mengirim ke komite'
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'status' => true,
+            'message' => 'Laporan telah dikirim ke Komite',
+            'insiden_id' => $insiden_id
         ]);
     }
 

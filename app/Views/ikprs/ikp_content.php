@@ -310,23 +310,32 @@
                           </button>
 
 
-                          <ul class="nav nav-pills flex-column">
-                              <li class="nav-item">
-                                  <a id="btnInfo" href="#" class="nav-link d-flex align-items-center">
-                                      <i class="bi bi-bell me-2"></i>
-                                      Info
-                                      <span id="badge-notif" class="badge bg-info ms-auto">0</span>
-                                  </a>
-                              </li>
+<ul class="nav nav-pills flex-column">
+                                <?php
+                                $role = session('user_role');
+                                $infoLabel = 'Info';
+                                $infoIcon = 'bi-bell';
+                                if ($role === 'KARU') {
+                                    $infoLabel = 'Inbox';
+                                    $infoIcon = 'bi-inbox';
+                                } elseif ($role === 'KOMITE') {
+                                    $infoLabel = 'Inbox';
+                                    $infoIcon = 'bi-inbox';
+                                }
+                                ?>
+                                <li class="nav-item">
+                                    <a id="btnInfo" href="#" class="nav-link d-flex align-items-center">
+                                        <i class="bi <?= $infoIcon ?> me-2"></i>
+                                        <?= $infoLabel ?>
+                                        <span id="badge-notif" class="badge bg-info ms-auto">0</span>
+                                    </a>
+                                </li>
 
-
-<li class="nav-item">
+                                <li class="nav-item">
                                     <a id="btnInbox" href="#" class="nav-link d-flex align-items-center">
                                         <i class="bi bi-inbox me-2"></i>
                                         Inbox
-                                        <span id="badge-inbox" class="badge bg-primary ms-auto">
-                                            0
-                                        </span>
+                                        <span id="badge-inbox" class="badge bg-primary ms-auto">0</span>
                                     </a>
                                 </li>
 
@@ -389,9 +398,10 @@
           const initialTab = $('#initialTabInput').val();
           
           // Load initial content
+          const userRole = "<?= session('user_role') ?>";
           if (initialTab === 'info') {
               loadInfo(1);
-          } else {
+          } else if (userRole !== 'PELAPOR') {
               loadInbox();
           }
 
@@ -933,9 +943,14 @@
       /* ===== KLIK ROW INFO ===== */
       $(document).on('click', '.info-row', function() {
 
-          let id = $(this).data('id');
+          let row = $(this);
+          let id = row.data('id');
 
-          // tandai sudah dibaca
+          // Update UI immediately sebelum server response
+          row.removeClass('notif-unread');
+          row.find('.notif-dot').remove();
+
+          // tandai sudah dibaca via server
           tandaiSudahDibaca(id);
 
           // buka detail inbox
@@ -970,6 +985,31 @@
 
       $(document).on('click', '.btn-kirim-verifikasi', function() {
           kirimVerifikasi(this);
+      });
+
+      $(document).on('click', '.btn-kirim-komite', function() {
+          let btn = this;
+          let id = $(btn).data('id');
+          $(btn).prop('disabled', true);
+          $.ajax({
+              url: "<?= base_url('ikprs/kirim-ke-komite') ?>",
+              type: "POST",
+              dataType: "json",
+              data: { insiden_id: id },
+              success: function(res) {
+                  if (res.status) {
+                      alert(res.message);
+                      loadInbox(1);
+                  } else {
+                      alert(res.message);
+                      $(btn).prop('disabled', false);
+                  }
+              },
+              error: function() {
+                  alert('Gagal mengirim ke komite');
+                  $(btn).prop('disabled', false);
+              }
+          });
       });
 
       $(document).off('click', '.btn-kirim-verifikasi').on('click', '.btn-kirim-verifikasi', function() {
