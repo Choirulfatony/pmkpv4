@@ -395,7 +395,7 @@ class IkpInsidenModel extends Model
 
             $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id', 'left');
             $builder->where('n.hris_user_id', $user_id);
-            $builder->whereIn('i.status_laporan', $status);
+            $builder->whereIn('i.status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
         } elseif ($role == 'PELAPOR') {
 
             // PELAPOR hanya lihat yang sudah SELESAI
@@ -474,7 +474,7 @@ class IkpInsidenModel extends Model
 
             $builder->where('n.hris_user_id', $user_id);
 
-            $builder->whereIn('i.status_laporan', ['DRAFT', 'KARU', 'INSTALASI', 'SELESAI']);
+            $builder->whereIn('i.status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
 
         } elseif ($role == 'PELAPOR') {
 

@@ -731,7 +731,7 @@ $db = db_connect();
 
             log_message('error', 'KARU counterAjax - total_inbox: ' . $total_inbox . ', total_draft: ' . $total_draft . ', total_send: ' . $total_send);
         } elseif ($role == 'KOMITE') {
-            // KOMITE inbox = INSTALASI/SELESAI
+            // KOMITE inbox = TERKIRIM + INSTALASI + SELESAI
             $total_inbox = $db->table('ikprssm_insiden i')
                 ->select('i.id')
                 ->join('ikprssm_notifikasi n', 'n.insiden_id = i.id', 'left')
@@ -739,7 +739,7 @@ $db = db_connect();
                 ->where('n.hris_user_id', $user_id)
                 ->orWhere('i.komite_id', $user_id)
                 ->groupEnd()
-                ->whereIn('i.status_laporan', ['INSTALASI', 'SELESAI'])
+                ->whereIn('i.status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI'])
                 ->groupBy('i.id')
                 ->countAllResults();
 
