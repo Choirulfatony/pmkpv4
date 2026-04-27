@@ -401,11 +401,7 @@
           const hrisUserId = "<?= session('hris_user_id') ?? '' ?>";
           if (hrisUserId !== '') {
               $.get("<?= site_url('ikprs/counter-ajax') ?>", function(res) {
-                  console.log('counter-ajax response:', res);
-                  console.log('role session:', "<?= session('user_role') ?? '' ?>");
-                  console.log('user_id session:', "<?= session('hris_user_id') ?? '' ?>");
                   if (res.error && res.error === 'User belum login') {
-                      console.log('User not logged in, skipping badge update');
                       return;
                   }
                   if (res.total_notif !== undefined && res.total_notif > 0) {
@@ -425,7 +421,6 @@
                       $('#badge-notif').text(res.total_info);
                   }
               }).fail(function(xhr) {
-                  console.log('counter-ajax error:', xhr);
               });
           }
 
