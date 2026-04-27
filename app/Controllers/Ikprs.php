@@ -711,9 +711,9 @@ $db = db_connect();
         // INBOX
         // ==========================
         if ($role == 'KARU') {
-            // Inbox KARU: DRAFT + KARU (semua laporan yang belum dibaca KOMITE)
+            // Inbox KARU: DRAFT + KARU + SELESAI
             $total_inbox = $db->table('ikprssm_insiden')
-                ->whereIn('status_laporan', ['DRAFT', 'KARU'])
+                ->whereIn('status_laporan', ['DRAFT', 'KARU', 'SELESAI'])
                 ->where('karu_id', $user_id)
                 ->countAllResults();
 
@@ -723,10 +723,10 @@ $db = db_connect();
                 ->where('karu_id', $user_id)
                 ->countAllResults();
 
-            // Sent KARU: TERKIRIM + INSTALASI + SELESAI (sudah dibaca KOMITE)
+            // Sent KARU: TERKIRIM + INSTALASI (sudah dibaca KOMITE, belum selesai)
             $total_send = $db->table('ikprssm_insiden')
                 ->where('karu_id', $user_id)
-                ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI'])
+                ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI'])
                 ->countAllResults();
 
             log_message('error', 'KARU counterAjax - total_inbox: ' . $total_inbox . ', total_draft: ' . $total_draft . ', total_send: ' . $total_send);

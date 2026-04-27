@@ -778,7 +778,7 @@
             <?php endif; ?>
         </div>
 
-        <?php if ($user_role === 'KOMITE' && $insiden['status_laporan'] == 'INSTALASI'): ?>
+        <?php if ($user_role === 'KOMITE' && in_array($insiden['status_laporan'], ['TERKIRIM', 'INSTALASI'])): ?>
 
             <div class="insiden-section">
 

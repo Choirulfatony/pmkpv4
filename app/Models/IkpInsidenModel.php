@@ -452,8 +452,8 @@ class IkpInsidenModel extends Model
         // STATUS FILTER
         // ======================
         if ($tab == 'inbox') {
-            // KARU Inbox: DRAFT + KARU (semua belum dibaca KOMITE)
-            $status = ['DRAFT', 'KARU'];
+            // KARU Inbox: DRAFT + KARU + SELESAI (semua laporan)
+            $status = ['DRAFT', 'KARU', 'SELESAI'];
         } elseif ($tab == 'draft') {
             // KARU Draft: KARU (data lama menunggu KOMITE baca)
             $status = ['KARU'];
