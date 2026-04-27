@@ -723,10 +723,10 @@ $db = db_connect();
                 ->where('karu_id', $user_id)
                 ->countAllResults();
 
-            // Sent KARU: TERKIRIM + INSTALASI (sudah dibaca KOMITE, belum selesai)
+            // Sent KARU: TERKIRIM + INSTALASI + SELESAI
             $total_send = $db->table('ikprssm_insiden')
                 ->where('karu_id', $user_id)
-                ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI'])
+                ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI'])
                 ->countAllResults();
 
             log_message('error', 'KARU counterAjax - total_inbox: ' . $total_inbox . ', total_draft: ' . $total_draft . ', total_send: ' . $total_send);
