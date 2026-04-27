@@ -91,13 +91,25 @@ class IkpInsidenModel extends Model
      * ===================================================== */
     public function getDraftPaginated($user_id, $limit, $offset, $search = '', $filters = [])
     {
-        $builder = $this->builder();
+        $role = session('user_role');
+        $db = $this->db;
+        $builder = $db->table($this->table);
 
         $builder->select(
             'id, nama_pasien, kd_pasien, jenis_insiden, insiden ,kronologis_insiden, created_at'
-        )
-            ->where('user_id', $user_id)
-            ->where('status_laporan', 'DRAFT');
+        );
+
+        if ($role == 'KARU') {
+            // KARU: Draft = DRAFT + KARU (cek karu_id ATAU current_receiver_id)
+            $builder->whereIn('status_laporan', ['DRAFT', 'KARU']);
+            $builder->groupStart()
+                ->where('karu_id', $user_id)
+                ->orWhere('current_receiver_id', $user_id)
+                ->groupEnd();
+        } else {
+            $builder->where('user_id', $user_id);
+            $builder->where('status_laporan', 'DRAFT');
+        }
 
         if ($search !== '') {
             $builder->groupStart()
@@ -153,11 +165,21 @@ class IkpInsidenModel extends Model
      * ===================================================== */
     public function countDraftFiltered($user_id, $search = '', $filters = [])
     {
-        $builder = $this->builder();
+        $role = session('user_role');
+        $db = $this->db;
+        $builder = $db->table($this->table);
 
-        $builder
-            ->where('user_id', $user_id)
-            ->where('status_laporan', 'DRAFT');
+        if ($role == 'KARU') {
+            // KARU: Draft = DRAFT + KARU (cek karu_id ATAU current_receiver_id)
+            $builder->whereIn('status_laporan', ['DRAFT', 'KARU']);
+            $builder->groupStart()
+                ->where('karu_id', $user_id)
+                ->orWhere('current_receiver_id', $user_id)
+                ->groupEnd();
+        } else {
+            $builder->where('user_id', $user_id);
+            $builder->where('status_laporan', 'DRAFT');
+        }
 
         if ($search !== '') {
             $builder->groupStart()
@@ -225,11 +247,12 @@ class IkpInsidenModel extends Model
             $builder->where('komite_id', $user_id);
             $builder->whereIn('status_laporan', ['INSTALASI', 'SELESAI']);
         } else {
+            // KARU & PELAPOR: Sent = hanya INSTALASI (belum selesai), SELESAI sudah final
             $builder->groupStart()
                 ->where('user_id', $user_id)
                 ->orWhere('karu_id', $user_id)
                 ->groupEnd()
-                ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
+                ->where('status_laporan', 'INSTALASI');
         }
 
         if ($search !== '') {
@@ -268,11 +291,12 @@ class IkpInsidenModel extends Model
             $builder->where('komite_id', $user_id);
             $builder->whereIn('status_laporan', ['INSTALASI', 'SELESAI']);
         } else {
+            // KARU & PELAPOR: Sent = hanya INSTALASI (belum selesai), SELESAI sudah final
             $builder->groupStart()
                 ->where('user_id', $user_id)
                 ->orWhere('karu_id', $user_id)
                 ->groupEnd()
-                ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
+                ->where('status_laporan', 'INSTALASI');
         }
 
         if ($search !== '') {
@@ -355,8 +379,8 @@ class IkpInsidenModel extends Model
         // STATUS FILTER
         // ======================
         if ($tab == 'inbox') {
-            // KARU & PELAPOR lihat semua status
-            $status = ['DRAFT', 'KARU', 'INSTALASI', 'SELESAI'];
+            // KARU: Draft = DRAFT + KARU (laporan yang perlu diverifikasi)
+            $status = ['DRAFT', 'KARU'];
         } else {
             $status = ['SELESAI'];
         }
@@ -374,7 +398,7 @@ class IkpInsidenModel extends Model
             $builder->whereIn('i.status_laporan', $status);
         } elseif ($role == 'PELAPOR') {
 
-            // PELAPOR hanya lihat yang sudah SELESAI (tidak lihat laporan yang belum selesai)
+            // PELAPOR hanya lihat yang sudah SELESAI
             $builder->where('i.user_id', $user_id);
             $builder->where('i.status_laporan', 'SELESAI');
         } else {
@@ -428,8 +452,8 @@ class IkpInsidenModel extends Model
         // STATUS FILTER
         // ======================
         if ($tab == 'inbox') {
-            // KARU & PELAPOR lihat semua status
-            $status = ['DRAFT', 'KARU', 'INSTALASI', 'SELESAI'];
+            // KARU: DRAFT + KARU + SELESAI (semua laporan termasuk yang sudah selesai)
+            $status = ['DRAFT', 'KARU', 'SELESAI'];
         } else {
             $status = ['SELESAI'];
         }
@@ -448,9 +472,9 @@ class IkpInsidenModel extends Model
 
         } elseif ($role == 'PELAPOR') {
 
-            // PELAPOR hanya lihat yang sudah SELESAI
+            // PELAPOR inbox: semua laporan yang sudah diverifikasi KARU (KARU, INSTALASI, SELESAI)
             $builder->where('i.user_id', $user_id);
-            $builder->where('i.status_laporan', 'SELESAI');
+            $builder->whereIn('i.status_laporan', ['KARU', 'INSTALASI', 'SELESAI']);
         } else {
 
             $builder->where('1=0');

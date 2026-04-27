@@ -691,7 +691,27 @@ class Ikprs extends AppController
 
         $db = db_connect();
 
-        $typeFilter = [];
+        // MATIKAN total_notif = 0 untuk KARU (tidak ada bunyi)
+        if ($role == 'KARU') {
+            $total_notif = 0;
+        } else {
+            $typeFilter = [];
+
+            if ($role == 'PELAPOR') {
+                $typeFilter = ['type' => 'to_pelapor'];
+            } elseif ($role == 'KARU') {
+                $typeFilter = ['type' => 'to_karu'];
+            } elseif ($role == 'KOMITE') {
+                $typeFilter = ['type' => 'to_komite'];
+            }
+
+            // NOTIF
+            $total_notif = $db->table('ikprssm_notifikasi')
+                ->where('hris_user_id', $user_id)
+                ->where('is_read', 0)
+                ->where($typeFilter) // 🔥 INI
+                ->countAllResults();
+        }
 
         if ($role == 'PELAPOR') {
             $typeFilter = ['type' => 'to_pelapor'];
@@ -708,25 +728,20 @@ class Ikprs extends AppController
             ->where($typeFilter) // 🔥 INI
             ->countAllResults();
 
-        // ==========================
+// ==========================
         // INBOX
         // ==========================
-
         if ($role == 'KARU') {
-
-            // Untuk KARU: hitung semua insiden yang pernah masuk ke KARU
-            // termasuk yang sudah selesai
+            // Inbox KARU: DRAFT (belum diverifikasi) + KARU (sudah diverifikasi, belum diproses komite)
             $total_inbox = $db->table('ikprssm_insiden')
-                ->select('id')
-                ->whereIn('status_laporan', ['DRAFT', 'KARU', 'INSTALASI', 'SELESAI'])
-                ->groupStart()
+                ->whereIn('status_laporan', ['DRAFT', 'KARU'])
                 ->where('karu_id', $user_id)
-                ->orWhere('current_receiver_id', $user_id)
-                ->groupEnd()
-                ->groupBy('id')
                 ->countAllResults();
-        } elseif ($role == 'KOMITE') {
 
+            // Draft KARU = 0 (karena sudah di-inbox)
+            $total_draft = 0;
+        } elseif ($role == 'KOMITE') {
+            // KOMITE inbox = INSTALASI/SELESAI
             $total_inbox = $db->table('ikprssm_insiden i')
                 ->select('i.id')
                 ->join('ikprssm_notifikasi n', 'n.insiden_id = i.id', 'left')
@@ -737,45 +752,38 @@ class Ikprs extends AppController
                 ->whereIn('i.status_laporan', ['INSTALASI', 'SELESAI'])
                 ->groupBy('i.id')
                 ->countAllResults();
-        } else {
 
-            // PELAPOR - bisa lihat semua status laporan miliknya
+            $total_draft = 0;
+        } else {
+            // PELAPOR inbox: KARU, INSTALASI, SELESAI (sudah diproses KARU)
             $total_inbox = $db->table('ikprssm_insiden')
-                ->select('id')
                 ->where('user_id', $user_id)
-                ->whereIn('status_laporan', ['DRAFT', 'KARU', 'INSTALASI', 'SELESAI'])
+                ->whereIn('status_laporan', ['KARU', 'INSTALASI', 'SELESAI'])
+                ->countAllResults();
+
+            $total_draft = $db->table('ikprssm_insiden')
+                ->where('user_id', $user_id)
+                ->where('status_laporan', 'DRAFT')
                 ->countAllResults();
         }
 
         // ==========================
-        // DRAFT
-        // ==========================
-
-        $total_draft = $db->table('ikprssm_insiden')
-            ->where('user_id', $user_id)
-            ->where('status_laporan', 'DRAFT')
-            ->countAllResults();
-
-        // ==========================
         // SENT
         // ==========================
-
         if ($role == 'KARU') {
-
+            // Sent KARU: INSTALASI (sedang diproses komite)
             $total_send = $db->table('ikprssm_insiden')
                 ->where('karu_id', $user_id)
-                ->whereIn('status_laporan', ['INSTALASI', 'SELESAI'])
+                ->where('status_laporan', 'INSTALASI')
                 ->countAllResults();
         } elseif ($role == 'KOMITE') {
-
-            // KOMITE: hitung yang sudah di proses oleh komite ini
-            // bisa dari komite_id ATAU komite_opened_by
+            // KOMITE sent: sudah diproses (INSTALASI/SELESAI)
             $total_send = $db->table('ikprssm_insiden')
                 ->where('komite_id', intval($user_id))
                 ->whereIn('status_laporan', ['INSTALASI', 'SELESAI'])
                 ->countAllResults();
         } else {
-
+            // PELAPOR sent: bukan DRAFT
             $total_send = $db->table('ikprssm_insiden')
                 ->where('user_id', $user_id)
                 ->where('status_laporan !=', 'DRAFT')
@@ -784,11 +792,21 @@ class Ikprs extends AppController
 
         $notif = $this->getNotifList($user_id, $role);
 
+        // total_info: notif tipe 'info' untuk user ini - MATI untuk KARU
+        $total_info = 0;
+        if ($role != 'KARU') {
+            $total_info = $db->table('ikprssm_notifikasi')
+                ->where('hris_user_id', $user_id)
+                ->where('type', 'info')
+                ->countAllResults();
+        }
+
         return $this->response->setJSON([
             'total_notif' => $total_notif,
             'total_inbox' => $total_inbox,
             'total_draft' => $total_draft,
             'total_send'  => $total_send,
+            'total_info'  => $total_info,
             'data'        => $notif
         ]);
     }
@@ -1506,11 +1524,11 @@ class Ikprs extends AppController
                 'penerima_laporan' => session('hris_full_name'),
                 'karu_id'          => session('hris_user_id'),
                 'tgl_terima'       => date('Y-m-d'),
-                'status_laporan'   => 'INSTALASI',
+                'status_laporan'   => 'KARU', // 🔥 Ubah ke KARU (menunggu Komite)
                 // 🔥 TAMBAHAN WAJIB
                 'karu_read_at'     => date('Y-m-d H:i:s'),
                 'current_receiver_role' => 'KOMITE',
-                'current_receiver_id'   => NULL, // belum ada komite yang menangani
+                'current_receiver_id'   => NULL, // belum ada komite yang来处理
                 'updated_at'       => date('Y-m-d H:i:s')
             ]);
         /*
@@ -1541,20 +1559,21 @@ class Ikprs extends AppController
 
         /*
         ==========================
-        NOTIF KE KARU (STATUS PROSES)
+        NOTIF KE KARU (STATUS PROSES) - MATIKAN (is_read = 1)
         ==========================
         */
 
-        $notifModel->insert([
-            'sender_id'    => session('hris_user_id'),
-            'hris_user_id' => session('hris_user_id'),
-            'insiden_id'   => $insiden_id,
-            'pesan'        => 'Laporan telah dikirim ke Komite untuk analisa',
-            'status'       => 'INFO',
-            'type'         => 'to_karu', // 🔥 TAMBAHAN
-            'is_read'      => 0, // 🔥 Baru verifikasi = belum dibaca
-            'created_at'   => date('Y-m-d H:i:s')
-        ]);
+        // MATIKAN NOTIFIKASI - Langsung jadi sudah dibaca
+        // $notifModel->insert([
+        //     'sender_id'    => session('hris_user_id'),
+        //     'hris_user_id' => session('hris_user_id'),
+        //     'insiden_id'   => $insiden_id,
+        //     'pesan'        => 'Laporan telah dikirim ke Komite untuk analisa',
+        //     'status'       => 'INFO',
+        //     'type'         => 'to_karu',
+        //     'is_read'      => 1, // 🔥 MATIKAN - sudah dibaca
+        //     'created_at'   => date('Y-m-d H:i:s')
+        // ]);
 
         /*
         ==========================
@@ -2088,6 +2107,17 @@ class Ikprs extends AppController
                     ]);
             }
         }
+
+        // ==========================
+        // ✅ 4. UPDATE is_read untuk notif tipe 'info' (untuk user ini)
+        // ==========================
+        $db->table('ikprssm_notifikasi')
+            ->where('hris_user_id', $user_id)
+            ->where('type', 'info')
+            ->where('is_read', 0)
+            ->update([
+                'is_read' => 1
+            ]);
 
         // ==========================
         // 🔥 3. TRACKING KOMITE BACA + SIMPAN KOMITE YANG MEMBUKA PERTAMA

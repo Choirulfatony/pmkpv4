@@ -502,10 +502,11 @@
                 let totalNotif = res.total_notif ?? 0;
 
                 /* =============================
-                      🔔 SOUND NOTIFIKASI (BERULANG KALAU BELUM DIBUKA)
-                      Hanya untuk KARU dan KOMITE, tidak untuk PELAPOR
+                      🔔 SOUND NOTIFIKASI - BERBUNYI JIKA INBOX/SENT BERTAMBAH
+                      Tidak untuk tipe INFO
                  ============================= */
-                if (totalNotif > 0 && totalNotif >= lastNotifCount && (user_role === 'KARU' || user_role === 'KOMITE')) {
+                let newInboxSend = (inbox > lastInboxCount) || (send > lastSendCount);
+                if (newInboxSend && (user_role === 'KARU' || user_role === 'KOMITE' || user_role === 'PELAPOR')) {
                     try {
                         const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
                         const oscillator = audioCtx.createOscillator();
@@ -522,10 +523,7 @@
                         oscillator.start(audioCtx.currentTime);
                         oscillator.stop(audioCtx.currentTime + 0.5);
                     } catch (e) {}
-                } else if (totalNotif == 0) {
-                    lastNotifCount = 0;
                 }
-                lastNotifCount = totalNotif;
 
                 if (inbox > lastInboxCount) {
                     console.log("Inbox baru masuk");

@@ -405,14 +405,21 @@
                       console.log('User not logged in, skipping badge update');
                       return;
                   }
-                  if (res.total_notif !== undefined) {
+if (res.total_notif !== undefined && res.total_notif > 0) {
                       $('#badge-notif').text(res.total_notif);
                   }
-                  if (res.total_inbox !== undefined) {
+                  if (res.total_inbox !== undefined && res.total_inbox > 0) {
                       $('#badge-inbox').text(res.total_inbox);
                   }
-                  if (res.total_send !== undefined) {
-                      $('#badge-send').text(res.total_send);
+                  if (res.total_send !== undefined && res.total_send > 0) {
+                       $('#badge-send').text(res.total_send);
+                  }
+                  if (res.total_draft !== undefined && res.total_draft > 0) {
+                      $('#badge-draft').text(res.total_draft);
+                  }
+                  // Matikan total_info untuk KARU
+                  if (res.total_info !== undefined && res.total_info > 0 && "<?= session('user_role') ?>" !== 'KARU') {
+                      $('#badge-notif').text(res.total_info);
                   }
               }).fail(function(xhr) {
                   // Ignore network errors
