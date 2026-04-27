@@ -495,11 +495,15 @@
             },
             success: function(res) {
 
+                console.log('header counter-ajax response:', res);
+
                 let notif = res.total_notif ?? 0;
                 let inbox = res.total_inbox ?? 0;
                 let draft = res.total_draft ?? 0;
                 let send = res.total_send ?? 0;
                 let totalNotif = res.total_notif ?? 0;
+
+                console.log('header - send value:', send);
 
                 /* =============================
                       🔔 SOUND NOTIFIKASI - BERBUNYI JIKA INBOX/SENT BERTAMBAH

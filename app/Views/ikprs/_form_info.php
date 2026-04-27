@@ -92,13 +92,13 @@
                     $statusColor = 'secondary';
                     if ($statusLabel == 'DRAFT') { $statusColor = 'warning'; }
                     elseif ($statusLabel == 'KARU') { $statusColor = 'info'; }
+                    elseif ($statusLabel == 'TERKIRIM') { $statusColor = 'primary'; }
                     elseif ($statusLabel == 'INSTALASI') { $statusColor = 'primary'; }
                     elseif ($statusLabel == 'SELESAI') { $statusColor = 'success'; }
                 ?>
 
                     <tr class="info-row <?= $row['is_read'] == 0 ? 'notif-unread' : '' ?>"
-                        data-id="<?= esc($row['insiden_id']) ?>"
-                        style="cursor:pointer">
+                        data-id="<?= esc($row['insiden_id']) ?>">
 
                         <!-- DOT UNREAD + ICON JENIS -->
                         <td class="mailbox-star text-muted" style="width:40px;">

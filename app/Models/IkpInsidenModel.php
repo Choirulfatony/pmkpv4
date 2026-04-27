@@ -247,12 +247,12 @@ class IkpInsidenModel extends Model
             $builder->where('komite_id', $user_id);
             $builder->whereIn('status_laporan', ['INSTALASI', 'SELESAI']);
         } else {
-            // KARU & PELAPOR: Sent = hanya INSTALASI (belum selesai), SELESAI sudah final
+            // KARU & PELAPOR: Sent = TERKIRIM + INSTALASI + SELESAI
             $builder->groupStart()
                 ->where('user_id', $user_id)
                 ->orWhere('karu_id', $user_id)
                 ->groupEnd()
-                ->where('status_laporan', 'INSTALASI');
+                ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
         }
 
         if ($search !== '') {
@@ -291,12 +291,12 @@ class IkpInsidenModel extends Model
             $builder->where('komite_id', $user_id);
             $builder->whereIn('status_laporan', ['INSTALASI', 'SELESAI']);
         } else {
-            // KARU & PELAPOR: Sent = hanya INSTALASI (belum selesai), SELESAI sudah final
+            // KARU & PELAPOR: Sent = TERKIRIM + INSTALASI + SELESAI
             $builder->groupStart()
                 ->where('user_id', $user_id)
                 ->orWhere('karu_id', $user_id)
                 ->groupEnd()
-                ->where('status_laporan', 'INSTALASI');
+                ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
         }
 
         if ($search !== '') {
@@ -452,8 +452,14 @@ class IkpInsidenModel extends Model
         // STATUS FILTER
         // ======================
         if ($tab == 'inbox') {
-            // KARU: DRAFT + KARU + SELESAI (semua laporan termasuk yang sudah selesai)
-            $status = ['DRAFT', 'KARU', 'SELESAI'];
+            // KARU Inbox: DRAFT + KARU (semua belum dibaca KOMITE)
+            $status = ['DRAFT', 'KARU'];
+        } elseif ($tab == 'draft') {
+            // KARU Draft: KARU (data lama menunggu KOMITE baca)
+            $status = ['KARU'];
+        } elseif ($tab == 'sent') {
+            // KARU Sent: TERKIRIM + INSTALASI + SELESAI (sudah dibaca KOMITE)
+            $status = ['TERKIRIM', 'INSTALASI', 'SELESAI'];
         } else {
             $status = ['SELESAI'];
         }

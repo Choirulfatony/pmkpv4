@@ -397,15 +397,18 @@
               loadInbox();
           }
 
-          // Update badge from counter-ajax - hanya untuk HRIS login (yang punya hris_user_id)
+// Update badge from counter-ajax - hanya untuk HRIS login (yang punya hris_user_id)
           const hrisUserId = "<?= session('hris_user_id') ?? '' ?>";
           if (hrisUserId !== '') {
               $.get("<?= site_url('ikprs/counter-ajax') ?>", function(res) {
+                  console.log('counter-ajax response:', res);
+                  console.log('role session:', "<?= session('user_role') ?? '' ?>");
+                  console.log('user_id session:', "<?= session('hris_user_id') ?? '' ?>");
                   if (res.error && res.error === 'User belum login') {
                       console.log('User not logged in, skipping badge update');
                       return;
                   }
-if (res.total_notif !== undefined && res.total_notif > 0) {
+                  if (res.total_notif !== undefined && res.total_notif > 0) {
                       $('#badge-notif').text(res.total_notif);
                   }
                   if (res.total_inbox !== undefined && res.total_inbox > 0) {
@@ -422,7 +425,7 @@ if (res.total_notif !== undefined && res.total_notif > 0) {
                       $('#badge-notif').text(res.total_info);
                   }
               }).fail(function(xhr) {
-                  // Ignore network errors
+                  console.log('counter-ajax error:', xhr);
               });
           }
 
@@ -938,18 +941,10 @@ if (res.total_notif !== undefined && res.total_notif > 0) {
           loadInfo(1);
       });
 
-      /* ===== KLIK ROW INFO ===== */
-      $(document).on('click', '.info-row', function() {
-
-          let id = $(this).data('id');
-
-          // tandai sudah dibaca
-          tandaiSudahDibaca(id);
-
-          // buka detail inbox
-          loadDetailInsiden(id, 'inbox');
-
-      });
+      /* ===== KLIK ROW INFO - NONAKTIFKAN (TIDAK BISA BUKA DARI INFO) ===== */
+      // $(document).on('click', '.info-row', function() {
+      //     // DIBISAKAN - tidak ada action
+      // });
 
 
       /* ===== tandaiBaca ===== */
