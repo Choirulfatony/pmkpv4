@@ -106,6 +106,10 @@ class IkpInsidenModel extends Model
                 ->where('karu_id', $user_id)
                 ->orWhere('current_receiver_id', $user_id)
                 ->groupEnd();
+        } elseif ($role == 'PELAPOR') {
+            // PELAPOR: hanya DRAFT
+            $builder->where('user_id', $user_id);
+            $builder->where('status_laporan', 'DRAFT');
         } else {
             $builder->where('user_id', $user_id);
             $builder->where('status_laporan', 'DRAFT');
@@ -176,6 +180,10 @@ class IkpInsidenModel extends Model
                 ->where('karu_id', $user_id)
                 ->orWhere('current_receiver_id', $user_id)
                 ->groupEnd();
+        } elseif ($role == 'PELAPOR') {
+            // PELAPOR: hanya DRAFT
+            $builder->where('user_id', $user_id);
+            $builder->where('status_laporan', 'DRAFT');
         } else {
             $builder->where('user_id', $user_id);
             $builder->where('status_laporan', 'DRAFT');
@@ -247,12 +255,12 @@ class IkpInsidenModel extends Model
             $builder->where('komite_id', $user_id);
             $builder->whereIn('status_laporan', ['INSTALASI', 'SELESAI']);
         } else {
-            // KARU & PELAPOR: Sent = TERKIRIM + INSTALASI + SELESAI
+            // KARU & PELAPOR: DRAFT + KARU + TERKIRIM + INSTALASI + SELESAI
             $builder->groupStart()
                 ->where('user_id', $user_id)
                 ->orWhere('karu_id', $user_id)
                 ->groupEnd()
-                ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
+                ->whereIn('status_laporan', ['DRAFT', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
         }
 
         if ($search !== '') {
@@ -291,12 +299,12 @@ class IkpInsidenModel extends Model
             $builder->where('komite_id', $user_id);
             $builder->whereIn('status_laporan', ['INSTALASI', 'SELESAI']);
         } else {
-            // KARU & PELAPOR: Sent = TERKIRIM + INSTALASI + SELESAI
+            // KARU & PELAPOR: DRAFT + KARU + TERKIRIM + INSTALASI + SELESAI
             $builder->groupStart()
                 ->where('user_id', $user_id)
                 ->orWhere('karu_id', $user_id)
                 ->groupEnd()
-                ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
+                ->whereIn('status_laporan', ['DRAFT', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
         }
 
         if ($search !== '') {
@@ -395,7 +403,9 @@ class IkpInsidenModel extends Model
 
             $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id', 'left');
             $builder->where('n.hris_user_id', $user_id);
-            $builder->whereIn('i.status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
+            
+            // Semua KOMITE bisa lihat inbox
+            $builder->whereIn('i.status_laporan', ['DRAFT', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
         } elseif ($role == 'PELAPOR') {
 
             // PELAPOR hanya lihat yang sudah SELESAI
@@ -452,11 +462,11 @@ class IkpInsidenModel extends Model
         // STATUS FILTER
         // ======================
         if ($tab == 'inbox') {
-            // KARU Inbox: DRAFT + KARU + SELESAI (semua laporan)
-            $status = ['DRAFT', 'KARU', 'SELESAI'];
+            // KARU Inbox: DRAFT + KARU + TERKIRIM + INSTALASI + SELESAI (semua laporan)
+            $status = ['DRAFT', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI'];
         } elseif ($tab == 'draft') {
-            // KARU Draft: KARU (data lama menunggu KOMITE baca)
-            $status = ['KARU'];
+            // KARU Draft: DRAFT + KARU (menunggu verifikasi)
+            $status = ['DRAFT', 'KARU'];
         } elseif ($tab == 'sent') {
             // KARU Sent: TERKIRIM + INSTALASI + SELESAI (sudah dibaca KOMITE)
             $status = ['TERKIRIM', 'INSTALASI', 'SELESAI'];
@@ -470,11 +480,12 @@ class IkpInsidenModel extends Model
             $builder->whereIn('i.status_laporan', $status);
             $builder->where("(i.current_receiver_id = " . intval($user_id) . " OR i.karu_id = " . intval($user_id) . ")");
             
-        } elseif ($role == 'KOMITE') {
+} elseif ($role == 'KOMITE') {
 
             $builder->where('n.hris_user_id', $user_id);
 
-            $builder->whereIn('i.status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
+            // Hapus filter lock - semua KOMITE bisa lihat inbox
+            $builder->whereIn('i.status_laporan', ['DRAFT', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
 
         } elseif ($role == 'PELAPOR') {
 

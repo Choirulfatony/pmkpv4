@@ -411,11 +411,13 @@
                       $('#badge-inbox').text(res.total_inbox);
                   }
                   if (res.total_send !== undefined && res.total_send > 0) {
-                       $('#badge-send').text(res.total_send);
-                  }
-                  if (res.total_draft !== undefined && res.total_draft > 0) {
-                      $('#badge-draft').text(res.total_draft);
-                  }
+$('#badge-send').text(res.total_send);
+                   }
+                   if (res.total_draft !== undefined && res.total_draft > 0) {
+                       $('#badge-draft').text(res.total_draft);
+                   } else {
+                       $('#badge-draft').text('0');
+                   }
                   // Matikan total_info untuk KARU
                   if (res.total_info !== undefined && res.total_info > 0 && "<?= session('user_role') ?>" !== 'KARU') {
                       $('#badge-notif').text(res.total_info);

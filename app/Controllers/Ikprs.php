@@ -711,15 +711,15 @@ $db = db_connect();
         // INBOX
         // ==========================
         if ($role == 'KARU') {
-            // Inbox KARU: DRAFT + KARU + SELESAI
+            // Inbox KARU: DRAFT + KARU + TERKIRIM + INSTALASI + SELESAI
             $total_inbox = $db->table('ikprssm_insiden')
-                ->whereIn('status_laporan', ['DRAFT', 'KARU', 'SELESAI'])
+                ->whereIn('status_laporan', ['DRAFT', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI'])
                 ->where('karu_id', $user_id)
                 ->countAllResults();
 
-            // Draft KARU: KARU (data lama menunggu KOMITE baca)
+            // Draft KARU: DRAFT + KARU (menunggu verifikasi)
             $total_draft = $db->table('ikprssm_insiden')
-                ->where('status_laporan', 'KARU')
+                ->whereIn('status_laporan', ['DRAFT', 'KARU'])
                 ->where('karu_id', $user_id)
                 ->countAllResults();
 
@@ -731,15 +731,12 @@ $db = db_connect();
 
             log_message('error', 'KARU counterAjax - total_inbox: ' . $total_inbox . ', total_draft: ' . $total_draft . ', total_send: ' . $total_send);
         } elseif ($role == 'KOMITE') {
-            // KOMITE inbox = TERKIRIM + INSTALASI + SELESAI
+            // KOMITE inbox = semua status
             $total_inbox = $db->table('ikprssm_insiden i')
                 ->select('i.id')
                 ->join('ikprssm_notifikasi n', 'n.insiden_id = i.id', 'left')
-                ->groupStart()
                 ->where('n.hris_user_id', $user_id)
-                ->orWhere('i.komite_id', $user_id)
-                ->groupEnd()
-                ->whereIn('i.status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI'])
+                ->whereIn('i.status_laporan', ['DRAFT', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI'])
                 ->groupBy('i.id')
                 ->countAllResults();
 
@@ -751,6 +748,7 @@ $db = db_connect();
                 ->whereIn('status_laporan', ['KARU', 'INSTALASI', 'SELESAI'])
                 ->countAllResults();
 
+            // PELAPOR draft: hanya DRAFT
             $total_draft = $db->table('ikprssm_insiden')
                 ->where('user_id', $user_id)
                 ->where('status_laporan', 'DRAFT')
@@ -767,10 +765,10 @@ $db = db_connect();
                 ->whereIn('status_laporan', ['INSTALASI', 'SELESAI'])
                 ->countAllResults();
         } elseif ($role == 'PELAPOR') {
-            // PELAPOR sent: bukan DRAFT
+            // PELAPOR sent: DRAFT + KARU + TERKIRIM + INSTALASI + SELESAI
             $total_send = $db->table('ikprssm_insiden')
                 ->where('user_id', $user_id)
-                ->where('status_laporan !=', 'DRAFT')
+                ->whereIn('status_laporan', ['DRAFT', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI'])
                 ->countAllResults();
         }
         // KARU tidak masuk else, biarkan total_send dari block KARU di atas (DRAFT + KARU sudah diproses)
@@ -922,6 +920,8 @@ $db = db_connect();
             $typeFilter = "AND n.type = 'to_karu'";
         } elseif ($role == 'KOMITE') {
             $typeFilter = "AND n.type = 'to_komite'";
+            // Filter: jangan tampilkan jika sudah dikunci oleh KOMITE lain
+            $komiteFilter = "AND (i.komite_id IS NULL OR i.komite_id = " . intval($user_id) . ")";
         }
 
         // Debug: log jika role kosong
@@ -951,6 +951,9 @@ $db = db_connect();
         // Hanya tambahkan typeFilter jika tidak kosong
         if (!empty($typeFilter)) {
             $query .= " " . $typeFilter;
+        }
+        if (!empty($komiteFilter)) {
+            $query .= " " . $komiteFilter;
         }
         
         $query .= " ORDER BY n.id DESC";
@@ -1311,6 +1314,7 @@ $db = db_connect();
 
         // ===================== SAMA DENGAN getNotifList =====================
         $typeFilter = "";
+        $komiteFilter = "";
 
         if ($role == 'PELAPOR') {
             $typeFilter = "AND n.type = 'to_pelapor'";
@@ -1318,6 +1322,8 @@ $db = db_connect();
             $typeFilter = "AND n.type = 'to_karu'";
         } elseif ($role == 'KOMITE') {
             $typeFilter = "AND n.type = 'to_komite'";
+            // Filter: 不要tampilkan jika sudah dikunci oleh KOMITE lain
+            $komiteFilter = "AND (i.komite_id IS NULL OR i.komite_id = " . intval($user_id) . ")";
         }
 
         // Query untuk hitung total
@@ -1329,6 +1335,9 @@ $db = db_connect();
         ";
         if (!empty($typeFilter)) {
             $countQuery .= " " . $typeFilter;
+        }
+        if (!empty($komiteFilter)) {
+            $countQuery .= " " . $komiteFilter;
         }
 
         if (!empty($keyword)) {
@@ -1371,6 +1380,9 @@ $db = db_connect();
         ";
         if (!empty($typeFilter)) {
             $dataQuery .= " " . $typeFilter;
+        }
+        if (!empty($komiteFilter)) {
+            $dataQuery .= " " . $komiteFilter;
         }
         if (!empty($keyword)) {
             $dataQuery .= " AND (n.pesan LIKE ? OR i.jenis_insiden LIKE ? OR i.nama_pasien LIKE ?)";
@@ -1509,7 +1521,7 @@ $db = db_connect();
                 'penerima_laporan' => session('hris_full_name'),
                 'karu_id'          => session('hris_user_id'),
                 'tgl_terima'       => date('Y-m-d'),
-                'status_laporan'   => 'DRAFT', // 🔥 Tetap DRAFT (belum dibaca komite)
+                'status_laporan'   => 'KARU', // ✅ Sudah diverifikasi KARU
                 'karu_read_at'     => date('Y-m-d H:i:s'),
                 'current_receiver_role' => 'KOMITE',
                 'current_receiver_id'   => NULL,
@@ -2285,6 +2297,14 @@ $db = db_connect();
             return $this->response->setJSON([
                 'status' => 'error',
                 'message' => 'Data tidak ditemukan'
+            ]);
+        }
+
+        // CEK: Apakah sudah dikunci oleh KOMITE lain?
+        if (!empty($insiden->komite_id) && $insiden->komite_id != $user_id) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Laporan ini sudah dikunci oleh Komite lain'
             ]);
         }
 

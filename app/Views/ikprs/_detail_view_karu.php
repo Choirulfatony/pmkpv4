@@ -657,7 +657,8 @@
             <!--Hasil Verifikasi KARU-->
             <?php if (
                 $insiden['status_laporan'] != 'DRAFT' &&
-                (!empty($insiden['grading_risiko']) || !empty($insiden['catatan_atasan']))
+                (!empty($insiden['grading_risiko']) || !empty($insiden['catatan_atasan'])) &&
+                empty($insiden['grading_final'])
             ): ?>
                 <div class="insiden-section">
 
@@ -778,7 +779,7 @@
             <?php endif; ?>
         </div>
 
-        <?php if ($user_role === 'KOMITE' && in_array($insiden['status_laporan'], ['TERKIRIM', 'INSTALASI'])): ?>
+        <?php if ($user_role === 'KOMITE' && in_array($insiden['status_laporan'], ['DRAFT', 'KARU', 'TERKIRIM', 'INSTALASI']) && empty($insiden['grading_final'])): ?>
 
             <div class="insiden-section">
 
@@ -868,7 +869,10 @@
             <!-- PAGINATION -->
             <div class="btn-group btn-group-sm">
 
-                <?php if ($user_role === 'KARU' && in_array($insiden['status_laporan'], ['DRAFT', 'INBOX'])): ?>
+                <?php 
+            $canVerifyKARU = ($user_role === 'KARU' && in_array($insiden['status_laporan'], ['DRAFT', 'INBOX']) && empty($insiden['grading_risiko']));
+            ?>
+                <?php if ($canVerifyKARU): ?>
 
                     <button class="btn btn-mailbox btn-sm"
                         data-bs-toggle="collapse"
@@ -883,7 +887,10 @@
     </div>
 
 
-    <?php if ($user_role === 'KARU' && in_array($insiden['status_laporan'], ['DRAFT', 'INBOX'])): ?>
+    <?php 
+            $canVerifyKARU = ($user_role === 'KARU' && in_array($insiden['status_laporan'], ['DRAFT', 'INBOX']) && empty($insiden['grading_risiko']));
+            ?>
+                <?php if ($canVerifyKARU): ?>
         <div class="collapse" id="formVerifikasi">
 
             <div class="insiden-section">

@@ -29,18 +29,30 @@
     </div>
 </div>
 
+<?php if (session('user_role') === 'PELAPOR' && empty($list)): ?>
+<div class="card-body text-center text-muted p-4">
+    <i class="bi bi-check-circle text-success fs-1"></i>
+    <p class="mt-2">Semua laporan telah terkirim dan diverifikasi</p>
+</div>
+<?php else: ?>
+
 <div class="card-body p-0">
     <div class="table-responsive">
         <table class="table table-hover mailbox-table mb-0">
             <tbody>
 
-                <?php if (empty($list)): ?>
-                    <tr>
-                        <td colspan="6" class="text-center text-muted p-4">
-                            Tidak ada laporan draft
-                        </td>
-                    </tr>
-                <?php endif; ?>
+<?php if (session('user_role') === 'PELAPOR' && empty($list)): ?>
+<div class="card-body text-center text-muted p-4">
+    <i class="bi bi-check-circle text-success fs-1"></i>
+    <p class="mt-2">Semua laporan telah terkirim dan diverifikasi</p>
+</div>
+<?php elseif (empty($list)): ?>
+<tr>
+    <td colspan="6" class="text-center text-muted p-4">
+        Tidak ada laporan draft
+    </td>
+</tr>
+<?php endif; ?>
 
                 <?php foreach ($list as $row): ?>
                     <tr class="draft-row"
@@ -94,6 +106,7 @@
         </table>
     </div>
 </div>
+<?php endif; ?>
 
 <?php
 $start = $total > 0 ? (($page - 1) * 10) + 1 : 0;
