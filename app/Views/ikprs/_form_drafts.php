@@ -73,9 +73,7 @@
 
                         <!-- PASIEN -->
                         <td class="mailbox-name">
-                            <div class="fw-semibold">
-                                <?= esc($row['nama_pasien']) ?>
-                            </div>
+                            <div class="fw-normal"><?= esc($row['nama_pasien']) ?></div>
                             <small class="text-muted">
                                 <?= esc($row['kd_pasien']) ?>
                             </small>
@@ -93,7 +91,7 @@
                         <td class="text-center">
                             <span class="badge bg-warning">Draft</span>
                         </td>
-
+                        
                         <!-- TANGGAL -->
                         <td class="mailbox-date text-nowrap">
                             <?= date('d M Y H:i', strtotime($row['created_at'])) ?>
@@ -241,9 +239,34 @@ $end   = $total > 0 ? min($page * 10, $total) : 0;
         background: #262626;
     }
 
-    .mailbox-name .fw-semibold {
+    /* Google-style font sizing */
+    .mailbox-name div {
+        font-size: 14px;
+        font-weight: normal;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+    
+    .mailbox-subject strong {
+        font-size: 14px;
+        font-weight: normal;
+    }
+    
+    .mailbox-date {
+        font-size: 14px;
+        font-weight: normal;
+    }
+    
+    .mailbox-star {
+        font-size: 14px;
+    }
+    
+    /* Override any Bootstrap bold styles */
+    .mailbox-name,
+    .mailbox-subject,
+    .mailbox-date {
+        font-size: 14px !important;
+        font-weight: normal !important;
     }
 </style>

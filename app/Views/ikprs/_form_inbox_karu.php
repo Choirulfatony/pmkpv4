@@ -1,34 +1,14 @@
-<!-- <div style="background: yellow; padding: 15px; margin: 10px; border: 3px solid red; font-size: 18px; font-weight: bold;">
-    <strong>DEBUG INBOX:</strong><br>
-    hris_user_id (session) = <?= session('hris_user_id') ?><br>
-    user_role = <?= session('user_role') ?><br>
-    <span style="font-size: 24px; color: blue;">TOTAL DATA = <?= $total ?></span><br>
-    karu_id_di_database = 17136<br>
-    <br>
-    <strong>PARAMETER:</strong><br>
-    keyword = "<?= $keyword ?? '' ?>"<br>
-    page = <?= $page ?? 1 ?>
-    <br>
-    <strong>PANGGIL MODEL LANGSUNG:</strong><br>
-    <?php 
-    $model = new \App\Models\IkpInsidenModel();
-    $user_id = session('hris_user_id');
-    
-    // Panggil langsung seperti controller
-    $totalTest = $model->countInboxFiltered($user_id, '', 'inbox');
-    echo "countInboxFiltered(user_id, '', 'inbox'): " . $totalTest . "<br>";
-    
-    // Dengan keyword kosong
-    $totalTest2 = $model->countInboxFiltered($user_id, null, 'inbox');
-    echo "countInboxFiltered(user_id, null, 'inbox'): " . $totalTest2 . "<br>";
-    ?>
-</div> -->
 <div class="card-header mailbox-header d-flex align-items-start gap-2 flex-wrap">
 
     <!-- LEFT TOOLBAR -->
     <div class="d-flex gap-2">
-        <button class="btn btn-mailbox btn-sm btn-inbox-reload " title="Reload">
+        <button class="btn btn-mailbox btn-sm btn-inbox-reload" title="Reload">
             <i class="bi bi-arrow-repeat"></i>
+        </button>
+        
+        <!-- CHECKBOX TOGGLE ALL -->
+        <button class="btn btn-mailbox btn-sm checkbox-toggle" title="Pilih Semua">
+            <i class="bi bi-square"></i>
         </button>
     </div>
 
@@ -38,13 +18,12 @@
     <!-- RIGHT AREA: SEARCH + INFO -->
     <div class="d-flex flex-column align-items-end gap-1">
 
-        <!-- SEARCH -->
         <div class="input-group input-group-sm mailbox-search" style="width: 220px;">
             <input type="text"
-                class="form-control"
-                id="searchInbox"
-                placeholder="Cari Inbox..."
-                value="<?= esc($keyword ?? '') ?>">
+                   class="form-control"
+                   id="searchInbox"
+                   placeholder="Cari inbox..."
+                   value="<?= esc($keyword ?? '') ?>">
 
             <button class="btn btn-primary btn-search-inbox" type="button">
                 <i class="bi bi-search"></i>
@@ -60,103 +39,64 @@
             <tbody>
 
                 <?php if (empty($inbox)): ?>
-                    <tr>
-                        <td colspan="6" class="text-center text-muted p-4">
-                            Tidak ada Kotak Masuk
-                        </td>
-                    </tr>
-                <?php endif; ?>
+                <tr>
+                    <td colspan="6" class="text-center text-muted p-4">
+                        Tidak ada laporan masuk
+                    </td>
+                </tr>
+                <?php else: ?>
 
-                <?php foreach ($inbox as $row): ?>
+                    <?php foreach ($inbox as $row): ?>
+                        <tr class="inbox-row <?= $row['is_read'] ? '' : 'notif-unread' ?>"
+                            data-id="<?= esc($row['id']) ?>"
+                            style="cursor:pointer">
 
-                    <tr class="inbox-row <?= ($row['is_read'] ?? 1) == 0 ? 'fw-bold' : '' ?>"
-                        data-id="<?= esc($row['id']) ?>"
-                        style="cursor:pointer">
+                            <!-- CHECKBOX -->
+                            <td class="mailbox-check" onclick="event.stopPropagation();">
+                                <input class="form-check-input mailbox-checkbox check-item"
+                                       type="checkbox"
+                                       value="<?= esc($row['id']) ?>">
+                            </td>
 
-                        <?php
-                        $warna = '';
-                        $icon  = '';
+                            <!-- ICON -->
+                            <td class="mailbox-star text-muted">
+                                <?php if (!$row['is_read']): ?>
+                                    <i class="bi bi-circle-fill text-primary"></i>
+                                <?php else: ?>
+                                    <i class="bi bi-file-earmark-text me-2 text-muted"></i>
+                                <?php endif; ?>
+                            </td>
 
-                        if (!empty($row['grading_risiko'])) {
+                            <!-- PASIEN -->
+                            <td class="mailbox-name">
+                                <div class="fw-normal"><?= esc($row['nama_pasien']) ?></div>
+                                <small class="text-muted">
+                                    <?= esc($row['kd_pasien']) ?>
+                                </small>
+                            </td>
 
-                            switch (strtoupper($row['grading_risiko'])) {
+                            <!-- ISI -->
+                            <td class="mailbox-subject">
+                                <strong><?= esc($row['jenis_insiden']) ?></strong>
+                                <span class="text-muted d-block text-truncate">
+                                    <?= esc(substr(strip_tags($row['insiden']), 0, 50)) ?>...
+                                </span>
+                            </td>
 
-                                case 'BIRU':
-                                    $warna = 'primary';
-                                    $icon  = 'bi-info-circle-fill';
-                                    break;
+                            <!-- STATUS -->
+                            <td class="text-center">
+                                <span class="badge bg-info">KARU</span>
+                            </td>
 
-                                case 'HIJAU':
-                                    $warna = 'success';
-                                    $icon  = 'bi-check-circle-fill';
-                                    break;
-
-                                case 'KUNING':
-                                    $warna = 'warning';
-                                    $icon  = 'bi-exclamation-triangle-fill';
-                                    break;
-
-                                case 'MERAH':
-                                    $warna = 'danger';
-                                    $icon  = 'bi-exclamation-octagon-fill';
-                                    break;
-                            }
-                        }
-                        ?>
-                        <td class="mailbox-star text-muted">
-                            <i class="bi <?= $icon ?> text-<?= $warna ?>"
-                                title="<?= esc($row['grading_risiko']) ?>"
-                                style="font-size:15px;"></i>
-                        </td>
-
-                        <!-- ICON -->
-                        <td class="mailbox-star text-muted">
-                            <?php if (($row['is_read'] ?? 1) == 0): ?>
-                                <i class="bi bi-circle-fill text-primary me-2" style="font-size:8px;"></i>
-                            <?php endif; ?>
-                            <i class="bi bi-inbox text-primary"></i>
-                        </td>
-
-                        <!-- PASIEN -->
-                        <td class="mailbox-name">
-                            <div>
-                                <?= esc($row['nama_pasien']) ?>
-                            </div>
-                            <small class="text-muted">
-                                <?= esc($row['kd_pasien']) ?>
-                            </small>
-                        </td>
-
-                        <!-- ISI -->
-                        <td class="mailbox-subject">
-                            <span><?= esc($row['jenis_insiden']) ?></span>
-                            <span class="text-muted d-block text-truncate">
-                                <?= esc(substr(strip_tags($row['insiden']), 0, 50)) ?>...
-                            </span>
-                        </td>
-
-                        <!-- STATUS -->
-                        <td class="text-center">
-                            <span class="badge bg-primary">Inbox</span>
-                        </td>
-
-                        <!-- TANGGAL -->
-                        <td class="mailbox-name">
-                            <div class="text-truncate"
-                                style="max-width:200px;"
-                                title="<?= esc($row['nama_petugas']) ?>">
-                                <?= esc($row['nama_petugas']) ?>
-                            </div>
-
-                            <small class="text-muted mailbox-date">
+                            <!-- TANGGAL -->
+                            <td class="mailbox-date text-nowrap">
                                 <?= date('d M Y H:i', strtotime($row['created_at'])) ?>
-                            </small>
-                        </td>
+                            </td>
 
+                        </tr>
+                    <?php endforeach; ?>
 
-                    </tr>
-
-                <?php endforeach; ?>
+                <?php endif; ?>
 
             </tbody>
         </table>
@@ -164,7 +104,7 @@
 </div>
 
 <?php
-$start = $total > 0 ? (($page - 1) * 10) + 1 : 0;
+$start = $total > 0 ? ($page - 1) * 10 + 1 : 0;
 $end   = $total > 0 ? min($page * 10, $total) : 0;
 ?>
 
@@ -183,14 +123,14 @@ $end   = $total > 0 ? min($page * 10, $total) : 0;
 
     <div class="btn-group btn-group-sm">
         <button class="btn btn-mailbox btn-inbox-prev"
-            data-page="<?= $page - 1 ?>"
-            <?= ($page <= 1 || $total == 0 ? 'disabled' : '') ?>>
+                data-page="<?= $page - 1 ?>"
+                <?= ($page <= 1 || $total == 0 ? 'disabled' : '') ?>>
             <i class="bi bi-chevron-left"></i>
         </button>
 
         <button class="btn btn-mailbox btn-inbox-next"
-            data-page="<?= $page + 1 ?>"
-            <?= ($page >= $total_pages || $total == 0 ? 'disabled' : '') ?>>
+                data-page="<?= $page + 1 ?>"
+                <?= ($page >= $total_pages || $total == 0 ? 'disabled' : '') ?>>
             <i class="bi bi-chevron-right"></i>
         </button>
     </div>
@@ -244,7 +184,7 @@ $end   = $total > 0 ? min($page * 10, $total) : 0;
 
     /**
      * WAJIB: reset ikon setiap konten AJAX reload
-     * panggil ini SETELAH loadDraft / reloadDraft
+     * panggil ini SETELAH loadInbox / reloadInbox
      */
     function resetMailboxSelection() {
         $('.mailbox-checkbox').prop('checked', false);
@@ -252,76 +192,79 @@ $end   = $total > 0 ? min($page * 10, $total) : 0;
     }
 </script>
 
-
 <style>
-    /* DEFAULT */
-    .btn-inbox-reload {
+    /* ===============================
+    GLOBAL BUTTON (SEMUA MODE)
+    ================================ */
+
+    .btn-mailbox {
         background: var(--bs-secondary-bg);
         border: 1px solid var(--bs-border-color);
         color: var(--bs-body-color);
         transition: all 0.2s ease;
     }
 
-    /* HOVER (TIDAK BIRU) */
-    .btn-inbox-reload:hover {
+    /* HOVER */
+    .btn-mailbox:hover {
         background: var(--bs-tertiary-bg);
         border-color: var(--bs-border-color);
         color: var(--bs-body-color);
     }
 
-    /* ACTIVE (SAAT DIKLIK) */
-    .btn-inbox-reload:active {
+    /* ACTIVE */
+    .btn-mailbox:active {
         background: var(--bs-secondary-bg);
         transform: scale(0.95);
     }
 
-    /* DARK MODE */
-    .dark-mode .btn-inbox-reload {
+    /* ===============================
+    DARK MODE
+    ================================ */
+
+    .dark-mode .btn-mailbox {
         background: #2b2b2b;
         border: 1px solid #444;
         color: #ddd;
     }
 
-    /* HOVER DARK (TETAP GELAP) */
-    .dark-mode .btn-inbox-reload:hover {
+    .dark-mode .btn-mailbox:hover {
         background: #333;
         border-color: #555;
         color: #fff;
     }
 
-    /* ACTIVE DARK */
-    .dark-mode .btn-inbox-reload:active {
+    .dark-mode .btn-mailbox:active {
         background: #262626;
     }
 
-    .btn-inbox-reload:active i {
-        animation: spin 0.5s linear;
+    /* Google-style font sizing */
+    .mailbox-name div {
+        font-size: 14px;
+        font-weight: normal;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
-
-    @keyframes spin {
-        100% {
-            transform: rotate(360deg);
-        }
+    
+    .mailbox-subject strong {
+        font-size: 14px;
+        font-weight: normal;
     }
-
-    .inbox-row:not(.fw-bold) .mailbox-name {
+    
+    .mailbox-date {
+        font-size: 14px;
+        font-weight: normal;
+    }
+    
+    .mailbox-star {
+        font-size: 14px;
+    }
+    
+    /* Override any Bootstrap bold styles */
+    .mailbox-name,
+    .mailbox-subject,
+    .mailbox-date {
+        font-size: 14px !important;
         font-weight: normal !important;
-    }
-
-    .mailbox-table {
-        table-layout: fixed;
-        width: 100%;
-    }
-
-    .mailbox-name {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .mailbox-subject {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
 </style>

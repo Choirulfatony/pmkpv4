@@ -870,7 +870,7 @@
             <div class="btn-group btn-group-sm">
 
                 <?php 
-            $canVerifyKARU = ($user_role === 'KARU' && in_array($insiden['status_laporan'], ['DRAFT', 'INBOX']) && empty($insiden['grading_risiko']));
+            $canVerifyKARU = ($user_role === 'KARU' && $insiden['status_laporan'] === 'KARU' && empty($insiden['grading_risiko']));
             ?>
                 <?php if ($canVerifyKARU): ?>
 
@@ -888,7 +888,7 @@
 
 
     <?php 
-            $canVerifyKARU = ($user_role === 'KARU' && in_array($insiden['status_laporan'], ['DRAFT', 'INBOX']) && empty($insiden['grading_risiko']));
+            $canVerifyKARU = ($user_role === 'KARU' && $insiden['status_laporan'] === 'KARU' && empty($insiden['grading_risiko']));
             ?>
                 <?php if ($canVerifyKARU): ?>
         <div class="collapse" id="formVerifikasi">

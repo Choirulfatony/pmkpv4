@@ -94,13 +94,31 @@
                         </td>
 
                         <!-- PASIEN -->
-                        <td class="mailbox-name">
-                            <div class="fw-semibold">
+                        <td class="mailbox-name" style="font-size:14px !important; font-weight:normal !important;">
+                            <div style="font-size:14px !important; font-weight:normal !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                                 <?= esc($row['nama_pasien']) ?>
                             </div>
-                            <small class="text-muted">
-                                <?= esc($row['kd_pasien']) ?>
-                            </small>
+                            <small class="text-muted" style="font-size:12px !important;"><?= esc($row['kd_pasien']) ?></small>
+                        </td>
+
+                        <!-- ISI -->
+                        <td class="mailbox-subject" style="font-size:14px !important; font-weight:normal !important;">
+                            <strong style="font-size:14px !important; font-weight:normal !important;"><?= esc($row['jenis_insiden']) ?></strong>
+                            <span class="text-muted d-block text-truncate" style="font-size:13px !important;">
+                                <?= esc(substr(strip_tags($row['insiden']), 0, 50)) ?>...
+                            </span>
+                        </td>
+
+                        <!-- GRADING -->
+                        <td class="text-center" style="font-size:14px !important; font-weight:normal !important;">
+                            <span class="badge bg-<?= $warna ?>">
+                                <i class="bi <?= $icon ?>"></i> <?= $grading ?>
+                            </span>
+                        </td>
+
+                        <!-- TANGGAL -->
+                        <td class="mailbox-date text-nowrap" style="font-size:14px !important; font-weight:normal !important;">
+                            <?= date('d M Y H:i', strtotime($row['created_at'])) ?>
                         </td>
 
                         <!-- ISI -->
@@ -264,7 +282,9 @@ $end   = $total > 0 ? min($page * 10, $total) : 0;
     }
 
 
-    .mailbox-name .fw-semibold {
+    .mailbox-name {
+        font-size: 14px;
+        font-weight: normal;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;

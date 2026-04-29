@@ -429,10 +429,10 @@
 <script>
     window.user_id = "<?= session('hris_user_id') ?? '' ?>";
     window.user_role = "<?= session('user_role') ?? '' ?>";
-    window.lastInboxCount = 0;
-    window.lastDraftCount = 0;
-    window.lastSendCount = 0;
-    window.lastNotifCount = 0;
+    window.lastInboxCount = -1;
+    window.lastDraftCount = -1;
+    window.lastSendCount = -1;
+    window.lastNotifCount = -1;
 </script>
 
 <script>
@@ -502,11 +502,11 @@
                 let totalNotif = res.total_notif ?? 0;
 
                 /* =============================
-                      🔔 SOUND NOTIFIKASI - BERBUNYI JIKA INBOX/SENT BERTAMBAH
+                      🔔 SOUND NOTIFIKASI - HANYA BUNYI SEKALI SAAT ADA INBOX BARU
                       Tidak untuk tipe INFO
                  ============================= */
-                let newInboxSend = (inbox > lastInboxCount) || (send > lastSendCount);
-                if (newInboxSend && (user_role === 'KARU' || user_role === 'KOMITE' || user_role === 'PELAPOR')) {
+                let newInbox = (inbox > lastInboxCount);
+                if (newInbox && (user_role === 'KARU' || user_role === 'KOMITE' || user_role === 'PELAPOR')) {
                     try {
                         const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
                         const oscillator = audioCtx.createOscillator();
@@ -532,19 +532,19 @@
                     }
                 }
 
-                if (draft > lastDraftCount) {
-                    console.log("Draft baru masuk");
-                    if (typeof loadDrafts === "function") {
-                        loadDrafts();
-                    }
-                }
+                // if (draft > lastDraftCount) {
+                //     console.log("Draft baru masuk");
+                //     if (typeof loadDrafts === "function") {
+                //         loadDrafts();
+                //     }
+                // }
 
-                if (send > lastSendCount) {
-                    console.log("Sent baru masuk");
-                    if (typeof loadSend === "function") {
-                        loadSend();
-                    }
-                }
+                // if (send > lastSendCount) {
+                //     console.log("Sent baru masuk");
+                //     if (typeof loadSend === "function") {
+                //         loadSend();
+                //     }
+                // }
 
                 lastInboxCount = inbox;
                 lastDraftCount = draft;

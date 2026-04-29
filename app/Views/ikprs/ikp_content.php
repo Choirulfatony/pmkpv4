@@ -386,48 +386,38 @@
           isSearching: false
       };
 
-      $(document).ready(function() {
-          // Load tab dari hidden input
-          const initialTab = $('#initialTabInput').val();
-          
-          // Load initial content
-          if (initialTab === 'info') {
-              loadInfo(1);
-          } else {
-              loadInbox();
+$(document).ready(function() {
+          // Default ke INBOX untuk semua user - force load tanpa cache
+          loadInbox(1, null, true);
+
+          // Handle URL parameter id (dari notifikasi KARU)
+          const urlParams = new URLSearchParams(window.location.search);
+          const insidenIdFromUrl = urlParams.get('id');
+          if (insidenIdFromUrl) {
+              loadDetailInsiden(insidenIdFromUrl, 'inbox');
+              // Hapus parameter id dari URL agar tidak reload terus
+              window.history.replaceState({}, document.title, window.location.pathname);
           }
 
-// Update badge from counter-ajax - hanya untuk HRIS login (yang punya hris_user_id)
+          // Update badge
           const hrisUserId = "<?= session('hris_user_id') ?? '' ?>";
           if (hrisUserId !== '') {
               $.get("<?= site_url('ikprs/counter-ajax') ?>", function(res) {
                   if (res.error && res.error === 'User belum login') {
                       return;
                   }
-                  if (res.total_notif !== undefined && res.total_notif > 0) {
-                      $('#badge-notif').text(res.total_notif);
+                  if (res.total_notif !== undefined) $('#badge-notif').text(res.total_notif);
+                  if (res.total_inbox !== undefined) $('#badge-inbox').text(res.total_inbox);
+                  if (res.total_send !== undefined) $('#badge-send').text(res.total_send);
+                  if (res.total_draft !== undefined && res.total_draft > 0) {
+                      $('#badge-draft').text(res.total_draft);
+                  } else {
+                      $('#badge-draft').text('0');
                   }
-                  if (res.total_inbox !== undefined && res.total_inbox > 0) {
-                      $('#badge-inbox').text(res.total_inbox);
-                  }
-                  if (res.total_send !== undefined && res.total_send > 0) {
-$('#badge-send').text(res.total_send);
-                   }
-                   if (res.total_draft !== undefined && res.total_draft > 0) {
-                       $('#badge-draft').text(res.total_draft);
-                   } else {
-                       $('#badge-draft').text('0');
-                   }
-                  // Matikan total_info untuk KARU
-                  if (res.total_info !== undefined && res.total_info > 0 && "<?= session('user_role') ?>" !== 'KARU') {
-                      $('#badge-notif').text(res.total_info);
-                  }
-              }).fail(function(xhr) {
               });
           }
 
           initValidasiKomite();
-
       });
 
 
@@ -544,28 +534,33 @@ $('#badge-send').text(res.total_send);
       });
 
       /* ===== FUNGSI LOAD INBOX (SATU-SATUNYA) ===== */
-      function loadInbox(page = 1, keywordParam = null) {
+      function loadInbox(page = 1, keywordParam = null, force = false) {
 
-          if (inboxLoading) return;
-          inboxLoading = true;
+          if (inboxLoading && !force) return;
+          if (!force) inboxLoading = true;
 
           let keyword = keywordParam ?? $('#searchInbox').val() ?? '';
 
           $('#inbox-wrapper').trigger('processing.inbox', [true]);
 
-          $.get("<?= site_url('ikprs/form_inbox_karu') ?>", {
-              page: page,
-              keyword: keyword
-          }, function(res) {
-
-              $('#inbox-wrapper').html(res);
-
-          }).always(function() {
-
-              inboxLoading = false;
-              $('#inbox-wrapper').trigger('processing.inbox', [false]);
-
-          });
+           $.ajax({
+               url: "<?= site_url('ikprs/form_inbox_karu') ?>",
+               type: "GET",
+               data: {
+                   page: page,
+                   keyword: keyword
+               },
+               cache: false
+           }).done(function(res) {
+               $('#inbox-wrapper').html(res);
+               // Reset checkbox selection setelah load
+               if (typeof resetMailboxSelection === 'function') {
+                   resetMailboxSelection();
+               }
+           }).always(function() {
+               inboxLoading = false;
+               $('#inbox-wrapper').trigger('processing.inbox', [false]);
+           });
       }
 
       /* ===== reloadInbox ===== */
@@ -623,16 +618,16 @@ $('#badge-send').text(res.total_send);
                   tipe: tipe
               },
 
-              success: function(res) {
+                success: function(res) {
 
-                  $('#inbox-wrapper').html(res);
+                    $('#inbox-wrapper').html(res);
 
-                  // hanya inbox yang update status baca
-                  if (tipe === 'inbox') {
-                      tandaiSudahDibaca(id);
-                  }
+                    // Mark as read when opening from inbox
+                    if (tipe === 'inbox') {
+                        tandaiSudahDibaca(id);
+                    }
 
-              },
+                },
 
               complete: function() {
                   inboxLoading = false;
@@ -778,21 +773,65 @@ $('#badge-send').text(res.total_send);
               loadDrafts(1, keyword);
           });
 
-      /* ===== PAGINATION ===== */
+/* ===== PAGINATION ===== */
 
-      // NEXT PAGINATION
-      $(document).on('click', '.btn-draft-next:not(.disabled)', function() {
-          loadDrafts($(this).data('page'));
-      });
+       // NEXT PAGINATION
+       $(document).on('click', '.btn-draft-next:not(.disabled)', function() {
+           loadDrafts($(this).data('page'));
+       });
 
-      // PREV PAGINATION
-      $(document).on('click', '.btn-draft-prev:not(.disabled)', function() {
-          loadDrafts($(this).data('page'));
-      });
+       // PREV PAGINATION
+       $(document).on('click', '.btn-draft-prev:not(.disabled)', function() {
+           loadDrafts($(this).data('page'));
+       });
 
-      /*
-       * ===============================
-       * Sent 
+/* ===== KIRIM DRAFT KE KARU ===== */
+        $(document).on('click', '.btn-kirim-draft', function() {
+            const id = $(this).data('id');
+            const btn = $(this);
+            
+            console.log('btn-kirim-draft clicked, id:', id);
+            console.log('csrf token:', '<?= csrf_hash() ?>');
+            
+            if (!id) {
+                alert('ID tidak ditemukan!');
+                return;
+            }
+            
+            if (!confirm('Kirim laporan ini ke KARU?')) return;
+
+            btn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Mengirim...');
+
+            $.ajax({
+                url: "<?= site_url('ikprs/kirimDraft') ?>",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    insiden_id: id,
+                    '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                },
+                success: function(res) {
+                    console.log('ajax success:', res);
+                    if (res.status) {
+                        alert('Laporan berhasil dikirim ke KARU');
+                        loadDrafts(1);
+                        refreshNotif();
+                    } else {
+                        alert(res.message || 'Gagal mengirim laporan');
+                        btn.prop('disabled', false).html('<i class="bi bi-send"></i> Kirim');
+                    }
+                },
+                error: function(xhr) {
+                    console.log('ajax error:', xhr);
+                    alert('Terjadi kesalahan saat mengirim');
+                    btn.prop('disabled', false).html('<i class="bi bi-send"></i> Kirim');
+                }
+            });
+        });
+
+       /*
+        * ===============================
+        * Sent
        * ===============================
        */
 
@@ -952,12 +991,12 @@ $('#badge-send').text(res.total_send);
               type: "POST",
               dataType: "json",
               data: {
-                  insiden_id: id
+                  insiden_id: id,
+                  '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
               },
               success: function(res) {
 
                   refreshNotif(); // update badge + dropdown notif
-
 
               },
               error: function(xhr) {
