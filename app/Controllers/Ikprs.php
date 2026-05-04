@@ -1593,49 +1593,6 @@ $db = db_connect();
         return view('ikprs/_form_info', $data);
     }
 
-    // Test WhatsApp Business API
-    public function testWhatsApp()
-    {
-        $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZDZD';
-        $phone = '082233346468'; // 0822-333-46468
-        $message = 'Test WhatsApp Business API - ' . date('Y-m-d H:i:s');
-        
-        // Format nomor: 0822... -> 62822...
-        $phone = preg_replace('/^0/', '62', $phone);
-        
-        $url = "https://graph.facebook.com/v19.0/487823678084772/messages";
-        
-        $data = [
-            'messaging_product' => 'whatsapp',
-            'to' => $phone,
-            'type' => 'text',
-            'text' => ['body' => $message]
-        ];
-        
-        $headers = [
-            'Authorization: Bearer ' . $token,
-            'Content-Type: application/json'
-        ];
-        
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        
-        $response = curl_exec($ch);
-        $error = curl_error($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        echo "<h3>WhatsApp API Test</h3>";
-        echo "Phone: " . htmlspecialchars($phone) . "<br>";
-        echo "Message: " . htmlspecialchars($message) . "<br>";
-        echo "HTTP Code: " . $httpCode . "<br>";
-        echo "Response: <pre>" . htmlspecialchars($response) . "</pre>";
-        if ($error) echo "Error: " . htmlspecialchars($error) . "<br>";
-    }
-
     // Verifikasi Karu
     public function verifikasi_karu()
     {
