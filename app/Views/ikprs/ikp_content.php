@@ -815,6 +815,7 @@ $(document).ready(function() {
                     if (res.status) {
                         alert('Laporan berhasil dikirim ke KARU');
                         loadDrafts(1);
+                        loadInfo(1);
                         refreshNotif();
                     } else {
                         alert(res.message || 'Gagal mengirim laporan');

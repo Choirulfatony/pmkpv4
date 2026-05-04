@@ -774,6 +774,17 @@
                 disabled>
                 Selanjutnya
             </button>
+
+            <!-- TOMBOL KIRIM LANGSUNG (HANYA UNTUK INPUT BARU) -->
+            <?php if (empty($insiden_id)): ?>
+            <button type="button"
+                class="btn btn-success"
+                id="btnKirimLangsung"
+                onclick="submitIkp('KARU')"
+                style="display: none;">
+                <i class="bi bi-send"></i> Kirim Langsung ke KARU
+            </button>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -1623,11 +1634,27 @@
         const totalSteps = document.querySelectorAll('.bs-stepper-header .step').length;
         const btnPrev = document.getElementById('btnPrev');
         const btnNext = document.getElementById('btnNext');
+        const insiden_id = <?= !empty($insiden_id) ? $insiden_id : 0 ?>;
 
         btnPrev.disabled = window.currentStep === 1;
 
-        btnNext.textContent =
-            window.currentStep === totalSteps ? 'Simpan' : 'Selanjutnya';
+        if (window.currentStep === totalSteps) {
+            if (insiden_id > 0) {
+                // Edit DRAFT → tombol jadi "Kirim ke KARU"
+                btnNext.textContent = 'Kirim ke KARU';
+                btnNext.className = 'btn btn-success';
+                btnNext.onclick = function() { kirimDraft(); };
+            } else {
+                // Input baru → tombol tetap "Simpan"
+                btnNext.textContent = 'Simpan';
+                btnNext.className = 'btn btn-primary';
+                btnNext.onclick = function() { nextStep(); };
+            }
+        } else {
+            btnNext.textContent = 'Selanjutnya';
+            btnNext.className = 'btn btn-primary';
+            btnNext.onclick = function() { nextStep(); };
+        }
     }
 
     // load tempat insiden (select2 dengan AJAX)
@@ -1761,6 +1788,53 @@
             showConfirmButton: false,
             timer: 3000,
             timerProgressBar: true
+        });
+    }
+
+    /* ===== KIRIM DRAFT KE KARU ===== */
+    function kirimDraft() {
+        const insiden_id = <?= !empty($insiden_id) ? $insiden_id : 0 ?>;
+        
+        if (!insiden_id) {
+            alert('ID insiden tidak ditemukan!');
+            return;
+        }
+
+        if (!confirm('Kirim laporan ini ke KARU?')) return;
+
+        const btn = $('#btnKirim');
+        btn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Mengirim...');
+
+        $.ajax({
+            url: "<?= site_url('ikprs/kirimDraft') ?>",
+            type: "POST",
+            dataType: "json",
+            data: {
+                insiden_id: insiden_id,
+                '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+            },
+            success: function(res) {
+                if (res.status) {
+                    alert('Laporan berhasil dikirim ke KARU');
+                    // Reload Info tab
+                    if (typeof loadInfo === 'function') {
+                        loadInfo(1);
+                    }
+                    // Refresh notif counter
+                    if (typeof refreshNotif === 'function') {
+                        refreshNotif();
+                    }
+                    // Close modal if any
+                    $('#modal_ikp').modal('hide');
+                } else {
+                    alert(res.message || 'Gagal mengirim laporan');
+                    btn.prop('disabled', false).html('<i class="bi bi-send"></i> Kirim ke KARU');
+                }
+            },
+            error: function() {
+                alert('Terjadi kesalahan saat mengirim');
+                btn.prop('disabled', false).html('<i class="bi bi-send"></i> Kirim ke KARU');
+            }
         });
     }
 </script>
