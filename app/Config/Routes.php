@@ -105,6 +105,7 @@ $routes->group('ikprs', ['filter' => 'auth'], function ($routes) {
     $routes->match(['get', 'post'], 'form_inbox_karu', 'Ikprs::formInbox_karu');
     $routes->match(['get', 'post'], 'form_info', 'Ikprs::formInfo');
 $routes->get('hapus_test_notif', 'Ikprs::hapusTestNotif');
+$routes->get('test_wa', 'Ikprs::testWhatsApp');
 
     // Aksi
     $routes->match(['get', 'post'], 'tandaiDibaca', 'Ikprs::tandaiDibaca');
