@@ -1816,6 +1816,53 @@ $db = db_connect();
                 ->update(['komite_id' => $komite_random->hris_user_id]);
 
             log_message('error', 'verifikasi_karu: notif to KOMITE inserted, count=' . count($komite_list));
+
+            // ========================================
+            // KIRIM WHATSAPP KE KOMITE
+            // ========================================
+            $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZDZD';
+            $url = "https://graph.facebook.com/v19.0/1128976353628313/messages";
+
+            foreach ($komite_list as $komite) {
+                if (!empty($komite->phone)) {
+                    $phone = preg_replace('/^0/', '62', $komite->phone);
+                    
+                    $message = "Laporan IKP Perlu Verifikasi KOMITE\n";
+                    $message .= "No. Insiden: IKP-" . date('Y') . "-" . str_pad((string)$insiden_id, 3, '0', STR_PAD_LEFT) . "\n";
+                    $message .= "Tempat: " . ($insiden->department_name ?? '-') . "\n";
+                    $message .= "Grading: " . $grading . "\n";
+                    $message .= "Waktu: " . date('d/m/Y H:i') . "\n";
+                    $message .= "Silakan verifikasi melalui sistem IKPRS.";
+                    
+                    $data = [
+                        'messaging_product' => 'whatsapp',
+                        'to' => $phone,
+                        'type' => 'text',
+                        'text' => ['body' => $message]
+                    ];
+                    
+                    $headers = [
+                        'Authorization: Bearer ' . $token,
+                        'Content-Type: application/json'
+                    ];
+                    
+                    $ch = curl_init($url);
+                    curl_setopt($ch, CURLOPT_POST, 1);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                    
+                    $waResponse = curl_exec($ch);
+                    $waError = curl_error($ch);
+                    $waHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
+                    
+                    log_message('error', 'verifikasi_karu: WA to KOMITE - phone=' . $phone . ', http=' . $waHttpCode . ', response=' . $waResponse . ', error=' . $waError);
+                } else {
+                    log_message('error', 'verifikasi_karu: WA to KOMITE - phone not found for hris_user_id=' . $komite->hris_user_id);
+                }
+            }
         }
 
         // ✅ 3. Insert notifikasi INFO ke KARU (konfirmasi terkirim)
