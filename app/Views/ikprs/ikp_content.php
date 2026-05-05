@@ -969,13 +969,7 @@ $(document).ready(function() {
           }, function(res) {
 
               $('#inbox-wrapper').html(res);
-              // Update badge Info tab dengan total_info
-              $.get("<?= site_url('ikprs/counter-ajax') ?>", { _: new Date().getTime() })
-                  .done(function(counterRes) {
-                      if (counterRes.total_info !== undefined) {
-                          $('#badge-notif').text(counterRes.total_info);
-                      }
-                  });
+              refreshNotif(); // Update semua counters termasuk badge Info
 
           }).always(function() {
 
