@@ -18,13 +18,13 @@ class IkpInsidenModel extends Model
         'tgl_insiden', 'jam_insiden', 'insiden', 'kronologis_insiden', 'tempat_insiden', 'jenis_insiden',
         // Pelapor
         'pelapor_insiden', 'pelapor_lain_text', 'insiden_pada', 'insiden_pada_lain', 'spesialisasi_pasien', 'spesialisasi_lain',
-        // Dampak
-        'akibat_insiden',
         // Tindakan
         'tindakan_segera', 'tindakan_oleh', 'tindakan_tim', 'tindakan_petugas_lain', 'pernah_terjadi', 'tindakan_lanjutan',
+        // Verifikasi KARU
+        'grading_risiko', 'catatan_atasan', 'penerima_laporan', 'tgl_terima', 'karu_read_at',
         // Instalasi
         'instalasi_id', 'karu_id', 'current_receiver_id', 'current_receiver_role',
-        'status_laporan', 'created_at', 'karu_read_at', 'komite_read_at', 'validated_at', 'grading_final', 'selesai_at', 'updated_at'
+        'status_laporan', 'created_at', 'komite_read_at', 'validated_at', 'grading_final', 'selesai_at', 'updated_at'
     ];
 
     protected $useTimestamps = true;
