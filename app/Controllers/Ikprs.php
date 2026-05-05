@@ -1191,22 +1191,9 @@ $db = db_connect();
             log_message('error', 'simpanikp: WA to KARU - phone not found for hris_user_id=' . $karu->hris_user_id);
         }
 
-        // 8. VERIFIKASI LANGSUNG DI DATABASE
-        $total_notif = $db->query("SELECT COUNT(*) as total FROM ikprssm_notifikasi WHERE insiden_id = ?", [$insiden_id])->getRow();
-        log_message('error', 'simpanikp: VERIFICATION - insiden_id=' . $insiden_id . ', total_notif=' . json_encode($total_notif));
-
-        if ($notif1_id) {
-            $cek1 = $db->query("SELECT * FROM ikprssm_notifikasi WHERE id = ?", [$notif1_id])->getRow();
-            log_message('error', 'simpanikp: CEK notif1 in DB=' . json_encode($cek1));
-        }
-        if ($notif2_id) {
-            $cek2 = $db->query("SELECT * FROM ikprssm_notifikasi WHERE id = ?", [$notif2_id])->getRow();
-            log_message('error', 'simpanikp: CEK notif2 in DB=' . json_encode($cek2));
-        }
-
         return $this->response->setJSON([
             'status'  => true,
-            'message' => 'Test: insiden_id=' . $insiden_id . ', notif_count=' . ($total_notif->total ?? 0)
+            'message' => 'Laporan IKP berhasil disimpan dan notifikasi telah dikirim ke KARU'
         ]);
     }
 
