@@ -1206,8 +1206,15 @@ $db = db_connect();
         $request = service('request');
 
         $user_id = session()->get('hris_user_id');
+        $role    = session()->get('user_role');
+        
         if (!$user_id) {
             return 'SESSION USER BELUM ADA';
+        }
+
+        // KARU tidak boleh akses Drafts
+        if ($role == 'KARU') {
+            return 'Akses Ditolak: KARU tidak memiliki Drafts';
         }
 
         // 🔑 FIX UTAMA DI SINI
