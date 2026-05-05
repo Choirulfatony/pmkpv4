@@ -103,6 +103,7 @@
                         <!-- DOT UNREAD + ICON JENIS -->
                         <td class="mailbox-star text-muted" style="width:40px;">
                             <?php if ($row['is_read'] == 0): ?>
+                                <div class="notif-dot blink"></div>
                                 <i class="<?= $iconStatus ?> <?= $warna_status ?>" style="font-size: 0.7rem;"></i>
                             <?php else: ?>
                                 <i class="<?= $iconJenis ?> text-muted" style="font-size: 0.7rem;"></i>
@@ -180,3 +181,15 @@ $end   = $total > 0 ? min($page * 20, $total) : 0;
 
 </div>
 <?php endif; ?>
+
+        /* Blinking animation for unread indicator */
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        .notif-dot.blink {
+            animation: blink 1.5s infinite;
+        }
+
