@@ -410,11 +410,14 @@ $(document).ready(function() {
                    if (res.total_notif !== undefined) $('#badge-notif').text(res.total_notif);
                    if (res.total_inbox !== undefined) $('#badge-inbox').text(res.total_inbox);
                    if (res.total_send !== undefined) $('#badge-send').text(res.total_send);
-                   // total_info = total_notif (sama), jadi tidak perlu update element terpisah
                    if (res.total_draft !== undefined && res.total_draft > 0) {
                        $('#badge-draft').text(res.total_draft);
                    } else {
                        $('#badge-draft').text('0');
+                   }
+                   // Update badge Info tab dengan total_info
+                   if (res.total_info !== undefined) {
+                       $('#badge-notif').text(res.total_info); // Badge Info = total_info
                    }
               })
               .fail(function() {
@@ -966,7 +969,13 @@ $(document).ready(function() {
           }, function(res) {
 
               $('#inbox-wrapper').html(res);
-              refreshNotif(); // Update counters (total_info, total_notif, etc.)
+              // Update badge Info tab dengan total_info
+              $.get("<?= site_url('ikprs/counter-ajax') ?>", { _: new Date().getTime() })
+                  .done(function(counterRes) {
+                      if (counterRes.total_info !== undefined) {
+                          $('#badge-notif').text(counterRes.total_info);
+                      }
+                  });
 
           }).always(function() {
 
