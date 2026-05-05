@@ -61,9 +61,10 @@
                             <!-- ICON -->
                             <td class="mailbox-star text-muted">
                                 <?php if (!$row['is_read']): ?>
-                                    <i class="bi bi-circle-fill text-primary"></i>
+                                    <div class="notif-dot blink"></div>
+                                    <i class="bi bi-info-circle" style="font-size:15px;" title="Sentinel"></i>
                                 <?php else: ?>
-                                    <i class="bi bi-file-earmark-text me-2 text-muted"></i>
+                                    <i class="bi bi-file-earmark-text me-2 text-muted" style="font-size:15px;"></i>
                                 <?php endif; ?>
                             </td>
 
@@ -260,11 +261,22 @@ $end   = $total > 0 ? min($page * 10, $total) : 0;
         font-size: 14px;
     }
     
-    /* Override any Bootstrap bold styles */
-    .mailbox-name,
-    .mailbox-subject,
-    .mailbox-date {
-        font-size: 14px !important;
-        font-weight: normal !important;
-    }
-</style>
+     /* Override any Bootstrap bold styles */
+     .mailbox-name,
+     .mailbox-subject,
+     .mailbox-date {
+         font-size: 14px !important;
+         font-weight: normal !important;
+     }
+
+     /* Blinking animation for unread indicator */
+     @keyframes blink {
+         0% { opacity: 1; }
+         50% { opacity: 0.3; }
+         100% { opacity: 1; }
+     }
+
+     .notif-dot.blink {
+         animation: blink 1.5s infinite;
+     }
+ </style>
