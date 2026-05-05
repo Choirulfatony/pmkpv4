@@ -382,50 +382,40 @@
       let lastInboxCount = 0;
       const user_role = "<?= session('user_role') ?>";
 
-      window.IKP = {
-          isSearching: false
-      };
+       window.IKP = {
+           isSearching: false
+       };
 
-$(document).ready(function() {
-          // Default ke INBOX untuk semua user - force load tanpa cache
-          loadInbox(1, null, true);
+        $(document).ready(function() {
 
-          // Handle URL parameter id (dari notifikasi KARU)
-          const urlParams = new URLSearchParams(window.location.search);
-          const insidenIdFromUrl = urlParams.get('id');
-          if (insidenIdFromUrl) {
-              loadDetailInsiden(insidenIdFromUrl, 'inbox');
-              // Hapus parameter id dari URL agar tidak reload terus
-              window.history.replaceState({}, document.title, window.location.pathname);
-          }
+            // Load inbox pertama kali
+            loadInbox(1);
 
-          // Update badge
-          const hrisUserId = "<?= session('hris_user_id') ?? '' ?>";
-          if (hrisUserId !== '') {
-              $.get("<?= site_url('ikprs/counter-ajax') ?>", { _: new Date().getTime() }) // Cache busting
-              .done(function(res) {
-                  if (res.error && res.error === 'User belum login') {
-                      return;
-                  }
-                   if (res.total_notif !== undefined) {
-                       $('#badge-notif').text(res.total_notif);
-                   }
-                  if (res.total_inbox !== undefined) $('#badge-inbox').text(res.total_inbox);
-                  if (res.total_send !== undefined) $('#badge-send').text(res.total_send);
-                  if (res.total_draft !== undefined && res.total_draft > 0) {
-                      $('#badge-draft').text(res.total_draft);
-                  } else {
-                      $('#badge-draft').text('0');
-                  }
-              })
-              .fail(function(jqXHR, textStatus, errorThrown) {
-                  console.log('Gagal update notifikasi:', textStatus, errorThrown);
-              });
-          }
-      });
+            // Load info jika ada parameter ?info=1
+            const urlParams = new URLSearchParams(window.location.search);
+            const infoParam = urlParams.get('info');
+            if (infoParam === '1') {
+                $('#btnInfo').click();
+            }
 
-          initValidasiKomite();
-      });
+            // Load draft jika ada parameter ?draft=1
+            const draftParam = urlParams.get('draft');
+            if (draftParam === '1') {
+                $('#btnDrafts').click();
+            }
+
+            const insidenIdFromUrl = urlParams.get('id');
+            if (insidenIdFromUrl) {
+                loadDetailInsiden(insidenIdFromUrl, 'inbox');
+                // Hapus parameter id dari URL agar tidak reload terus
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            // Update badge
+            refreshNotif();
+
+            initValidasiKomite();
+        });
 
 
       /* ===== EVENT Loding PROCESSING ===== */
