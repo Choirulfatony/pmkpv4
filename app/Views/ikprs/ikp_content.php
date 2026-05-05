@@ -331,17 +331,17 @@
                               </li>
 
 
-                               <li class="nav-item">
-                                   <a id="btnSend" href="#" class="nav-link d-flex align-items-center">
-                                       <i class="bi bi-send me-2"></i>
-                                       Sent
-                                       <span id="badge-send" class="badge bg-success ms-auto">
-                                           0
-                                       </span>
-                                   </a>
-                               </li>
+                              <li class="nav-item">
+                                  <a id="btnSend" href="#" class="nav-link d-flex align-items-center">
+                                      <i class="bi bi-send me-2"></i>
+                                      Sent
+                                      <span id="badge-send" class="badge bg-success ms-auto">
+                                          0
+                                      </span>
+                                  </a>
+                              </li>
 
-                               <?php if (session('user_role') != 'KARU'): ?>
+                               <?php if (session('user_role') !== 'KARU'): ?>
                                <li class="nav-item">
                                    <a id="btnDrafts" href="#" class="nav-link d-flex align-items-center">
                                        <i class="bi bi-file-earmark-text me-2"></i>
@@ -352,7 +352,7 @@
                                    </a>
                                </li>
                                <?php endif; ?>
-                           </ul>
+                          </ul>
 
                       </div>
                   </div>
