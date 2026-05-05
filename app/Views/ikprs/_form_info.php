@@ -103,10 +103,10 @@
                         <!-- DOT UNREAD + ICON JENIS -->
                         <td class="mailbox-star text-muted" style="width:40px;">
                             <?php if ($row['is_read'] == 0): ?>
-                                <div class="notif-dot"></div>
+                                <i class="<?= $iconStatus ?> <?= $warna_status ?>" style="font-size: 0.7rem;"></i>
+                            <?php else: ?>
+                                <i class="<?= $iconJenis ?> text-muted" style="font-size: 0.7rem;"></i>
                             <?php endif; ?>
-                            <i class="<?= $iconJenis ?>" style="font-size:15px;"
-                                title="<?= esc($row['jenis']) ?>"></i>
                         </td>
 
                         <!-- JENIS + UNIT -->
