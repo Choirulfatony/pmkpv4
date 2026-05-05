@@ -1912,13 +1912,18 @@ $db = db_connect();
         $db->transComplete();
 
         if ($db->transStatus() === FALSE) {
-            // Log error database untuk debugging
+            // Log semua error database untuk debugging
             $error = $db->error();
-            log_message('error', 'verifikasi_karu: TRANSACTION FAILED - error=' . json_encode($error));
+            $lastQuery = $db->getLastQuery();
+            log_message('error', 'verifikasi_karu: TRANSACTION FAILED');
+            log_message('error', 'verifikasi_karu: DB error=' . json_encode($error));
+            log_message('error', 'verifikasi_karu: Last query=' . ($lastQuery ? $lastQuery->getOriginalQuery() : 'no query'));
+            log_message('error', 'verifikasi_karu: Insiden ID=' . $insiden_id);
             return $this->response->setJSON([
                 'status' => false,
                 'message' => 'Gagal memproses verifikasi',
-                'error' => $error
+                'error' => $error,
+                'debug' => 'Check log for details'
             ]);
         }
 
