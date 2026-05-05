@@ -61,9 +61,10 @@
                             <!-- ICON -->
                             <td class="mailbox-star text-muted">
                                 <?php if (!$row['is_read']): ?>
-                                    <i class="bi bi-circle-fill text-primary"></i>
+                                    <div class="notif-dot"></div>
+                                    <i class="bi bi-info-circle" style="font-size:15px;" title="Sentinel"></i>
                                 <?php else: ?>
-                                    <i class="bi bi-file-earmark-text me-2 text-muted"></i>
+                                    <i class="bi bi-file-earmark-text me-2 text-muted" style="font-size:15px;"></i>
                                 <?php endif; ?>
                             </td>
 
