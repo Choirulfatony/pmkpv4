@@ -1134,7 +1134,64 @@ $db = db_connect();
         $error2 = $db->error();
         log_message('error', 'simpanikp: notif PELAPOR - id=' . $notif2_id . ', error=' . json_encode($error2) . ', query=' . $db->getLastQuery());
 
-        // 7. VERIFIKASI LANGSUNG DI DATABASE
+        // ========================================
+        // 7. KIRIM WHATSAPP KE KARU
+        // ========================================
+        
+        // Ambil nomor HP KARU dari tabel unit_karu
+        $karuPhone = $db->table('unit_karu')->select('phone')->where('hris_user_id', $karu->hris_user_id)->get()->getRow();
+        
+        if ($karuPhone && !empty($karuPhone->phone)) {
+            // Format nomor: 08xx -> 62xx (standar internasional)
+            $phone = preg_replace('/^0/', '62', $karuPhone->phone);
+            
+            // Konfigurasi WhatsApp Business API
+            $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZDZD';
+            $url = "https://graph.facebook.com/v19.0/1128976353628313/messages";
+            
+            // Susun isi pesan WhatsApp
+            $message = "Laporan IKP Baru\n";
+            $message .= "No. Insiden: IKP-" . date('Y') . "-" . str_pad((string)$insiden_id, 3, '0', STR_PAD_LEFT) . "\n";
+            $message .= "Tempat: " . ($db->table('master_institution_department')->select('department_name')->where('department_id', $dataInsiden['tempat_insiden'])->get()->getRow()->department_name ?? '-') . "\n";
+            $message .= "Waktu: " . date('d/m/Y H:i') . "\n";
+            $message .= "Silakan verifikasi melalui sistem IKPRS.";
+            
+            // Siapkan data untuk WhatsApp API
+            $data = [
+                'messaging_product' => 'whatsapp',
+                'to' => $phone,
+                'type' => 'text',
+                'text' => ['body' => $message]
+            ];
+            
+            // Header untuk HTTP request
+            $headers = [
+                'Authorization: Bearer ' . $token,
+                'Content-Type: application/json'
+            ];
+            
+            // Inisialisasi cURL untuk kirim request
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            
+            // Eksekusi pengiriman WhatsApp
+            $waResponse = curl_exec($ch);
+            $waError = curl_error($ch);
+            $waHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            // Log hasil pengiriman untuk debugging
+            log_message('error', 'simpanikp: WA to KARU - phone=' . $phone . ', http=' . $waHttpCode . ', response=' . $waResponse . ', error=' . $waError);
+        } else {
+            // Log jika nomor HP KARU tidak ditemukan
+            log_message('error', 'simpanikp: WA to KARU - phone not found for hris_user_id=' . $karu->hris_user_id);
+        }
+
+        // 8. VERIFIKASI LANGSUNG DI DATABASE
         $total_notif = $db->query("SELECT COUNT(*) as total FROM ikprssm_notifikasi WHERE insiden_id = ?", [$insiden_id])->getRow();
         log_message('error', 'simpanikp: VERIFICATION - insiden_id=' . $insiden_id . ', total_notif=' . json_encode($total_notif));
 
