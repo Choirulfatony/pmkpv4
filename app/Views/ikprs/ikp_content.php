@@ -961,6 +961,7 @@ $(document).ready(function() {
           }, function(res) {
 
               $('#inbox-wrapper').html(res);
+              refreshNotif(); // Update counters (total_info, total_notif, etc.)
 
           }).always(function() {
 
