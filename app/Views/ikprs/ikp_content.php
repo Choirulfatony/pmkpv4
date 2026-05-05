@@ -924,6 +924,27 @@ $(document).ready(function() {
           loadInfo(1);
       });
 
+      /* ===== AUTO REFRESH INFO ===== */
+      let infoRefreshInterval = null;
+      const INFO_REFRESH_TIME = 30000; // 30 detik
+
+      function startInfoAutoRefresh() {
+          if (infoRefreshInterval) clearInterval(infoRefreshInterval);
+          infoRefreshInterval = setInterval(function() {
+              if (!infoLoading) {
+                  let keyword = $('#searchInfo').val() ?? '';
+                  loadInfo(1, keyword);
+              }
+          }, INFO_REFRESH_TIME);
+      }
+
+      function stopInfoAutoRefresh() {
+          if (infoRefreshInterval) {
+              clearInterval(infoRefreshInterval);
+              infoRefreshInterval = null;
+          }
+      }
+
       /* ===== LOAD INFO ===== */
       function loadInfo(page = 1, keywordParam = null) {
 
@@ -1192,10 +1213,26 @@ $(document).ready(function() {
                       $(btn).prop('disabled', false);
                   }
               },
-              error: function() {
-                  $('#komite_error').text('Terjadi kesalahan server');
-                  $(btn).prop('disabled', false);
-              }
-          });
-      }
-  </script>
+               error: function() {
+                   $('#komite_error').text('Terjadi kesalahan server');
+                   $(btn).prop('disabled', false);
+               }
+           });
+       }
+
+       /* ===== TAB EVENT - AUTO REFRESH INFO ===== */
+       $(document).on('shown.bs.tab', 'button[data-bs-toggle="tab"]', function(e) {
+           let target = $(e.target).attr('data-bs-target');
+           if (target === '#info') {
+               loadInfo(1);
+               startInfoAutoRefresh();
+           } else {
+               stopInfoAutoRefresh();
+           }
+       });
+
+       /* ===== START AUTO REFRESH IF INFO TAB ACTIVE ON LOAD ===== */
+       if ($('#info').hasClass('active')) {
+           startInfoAutoRefresh();
+       }
+   </script>
