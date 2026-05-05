@@ -950,8 +950,9 @@ $db = db_connect();
                 d.department_name as unit_ruangan
             ')
             ->join('ikprssm_insiden i', 'i.id = n.insiden_id', 'left')
-            ->join('master_institution_department d', 'd.department_id = i.tempat_insiden', 'left')
+            ->join('master_institution_department d', 'd.department_id=i.tempat_insiden', 'left')
             ->where('n.hris_user_id', $user_id)
+            ->where('n.is_read', 0)  // Hanya ambil yang BELUM dibaca
             ->whereIn('n.status', ['INFO', 'NEW']);
 
         if ($role == 'PELAPOR') {
