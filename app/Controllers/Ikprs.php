@@ -1753,9 +1753,13 @@ $db = db_connect();
             ]);
         }
 
+        // Cek apakah KARU berhak verifikasi
+        // KARU berhak jika:
+        // 1. current_receiver_id = session user_id DAN current_receiver_role = 'KARU'
+        // ATAU 2. karu_id = session user_id (KARU yang ditunjuk)
         if (
-            $insiden->current_receiver_id != session('hris_user_id')
-            || $insiden->current_receiver_role != 'KARU'
+            ($insiden->current_receiver_id != session('hris_user_id') && $insiden->karu_id != session('hris_user_id'))
+            || ($insiden->current_receiver_role != 'KARU' && $insiden->status_laporan != 'KARU')
         ) {
 
             return $this->response->setJSON([
