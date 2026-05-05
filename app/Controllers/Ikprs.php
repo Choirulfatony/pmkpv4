@@ -1150,9 +1150,19 @@ $db = db_connect();
             $url = "https://graph.facebook.com/v19.0/1128976353628313/messages";
             
             // Susun isi pesan WhatsApp
+            // Masking nama pasien: "ASTRI NUR FATMASARI" -> "A*** N***"
+            $maskedName = '';
+            $nameParts = explode(' ', trim($dataInsiden['nama_pasien'] ?? ''));
+            $partsToMask = array_slice($nameParts, 0, 2); // Ambil 2 kata pertama
+            foreach ($partsToMask as $part) {
+                if (!empty($part)) {
+                    $maskedName .= (strlen($maskedName) > 0 ? ' ' : '') . substr($part, 0, 1) . '***';
+                }
+            }
+            
             $message = "📢 Laporan IKP Baru\n";
             $message .= "No. Insiden: IKP-" . date('Y') . "-" . str_pad((string)$insiden_id, 3, '0', STR_PAD_LEFT) . "\n";
-            $message .= "Pasien: " . ($dataInsiden['nama_pasien'] ?? '-') . "\n";
+            $message .= "Pasien: " . ($maskedName ?: '-') . "\n";
             $message .= "Tempat: " . ($db->table('master_institution_department')->select('department_name')->where('department_id', $dataInsiden['tempat_insiden'])->get()->getRow()->department_name ?? '-') . "\n";
             $message .= "Jenis: " . ($dataInsiden['jenis_insiden'] ?? '-') . "\n";
             $message .= "Akibat: " . ($dataInsiden['akibat_insiden'] ?? '-') . "\n";
