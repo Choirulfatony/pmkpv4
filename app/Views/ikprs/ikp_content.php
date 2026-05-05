@@ -407,6 +407,21 @@ $(document).ready(function() {
                   if (res.error && res.error === 'User belum login') {
                       return;
                   }
+                   if (res.total_notif !== undefined) {
+                       $('#badge-notif').text(res.total_notif);
+                   }
+                  if (res.total_inbox !== undefined) $('#badge-inbox').text(res.total_inbox);
+                  if (res.total_send !== undefined) $('#badge-send').text(res.total_send);
+                  if (res.total_draft !== undefined && res.total_draft > 0) {
+                      $('#badge-draft').text(res.total_draft);
+                  } else {
+                      $('#badge-draft').text('0');
+                  }
+              })
+              .fail(function() {
+                  console.log('Gagal update notifikasi');
+              });
+          }
                    if (res.total_notif !== undefined) $('#badge-notif').text(res.total_notif);
                    if (res.total_inbox !== undefined) $('#badge-inbox').text(res.total_inbox);
                    if (res.total_send !== undefined) $('#badge-send').text(res.total_send);
