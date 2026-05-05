@@ -1912,9 +1912,13 @@ $db = db_connect();
         $db->transComplete();
 
         if ($db->transStatus() === FALSE) {
+            // Log error database untuk debugging
+            $error = $db->error();
+            log_message('error', 'verifikasi_karu: TRANSACTION FAILED - error=' . json_encode($error));
             return $this->response->setJSON([
                 'status' => false,
-                'message' => 'Gagal memproses verifikasi'
+                'message' => 'Gagal memproses verifikasi',
+                'error' => $error
             ]);
         }
 
