@@ -1805,7 +1805,7 @@ $db = db_connect();
                 'status_laporan'   => 'TERKIRIM', // ✅ Sudah diverifikasi KARU, kirim ke KOMITE
                 'karu_read_at'     => date('Y-m-d H:i:s'),
                 'current_receiver_role' => 'KOMITE',
-                'current_receiver_id'   => NULL,
+                'current_receiver_id'   => null, // ✅ Fix: gunakan null (lowercase)
                 'updated_at'       => date('Y-m-d H:i:s')
             ]);
 
