@@ -1212,9 +1212,24 @@ $db = db_connect();
             return 'SESSION USER BELUM ADA';
         }
 
-        // KARU tidak boleh akses Drafts
+        // KARU tidak boleh akses Drafts - return kosong
         if ($role == 'KARU') {
-            return 'Akses Ditolak: KARU tidak memiliki Drafts';
+            if ($request->isAJAX()) {
+                return view('ikprs/_form_drafts', [
+                    'list' => [],
+                    'total' => 0,
+                    'total_pages' => 0,
+                    'page' => 1,
+                    'keyword' => ''
+                ]);
+            }
+            return view('ikprs/_form_drafts', [
+                'list' => [],
+                'total' => 0,
+                'total_pages' => 0,
+                'page' => 1,
+                'keyword' => ''
+            ]);
         }
 
         // 🔑 FIX UTAMA DI SINI
