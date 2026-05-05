@@ -341,17 +341,15 @@
                                   </a>
                               </li>
 
-                               <?php if (session('user_role') !== 'KARU'): ?>
-                               <li class="nav-item">
-                                   <a id="btnDrafts" href="#" class="nav-link d-flex align-items-center">
-                                       <i class="bi bi-file-earmark-text me-2"></i>
-                                       Drafts
-                                       <span id="badge-draft" class="badge bg-warning ms-auto">
-                                           0
-                                       </span>
-                                   </a>
-                               </li>
-                               <?php endif; ?>
+                              <li class="nav-item">
+                                  <a id="btnDrafts" href="#" class="nav-link d-flex align-items-center">
+                                      <i class="bi bi-file-earmark-text me-2"></i>
+                                      Drafts
+                                      <span id="badge-draft" class="badge bg-warning ms-auto">
+                                          0
+                                      </span>
+                                  </a>
+                              </li>
                           </ul>
 
                       </div>
@@ -954,11 +952,9 @@
 
           $('#inbox-wrapper').trigger('processing.inbox', [true]);
 
-          // Cache busting dengan timestamp
           $.get("<?= site_url('ikprs/form_info') ?>", {
               page: page,
-              keyword: keyword,
-              _: new Date().getTime() // Cache busting
+              keyword: keyword
           }, function(res) {
 
               $('#inbox-wrapper').html(res);
