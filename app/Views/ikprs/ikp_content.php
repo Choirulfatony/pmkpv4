@@ -311,13 +311,13 @@
 
 
                           <ul class="nav nav-pills flex-column">
-                              <li class="nav-item">
-                                  <a id="btnInfo" href="#" class="nav-link d-flex align-items-center">
-                                      <i class="bi bi-bell me-2"></i>
-                                      Info
-                                      <span id="badge-notif" class="badge bg-info ms-auto">0</span>
-                                  </a>
-                              </li>
+                               <li class="nav-item">
+                                   <a id="btnInfo" href="#" class="nav-link d-flex align-items-center">
+                                       <i class="bi bi-bell me-2"></i>
+                                       Info
+                                       <span id="badge-notif" class="badge bg-info ms-auto">0</span>
+                                   </a>
+                               </li>
 
 
                               <li class="nav-item">
@@ -402,18 +402,23 @@ $(document).ready(function() {
           // Update badge
           const hrisUserId = "<?= session('hris_user_id') ?? '' ?>";
           if (hrisUserId !== '') {
-              $.get("<?= site_url('ikprs/counter-ajax') ?>", function(res) {
+              $.get("<?= site_url('ikprs/counter-ajax') ?>", { _: new Date().getTime() }) // Cache busting
+              .done(function(res) {
                   if (res.error && res.error === 'User belum login') {
                       return;
                   }
-                  if (res.total_notif !== undefined) $('#badge-notif').text(res.total_notif);
-                  if (res.total_inbox !== undefined) $('#badge-inbox').text(res.total_inbox);
-                  if (res.total_send !== undefined) $('#badge-send').text(res.total_send);
-                  if (res.total_draft !== undefined && res.total_draft > 0) {
-                      $('#badge-draft').text(res.total_draft);
-                  } else {
-                      $('#badge-draft').text('0');
-                  }
+                   if (res.total_notif !== undefined) $('#badge-notif').text(res.total_notif);
+                   if (res.total_inbox !== undefined) $('#badge-inbox').text(res.total_inbox);
+                   if (res.total_send !== undefined) $('#badge-send').text(res.total_send);
+                   // total_info = total_notif (sama), jadi tidak perlu update element terpisah
+                   if (res.total_draft !== undefined && res.total_draft > 0) {
+                       $('#badge-draft').text(res.total_draft);
+                   } else {
+                       $('#badge-draft').text('0');
+                   }
+              })
+              .fail(function() {
+                  console.log('Gagal update notifikasi');
               });
           }
 

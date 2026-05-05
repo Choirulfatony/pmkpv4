@@ -785,21 +785,9 @@ $db = db_connect();
 
         $notif = $this->getNotifList($user_id, $role);
 
-        // total_info: notif tipe 'INFO' untuk user ini (semua role)
-        $infoQuery = $db->table('ikprssm_notifikasi')
-            ->where('hris_user_id', $user_id)
-            ->where('status', 'INFO');
-        
-        // Filter by type based on role (consistent with inbox)
-        if ($role == 'PELAPOR') {
-            $infoQuery->where('type', 'to_pelapor');
-        } elseif ($role == 'KARU') {
-            $infoQuery->where('type', 'to_karu');
-        } elseif ($role == 'KOMITE') {
-            $infoQuery->where('type', 'to_komite');
-        }
-        
-        $total_info = $infoQuery->countAllResults();
+        // total_info: SAMAKAN DENGAN total_notif (karena tampilan Info tab = NEW + INFO yang belum dibaca)
+        // Gunakan query yang sama dengan total_notif
+        $total_info = $total_notif;
 
         return $this->response->setJSON([
             'total_notif' => $total_notif,
