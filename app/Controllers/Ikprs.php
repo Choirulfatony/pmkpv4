@@ -1150,11 +1150,15 @@ $db = db_connect();
             $url = "https://graph.facebook.com/v19.0/1128976353628313/messages";
             
             // Susun isi pesan WhatsApp
-            $message = "Laporan IKP Baru\n";
+            $message = "📢 Laporan IKP Baru\n";
             $message .= "No. Insiden: IKP-" . date('Y') . "-" . str_pad((string)$insiden_id, 3, '0', STR_PAD_LEFT) . "\n";
+            $message .= "Pasien: " . ($dataInsiden['nama_pasien'] ?? '-') . "\n";
             $message .= "Tempat: " . ($db->table('master_institution_department')->select('department_name')->where('department_id', $dataInsiden['tempat_insiden'])->get()->getRow()->department_name ?? '-') . "\n";
+            $message .= "Jenis: " . ($dataInsiden['jenis_insiden'] ?? '-') . "\n";
+            $message .= "Akibat: " . ($dataInsiden['akibat_insiden'] ?? '-') . "\n";
+            $message .= "Kronologis: " . substr($dataInsiden['kronologis_insiden'] ?? '-', 0, 100) . "\n";
             $message .= "Waktu: " . date('d/m/Y H:i') . "\n";
-            $message .= "Silakan verifikasi melalui sistem IKPRS.";
+            $message .= "Silakan verifikasi via sistem IKPRS.";
             
             // Siapkan data untuk WhatsApp API
             $data = [
