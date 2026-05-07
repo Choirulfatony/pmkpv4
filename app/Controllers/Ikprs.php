@@ -1135,36 +1135,30 @@ $db = db_connect();
             $phone = preg_replace('/^0/', '62', $karuPhone->phone);
             
             // Konfigurasi WhatsApp Business API
-            $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZDZD';
+            $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZD';
             $url = "https://graph.facebook.com/v19.0/1128976353628313/messages";
             
-            // Susun isi pesan WhatsApp
-            // Masking nama pasien: "ASTRI NUR FATMASARI" -> "A*** N***"
-            $maskedName = '';
-            $nameParts = explode(' ', trim($dataInsiden['nama_pasien'] ?? ''));
-            $partsToMask = array_slice($nameParts, 0, 2); // Ambil 2 kata pertama
-            foreach ($partsToMask as $part) {
-                if (!empty($part)) {
-                    $maskedName .= (strlen($maskedName) > 0 ? ' ' : '') . substr($part, 0, 1) . '***';
-                }
-            }
+            // Parameters untuk template ikprs_to_karu: Nama Karu, Jenis Insiden, Unit
+            $templateParams = [
+                ['type' => 'text', 'text' => 'Karu'],  // Nama Karu (tidak ada di tabel, gunakan default)
+                ['type' => 'text', 'text' => $dataInsiden['jenis_insiden'] ?? 'Insiden'],  // Jenis Insiden
+                ['type' => 'text', 'text' => $dataInsiden['nama_unit'] ?? 'Unit']  // Unit
+            ];
             
-            $message = "📢 Laporan IKP Baru\n";
-            $message .= "No. Insiden: IKP-" . date('Y') . "-" . str_pad((string)$insiden_id, 3, '0', STR_PAD_LEFT) . "\n";
-            $message .= "Pasien: " . ($maskedName ?: '-') . "\n";
-            $message .= "Tempat: " . ($db->table('master_institution_department')->select('department_name')->where('department_id', $dataInsiden['tempat_insiden'])->get()->getRow()->department_name ?? '-') . "\n";
-            $message .= "Jenis: " . ($dataInsiden['jenis_insiden'] ?? '-') . "\n";
-            $message .= "Akibat: " . ($dataInsiden['akibat_insiden'] ?? '-') . "\n";
-            $message .= "Kronologis: " . substr($dataInsiden['kronologis_insiden'] ?? '-', 0, 100) . "\n";
-            $message .= "Waktu: " . date('d/m/Y H:i') . "\n";
-            $message .= "Silakan verifikasi via sistem IKPRS.";
-            
-            // Siapkan data untuk WhatsApp API
             $data = [
                 'messaging_product' => 'whatsapp',
                 'to' => $phone,
-                'type' => 'text',
-                'text' => ['body' => $message]
+                'type' => 'template',
+                'template' => [
+                    'name' => 'ikprs_to_karu',
+                    'language' => ['code' => 'id'],
+                    'components' => [
+                        [
+                            'type' => 'body',
+                            'parameters' => $templateParams
+                        ]
+                    ]
+                ]
             ];
             
             // Header untuk HTTP request
@@ -2735,7 +2729,54 @@ public function tandaiDibaca()
         }
     }
 
+    // ================= WHATSAPP MONITORING =================
+    
+    public function waMonitoring()
+    {
+        $db = db_connect();
+        
+        $status = $this->request->getGet('status') ?? '';
+        $page = (int)($this->request->getGet('page') ?? 1);
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+        $format = $this->request->getGet('format') ?? '';
+        
+        $builder = $db->table('ikprssm_notifikasi n')
+            ->select('n.id, n.hris_user_id, n.insiden_id, uk.nama, n.pesan, n.type, n.wa_status, n.wa_message_id, n.wa_error, n.retry_count, n.created_at')
+            ->join('unit_karu uk', 'n.hris_user_id = uk.hris_user_id', 'left');
+            
+        if (in_array($status, ['SENT', 'PENDING', 'FAILED', 'NO_PHONE'])) {
+            $builder->where('n.wa_status', $status);
+        }
+        
+        $total = $builder->countAllResults(false);
+        $data = $builder->orderBy('n.created_at', 'DESC')
+            ->limit($limit, $offset)
+            ->get()
+            ->getResultArray();
+        
+        // Return JSON for AJAX request
+        if ($format === 'json') {
+            return $this->response->setJSON([
+                'status' => true,
+                'data' => $data,
+                'page' => $page,
+                'total_pages' => ceil($total / $limit),
+                'total' => $total
+            ]);
+        }
+        
+        return view('ikprs/wa_monitoring', [
+            'data' => $data,
+            'total' => $total,
+            'page' => $page,
+            'total_pages' => ceil($total / $limit),
+            'current_status' => $status
+        ]);
+    }
+
 
 
     // ================= END OF CONTROLLER =================
 }
+
