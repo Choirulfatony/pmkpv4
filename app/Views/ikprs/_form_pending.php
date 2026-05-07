@@ -2,7 +2,7 @@
 
     <!-- LEFT TOOLBAR -->
     <div class="d-flex gap-2">
-        <button class="btn btn-mailbox btn-sm btn-draft-reload" title="Reload">
+        <button class="btn btn-mailbox btn-sm btn-pending-reload" title="Reload">
             <i class="bi bi-arrow-repeat"></i>
         </button>
     </div>
@@ -17,11 +17,11 @@
         <div class="input-group input-group-sm mailbox-search" style="width: 220px;">
             <input type="text"
                 class="form-control"
-                id="searchDraft"
-                placeholder="Cari draft..."
+                id="searchPending"
+                placeholder="Cari pending..."
                 value="<?= esc($keyword ?? '') ?>">
 
-            <button class="btn btn-primary btn-search-draft" type="button">
+            <button class="btn btn-primary btn-search-pending" type="button">
                 <i class="bi bi-search"></i>
             </button>
         </div>
@@ -49,13 +49,13 @@
 <?php elseif (empty($list)): ?>
 <tr>
     <td colspan="6" class="text-center text-muted p-4">
-        Tidak ada laporan draft
+        Tidak ada laporan pending
     </td>
 </tr>
 <?php endif; ?>
 
                 <?php foreach ($list as $row): ?>
-                    <tr class="draft-row"
+                    <tr class="pending-row"
                         data-id="<?= esc($row['id']) ?>"
                         style="cursor:pointer">
 
@@ -89,7 +89,7 @@
 
                         <!-- STATUS -->
                         <td class="text-center">
-                            <span class="badge bg-warning">Draft</span>
+                            <span class="badge bg-secondary">Pending</span>
                         </td>
                         
                         <!-- TANGGAL -->
@@ -125,13 +125,13 @@ $end   = $total > 0 ? min($page * 10, $total) : 0;
     </span>
 
     <div class="btn-group btn-group-sm">
-        <button class="btn btn-mailbox btn-draft-prev"
+        <button class="btn btn-mailbox btn-pending-prev"
             data-page="<?= $page - 1 ?>"
             <?= ($page <= 1 || $total == 0 ? 'disabled' : '') ?>>
             <i class="bi bi-chevron-left"></i>
         </button>
 
-        <button class="btn btn-mailbox btn-draft-next"
+        <button class="btn btn-mailbox btn-pending-next"
             data-page="<?= $page + 1 ?>"
             <?= ($page >= $total_pages || $total == 0 ? 'disabled' : '') ?>>
             <i class="bi bi-chevron-right"></i>
@@ -186,7 +186,7 @@ $end   = $total > 0 ? min($page * 10, $total) : 0;
 
     /**
      * WAJIB: reset ikon setiap konten AJAX reload
-     * panggil ini SETELAH loadDraft / reloadDraft
+     * panggil ini SETELAH loadPending / reloadPending
      */
     function resetMailboxSelection() {
         $('.mailbox-checkbox').prop('checked', false);
