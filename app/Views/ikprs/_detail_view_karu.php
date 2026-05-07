@@ -280,7 +280,7 @@
     $jenis_insiden_full = $jenisInsidenText[$jenis_insiden] ?? $jenis_insiden;
 
     $grading = $insiden['grading_risiko'] ?? null;
-    $status  = $insiden['status_laporan'] ?? 'DRAFT';
+    $status  = $insiden['status_laporan'] ?? 'PENDING';
 
     $gradingBg = [
         'BIRU'   => 'rgba(13,110,253,0.15)',
@@ -308,7 +308,7 @@
     $icon       = $gradingIcon[$grading] ?? 'bi-info-circle';
 
     $statusColor = [
-        'DRAFT'     => 'secondary',
+        'PENDING'     => 'secondary',
         'KARU'      => 'info',
         'INSTALASI' => 'primary',
         'PROSES'    => 'warning',
@@ -316,7 +316,7 @@
     ];
 
     $statusText = [
-        'DRAFT'     => 'Menunggu verifikasi KARU',
+        'PENDING'     => 'Menunggu verifikasi KARU',
         'KARU'      => 'Telah diverifikasi KARU',
         'INSTALASI' => 'Sedang dianalisa PMKP',
         'PROSES'    => 'Sedang diproses',
@@ -656,7 +656,7 @@
 
             <!--Hasil Verifikasi KARU-->
             <?php if (
-                $insiden['status_laporan'] != 'DRAFT' &&
+                $insiden['status_laporan'] != 'PENDING' &&
                 (!empty($insiden['grading_risiko']) || !empty($insiden['catatan_atasan'])) &&
                 empty($insiden['grading_final'])
             ): ?>
@@ -779,7 +779,7 @@
             <?php endif; ?>
         </div>
 
-        <?php if ($user_role === 'KOMITE' && in_array($insiden['status_laporan'], ['DRAFT', 'KARU', 'TERKIRIM', 'INSTALASI']) && empty($insiden['grading_final'])): ?>
+        <?php if ($user_role === 'KOMITE' && in_array($insiden['status_laporan'], ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI']) && empty($insiden['grading_final'])): ?>
 
             <div class="insiden-section">
 

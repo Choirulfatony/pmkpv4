@@ -92,19 +92,19 @@ $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
 });
 
 
-// ========== IKPRS ==========
-$routes->group('ikprs', ['filter' => 'auth'], function ($routes) {
+    // ========== IKPRS ==========
+    $routes->group('ikprs', ['filter' => 'auth'], function ($routes) {
     // Dashboard
     $routes->get('/', 'Ikprs::index');
     $routes->get('menu', 'Ikprs::ikprs');
 
     // Form Input
     $routes->get('_form_add_ikp', 'Ikprs::formAddIkp');
-    $routes->match(['get', 'post'], 'form_drafts', 'Ikprs::formDrafts');
-    $routes->match(['get', 'post'], 'form_send', 'Ikprs::formSend');
-    $routes->match(['get', 'post'], 'form_inbox_karu', 'Ikprs::formInbox_karu');
+    $routes->match(['GET', 'POST'], 'form_pending', 'Ikprs::formPending');
+    $routes->match(['GET', 'POST'], 'form_send', 'Ikprs::formSend');
+    $routes->match(['GET', 'POST'], 'form_inbox_karu', 'Ikprs::formInbox_karu');
     $routes->match(['get', 'post'], 'form_info', 'Ikprs::formInfo');
-$routes->get('hapus_test_notif', 'Ikprs::hapusTestNotif');
+    $routes->get('hapus_test_notif', 'Ikprs::hapusTestNotif');
     $routes->get('test_wa', 'Ikprs::testWhatsApp');
     $routes->get('waMonitoring', 'Ikprs::waMonitoring');
     $routes->get('wa-monitoring', 'Ikprs::waMonitoring');

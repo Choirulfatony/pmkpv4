@@ -42,17 +42,23 @@
                     </tr>
                 <?php endif; ?>
 
-                <?php 
+                <?php
                 $role = session()->get('user_role');
-                foreach ($notif as $row): 
+                foreach ($notif as $row):
                     // ===================== SAMA DENGAN HEADER DROPDOWN =====================
                     // iconJenis - SAMA dengan di _header.php line 584-604
                     $iconJenis = 'bi bi-info-circle';
-                    if ($row['jenis'] == 'KTD') { $iconJenis = 'bi bi-exclamation-triangle-fill text-danger'; }
-                    elseif ($row['jenis'] == 'KNC') { $iconJenis = 'bi bi-shield-exclamation text-purple'; }
-                    elseif ($row['jenis'] == 'KTC') { $iconJenis = 'bi bi-exclamation-circle-fill text-warning'; }
-                    elseif ($row['jenis'] == 'KPC') { $iconJenis = 'bi bi-info-circle-fill text-primary'; }
-                    elseif ($row['jenis'] == 'SENTINEL') { $iconJenis = 'bi bi-exclamation-octagon-fill text-danger'; }
+                    if ($row['jenis'] == 'KTD') {
+                        $iconJenis = 'bi bi-exclamation-triangle-fill text-danger';
+                    } elseif ($row['jenis'] == 'KNC') {
+                        $iconJenis = 'bi bi-shield-exclamation text-purple';
+                    } elseif ($row['jenis'] == 'KTC') {
+                        $iconJenis = 'bi bi-exclamation-circle-fill text-warning';
+                    } elseif ($row['jenis'] == 'KPC') {
+                        $iconJenis = 'bi bi-info-circle-fill text-primary';
+                    } elseif ($row['jenis'] == 'SENTINEL') {
+                        $iconJenis = 'bi bi-exclamation-octagon-fill text-danger';
+                    }
 
                     // Status read logic - SAMA dengan di _header.php line 650-704
                     $status_read = 'Belum Dibaca';
@@ -90,11 +96,17 @@
                     // Status laporan badge
                     $statusLabel = $row['status_laporan'] ?? '-';
                     $statusColor = 'secondary';
-                    if ($statusLabel == 'DRAFT') { $statusColor = 'warning'; }
-                    elseif ($statusLabel == 'KARU') { $statusColor = 'info'; }
-                    elseif ($statusLabel == 'TERKIRIM') { $statusColor = 'primary'; }
-                    elseif ($statusLabel == 'INSTALASI') { $statusColor = 'primary'; }
-                    elseif ($statusLabel == 'SELESAI') { $statusColor = 'success'; }
+                    if ($statusLabel == 'PENDING') {
+                        $statusColor = 'warning';
+                    } elseif ($statusLabel == 'KARU') {
+                        $statusColor = 'info';
+                    } elseif ($statusLabel == 'TERKIRIM') {
+                        $statusColor = 'primary';
+                    } elseif ($statusLabel == 'INSTALASI') {
+                        $statusColor = 'primary';
+                    } elseif ($statusLabel == 'SELESAI') {
+                        $statusColor = 'success';
+                    }
                 ?>
 
                     <tr class="info-row <?= $row['is_read'] == 0 ? 'notif-unread' : '' ?>"
@@ -152,44 +164,32 @@ $end   = $total > 0 ? min($page * 20, $total) : 0;
 ?>
 
 <?php if ($total_pages > 0): ?>
-<div class="card-header mailbox-header d-flex align-items-center gap-2">
+    <div class="card-header mailbox-header d-flex align-items-center gap-2">
 
-    <!-- INFO -->
-    <span class="text-muted small">
-        <?= $start ?> – <?= $end ?> / <?= $total ?>
-    </span>
+        <!-- INFO -->
+        <span class="text-muted small">
+            <?= $start ?> – <?= $end ?> / <?= $total ?>
+        </span>
 
-    <div class="ms-auto"></div>
+        <div class="ms-auto"></div>
 
-    <span class="text-muted small">
-        <?= $total > 0 ? $page : 0 ?> / <?= $total_pages ?>
-    </span>
+        <span class="text-muted small">
+            <?= $total > 0 ? $page : 0 ?> / <?= $total_pages ?>
+        </span>
 
-    <div class="btn-group btn-group-sm">
-        <button class="btn btn-mailbox btn-info-prev"
-            data-page="<?= $page - 1 ?>"
-            <?= ($page <= 1 || $total == 0 ? 'disabled' : '') ?>>
-            <i class="bi bi-chevron-left"></i>
-        </button>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-mailbox btn-info-prev"
+                data-page="<?= $page - 1 ?>"
+                <?= ($page <= 1 || $total == 0 ? 'disabled' : '') ?>>
+                <i class="bi bi-chevron-left"></i>
+            </button>
 
-        <button class="btn btn-mailbox btn-info-next"
-            data-page="<?= $page + 1 ?>"
-            <?= ($page >= $total_pages || $total == 0 ? 'disabled' : '') ?>>
-            <i class="bi bi-chevron-right"></i>
-        </button>
+            <button class="btn btn-mailbox btn-info-next"
+                data-page="<?= $page + 1 ?>"
+                <?= ($page >= $total_pages || $total == 0 ? 'disabled' : '') ?>>
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+
     </div>
-
-</div>
 <?php endif; ?>
-
-        /* Blinking animation for unread indicator */
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.3; }
-            100% { opacity: 1; }
-        }
-
-        .notif-dot.blink {
-            animation: blink 1.5s infinite;
-        }
-

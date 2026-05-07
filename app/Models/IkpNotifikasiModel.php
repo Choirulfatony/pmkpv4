@@ -16,7 +16,11 @@ class IkpNotifikasiModel extends Model
         'status',
         'type',
         'is_read',
-        'created_at'
+        'created_at',
+        'wa_status',
+        'wa_message_id',
+        'wa_error',
+        'retry_count'
     ];
 
     protected $useTimestamps = false;
@@ -25,7 +29,7 @@ class IkpNotifikasiModel extends Model
     // {
     //     return $this->db->table($this->table)
     //         ->where('current_receiver_id', $user_id) // ✅ BENAR
-    //         ->where('status_laporan', 'DRAFT')
+    //         ->where('status_laporan', 'PENDING')
     //         ->countAllResults();
     // }
 }

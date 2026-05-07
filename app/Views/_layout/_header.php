@@ -430,7 +430,7 @@
     window.user_id = "<?= session('hris_user_id') ?? '' ?>";
     window.user_role = "<?= session('user_role') ?? '' ?>";
     window.lastInboxCount = -1;
-    window.lastDraftCount = -1;
+    window.lastPendingCount = -1;
     window.lastSendCount = -1;
     window.lastNotifCount = -1;
 </script>
@@ -497,7 +497,7 @@
 
                 let notif = res.total_notif ?? 0;
                 let inbox = res.total_inbox ?? 0;
-                let draft = res.total_draft ?? 0;
+                let pending = res.total_pending ?? 0;
                 let send = res.total_send ?? 0;
                 let totalNotif = res.total_notif ?? 0;
 
@@ -547,7 +547,7 @@
                 // }
 
                 lastInboxCount = inbox;
-                lastDraftCount = draft;
+                lastPendingCount = pending;
                 lastSendCount = send;
 
                 /* =============================
@@ -566,8 +566,8 @@
                     .removeClass('bg-primary')
                     .addClass('bg-primary');
 
-                $('#badge-draft')
-                    .text(draft)
+                $('#badge-pending')
+                    .text(pending)
                     .removeClass('bg-warning')
                     .addClass('bg-warning');
 
@@ -641,7 +641,7 @@
 
                             if (item.is_read == 1) {
                                 // Sudah dibaca (sudah klik notifikasi)
-                                if (status === 'DRAFT') {
+                                if (status === 'PENDING') {
                                     status_read = "Menunggu Verifikasi KARU";
                                     warna_status = "text-secondary";
 
@@ -662,7 +662,7 @@
                                 }
                             } else {
                                 // Belum dibaca (belum klik notifikasi)
-                                if (status === 'DRAFT') {
+                                if (status === 'PENDING') {
                                     status_read = "Menunggu Verifikasi KARU";
                                     warna_status = "text-danger";
 

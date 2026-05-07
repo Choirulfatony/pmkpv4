@@ -1695,7 +1695,7 @@
     }
 
     // submit form IKP (placeholder)
-    function submitIkp(status = 'DRAFT') {
+    function submitIkp(status = 'PENDING') {
 
         // 🔥 tampilkan loading BAR DI LAYOUT UTAMA
         if (typeof showIKPLoading === 'function') {

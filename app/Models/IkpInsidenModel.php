@@ -32,9 +32,9 @@ class IkpInsidenModel extends Model
     protected $updatedField  = 'updated_at';
 
     /* =====================
-     * GET DRAFT PAGINATED
+     * GET PENDING PAGINATED
      * ===================== */
-    public function getDraftPaginated($user_id, $limit, $offset, $search = '', $filters = [])
+    public function getPendingPaginated($user_id, $limit, $offset, $search = '', $filters = [])
     {
         $role = session('user_role');
         $db = $this->db;
@@ -45,14 +45,14 @@ class IkpInsidenModel extends Model
         ');
 
         if ($role == 'KARU') {
-            $builder->whereIn('status_laporan', ['DRAFT']);
+            $builder->whereIn('status_laporan', ['PENDING']);
             $builder->where('karu_id', $user_id);
         } elseif ($role == 'PELAPOR') {
             $builder->where('user_id', $user_id);
-            $builder->where('status_laporan', 'DRAFT');
+            $builder->where('status_laporan', 'PENDING');
         } else {
             $builder->where('user_id', $user_id);
-            $builder->where('status_laporan', 'DRAFT');
+            $builder->where('status_laporan', 'PENDING');
         }
 
         if ($search !== '') {
@@ -105,22 +105,22 @@ class IkpInsidenModel extends Model
     }
 
     /* =====================
-     * COUNT DRAFT FILTERED
+     * COUNT PENDING FILTERED
      * ===================== */
-    public function countDraftFiltered($user_id, $search = '', $filters = [])
+    public function countPendingFiltered($user_id, $search = '', $filters = [])
     {
         $role = session('user_role');
         $builder = $this->db->table($this->table);
 
         if ($role == 'KARU') {
-            $builder->whereIn('status_laporan', ['DRAFT']);
+            $builder->whereIn('status_laporan', ['PENDING']);
             $builder->where('karu_id', $user_id);
         } elseif ($role == 'PELAPOR') {
             $builder->where('user_id', $user_id);
-            $builder->where('status_laporan', 'DRAFT');
+            $builder->where('status_laporan', 'PENDING');
         } else {
             $builder->where('user_id', $user_id);
-            $builder->where('status_laporan', 'DRAFT');
+            $builder->where('status_laporan', 'PENDING');
         }
 
         if ($search !== '') {
@@ -136,11 +136,11 @@ class IkpInsidenModel extends Model
         return $builder->countAllResults();
     }
 
-    public function countDraftByUser($user_id)
+    public function countPendingByUser($user_id)
     {
         return $this->db->table($this->table)
             ->where('user_id', $user_id)
-            ->where('status_laporan', 'DRAFT')
+            ->where('status_laporan', 'PENDING')
             ->countAllResults();
     }
 
@@ -253,7 +253,7 @@ class IkpInsidenModel extends Model
                 ->countAllResults();
         } elseif ($role == 'KOMITE') {
             return $this->db->table($this->table)
-                ->whereIn('status_laporan', ['DRAFT', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI'])
+                ->whereIn('status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI'])
                 ->countAllResults();
         } elseif ($role == 'PELAPOR') {
             return $this->db->table($this->table)
@@ -283,7 +283,7 @@ class IkpInsidenModel extends Model
         if ($role == 'KOMITE') {
             $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id', 'left');
             $builder->where('n.hris_user_id', $user_id);
-            $builder->whereIn('i.status_laporan', ['DRAFT', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
+            $builder->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
         } elseif ($role == 'PELAPOR') {
             $builder->where('i.user_id', $user_id);
             $builder->where('i.status_laporan', 'SELESAI');
@@ -338,7 +338,7 @@ class IkpInsidenModel extends Model
 
         if ($role == 'KOMITE') {
             $builder->where('n.hris_user_id', $user_id);
-            $builder->whereIn('i.status_laporan', ['DRAFT', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
+            $builder->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
         } elseif ($role == 'PELAPOR') {
             $builder->where('i.user_id', $user_id);
             $builder->where('i.status_laporan', 'SELESAI');

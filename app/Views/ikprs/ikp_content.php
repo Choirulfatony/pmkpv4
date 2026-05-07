@@ -173,13 +173,19 @@
           font-weight: 600;
       }
 
-      /* BUTTON btnDrafts */
-      #btnDrafts:hover {
-          background-color: #e2e4e7;
+      /* BUTTON btnPending */
+      #btnPending:hover {
+          background-color: #e9ecef;
       }
 
-      #btnDrafts.active {
+      #btnPending.active {
           background-color: #e2e4e7;
+          color: white;
+      }
+
+      #btnPending.active {
+          background-color: #e2e4e7;
+          color: white;
           font-weight: 600;
       }
 
@@ -342,13 +348,13 @@
                               </li>
 
                               <li class="nav-item">
-                                  <a id="btnDrafts" href="#" class="nav-link d-flex align-items-center">
-                                      <i class="bi bi-file-earmark-text me-2"></i>
-                                      Drafts
-                                      <span id="badge-draft" class="badge bg-warning ms-auto">
-                                          0
-                                      </span>
-                                  </a>
+                                   <a id="btnPending" href="#" class="nav-link d-flex align-items-center">
+                                       <i class="bi bi-file-earmark-text me-2"></i>
+                                       Pending
+                                       <span id="badge-pending" class="badge bg-secondary ms-auto">
+                                           0
+                                       </span>
+                                   </a>
                               </li>
                           </ul>
 
@@ -376,7 +382,7 @@
 
   <script>
       let inboxLoading = false;
-      let draftsLoading = false;
+      let pendingLoading = false;
       let sendLoading = false;
       let infoLoading = false;
       let lastInboxCount = 0;
@@ -398,10 +404,10 @@
                 $('#btnInfo').click();
             }
 
-            // Load draft jika ada parameter ?draft=1
-            const draftParam = urlParams.get('draft');
-            if (draftParam === '1') {
-                $('#btnDrafts').click();
+            // Load pending jika ada parameter ?pending=1
+            const pendingParam = urlParams.get('pending');
+            if (pendingParam === '1') {
+                $('#btnPending').click();
             }
 
             const insidenIdFromUrl = urlParams.get('id');
@@ -708,28 +714,29 @@
 
       /*
        * ===============================
-       * Drafts 
+        * Pending
        * ===============================
        */
 
-      /* ===== KLIK MENU DRAFTS ===== */
-      $(document).on('click', '#btnDrafts', function(e) {
-          e.preventDefault(); // ⛔ WAJIB
-          loadDrafts(1);
+        /* ===== KLIK MENU PENDING ===== */
+      $(document).on('click', '#btnPending', function(e) {
+          e.preventDefault();
+          if ($(this).hasClass('active')) return;
+          $('#btnPending').removeClass('active');
+          $('#btnInbox').removeClass('active');
+          $('#btnInfo').removeClass('active');
+          $(this).addClass('active');
+          loadPending(1);
       });
 
-      /* ===== LOAD DRAFTS ===== */
-      function loadDrafts(page = 1, keywordParam = null) {
-
-          if (draftsLoading) return;
-
-          draftsLoading = true;
-
-          let keyword = keywordParam ?? $('#searchDraft').val() ?? '';
+       /* ===== LOAD PENDING ===== */
+       function loadPending(page = 1, keywordParam = null) {
+           let url = "<?= site_url('ikprs/form_pending') ?>";
+          let keyword = keywordParam ?? $('#searchPending').val() ?? '';
 
           $('#inbox-wrapper').trigger('processing.inbox', [true]);
 
-          $.get("<?= site_url('ikprs/form_drafts') ?>", {
+           $.get("<?= site_url('ikprs/form_pending') ?>", {
               page: page,
               keyword: keyword
           }, function(res) {
@@ -738,56 +745,56 @@
 
           }).always(function() {
 
-              draftsLoading = false;
+              pendingLoading = false;
               $('#inbox-wrapper').trigger('processing.inbox', [false]);
 
           });
       }
 
-      /* ===== reloadDrafts ===== */
-      $(document).off('click', '.btn-draft-reload').on('click', '.btn-draft-reload', function() {
-          loadDrafts(1);
+      /* ===== reloadPending ===== */
+      $(document).off('click', '.btn-pending-reload').on('click', '.btn-pending-reload', function() {
+          loadPending(1);
       });
 
       /* ===== SEARCH ===== */
-      $(document).on('submit', '#formSearchDraft', function(e) {
+      $(document).on('submit', '#formSearchPending', function(e) {
           e.preventDefault();
-          loadDrafts(1);
+          loadPending(1);
       });
 
-      /* ===== SEARCH DRAFT (ENTER KEY) ===== */
-      $(document).on('keydown', '#searchDraft', function(e) {
-          if (e.keyCode === 13) {
+        /* ===== SEARCH PENDING (ENTER KEY) ===== */
+      $(document).on('keydown', '#searchPending', function(e) {
+          if (e.key === 'Enter') {
               e.preventDefault();
-              loadDrafts(1, this.value);
+              loadPending(1, this.value);
           }
       });
 
-      /* ===== SEARCH DRAFT (BUTTON) ===== */
-      $(document).off('click', '.btn-search-draft')
-          .on('click', '.btn-search-draft', function() {
-              let keyword = $('#searchDraft').val();
-              loadDrafts(1, keyword);
+        /* ===== SEARCH PENDING (BUTTON) ===== */
+      $(document).off('click', '.btn-search-pending')
+          .on('click', '.btn-search-pending', function() {
+              let keyword = $('#searchPending').val();
+              loadPending(1, keyword);
           });
 
 /* ===== PAGINATION ===== */
 
-       // NEXT PAGINATION
-       $(document).on('click', '.btn-draft-next:not(.disabled)', function() {
-           loadDrafts($(this).data('page'));
-       });
+        // NEXT PAGINATION
+        $(document).on('click', '.btn-pending-next:not(.disabled)', function() {
+            loadPending($(this).data('page'));
+        });
 
-       // PREV PAGINATION
-       $(document).on('click', '.btn-draft-prev:not(.disabled)', function() {
-           loadDrafts($(this).data('page'));
-       });
+        // PREV PAGINATION
+        $(document).on('click', '.btn-pending-prev:not(.disabled)', function() {
+            loadPending($(this).data('page'));
+        });
 
-/* ===== KIRIM DRAFT KE KARU ===== */
-        $(document).on('click', '.btn-kirim-draft', function() {
+        /* ===== KIRIM PENDING KE KARU ===== */
+        $(document).on('click', '.btn-kirim-pending', function() {
             const id = $(this).data('id');
             const btn = $(this);
             
-            console.log('btn-kirim-draft clicked, id:', id);
+            console.log('btn-kirim-pending clicked, id:', id);
             console.log('csrf token:', '<?= csrf_hash() ?>');
             
             if (!id) {
@@ -800,7 +807,7 @@
             btn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Mengirim...');
 
             $.ajax({
-                url: "<?= site_url('ikprs/kirimDraft') ?>",
+                 url: "<?= site_url('ikprs/kirimPending') ?>",
                 type: "POST",
                 dataType: "json",
                 data: {
@@ -811,7 +818,7 @@
                     console.log('ajax success:', res);
                     if (res.status) {
                         alert('Laporan berhasil dikirim ke KARU');
-                        loadDrafts(1);
+                        loadPending(1);
                         loadInfo(1);
                         refreshNotif();
                     } else {
