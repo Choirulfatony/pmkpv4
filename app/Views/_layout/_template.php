@@ -21,7 +21,7 @@
     <title><?= isset($judul) ? $judul : '' ?></title>
     <?= @$_meta ?>
     <?= @$_css ?>
-    <!-- JavaScript (WAJIB sebelum bottom navbar JS logic jalan) -->
+    <!-- JavaScript (WAJIB sebelum logic JS bottom navbar jalan) -->
     <?= @$_js ?>
 </head>
 
@@ -31,10 +31,10 @@
 
     <div class="app-wrapper">
 
-        <!-- Header -->
+        <!-- Bagian Header -->
         <?= @$_header ?>
 
-        <!-- Sidebar -->
+        <!-- Bagian Sidebar -->
         <?= @$_sidebar ?>
 
         <!--begin::App Main-->
@@ -51,11 +51,11 @@
         </main>
         <!--end::App Main-->
 
-        <!-- Footer -->
+        <!-- Bagian Footer -->
         <?= @$_footer ?>
 
     </div>
-    <!-- END app-wrapper -->
+    <!-- AKHIR app-wrapper -->
 
 
     <!-- ⬇️⬇️⬇️ INI POSISI BENAR BOTTOM NAVBAR -->
@@ -66,7 +66,7 @@
 
 
 
-    <!-- ⏳ Idle Warning Modal -->
+    <!-- ⏳ Modal Peringatan Idle -->
     <!-- <div class="modal fade" id="idleWarningModal" tabindex="-1"
         data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
@@ -92,7 +92,7 @@
     </div> -->
     <style>
         /* ===============================
-            IDLE MODAL - TOP RIGHT
+            MODAL IDLE - POJOK KANAN ATAS
             ================================ */
         .modal-top-right {
             position: fixed;
@@ -155,7 +155,7 @@
 </body>
 
 <script>
-    // 🔒 Anti Back - Cek session dan redirect jika tidak valid
+    // 🔒 Anti Back - Periksa session dan redirect jika tidak valid
     (function() {
         function checkSessionAndRedirect() {
             const currentPath = window.location.pathname;
