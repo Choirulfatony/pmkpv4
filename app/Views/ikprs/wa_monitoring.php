@@ -92,7 +92,7 @@
                                             <small><?= date('d/m/Y H:i', strtotime($row['created_at'])) ?></small>
                                         </td>
                                         <td>
-                                            <?php if ($row['wa_status'] == 'PENDING' && $row['retry_count'] < 3): ?>
+                                            <?php if (in_array($row['wa_status'], ['PENDING', 'FAILED']) && $row['retry_count'] < 3): ?>
                                                 <button class="btn btn-sm btn-outline-primary" onclick="retryMessage(<?= $row['id'] ?>)">
                                                     <i class="bi bi-arrow-clockwise"></i> Retry
                                                 </button>
@@ -127,6 +127,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function reloadData() {
             const btn = document.getElementById('btnReload');
@@ -175,7 +176,7 @@
                 const userName = row.nama ? row.nama : 'User ' + row.hris_user_id;
                 const message = row.pesan.length > 50 ? row.pesan.substring(0, 50) + '...' : row.pesan;
                 const errorInfo = row.wa_error ? '<br><small class="text-danger"><i class="bi bi-exclamation-triangle"></i> ' + row.wa_error.substring(0, 30) + '...</small>' : '';
-                const retryBtn = (row.wa_status == 'PENDING' && row.retry_count < 3) ?
+                const retryBtn = (['PENDING', 'FAILED'].includes(row.wa_status) && row.retry_count < 3) ?
                     '<button class="btn btn-sm btn-outline-primary" onclick="retryMessage(' + row.id + ')"><i class="bi bi-arrow-clockwise"></i> Retry</button>' :
                     (row.wa_message_id ? '<small class="text-muted">' + row.wa_message_id.substring(0, 10) + '...</small>' : '');
                 const date = new Date(row.created_at).toLocaleDateString('id-ID', {
@@ -217,9 +218,48 @@
         }
 
         function retryMessage(id) {
-            if (confirm('Retry sending this message?')) {
-                alert('Retry function not implemented yet. Message ID: ' + id);
-            }
+            if (!confirm('Kirim ulang WA ini?')) return;
+
+            const btn = document.querySelector(`button[onclick="retryMessage(${id})"]`);
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Mengirim...';
+
+            fetch('<?= site_url('ikprs/wa-retry') ?>', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'notif_id=' + id + '&<?= csrf_token() ?>=<?= csrf_hash() ?>'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status) {
+                    showToast('success', 'WA berhasil dikirim ulang');
+                } else {
+                    showToast('error', data.message || 'Gagal mengirim WA');
+                }
+                setTimeout(() => reloadData(), 1000);
+            })
+            .catch(err => {
+                showToast('error', 'Network error: ' + err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Retry';
+            });
+        }
+
+        function showToast(type, message) {
+            const toast = document.createElement('div');
+            toast.className = 'position-fixed top-0 end-0 p-3';
+            toast.style.zIndex = '9999';
+            toast.innerHTML = `
+                <div class="toast align-items-center text-bg-${type === 'success' ? 'success' : 'danger'} border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>`;
+            document.body.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast.querySelector('.toast'));
+            bsToast.show();
+            setTimeout(() => toast.remove(), 3000);
         }
 
         // Add spin animation

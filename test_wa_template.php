@@ -13,7 +13,7 @@ date_default_timezone_set('Asia/Jakarta');
 // Konfigurasi
 $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZDZD';
 // $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZDZD';
-$phone = '082233346468'; // Ganti dengan nomor tujuan
+$phone = '085707894488'; // Ganti dengan nomor tujuan
 $phone = preg_replace('/^0/', '62', $phone);
 
 $url = "https://graph.facebook.com/v19.0/1128976353628313/messages";

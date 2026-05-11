@@ -318,6 +318,7 @@
     $statusText = [
         'PENDING'     => 'Menunggu verifikasi KARU',
         'KARU'      => 'Telah diverifikasi KARU',
+        'TERKIRIM'  => 'Telah dibaca KOMITE',
         'INSTALASI' => 'Sedang dianalisa PMKP',
         'PROSES'    => 'Sedang diproses',
         'SELESAI'   => 'Laporan selesai'
@@ -325,6 +326,11 @@
 
     $badge = $statusColor[$status] ?? 'secondary';
     $statusLabel = $statusText[$status] ?? $status;
+
+    // Dynamic label: PENDING bisa berarti menunggu KARU atau menunggu KOMITE
+    if ($status === 'PENDING' && !empty($insiden['karu_read_at'])) {
+        $statusLabel = 'Menunggu diverifikasi KOMITE';
+    }
 
     $roleBadge = [
         'PELAPOR' => '<span class="badge bg-info"><i class="bi bi-person me-1"></i>Pelapor</span>',
@@ -870,7 +876,7 @@
             <div class="btn-group btn-group-sm">
 
                 <?php 
-            $canVerifyKARU = ($user_role === 'KARU' && $insiden['status_laporan'] === 'KARU' && empty($insiden['grading_risiko']));
+            $canVerifyKARU = ($user_role === 'KARU' && in_array($insiden['status_laporan'], ['PENDING', 'KARU']) && empty($insiden['grading_risiko']));
             ?>
                 <?php if ($canVerifyKARU): ?>
 
@@ -888,7 +894,7 @@
 
 
     <?php 
-            $canVerifyKARU = ($user_role === 'KARU' && $insiden['status_laporan'] === 'KARU' && empty($insiden['grading_risiko']));
+            $canVerifyKARU = ($user_role === 'KARU' && in_array($insiden['status_laporan'], ['PENDING', 'KARU']) && empty($insiden['grading_risiko']));
             ?>
                 <?php if ($canVerifyKARU): ?>
         <div class="collapse" id="formVerifikasi">

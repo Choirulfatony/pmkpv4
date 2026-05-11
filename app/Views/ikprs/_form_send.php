@@ -83,7 +83,7 @@
                         ?>
                         <td class="mailbox-star text-muted">
                             <i class="bi <?= $icon ?> text-<?= $warna ?>"
-                                title="<?= esc($row['grading_risiko']) ?>"
+                                title="<?= esc($row['grading_risiko'] ?? '-') ?>"
                                 style="font-size:15px;"></i>
                         </td>
 

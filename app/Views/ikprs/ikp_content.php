@@ -190,11 +190,11 @@
       }
 
       /* BUTTON btnSent */
-      #btnSent:hover {
+      #btnSend:hover {
           background-color: #e2e4e7;
       }
 
-      #btnSent.active {
+      #btnSend.active {
           background-color: #e2e4e7;
           font-weight: 600;
       }
@@ -532,7 +532,10 @@
 
       /* ===== KLIK MENU INBOX ===== */
       $(document).on('click', '#btnInbox', function(e) {
-          e.preventDefault(); // ⛔ WAJIB
+          e.preventDefault();
+          if ($(this).hasClass('active')) return;
+          $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
+          $(this).addClass('active');
           loadInbox();
       });
 
@@ -722,9 +725,7 @@
       $(document).on('click', '#btnPending', function(e) {
           e.preventDefault();
           if ($(this).hasClass('active')) return;
-          $('#btnPending').removeClass('active');
-          $('#btnInbox').removeClass('active');
-          $('#btnInfo').removeClass('active');
+          $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
           $(this).addClass('active');
           loadPending(1);
       });
@@ -777,7 +778,7 @@
               loadPending(1, keyword);
           });
 
-/* ===== PAGINATION ===== */
+    /* ===== PAGINATION ===== */
 
         // NEXT PAGINATION
         $(document).on('click', '.btn-pending-next:not(.disabled)', function() {
@@ -842,7 +843,10 @@
 
       /* ===== KLIK MENU SEND ===== */
       $(document).on('click', '#btnSend', function(e) {
-          e.preventDefault(); // ⛔ WAJIB
+          e.preventDefault();
+          if ($(this).hasClass('active')) return;
+          $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
+          $(this).addClass('active');
           loadSend(1);
       });
 
@@ -925,6 +929,9 @@
       /* ===== KLIK MENU INFO ===== */
       $(document).on('click', '#btnInfo', function(e) {
           e.preventDefault();
+          if ($(this).hasClass('active')) return;
+          $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
+          $(this).addClass('active');
           loadInfo(1);
       });
 
@@ -1086,19 +1093,12 @@
 
                   if (res.status) {
 
-                      $('#verifikasi_error').html(
-                          '<div class="text-success">' + res.message + '</div>'
-                      );
+                      toastr.success(res.message, 'Berhasil');
 
-                      //   loadDetailInsiden(res.insiden_id);
-
-                      // kembali ke inbox setelah verifikasi
-                      loadInbox(1);
-
-                      // delay kecil supaya DB selesai update
                       setTimeout(function() {
+                          loadInbox(1);
                           refreshNotif();
-                      }, 100);
+                      }, 500);
 
                   } else {
 

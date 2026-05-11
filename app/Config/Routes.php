@@ -106,8 +106,11 @@ $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
     $routes->match(['get', 'post'], 'form_info', 'Ikprs::formInfo');
     $routes->get('hapus_test_notif', 'Ikprs::hapusTestNotif');
     $routes->get('test_wa', 'Ikprs::testWhatsApp');
+    $routes->get('test_wa_template', 'Ikprs::testWATemplate');
     $routes->get('waMonitoring', 'Ikprs::waMonitoring');
     $routes->get('wa-monitoring', 'Ikprs::waMonitoring');
+    $routes->post('waRetry', 'Ikprs::waRetry');
+    $routes->post('wa-retry', 'Ikprs::waRetry');
     
     // Aksi
     $routes->match(['get', 'post'], 'tandaiDibaca', 'Ikprs::tandaiDibaca');

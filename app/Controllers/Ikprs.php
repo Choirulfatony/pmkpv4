@@ -732,14 +732,20 @@ class Ikprs extends AppController
 
             log_message('error', "counterAjax KARU: karu_id=$user_id, total_inbox=$total_inbox");
 
-            $total_pending = 0;
+            $total_pending = $db->table('ikprssm_insiden')
+                ->where('karu_id', $user_id)
+                ->where('status_laporan', 'PENDING')
+                ->where('karu_read_at IS NOT NULL', null, false)
+                ->where('komite_read_at', null)
+                ->countAllResults();
             $total_send = 0;
         } elseif ($role == 'KOMITE') {
-            // KOMITE inbox = semua status
+            // KOMITE inbox = item yang belum dibaca (is_read=0)
             $total_inbox = $db->table('ikprssm_insiden i')
                 ->select('i.id')
                 ->join('ikprssm_notifikasi n', 'n.insiden_id = i.id', 'left')
                 ->where('n.hris_user_id', $user_id)
+                ->where('n.is_read', 0)
                 ->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI'])
                 ->groupBy('i.id')
                 ->countAllResults();
@@ -752,10 +758,11 @@ class Ikprs extends AppController
                 ->where('status_laporan', 'SELESAI')
                 ->countAllResults();
 
-            // PELAPOR pending: hanya PENDING
+            // PELAPOR pending: hanya PENDING yang belum dibaca KARU
             $total_pending = $db->table('ikprssm_insiden')
                 ->where('user_id', $user_id)
                 ->where('status_laporan', 'PENDING')
+                ->where('karu_read_at', null)
                 ->countAllResults();
         }
 
@@ -763,22 +770,27 @@ class Ikprs extends AppController
         // SENT
         // ==========================
         if ($role == 'KARU') {
-            // KARU sent: hanya yang sudah diproses KOMITE (INSTALASI/SELESAI)
+            // KARU sent: item yang sudah selesai diproses atau sudah dibaca KOMITE
             $total_send = $db->table('ikprssm_insiden')
                 ->where('karu_id', $user_id)
-                ->whereIn('status_laporan', ['INSTALASI', 'SELESAI'])
+                ->groupStart()
+                    ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI'])
+                    ->orWhere('komite_read_at IS NOT NULL')
+                ->groupEnd()
                 ->countAllResults();
         } elseif ($role == 'KOMITE') {
-            // KOMITE sent: sudah diproses (INSTALASI/SELESAI)
-            $total_send = $db->table('ikprssm_insiden')
-                ->where('komite_id', intval($user_id))
-                ->whereIn('status_laporan', ['INSTALASI', 'SELESAI'])
+            // KOMITE sent: item yang sudah dibaca KOMITE (is_read=1)
+            $total_send = $db->table('ikprssm_insiden i')
+                ->join('ikprssm_notifikasi n', 'n.insiden_id = i.id')
+                ->where('n.hris_user_id', $user_id)
+                ->where('n.is_read', 1)
+                ->whereIn('i.status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI'])
                 ->countAllResults();
         } elseif ($role == 'PELAPOR') {
-            // PELAPOR sent: KARU + TERKIRIM + INSTALASI + SELESAI (sudah diproses KARU)
+            // PELAPOR sent: KARU + TERKIRIM + INSTALASI + SELESAI + PENDING (setelah KARU)
             $total_send = $db->table('ikprssm_insiden')
                 ->where('user_id', $user_id)
-                ->whereIn('status_laporan', ['KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI'])
+                ->where('(status_laporan IN ("KARU","TERKIRIM","INSTALASI","SELESAI") OR (status_laporan = "PENDING" AND karu_read_at IS NOT NULL))')
                 ->countAllResults();
         }
 
@@ -951,7 +963,6 @@ class Ikprs extends AppController
             ->join('ikprssm_insiden i', 'i.id = n.insiden_id', 'left')
             ->join('master_institution_department d', 'd.department_id=i.tempat_insiden', 'left')
             ->where('n.hris_user_id', $user_id)
-            ->where('n.is_read', 0)  // Hanya ambil yang BELUM dibaca
             ->whereIn('n.status', ['INFO', 'NEW']);
 
         if ($role == 'PELAPOR') {
@@ -960,11 +971,6 @@ class Ikprs extends AppController
             $builder->where('n.type', 'to_karu');
         } elseif ($role == 'KOMITE') {
             $builder->where('n.type', 'to_komite');
-            // Filter: jangan tampilkan jika sudah dikunci oleh KOMITE lain
-            $builder->groupStart()
-                ->where('i.komite_id IS NULL')
-                ->orWhere('i.komite_id', intval($user_id))
-                ->groupEnd();
         }
 
         $rows = $builder->orderBy('n.id', 'DESC')->get()->getResultArray();
@@ -1074,8 +1080,8 @@ class Ikprs extends AppController
             'jam_insiden' => $this->request->getPost('jam_insiden'),
             'status_laporan' => $status_laporan,
             'karu_id' => $karu->hris_user_id,
-            'current_receiver_id' => ($status_laporan == 'KARU') ? $karu->hris_user_id : null,
-            'current_receiver_role' => ($status_laporan == 'KARU') ? 'KARU' : null
+            'current_receiver_id' => $karu->hris_user_id,
+            'current_receiver_role' => 'KARU'
         ];
 
         // 5. Insert ke ikprssm_insiden
@@ -1126,6 +1132,10 @@ class Ikprs extends AppController
         // 7. KIRIM WHATSAPP KE KARU
         // ========================================
 
+        $waStatus = null;
+        $waMessageId = null;
+        $waErrorMsg = null;
+
         // Ambil nomor HP KARU dari tabel unit_karu
         $karuPhone = $db->table('unit_karu')->select('phone')->where('hris_user_id', $karu->hris_user_id)->get()->getRow();
 
@@ -1141,7 +1151,7 @@ class Ikprs extends AppController
             $templateParams = [
                 ['type' => 'text', 'text' => 'Karu'],  // Nama Karu (tidak ada di tabel, gunakan default)
                 ['type' => 'text', 'text' => $dataInsiden['jenis_insiden'] ?? 'Insiden'],  // Jenis Insiden
-                ['type' => 'text', 'text' => $dataInsiden['nama_unit'] ?? 'Unit']  // Unit
+                ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? 'Unit']  // Kamar
             ];
 
             $data = [
@@ -1182,9 +1192,41 @@ class Ikprs extends AppController
 
             // Log hasil pengiriman untuk debugging
             log_message('error', 'simpanikp: WA to KARU - phone=' . $phone . ', http=' . $waHttpCode . ', response=' . $waResponse . ', error=' . $waError);
+
+            // Parse response dan simpan status
+            if ($waError) {
+                $waStatus = 'FAILED';
+                $waErrorMsg = $waError;
+            } elseif ($waHttpCode >= 200 && $waHttpCode < 300) {
+                $respJson = json_decode($waResponse, true);
+                if (isset($respJson['messages'][0]['id'])) {
+                    $waStatus = 'SENT';
+                    $waMessageId = $respJson['messages'][0]['id'];
+                } else {
+                    $waStatus = 'FAILED';
+                    $waErrorMsg = $waResponse;
+                }
+            } else {
+                $waStatus = 'FAILED';
+                $waErrorMsg = 'HTTP ' . $waHttpCode . ': ' . $waResponse;
+            }
         } else {
-            // Log jika nomor HP KARU tidak ditemukan
+            $waStatus = 'NO_PHONE';
+            $waErrorMsg = 'No HP tidak ditemukan untuk KARU';
             log_message('error', 'simpanikp: WA to KARU - phone not found for hris_user_id=' . $karu->hris_user_id);
+        }
+
+        // Update status WA ke notifikasi KARU
+        if ($waStatus && $notif1_id) {
+            $db->table('ikprssm_notifikasi')
+                ->where('id', $notif1_id)
+                ->update([
+                    'wa_status' => $waStatus,
+                    'wa_message_id' => $waMessageId,
+                    'wa_error' => $waErrorMsg,
+                    'retry_count' => ($waStatus === 'FAILED') ? 1 : 0
+                ]);
+            log_message('error', 'simpanikp: WA status updated - notif_id=' . $notif1_id . ', wa_status=' . $waStatus);
         }
 
         return $this->response->setJSON([
@@ -1205,69 +1247,35 @@ class Ikprs extends AppController
             return 'SESSION USER BELUM ADA';
         }
 
-        // KARU tidak boleh akses Pending
-        if ($role == 'KARU') {
+        $page = (int) (
+            $this->request->getPost('page')
+            ?? $this->request->getGet('page')
+            ?? 1
+        );
 
-            $data = [
-                'list'        => [],
-                'total'       => 0,
-                'total_pages' => 0,
-                'page'        => 1,
-                'keyword'     => ''
-            ];
-
-            if ($this->request->isAJAX()) {
-                return view('ikprs/_form_pending', $data);
-                // return view('ikprs/_form_drafts', $data);
-            }
-
-            return view('ikprs/_form_pending', $data);
-            // return view('ikprs/_form_drafts', $data);
-
-        }
-
-        // Ambil parameter
-        $page = (int) ($this->request->getVar('page') ?? 1);
-
-        if ($page < 1) {
-            $page = 1;
-        }
-
-        $keyword = trim($this->request->getVar('keyword') ?? '');
+        $keyword = trim($this->request->getGet('keyword') ?? '');
         $limit   = 10;
 
         $model = new IkpInsidenModel();
 
-        // Hitung total data
+
+        // 🔹 Hitung total
         $total = $model->countPendingFiltered($user_id, $keyword, []);
 
-        // Hitung total halaman
-        $total_pages = ($total > 0)
-            ? (int) ceil($total / $limit)
-            : 0;
+        // 🔹 Hitung total halaman TANPA dipaksa minimal 1
+        $total_pages = $total > 0 ? (int) ceil($total / $limit) : 0;
 
-        // Hitung offset
+        // 🔹 Jika kosong
         if ($total_pages === 0) {
-
             $page   = 0;
             $offset = 0;
         } else {
-
             $page   = max(1, min($page, $total_pages));
             $offset = ($page - 1) * $limit;
         }
 
-        // Ambil data pending
-        $list = $model->getPendingPaginated(
-            $user_id,
-            $limit,
-            $offset,
-            $keyword,
-            []
-        );
-
         $data = [
-            'list'        => $list,
+            'list'        => $model->getPendingPaginated($user_id, $limit, $offset, $keyword),
             'total'       => $total,
             'total_pages' => $total_pages,
             'page'        => $page,
@@ -1331,7 +1339,7 @@ class Ikprs extends AppController
         // Ambil KARU berdasarkan department insiden
         $karu = $db->table('unit_karu')
             ->where('department_id', $insiden->tempat_insiden)
-            ->where('role_id', 1) // KARU
+            ->where('role_id', 1)
             ->where('aktif', 1)
             ->get()
             ->getRow();
@@ -1348,8 +1356,7 @@ class Ikprs extends AppController
 
         $db->transStart();
 
-        // Update status ke KARU
-        $updateResult = $db->table('ikprssm_insiden')
+        $db->table('ikprssm_insiden')
             ->where('id', $insiden_id)
             ->update([
                 'status_laporan' => 'KARU',
@@ -1359,9 +1366,6 @@ class Ikprs extends AppController
                 'updated_at' => date('Y-m-d H:i:s')
             ]);
 
-        log_message('error', "kirimPending: update result=" . json_encode($updateResult));
-
-        // Notifikasi ke KARU
         $notifData = [
             'sender_id' => $user_id,
             'hris_user_id' => $karu->hris_user_id,
@@ -1376,10 +1380,7 @@ class Ikprs extends AppController
         $db->table('ikprssm_notifikasi')->insert($notifData);
         $notif_id = $notifModel->getInsertID();
 
-        log_message('error', "kirimPending: notification inserted, id=$notif_id");
-
-        // ✅ NOTIF KE PELAPOR - Konfirmasi terkirim
-        $pelapor_notif_id = $db->table('ikprssm_notifikasi')->insert([
+        $db->table('ikprssm_notifikasi')->insert([
             'sender_id'    => $user_id,
             'hris_user_id' => $user_id,
             'insiden_id'   => $insiden_id,
@@ -1389,12 +1390,6 @@ class Ikprs extends AppController
             'is_read'      => 0,
             'created_at'   => date('Y-m-d H:i:s')
         ]);
-
-        log_message('error', "kirimPending: notif to PELAPOR inserted, result=$pelapor_notif_id, id=" . $notifModel->getInsertID());
-
-        // Debug: cek apakah data masuk
-        $cek = $db->query("SELECT * FROM ikprssm_notifikasi WHERE id = ?", [$notifModel->getInsertID()])->getRowArray();
-        log_message('error', "kirimPending: verify notif PELAPOR - " . json_encode($cek));
 
         $db->transComplete();
 
@@ -1424,7 +1419,6 @@ class Ikprs extends AppController
             return 'SESSION USER BELUM ADA';
         }
 
-        // 🔑 FIX UTAMA DI SINI
         $page = (int) (
             $request->getPost('page')
             ?? $request->getGet('page')
@@ -1436,14 +1430,10 @@ class Ikprs extends AppController
 
         $model = new IkpInsidenModel();
 
-
-        // 🔹 Hitung total
         $total = $model->countSendFiltered($user_id, $keyword, []);
 
-        // 🔹 Hitung total halaman TANPA dipaksa minimal 1
         $total_pages = $total > 0 ? (int) ceil($total / $limit) : 0;
 
-        // 🔹 Jika kosong
         if ($total_pages === 0) {
             $page   = 0;
             $offset = 0;
@@ -1453,7 +1443,7 @@ class Ikprs extends AppController
         }
 
         $data = [
-            'list'        => $model->getPendingPaginated($user_id, $limit, $offset, $keyword),
+            'list'        => $model->getSendPaginated($user_id, $limit, $offset, $keyword),
             'total'       => $total,
             'total_pages' => $total_pages,
             'page'        => $page,
@@ -1553,8 +1543,6 @@ class Ikprs extends AppController
             $typeFilter = "AND n.type = 'to_karu'";
         } elseif ($role == 'KOMITE') {
             $typeFilter = "AND n.type = 'to_komite'";
-            // Filter: 不要tampilkan jika sudah dikunci oleh KOMITE lain
-            $komiteFilter = "AND (i.komite_id IS NULL OR i.komite_id = " . intval($user_id) . ")";
         }
 
         // Query untuk hitung total - INFO + NEW (inbox juga masuk ke info)
@@ -1672,14 +1660,15 @@ class Ikprs extends AppController
     // Test WhatsApp Business API
     public function testWhatsApp()
     {
-        $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZDZD';
-        $phone = '082233346468'; // 0822-333-46468
+        $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZD';
+        $phoneId = '1128976353628313';
+        $phone = '082233346468';
         $message = 'Test WhatsApp Business API - ' . date('Y-m-d H:i:s');
 
         // Format nomor: 0822... -> 62822...
         $phone = preg_replace('/^0/', '62', $phone);
 
-        $url = "https://graph.facebook.com/v19.0/487823678084772/messages";
+        $url = "https://graph.facebook.com/v19.0/{$phoneId}/messages";
 
         $data = [
             'messaging_product' => 'whatsapp',
@@ -1710,6 +1699,143 @@ class Ikprs extends AppController
         echo "HTTP Code: " . $httpCode . "<br>";
         echo "Response: <pre>" . htmlspecialchars($response) . "</pre>";
         if ($error) echo "Error: " . htmlspecialchars($error) . "<br>";
+    }
+
+    public function testWATemplate1()
+    {
+        $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZD';
+        $phoneId = '1128976353628313';
+        $phone = '085707894488';
+        $phone = preg_replace('/^0/', '62', $phone);
+
+        $data = [
+            'messaging_product' => 'whatsapp',
+            'to' => $phone,
+            'type' => 'template',
+            'template' => [
+                'name' => 'ikprs_to_karu',
+                'language' => ['code' => 'id'],
+                'components' => [
+                    [
+                        'type' => 'body',
+                        'parameters' => [
+                            ['type' => 'text', 'text' => 'Karu'],
+                            ['type' => 'text', 'text' => 'Jatuh'],
+                            ['type' => 'text', 'text' => 'Rawat Inap']
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $url = "https://graph.facebook.com/v19.0/{$phoneId}/messages";
+        $headers = [
+            'Authorization: Bearer ' . $token,
+            'Content-Type: application/json'
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        $response = curl_exec($ch);
+        $error = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        echo "<h3>WhatsApp Template Test</h3>";
+        echo "Phone: " . htmlspecialchars($phone) . "<br>";
+        echo "Template: ikprs_to_karu<br>";
+        echo "HTTP Code: " . $httpCode . "<br>";
+        echo "Response: <pre>" . htmlspecialchars($response) . "</pre>";
+        if ($error) echo "Error: " . htmlspecialchars($error) . "<br>";
+    }
+
+    public function testWATemplate()
+    {
+        // $token = 'TOKEN_ANDA';
+        $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZD';
+        $phoneId = '1128976353628313';
+
+        $phone = '082233346468';
+        $phone = preg_replace('/^0/', '62', $phone);
+
+        $data = [
+            'messaging_product' => 'whatsapp',
+            'to' => $phone,
+            'type' => 'template',
+            'template' => [
+                'name' => 'ikprs_to_karu',
+                'language' => [
+                    'code' => 'id'
+                ],
+                'components' => [
+                    [
+                        'type' => 'body',
+                        'parameters' => [
+                            [
+                                'type' => 'text',
+                                'text' => 'Karu'
+                            ],
+                            [
+                                'type' => 'text',
+                                'text' => 'Jatuh'
+                            ],
+                            [
+                                'type' => 'text',
+                                'text' => 'Rawat Inap'
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $url = "https://graph.facebook.com/v19.0/{$phoneId}/messages";
+
+        $headers = [
+            'Authorization: Bearer ' . $token,
+            'Content-Type: application/json'
+        ];
+
+        $ch = curl_init($url);
+
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        $response = curl_exec($ch);
+
+        $error = curl_error($ch);
+
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        curl_close($ch);
+
+        echo "<h3>WhatsApp Template Test</h3>";
+        echo "Phone: {$phone}<br>";
+        echo "HTTP Code: {$httpCode}<br>";
+
+        echo "<hr>";
+
+        echo "<strong>REQUEST:</strong>";
+        echo "<pre>";
+        print_r($data);
+        echo "</pre>";
+
+        echo "<strong>RESPONSE:</strong>";
+        echo "<pre>";
+        print_r(json_decode($response, true));
+        echo "</pre>";
+
+        if ($error) {
+            echo "<strong>cURL Error:</strong> " . $error;
+        }
     }
 
     // Verifikasi Karu
@@ -1761,22 +1887,17 @@ class Ikprs extends AppController
         }
 
         // Cek apakah KARU berhak verifikasi
-        // KARU berhak jika:
-        // 1. current_receiver_id = session user_id DAN current_receiver_role = 'KARU'
-        // ATAU 2. karu_id = session user_id (KARU yang ditunjuk)
         if (
-            ($insiden->current_receiver_id != session('hris_user_id') && $insiden->karu_id != session('hris_user_id'))
-            || ($insiden->current_receiver_role != 'KARU' && $insiden->status_laporan != 'KARU')
+            $insiden->karu_id != session('hris_user_id')
+            && $insiden->current_receiver_id != session('hris_user_id')
         ) {
-
             return $this->response->setJSON([
                 'status' => false,
                 'message' => 'Anda tidak berhak memverifikasi laporan ini'
             ]);
         }
 
-        if ($insiden->status_laporan != 'KARU') {
-
+        if (!in_array($insiden->status_laporan, ['PENDING', 'KARU'])) {
             return $this->response->setJSON([
                 'status' => false,
                 'message' => 'Laporan sudah diverifikasi sebelumnya'
@@ -1812,7 +1933,7 @@ class Ikprs extends AppController
                 'penerima_laporan' => session('hris_full_name'),
                 'karu_id'          => session('hris_user_id'),
                 'tgl_terima'       => date('Y-m-d'),
-                'status_laporan'   => 'TERKIRIM', // ✅ Sudah diverifikasi KARU, kirim ke KOMITE
+                'status_laporan'   => 'PENDING', // ✅ Sudah diverifikasi KARU, menunggu KOMITE baca
                 'karu_read_at'     => date('Y-m-d H:i:s'),
                 'current_receiver_role' => 'KOMITE',
                 'updated_at'       => date('Y-m-d H:i:s')
@@ -1828,7 +1949,7 @@ class Ikprs extends AppController
             ->where('insiden_id', $insiden_id)
             ->where('type', 'to_karu')
             ->where('hris_user_id', session('hris_user_id'))
-            ->update(['is_read' => 1, 'updated_at' => date('Y-m-d H:i:s')]);
+            ->update(['is_read' => 1]);
 
         log_message('error', 'verifikasi_karu: Mark KARU notif as read, result=' . ($updateResult ? 'success' : 'failed'));
         log_message('error', 'verifikasi_karu: DB error after mark read: ' . json_encode($db->error()));
@@ -1843,7 +1964,11 @@ class Ikprs extends AppController
         if (!empty($komite_list)) {
             $komite_random = $komite_list[array_rand($komite_list)];
 
+            $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZDZD';
+            $url = "https://graph.facebook.com/v19.0/1128976353628313/messages";
+
             foreach ($komite_list as $komite) {
+                // Insert notifikasi
                 $db->table('ikprssm_notifikasi')->insert([
                     'sender_id'    => session('hris_user_id'),
                     'hris_user_id' => $komite->hris_user_id,
@@ -1855,37 +1980,36 @@ class Ikprs extends AppController
                     'created_at'   => date('Y-m-d H:i:s'),
                     'wa_status'    => null
                 ]);
-            }
+                $notifId = $db->insertID();
 
-            // Update current_receiver_id ke satu KOMITE yang dipilih
-            $db->table('ikprssm_insiden')
-                ->where('id', $insiden_id)
-                ->update(['komite_id' => $komite_random->hris_user_id]);
+                // Kirim WA ke KOMITE
+                $waStatus = null;
+                $waMessageId = null;
+                $waErrorMsg = null;
 
-            log_message('error', 'verifikasi_karu: notif to KOMITE inserted, count=' . count($komite_list));
-
-            // ========================================
-            // KIRIM WHATSAPP KE KOMITE
-            // ========================================
-            $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZDZD';
-            $url = "https://graph.facebook.com/v19.0/1128976353628313/messages";
-
-            foreach ($komite_list as $komite) {
                 if (!empty($komite->phone)) {
                     $phone = preg_replace('/^0/', '62', $komite->phone);
-
-                    $message = "Laporan IKP Perlu Verifikasi KOMITE\n";
-                    $message .= "No. Insiden: IKP-" . date('Y') . "-" . str_pad((string)$insiden_id, 3, '0', STR_PAD_LEFT) . "\n";
-                    $message .= "Tempat: " . ($insiden->department_name ?? '-') . "\n";
-                    $message .= "Grading: " . $grading . "\n";
-                    $message .= "Waktu: " . date('d/m/Y H:i') . "\n";
-                    $message .= "Silakan verifikasi melalui sistem IKPRS.";
 
                     $data = [
                         'messaging_product' => 'whatsapp',
                         'to' => $phone,
-                        'type' => 'text',
-                        'text' => ['body' => $message]
+                        'type' => 'template',
+                        'template' => [
+                            'name' => 'ikprs_to_komite',
+                            'language' => ['code' => 'id'],
+                            'components' => [
+                                [
+                                    'type' => 'body',
+                                    'parameters' => [
+                                        ['type' => 'text', 'text' => $komite->nama ?? 'KOMITE'],
+                                        ['type' => 'text', 'text' => $insiden->jenis_insiden ?? '-'],
+                                        ['type' => 'text', 'text' => $grading],
+                                        ['type' => 'text', 'text' => $insiden->department_name ?? $insiden->nama_unit ?? '-'],
+                                        ['type' => 'text', 'text' => session('hris_full_name') ?? 'KARU']
+                                    ]
+                                ]
+                            ]
+                        ]
                     ];
 
                     $headers = [
@@ -1906,10 +2030,48 @@ class Ikprs extends AppController
                     curl_close($ch);
 
                     log_message('error', 'verifikasi_karu: WA to KOMITE - phone=' . $phone . ', http=' . $waHttpCode . ', response=' . $waResponse . ', error=' . $waError);
+
+                    if ($waError) {
+                        $waStatus = 'FAILED';
+                        $waErrorMsg = $waError;
+                    } elseif ($waHttpCode >= 200 && $waHttpCode < 300) {
+                        $respJson = json_decode($waResponse, true);
+                        if (isset($respJson['messages'][0]['id'])) {
+                            $waStatus = 'SENT';
+                            $waMessageId = $respJson['messages'][0]['id'];
+                        } else {
+                            $waStatus = 'FAILED';
+                            $waErrorMsg = $waResponse;
+                        }
+                    } else {
+                        $waStatus = 'FAILED';
+                        $waErrorMsg = 'HTTP ' . $waHttpCode . ': ' . $waResponse;
+                    }
                 } else {
+                    $waStatus = 'NO_PHONE';
+                    $waErrorMsg = 'No HP tidak ditemukan untuk KOMITE';
                     log_message('error', 'verifikasi_karu: WA to KOMITE - phone not found for hris_user_id=' . $komite->hris_user_id);
                 }
+
+                if ($waStatus && $notifId) {
+                    $db->table('ikprssm_notifikasi')
+                        ->where('id', $notifId)
+                        ->update([
+                            'wa_status' => $waStatus,
+                            'wa_message_id' => $waMessageId,
+                            'wa_error' => $waErrorMsg,
+                            'retry_count' => ($waStatus === 'FAILED') ? 1 : 0
+                        ]);
+                    log_message('error', 'verifikasi_karu: WA status updated - notif_id=' . $notifId . ', wa_status=' . $waStatus);
+                }
             }
+
+            // Update current_receiver_id ke satu KOMITE yang dipilih
+            $db->table('ikprssm_insiden')
+                ->where('id', $insiden_id)
+                ->update(['komite_id' => $komite_random->hris_user_id]);
+
+            log_message('error', 'verifikasi_karu: notif to KOMITE inserted, count=' . count($komite_list));
         }
 
         // ✅ 3. Insert notifikasi INFO ke KARU (konfirmasi terkirim)
@@ -2469,6 +2631,50 @@ class Ikprs extends AppController
         }
 
         // ==========================
+        // ✅ 3. TRACKING KOMITE BACA
+        // ==========================
+        if ($role == 'KOMITE' && $insiden) {
+
+            log_message('error', "tandaiDibaca KOMITE: insiden_id=$insiden_id, current_status=" . $insiden->status_laporan);
+
+            // Update komite_read_at untuk tracking siapa saja yang sudah membaca
+            $db->table('ikprssm_insiden')
+                ->where('id', $insiden_id)
+                ->update([
+                    'komite_read_at' => date('Y-m-d H:i:s')
+                ]);
+
+            // Notif ke KARU: Komite telah membaca
+            $cek = $db->table('ikprssm_notifikasi')
+                ->where('insiden_id', $insiden_id)
+                ->where('hris_user_id', $insiden->karu_id)
+                ->where('pesan', 'Komite telah membaca laporan')
+                ->get()
+                ->getRow();
+
+            if ($cek) {
+                $db->table('ikprssm_notifikasi')
+                    ->where('id', $cek->id)
+                    ->update([
+                        'is_read'    => 0,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'pesan'      => 'Komite telah membaca laporan'
+                    ]);
+            } else {
+                $db->table('ikprssm_notifikasi')->insert([
+                    'sender_id'    => $user_id,
+                    'hris_user_id' => $insiden->karu_id,
+                    'insiden_id'   => $insiden_id,
+                    'pesan'        => 'Komite telah membaca laporan',
+                    'status'       => 'INFO',
+                    'type'         => 'to_karu',
+                    'is_read'      => 0,
+                    'created_at'   => date('Y-m-d H:i:s')
+                ]);
+            }
+        }
+
+        // ==========================
         // ✅ 4. UPDATE is_read untuk notif tipe 'info' (untuk user ini)
         // ==========================
         $db->table('ikprssm_notifikasi')
@@ -2478,70 +2684,6 @@ class Ikprs extends AppController
             ->update([
                 'is_read' => 1
             ]);
-
-        // ==========================
-        // 🔥 3. TRACKING KOMITE BACA + SIMPAN KOMITE YANG MEMBUKA PERTAMA + UBAH STATUS KE TERKIRIM
-        // ==========================
-        if ($role == 'KOMITE' && $insiden) {
-
-            // Cek apakah sudah ada komite_id (sudah ada yang membuka dulu)
-            $insidenData = $db->table('ikprssm_insiden')
-                ->select('komite_id, komite_opened_at, status_laporan')
-                ->where('id', $insiden_id)
-                ->get()
-                ->getRow();
-
-            // Jika belum ada komite_id, simpan komite pertama yang membuka + ubah status ke TERKIRIM
-            if (empty($insidenData->komite_id)) {
-                $db->table('ikprssm_insiden')
-                    ->where('id', $insiden_id)
-                    ->update([
-                        'komite_id'        => $user_id,
-                        'komite_opened_at' => date('Y-m-d H:i:s'),
-                        'komite_read_at'   => date('Y-m-d H:i:s'),
-                        'status_laporan'   => 'TERKIRIM' // 🔥 Ubah dari KARU ke TERKIRIM (sudah terbaca komite)
-                    ]);
-            } else {
-                // Jika sudah ada, tetap update tracking read
-                $db->table('ikprssm_insiden')
-                    ->where('id', $insiden_id)
-                    ->update([
-                        'komite_read_at' => date('Y-m-d H:i:s')
-                    ]);
-            }
-
-            $cek = $db->table('ikprssm_notifikasi')
-                ->where('insiden_id', $insiden_id)
-                ->where('hris_user_id', $insiden->karu_id)
-                ->where('pesan', 'Komite telah membaca laporan')
-                ->get()
-                ->getRow();
-
-            if ($cek) {
-
-                // munculin lagi notif ke KARU
-                $db->table('ikprssm_notifikasi')
-                    ->where('id', $cek->id)
-                    ->update([
-                        'is_read'    => 0,
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'pesan'      => 'Komite telah membaca laporan'
-                    ]);
-            } else {
-
-                // insert notif baru ke KARU
-                $db->table('ikprssm_notifikasi')->insert([
-                    'sender_id'    => $user_id,
-                    'hris_user_id' => $insiden->karu_id,
-                    'insiden_id'   => $insiden_id,
-                    'pesan'        => 'Komite telah membaca laporan',
-                    'status'       => 'INFO',
-                    'type'         => 'to_karu',
-                    'is_read'      => 0, // 🔥 harus 0 biar muncul
-                    'created_at'   => date('Y-m-d H:i:s')
-                ]);
-            }
-        }
 
         return $this->response->setJSON(['status' => 'ok']);
     }
@@ -2647,11 +2789,11 @@ class Ikprs extends AppController
             ]);
         }
 
-        // CEK: Apakah sudah dikunci oleh KOMITE lain?
-        if (!empty($insiden->komite_id) && $insiden->komite_id != $user_id) {
+        // CEK: Apakah sudah divalidasi oleh KOMITE lain?
+        if (!empty($insiden->selesai_at) || !empty($insiden->grading_final)) {
             return $this->response->setJSON([
                 'status' => 'error',
-                'message' => 'Laporan ini sudah dikunci oleh Komite lain'
+                'message' => 'Laporan ini sudah divalidasi oleh Komite lain'
             ]);
         }
 
@@ -2767,6 +2909,203 @@ class Ikprs extends AppController
     }
 
     // ================= WHATSAPP MONITORING =================
+
+    // Retry send WA untuk notifikasi
+    public function waRetry()
+    {
+        $notifId = $this->request->getPost('notif_id');
+        if (!$notifId) {
+            return $this->response->setJSON([
+                'status' => false,
+                'message' => 'ID notifikasi tidak ditemukan'
+            ]);
+        }
+
+        $db = db_connect();
+
+        // Ambil notifikasi + user phone
+        $notif = $db->table('ikprssm_notifikasi n')
+            ->select('n.*, uk.phone, uk.nama')
+            ->join('unit_karu uk', 'n.hris_user_id = uk.hris_user_id', 'left')
+            ->where('n.id', $notifId)
+            ->get()
+            ->getRow();
+
+        if (!$notif) {
+            return $this->response->setJSON([
+                'status' => false,
+                'message' => 'Notifikasi tidak ditemukan'
+            ]);
+        }
+
+        // Cek retry limit
+        if ($notif->retry_count >= 3) {
+            return $this->response->setJSON([
+                'status' => false,
+                'message' => 'Retry sudah mencapai batas maksimal (3x)'
+            ]);
+        }
+
+        $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZD';
+        $url = "https://graph.facebook.com/v19.0/1128976353628313/messages";
+
+        $waStatus = 'FAILED';
+        $waMessageId = null;
+        $waErrorMsg = null;
+
+        if (!empty($notif->phone)) {
+            $phone = preg_replace('/^0/', '62', $notif->phone);
+
+            // Tentukan template berdasarkan type
+            if ($notif->type === 'to_karu') {
+                $templateName = 'ikprs_to_karu';
+                $params = [
+                    ['type' => 'text', 'text' => $notif->nama ?? 'User'],
+                    ['type' => 'text', 'text' => 'Insiden'],
+                    ['type' => 'text', 'text' => 'Unit']
+                ];
+            } elseif ($notif->type === 'to_komite') {
+                $templateName = 'ikprs_to_komite';
+                $params = [
+                    ['type' => 'text', 'text' => $notif->nama ?? 'KOMITE'],
+                    ['type' => 'text', 'text' => '-'],
+                    ['type' => 'text', 'text' => '-'],
+                    ['type' => 'text', 'text' => '-'],
+                    ['type' => 'text', 'text' => '-']
+                ];
+            } else {
+                // Fallback: text message biasa
+                $data = [
+                    'messaging_product' => 'whatsapp',
+                    'to' => $phone,
+                    'type' => 'text',
+                    'text' => ['body' => $notif->pesan]
+                ];
+
+                $headers = [
+                    'Authorization: Bearer ' . $token,
+                    'Content-Type: application/json'
+                ];
+
+                $ch = curl_init($url);
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+                $waResponse = curl_exec($ch);
+                $waError = curl_error($ch);
+                $waHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+
+                if ($waError) {
+                    $waStatus = 'FAILED';
+                    $waErrorMsg = $waError;
+                } elseif ($waHttpCode >= 200 && $waHttpCode < 300) {
+                    $respJson = json_decode($waResponse, true);
+                    if (isset($respJson['messages'][0]['id'])) {
+                        $waStatus = 'SENT';
+                        $waMessageId = $respJson['messages'][0]['id'];
+                    } else {
+                        $waStatus = 'FAILED';
+                        $waErrorMsg = $waResponse;
+                    }
+                } else {
+                    $waStatus = 'FAILED';
+                    $waErrorMsg = 'HTTP ' . $waHttpCode . ': ' . $waResponse;
+                }
+
+                // Update notifikasi
+                $db->table('ikprssm_notifikasi')
+                    ->where('id', $notifId)
+                    ->update([
+                        'wa_status' => $waStatus,
+                        'wa_message_id' => $waMessageId,
+                        'wa_error' => $waErrorMsg,
+                        'retry_count' => $notif->retry_count + 1
+                    ]);
+
+                return $this->response->setJSON([
+                    'status' => $waStatus === 'SENT',
+                    'message' => $waStatus === 'SENT' ? 'WA berhasil dikirim ulang' : 'Gagal: ' . $waErrorMsg,
+                    'wa_status' => $waStatus
+                ]);
+            }
+
+            // Kirim template WA
+            $data = [
+                'messaging_product' => 'whatsapp',
+                'to' => $phone,
+                'type' => 'template',
+                'template' => [
+                    'name' => $templateName,
+                    'language' => ['code' => 'id'],
+                    'components' => [
+                        [
+                            'type' => 'body',
+                            'parameters' => $params
+                        ]
+                    ]
+                ]
+            ];
+
+            $headers = [
+                'Authorization: Bearer ' . $token,
+                'Content-Type: application/json'
+            ];
+
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+            $waResponse = curl_exec($ch);
+            $waError = curl_error($ch);
+            $waHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($waError) {
+                $waStatus = 'FAILED';
+                $waErrorMsg = $waError;
+            } elseif ($waHttpCode >= 200 && $waHttpCode < 300) {
+                $respJson = json_decode($waResponse, true);
+                if (isset($respJson['messages'][0]['id'])) {
+                    $waStatus = 'SENT';
+                    $waMessageId = $respJson['messages'][0]['id'];
+                } else {
+                    $waStatus = 'FAILED';
+                    $waErrorMsg = $waResponse;
+                }
+            } else {
+                $waStatus = 'FAILED';
+                $waErrorMsg = 'HTTP ' . $waHttpCode . ': ' . $waResponse;
+            }
+        } else {
+            $waStatus = 'NO_PHONE';
+            $waErrorMsg = 'No HP tidak ditemukan';
+        }
+
+        // Update notifikasi
+        $db->table('ikprssm_notifikasi')
+            ->where('id', $notifId)
+            ->update([
+                'wa_status' => $waStatus,
+                'wa_message_id' => $waMessageId,
+                'wa_error' => $waErrorMsg,
+                'retry_count' => $notif->retry_count + 1
+            ]);
+
+        return $this->response->setJSON([
+            'status' => $waStatus === 'SENT',
+            'message' => $waStatus === 'SENT'
+                ? 'WA berhasil dikirim ulang'
+                : ($waStatus === 'NO_PHONE' ? 'Nomor HP tidak ditemukan' : 'Gagal: ' . $waErrorMsg),
+            'wa_status' => $waStatus
+        ]);
+    }
 
     public function waMonitoring()
     {

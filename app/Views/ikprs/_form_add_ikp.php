@@ -780,7 +780,7 @@
             <button type="button"
                 class="btn btn-success"
                 id="btnKirimLangsung"
-                onclick="submitIkp('KARU')"
+                onclick="submitIkp('PENDING')"
                 style="display: none;">
                 <i class="bi bi-send"></i> Kirim Langsung ke KARU
             </button>

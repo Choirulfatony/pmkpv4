@@ -8,7 +8,7 @@
 date_default_timezone_set('Asia/Jakarta');
 
 $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZDZD';
-$phone = '082233346468'; // Original number
+$phone = '085707894488'; // Original number
 // Format phone: 0822... -> 62822...
 $phone = preg_replace('/^0/', '62', $phone);
 
