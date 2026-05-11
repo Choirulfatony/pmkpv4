@@ -753,11 +753,8 @@ class Ikprs extends AppController
 
             $total_pending = 0;
         } else {
-            // PELAPOR inbox: hanya SELESAI (laporan yang sudah selesai)
-            $total_inbox = $db->table('ikprssm_insiden')
-                ->where('user_id', $user_id)
-                ->where('status_laporan', 'SELESAI')
-                ->countAllResults();
+            // PELAPOR inbox: 0 — hanya history, tidak perlu badge
+            $total_inbox = 0;
 
             // PELAPOR pending: hanya PENDING yang belum dibaca KARU
             $total_pending = $db->table('ikprssm_insiden')
@@ -777,11 +774,8 @@ class Ikprs extends AppController
             // KOMITE sent: 0 — yang sudah terbaca tidak perlu badge
             $total_send = 0;
         } elseif ($role == 'PELAPOR') {
-            // PELAPOR sent: KARU + TERKIRIM + INSTALASI + SELESAI + PENDING (setelah KARU)
-            $total_send = $db->table('ikprssm_insiden')
-                ->where('user_id', $user_id)
-                ->where('(status_laporan IN ("KARU","TERKIRIM","INSTALASI","SELESAI") OR (status_laporan = "PENDING" AND karu_read_at IS NOT NULL))')
-                ->countAllResults();
+            // PELAPOR sent: 0 — hanya history, tidak perlu badge
+            $total_send = 0;
         }
 
         $notif = $this->getNotifList($user_id, $role);
