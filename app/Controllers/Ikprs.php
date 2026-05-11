@@ -779,13 +779,8 @@ class Ikprs extends AppController
                 ->groupEnd()
                 ->countAllResults();
         } elseif ($role == 'KOMITE') {
-            // KOMITE sent: item yang sudah dibaca KOMITE (is_read=1)
-            $total_send = $db->table('ikprssm_insiden i')
-                ->join('ikprssm_notifikasi n', 'n.insiden_id = i.id')
-                ->where('n.hris_user_id', $user_id)
-                ->where('n.is_read', 1)
-                ->whereIn('i.status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI'])
-                ->countAllResults();
+            // KOMITE sent: 0 — yang sudah terbaca tidak perlu badge
+            $total_send = 0;
         } elseif ($role == 'PELAPOR') {
             // PELAPOR sent: KARU + TERKIRIM + INSTALASI + SELESAI + PENDING (setelah KARU)
             $total_send = $db->table('ikprssm_insiden')
