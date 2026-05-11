@@ -1106,11 +1106,12 @@
                   if (res.status) {
 
                       toastr.success(res.message, 'Berhasil');
+                      $('#verifikasi_error').html('<div class="text-success fw-bold">' + res.message + '</div>');
 
                       setTimeout(function() {
                           loadInbox(1);
                           refreshNotif();
-                      }, 500);
+                      }, 1500);
 
                   } else {
 
