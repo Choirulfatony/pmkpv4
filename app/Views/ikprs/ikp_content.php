@@ -533,7 +533,10 @@
       /* ===== KLIK MENU INBOX ===== */
       $(document).on('click', '#btnInbox', function(e) {
           e.preventDefault();
-          if ($(this).hasClass('active')) return;
+          if ($(this).hasClass('active')) {
+              loadInbox();
+              return;
+          }
           $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
           $(this).addClass('active');
           loadInbox();
@@ -724,7 +727,10 @@
         /* ===== KLIK MENU PENDING ===== */
       $(document).on('click', '#btnPending', function(e) {
           e.preventDefault();
-          if ($(this).hasClass('active')) return;
+          if ($(this).hasClass('active')) {
+              loadPending(1);
+              return;
+          }
           $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
           $(this).addClass('active');
           loadPending(1);
@@ -844,7 +850,10 @@
       /* ===== KLIK MENU SEND ===== */
       $(document).on('click', '#btnSend', function(e) {
           e.preventDefault();
-          if ($(this).hasClass('active')) return;
+          if ($(this).hasClass('active')) {
+              loadSend(1);
+              return;
+          }
           $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
           $(this).addClass('active');
           loadSend(1);
@@ -929,7 +938,10 @@
       /* ===== KLIK MENU INFO ===== */
       $(document).on('click', '#btnInfo', function(e) {
           e.preventDefault();
-          if ($(this).hasClass('active')) return;
+          if ($(this).hasClass('active')) {
+              loadInfo(1);
+              return;
+          }
           $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
           $(this).addClass('active');
           loadInfo(1);
