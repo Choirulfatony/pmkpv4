@@ -2628,33 +2628,12 @@ class Ikprs extends AppController
                     'komite_read_at' => date('Y-m-d H:i:s')
                 ]);
 
-            // Notif ke KARU: Komite telah membaca
-            $cek = $db->table('ikprssm_notifikasi')
-                ->where('insiden_id', $insiden_id)
-                ->where('hris_user_id', $insiden->karu_id)
-                ->where('pesan', 'Komite telah membaca laporan')
-                ->get()
-                ->getRow();
-
-            if ($cek) {
+            // Tandai semua notif KARU untuk insiden ini sebagai sudah dibaca
+            if ($insiden->karu_id) {
                 $db->table('ikprssm_notifikasi')
-                    ->where('id', $cek->id)
-                    ->update([
-                        'is_read'    => 0,
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'pesan'      => 'Komite telah membaca laporan'
-                    ]);
-            } else {
-                $db->table('ikprssm_notifikasi')->insert([
-                    'sender_id'    => $user_id,
-                    'hris_user_id' => $insiden->karu_id,
-                    'insiden_id'   => $insiden_id,
-                    'pesan'        => 'Komite telah membaca laporan',
-                    'status'       => 'INFO',
-                    'type'         => 'to_karu',
-                    'is_read'      => 0,
-                    'created_at'   => date('Y-m-d H:i:s')
-                ]);
+                    ->where('insiden_id', $insiden_id)
+                    ->where('hris_user_id', $insiden->karu_id)
+                    ->update(['is_read' => 1]);
             }
         }
 
