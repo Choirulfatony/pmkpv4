@@ -771,14 +771,8 @@ class Ikprs extends AppController
         // SENT
         // ==========================
         if ($role == 'KARU') {
-            // KARU sent: item yang sudah selesai diproses atau sudah dibaca KOMITE
-            $total_send = $db->table('ikprssm_insiden')
-                ->where('karu_id', $user_id)
-                ->groupStart()
-                    ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI'])
-                    ->orWhere('komite_read_at IS NOT NULL')
-                ->groupEnd()
-                ->countAllResults();
+            // KARU sent: 0 — hanya history, tidak perlu badge
+            $total_send = 0;
         } elseif ($role == 'KOMITE') {
             // KOMITE sent: 0 — yang sudah terbaca tidak perlu badge
             $total_send = 0;
