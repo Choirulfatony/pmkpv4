@@ -725,9 +725,10 @@ class Ikprs extends AppController
         log_message('error', "counterAjax: user_id=$user_id, role=$role");
 
         if ($role == 'KARU') {
-            // Inbox KARU: semua laporan untuk KARU ini (PENDING, KARU, TERKIRIM)
+            // Inbox KARU: hanya laporan yang belum dibaca KARU
             $total_inbox = $db->table('ikprssm_insiden')
                 ->where('karu_id', $user_id)
+                ->where('karu_read_at', null)
                 ->countAllResults();
 
             log_message('error', "counterAjax KARU: karu_id=$user_id, total_inbox=$total_inbox");
