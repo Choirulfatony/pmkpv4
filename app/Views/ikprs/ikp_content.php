@@ -1212,7 +1212,10 @@
               dataType: 'json',
               success: function(res) {
                   if (res.status == 'success') {
-                      location.reload();
+                      toastr.success(res.message, 'Berhasil');
+                      setTimeout(function() {
+                          location.reload();
+                      }, 1000);
                   } else {
                       $('#komite_error').text(res.message);
                       $(btn).prop('disabled', false);

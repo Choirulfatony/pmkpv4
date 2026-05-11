@@ -2797,7 +2797,7 @@ class Ikprs extends AppController
                 ->where('hris_user_id', $insiden->karu_id)
                 ->update(['is_read' => 1]);
 
-            // Insert notifikasi baru - langsung read
+            // Insert notifikasi baru untuk KARU
             $db->table('ikprssm_notifikasi')->insert([
                 'sender_id'    => $user_id,
                 'hris_user_id' => $insiden->karu_id,
@@ -2805,7 +2805,7 @@ class Ikprs extends AppController
                 'pesan'        => 'Laporan telah divalidasi dan diselesaikan oleh Komite PMKP',
                 'status'       => 'INFO',
                 'type'         => 'to_karu',
-                'is_read'      => 1,
+                'is_read'      => 0,
                 'created_at'   => date('Y-m-d H:i:s')
             ]);
         }
@@ -2824,7 +2824,7 @@ class Ikprs extends AppController
                 ->where('hris_user_id', $insiden->user_id)
                 ->update(['is_read' => 1]);
 
-            // Insert notifikasi baru - langsung read
+            // Insert notifikasi baru untuk PELAPOR
             $db->table('ikprssm_notifikasi')->insert([
                 'sender_id'    => $user_id,
                 'hris_user_id' => $insiden->user_id,
@@ -2832,7 +2832,7 @@ class Ikprs extends AppController
                 'pesan'        => 'Laporan Anda telah divalidasi oleh Komite PMKP dan dinyatakan selesai',
                 'status'       => 'INFO',
                 'type'         => 'to_pelapor',
-                'is_read'      => 1,
+                'is_read'      => 0,
                 'created_at'   => date('Y-m-d H:i:s')
             ]);
         }
