@@ -1133,7 +1133,7 @@ class Ikprs extends AppController
 
             // Parameters untuk template ikprs_to_karu: Nama Karu, Jenis Insiden, Unit
             $templateParams = [
-                ['type' => 'text', 'text' => 'Karu'],  // Nama Karu (tidak ada di tabel, gunakan default)
+                ['type' => 'text', 'text' => $karu->nama ?? 'Karu'],  // Nama Karu dari tabel unit_karu
                 ['type' => 'text', 'text' => $dataInsiden['jenis_insiden'] ?? 'Insiden'],  // Jenis Insiden
                 ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? 'Unit']  // Kamar
             ];
