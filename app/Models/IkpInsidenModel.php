@@ -77,7 +77,7 @@ class IkpInsidenModel extends Model
                 ->groupEnd();
         }
 
-        $this->applyFilters($builder, $filters);
+        $this->applyFilters($builder, $filters, 'i');
 
         return $builder
             ->orderBy('i.created_at', 'DESC')
