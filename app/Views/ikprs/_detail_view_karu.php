@@ -333,9 +333,10 @@
     }
 
     $roleBadge = [
-        'PELAPOR' => '<span class="badge bg-info"><i class="bi bi-person me-1"></i>Pelapor</span>',
-        'KARU'    => '<span class="badge bg-warning text-dark"><i class="bi bi-person-badge me-1"></i>Kepala Ruangan</span>',
-        'KOMITE'  => '<span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>Komite PMKP</span>'
+        'PELAPOR'               => '<span class="badge bg-info"><i class="bi bi-person me-1"></i>Pelapor</span>',
+        'KARU'                  => '<span class="badge bg-warning text-dark"><i class="bi bi-person-badge me-1"></i>Kepala Ruangan</span>',
+        'KOMITE'                => '<span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>Komite PMKP</span>',
+        'KEPALA_KEPERAWATAN'    => '<span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>Kepala Keperawatan</span>',
     ];
 
     $currentRoleBadge = $roleBadge[$user_role] ?? '';
@@ -788,20 +789,22 @@
 
         <div class="insiden-section">
 
+            <?php $roleLabel = ($user_role === 'KOMITE') ? 'Komite PMKP' : 'Kepala Keperawatan'; ?>
+
             <div class="insiden-section-title">
-                <i class="bi bi-shield-check me-1"></i>Validasi Komite PMKP
+                <i class="bi bi-shield-check me-1"></i>Validasi <?= $roleLabel ?>
             </div>
 
             <div class="alert alert-success">
                 <i class="bi bi-info-circle me-1"></i>
-                Anda sebagai <strong>Komite PMKP</strong>. Silakan lakukan analisa dan validasi terhadap laporan ini.
+                Anda sebagai <strong><?= $roleLabel ?></strong>. Silakan lakukan analisa dan validasi terhadap laporan ini.
             </div>
 
             <input type="hidden" id="insiden_id" value="<?= $insiden['id'] ?>">
 
             <!-- CATATAN KOMITE -->
             <div class="mb-3">
-                <label class="insiden-label">Catatan Komite</label>
+                <label class="insiden-label">Catatan <?= $roleLabel ?></label>
                 <textarea class="form-control"
                     id="catatan_komite"
                     rows="4"

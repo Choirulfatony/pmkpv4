@@ -45,7 +45,7 @@
                         ?>
                     <?php endif; ?>
 
-                    <?php if ($login_source == 'HRIS' && in_array(session('user_role'), ['KOMITE', 'KARU'])): ?>
+                    <?php if ($login_source == 'HRIS' && in_array(session('user_role'), ['KOMITE', 'KARU', 'KEPALA_KEPERAWATAN'])): ?>
                         <li class="nav-item">
                             <a href="<?= site_url('ikprs') ?>" class="nav-link">
                                 <i class="nav-icon bi bi-speedometer"></i>

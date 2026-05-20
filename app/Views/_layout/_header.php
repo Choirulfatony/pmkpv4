@@ -302,8 +302,8 @@
             </li>
 
 
-            <!-- Dashboard (KOMITE & KARU only) -->
-            <?php if (in_array(session('user_role'), ['KARU', 'KOMITE'])): ?>
+            <!-- Dashboard (KOMITE, KEPALA_KEPERAWATAN & KARU only) -->
+            <?php if (in_array(session('user_role'), ['KARU', 'KOMITE', 'KEPALA_KEPERAWATAN'])): ?>
             <li class="nav-item">
                 <a href="<?= site_url('ikprs') ?>" class="nav-link">
                     <i class="bi bi-speedometer"></i>
@@ -506,7 +506,7 @@
                       Tidak untuk tipe INFO
                  ============================= */
                 let newInbox = (inbox > lastInboxCount);
-                if (newInbox && (user_role === 'KARU' || user_role === 'KOMITE' || user_role === 'PELAPOR')) {
+                if (newInbox && (user_role === 'KARU' || user_role === 'KOMITE' || user_role === 'PELAPOR' || user_role === 'KEPALA_KEPERAWATAN')) {
                     try {
                         const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
                         const oscillator = audioCtx.createOscillator();
@@ -527,7 +527,8 @@
 
                 // Auto-refresh konten tab IKP yang sedang aktif (setiap 8 detik)
                 // Info tab punya interval sendiri (30 detik) — tidak perlu di-refresh dari sini
-                if ($('#btnInbox').length) {
+                // Jangan refresh kalau sedang lihat detail (detailOpen = true)
+                if ($('#btnInbox').length && !window.detailOpen) {
                     if ($('#btnInbox').hasClass('active') && typeof loadInbox === 'function') {
                         loadInbox(1);
                     } else if ($('#btnPending').hasClass('active') && typeof loadPending === 'function') {
@@ -699,8 +700,8 @@
                                 status_read = "Belum Dibaca";
                                 warna_status = "text-danger";
                             }
-                        } else if (user_role === 'KOMITE') {
-                            // KOMITE: cek komite sudah baca atau belum
+                        } else if (user_role === 'KOMITE' || user_role === 'KEPALA_KEPERAWATAN') {
+                            // KOMITE / KEPALA_KEPERAWATAN: cek sudah baca atau belum
                             if (item.komite_read_at) {
                                 status_read = "Sudah Dibaca";
                                 warna_status = "text-success";

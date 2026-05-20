@@ -75,6 +75,8 @@ class Auth extends BaseController
 
     public function process()
     {
+        log_message('error', 'DEBUG process() called - POST identity=' . $this->request->getPost('identity'));
+
         $identity = trim($this->request->getPost('identity'));
         $password = $this->request->getPost('password');
         $captcha  = strtoupper($this->request->getPost('captcha'));
@@ -224,6 +226,8 @@ class Auth extends BaseController
         }
 
         $role = $this->detectRoleByHrisId($user->id);
+
+        log_message('error', 'DEBUG loginHris: user_id=' . $user->id . ', nip=' . $user->nip . ', detected_role=' . $role);
 
         $db = db_connect();
         $profile = $db->table('user_profile')
@@ -947,7 +951,11 @@ class Auth extends BaseController
 
         return $this->response->setJSON([
             'logged_in'    => true,
-            'login_source' => $session->get('login_source')
+            'login_source' => $session->get('login_source'),
+            'user_role'    => $session->get('user_role'),
+            'hris_user_id' => $session->get('hris_user_id'),
+            'hris_nip'     => $session->get('hris_nip'),
+            'hris_full_name' => $session->get('hris_full_name'),
         ]);
     }
 

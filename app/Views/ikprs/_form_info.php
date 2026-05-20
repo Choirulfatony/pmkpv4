@@ -85,7 +85,7 @@
                                 $warna_status = 'text-primary';
                             }
                         }
-                    } elseif ($role == 'KOMITE') {
+                    } elseif ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
                         if (!empty($row['komite_read_at'])) {
                             $status_read = 'Sudah Dibaca';
                             $warna_status = 'text-success';

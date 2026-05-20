@@ -275,7 +275,7 @@
                                   Kepala Ruangan - <?= esc(session('karu_room_name')) ?>
                               </small>
 
-                          <?php elseif (session('user_role') === 'KOMITE'): ?>
+                          <?php elseif (in_array(session('user_role'), ['KOMITE', 'KEPALA_KEPERAWATAN'])): ?>
 
                               <h5 class="fw-bold mb-1">
                                   <?= esc(session('hris_full_name')) ?>
@@ -286,7 +286,7 @@
                               </small>
 
                               <small class="text-muted fst-italic d-block">
-                                  Komite PMKP
+                                  <?= session('user_role') === 'KOMITE' ? 'Komite PMKP' : 'Kepala Keperawatan' ?>
                               </small>
 
                           <?php else: ?>
@@ -554,6 +554,7 @@
           }
           $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
           $(this).addClass('active');
+          window.detailOpen = false;
           loadInbox();
       });
 
@@ -632,6 +633,7 @@
 
           if (inboxLoading) return;
           inboxLoading = true;
+          window.detailOpen = true;
 
           $('#inbox-wrapper').trigger('processing.inbox', [true]);
 
@@ -689,6 +691,7 @@
       $(document).on('click', '.btn-back', function() {
 
           const tipe = $(this).data('tipe') || 'inbox';
+          window.detailOpen = false;
 
           console.log("BACK:", tipe);
 
@@ -748,6 +751,7 @@
           }
           $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
           $(this).addClass('active');
+          window.detailOpen = false;
           loadPending(1);
       });
 
@@ -871,6 +875,7 @@
           }
           $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
           $(this).addClass('active');
+          window.detailOpen = false;
           loadSend(1);
       });
 
@@ -959,6 +964,7 @@
           }
           $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
           $(this).addClass('active');
+          window.detailOpen = false;
           loadInfo(1);
       });
 

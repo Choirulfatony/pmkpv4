@@ -39,8 +39,7 @@ class IkpInsidenModel extends Model
         $role = session('user_role');
         $db = $this->db;
 
-        if ($role == 'KOMITE') {
-            // KOMITE tidak menggunakan tab Pending — lihat notifikasi via Info tab
+        if ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
             return [];
         }
 
@@ -127,8 +126,7 @@ class IkpInsidenModel extends Model
     {
         $role = session('user_role');
 
-        if ($role == 'KOMITE') {
-            // KOMITE tidak menggunakan tab Pending
+        if ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
             return 0;
         }
 
@@ -192,7 +190,7 @@ class IkpInsidenModel extends Model
     {
         $role = session('user_role');
 
-        if ($role == 'KOMITE') {
+        if ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
             $builder = $this->db->table('ikprssm_insiden i');
             $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id');
             $builder->where('n.hris_user_id', $user_id);
@@ -210,10 +208,7 @@ class IkpInsidenModel extends Model
             $builder->where('(status_laporan IN ("KARU","TERKIRIM","INSTALASI","SELESAI") OR (status_laporan = "PENDING" AND karu_read_at IS NOT NULL))');
         } elseif ($role == 'KARU') {
             $builder->where('karu_id', $user_id);
-            $builder->groupStart()
-                ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI'])
-                ->orWhere('komite_read_at IS NOT NULL')
-            ->groupEnd();
+            $builder->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
         } else {
             $builder->where('user_id', $user_id);
             $builder->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
@@ -227,7 +222,7 @@ class IkpInsidenModel extends Model
                 ->groupEnd();
         }
 
-        $tablePrefix = ($role == 'KOMITE') ? 'ikprssm_insiden' : '';
+        $tablePrefix = ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') ? 'ikprssm_insiden' : '';
         $this->applyFilters($builder, $filters, $tablePrefix);
 
         return $builder->countAllResults();
@@ -240,7 +235,7 @@ class IkpInsidenModel extends Model
     {
         $role = session('user_role');
 
-        if ($role == 'KOMITE') {
+        if ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
             $builder = $this->db->table('ikprssm_insiden i');
             $builder->select('i.id, i.nama_pasien, i.kd_pasien, i.jenis_insiden, i.insiden, i.kronologis_insiden, i.grading_risiko, i.created_at');
             $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id');
@@ -274,12 +269,9 @@ class IkpInsidenModel extends Model
             $builder->where('user_id', $user_id);
             $builder->where('(status_laporan IN ("KARU","TERKIRIM","INSTALASI","SELESAI") OR (status_laporan = "PENDING" AND karu_read_at IS NOT NULL))');
         } elseif ($role == 'KARU') {
-            // KARU Sent: item yang sudah selesai diproses atau sudah dibaca KOMITE
+            // KARU Sent: item yang sudah selesai diproses
             $builder->where('karu_id', $user_id);
-            $builder->groupStart()
-                ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI'])
-                ->orWhere('komite_read_at IS NOT NULL')
-            ->groupEnd();
+            $builder->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
         } else {
             $builder->where('user_id', $user_id);
             $builder->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
@@ -314,7 +306,7 @@ class IkpInsidenModel extends Model
                 ->where('karu_id', $user_id)
                 ->whereIn('status_laporan', ['KARU', 'TERKIRIM', 'SELESAI'])
                 ->countAllResults();
-        } elseif ($role == 'KOMITE') {
+        } elseif ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
             return $this->db->table($this->table)
                 ->whereIn('status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI'])
                 ->countAllResults();
@@ -343,7 +335,7 @@ class IkpInsidenModel extends Model
 
         $builder = $this->db->table('ikprssm_insiden i');
 
-        if ($role == 'KOMITE') {
+        if ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
             $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id', 'left');
             $builder->where('n.hris_user_id', $user_id);
             $builder->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
@@ -363,7 +355,7 @@ class IkpInsidenModel extends Model
                 ->groupEnd();
         }
 
-        $tablePrefix = ($role == 'KOMITE') ? 'i' : '';
+        $tablePrefix = ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') ? 'i' : '';
         $this->applyFilters($builder, $filters, $tablePrefix);
 
         return $builder->countAllResults();
@@ -397,7 +389,7 @@ class IkpInsidenModel extends Model
         $builder->join('master_institution_department d', 'd.department_id = i.tempat_insiden', 'left');
         $builder->join('unit_karu uk', 'uk.hris_user_id = i.komite_id', 'left');
 
-        if ($role == 'KOMITE') {
+        if ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
             $builder->select('i.*, d.department_name as unit_insiden, n.is_read, uk.nama as komite_nama');
             $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id AND n.hris_user_id = ' . $this->db->escape($user_id), 'left');
             $builder->where('n.hris_user_id', $user_id);
@@ -423,10 +415,10 @@ class IkpInsidenModel extends Model
                 ->groupEnd();
         }
 
-        $tablePrefix = ($role == 'KOMITE') ? 'i' : '';
+        $tablePrefix = ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') ? 'i' : '';
         $this->applyFilters($builder, $filters, $tablePrefix);
 
-        $orderField = ($role == 'KOMITE') ? 'i.created_at' : 'created_at';
+        $orderField = ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') ? 'i.created_at' : 'created_at';
 
         return $builder
             ->orderBy($orderField, 'DESC')
