@@ -44,38 +44,43 @@ class IkpInsidenModel extends Model
             return [];
         }
 
-        $builder = $db->table($this->table);
+        $builder = $db->table($this->table . ' i');
+        $builder->join('unit_karu uk', 'uk.hris_user_id = i.komite_id', 'left');
 
         $builder->select('
-        id, nama_pasien, kd_pasien, jenis_insiden, insiden, kronologis_insiden, created_at
+        i.id, i.nama_pasien, i.kd_pasien, i.jenis_insiden, i.insiden, i.kronologis_insiden,
+        i.status_laporan, i.grading_final, i.catatan_komite, i.catatan_atasan,
+        i.validated_at, i.selesai_at, i.komite_id, i.created_at,
+        0 as is_read,
+        uk.nama as komite_nama
         ');
 
         if ($role == 'KARU') {
-            $builder->whereIn('status_laporan', ['PENDING']);
-            $builder->where('karu_id', $user_id);
-            $builder->where('karu_read_at IS NOT NULL', null, false);
-            $builder->where('komite_read_at', null);
+            $builder->whereIn('i.status_laporan', ['PENDING']);
+            $builder->where('i.karu_id', $user_id);
+            $builder->where('i.karu_read_at IS NOT NULL', null, false);
+            $builder->where('i.komite_read_at', null);
         } elseif ($role == 'PELAPOR') {
-            $builder->where('user_id', $user_id);
-            $builder->where('status_laporan', 'PENDING');
-            $builder->where('karu_read_at', null);
+            $builder->where('i.user_id', $user_id);
+            $builder->where('i.status_laporan', 'PENDING');
+            $builder->where('i.karu_read_at', null);
         } else {
-            $builder->where('user_id', $user_id);
-            $builder->where('status_laporan', 'PENDING');
+            $builder->where('i.user_id', $user_id);
+            $builder->where('i.status_laporan', 'PENDING');
         }
 
         if ($search !== '') {
             $builder->groupStart()
-                ->like('nama_pasien', $search)
-                ->orLike('kd_pasien', $search)
-                ->orLike('jenis_insiden', $search)
+                ->like('i.nama_pasien', $search)
+                ->orLike('i.kd_pasien', $search)
+                ->orLike('i.jenis_insiden', $search)
                 ->groupEnd();
         }
 
         $this->applyFilters($builder, $filters);
 
         return $builder
-            ->orderBy('created_at', 'DESC')
+            ->orderBy('i.created_at', 'DESC')
             ->limit($limit, $offset)
             ->get()
             ->getResultArray();

@@ -5,6 +5,11 @@
         <button class="btn btn-mailbox btn-sm btn-pending-reload" title="Reload">
             <i class="bi bi-arrow-repeat"></i>
         </button>
+
+        <!-- CHECKBOX TOGGLE ALL -->
+        <button class="btn btn-mailbox btn-sm checkbox-toggle" title="Pilih Semua">
+            <i class="bi bi-square"></i>
+        </button>
     </div>
 
     <!-- PUSH RIGHT -->
@@ -29,82 +34,109 @@
     </div>
 </div>
 
-<?php if (session('user_role') === 'PELAPOR' && empty($list)): ?>
-<div class="card-body text-center text-muted p-4">
-    <i class="bi bi-check-circle text-success fs-1"></i>
-    <p class="mt-2">Semua laporan telah terkirim dan diverifikasi</p>
-</div>
-<?php else: ?>
-
 <div class="card-body p-0">
     <div class="table-responsive">
         <table class="table table-hover mailbox-table mb-0">
             <tbody>
 
-<?php if (session('user_role') === 'PELAPOR' && empty($list)): ?>
-<div class="card-body text-center text-muted p-4">
-    <i class="bi bi-check-circle text-success fs-1"></i>
-    <p class="mt-2">Semua laporan telah terkirim dan diverifikasi</p>
-</div>
-<?php elseif (empty($list)): ?>
-<tr>
-    <td colspan="6" class="text-center text-muted p-4">
-        Tidak ada laporan pending
-    </td>
-</tr>
-<?php endif; ?>
+                <?php if (empty($list)): ?>
+                <tr>
+                    <td colspan="6" class="text-center text-muted p-4">
+                        <i class="bi bi-check-circle text-success fs-1 d-block mb-2"></i>
+                        Tidak ada laporan pending
+                    </td>
+                </tr>
+                <?php else: ?>
 
-                <?php foreach ($list as $row): ?>
-                    <tr class="pending-row"
-                        data-id="<?= esc($row['id']) ?>"
-                        style="cursor:pointer">
+                    <?php foreach ($list as $row): ?>
+                        <tr class="pending-row <?= $row['is_read'] ? '' : 'notif-unread' ?>"
+                            data-id="<?= esc($row['id']) ?>"
+                            style="cursor:pointer">
 
-                        <!-- CHECKBOX -->
-                        <td class="mailbox-check" onclick="event.stopPropagation();">
-                            <input class="form-check-input mailbox-checkbox check-item"
-                                type="checkbox"
-                                value="<?= esc($row['id']) ?>">
-                        </td>
+                            <!-- CHECKBOX -->
+                            <td class="mailbox-check" onclick="event.stopPropagation();">
+                                <input class="form-check-input mailbox-checkbox check-item"
+                                       type="checkbox"
+                                       value="<?= esc($row['id']) ?>">
+                            </td>
 
-                        <!-- ICON -->
-                        <td class="mailbox-star text-muted">
-                            <i class="bi bi-file-earmark-text me-2 text-warning"></i>
-                        </td>
+                            <!-- ICON -->
+                            <td class="mailbox-star text-muted">
+                                <?php if (!$row['is_read']): ?>
+                                    <div class="notif-dot blink"></div>
+                                    <i class="bi bi-info-circle" style="font-size:15px;" title="Pending"></i>
+                                <?php else: ?>
+                                    <i class="bi bi-file-earmark-text me-2 text-muted" style="font-size:15px;"></i>
+                                <?php endif; ?>
+                            </td>
 
-                        <!-- PASIEN -->
-                        <td class="mailbox-name">
-                            <div class="fw-normal"><?= esc($row['nama_pasien']) ?></div>
-                            <small class="text-muted">
-                                <?= esc($row['kd_pasien']) ?>
-                            </small>
-                        </td>
+                            <!-- PASIEN -->
+                            <td class="mailbox-name">
+                                <div class="fw-normal"><?= esc($row['nama_pasien']) ?></div>
+                                <small class="text-muted">
+                                    <?= esc($row['kd_pasien']) ?>
+                                </small>
+                            </td>
 
-                        <!-- ISI -->
-                        <td class="mailbox-subject">
-                            <strong><?= esc($row['jenis_insiden']) ?></strong>
-                            <span class="text-muted d-block text-truncate">
-                                <?= esc(substr(strip_tags($row['insiden']), 0, 50)) ?>...
-                            </span>
-                        </td>
+                            <!-- ISI -->
+                            <td class="mailbox-subject">
+                                <strong><?= esc($row['jenis_insiden']) ?></strong>
+                                <span class="text-muted d-block text-truncate">
+                                    <?= esc(substr(strip_tags($row['insiden']), 0, 50)) ?>...
+                                </span>
+                                <?php if (($row['status_laporan'] ?? '') === 'SELESAI'): ?>
+                                    <span class="text-success d-block small mt-1" style="border-left:3px solid #198754; padding-left:6px;">
+                                        <i class="bi bi-check-circle-fill" style="font-size:10px;"></i>
+                                        <strong><?= esc($row['grading_final'] ?? '-') ?></strong> – 
+                                        <?= esc(substr(strip_tags($row['catatan_komite'] ?? ''), 0, 200)) ?>
+                                    </span>
+                                    <span class="d-block small mt-1" style="font-size:11px; color:#6c757d;">
+                                        <i class="bi bi-person-check"></i> <?= esc($row['komite_nama'] ?? 'Komite PMKP') ?>
+                                        <i class="bi bi-clock ms-2"></i> <?= date('d M Y H:i', strtotime($row['validated_at'] ?? $row['selesai_at'] ?? '')) ?>
+                                    </span>
+                                <?php elseif (($row['status_laporan'] ?? '') === 'KARU' && !empty($row['catatan_atasan'])): ?>
+                                    <span class="text-info d-block small mt-1" style="border-left:3px solid #0dcaf0; padding-left:6px;">
+                                        <i class="bi bi-chat-dots" style="font-size:10px;"></i>
+                                        <?= esc(substr(strip_tags($row['catatan_atasan']), 0, 60)) ?>
+                                    </span>
+                                <?php endif; ?>
+                            </td>
 
-                        <!-- STATUS -->
-                        <td class="text-center">
-                            <span class="badge bg-secondary">Pending</span>
-                        </td>
-                        
-                        <!-- TANGGAL -->
-                        <td class="mailbox-date text-nowrap">
-                            <?= date('d M Y H:i', strtotime($row['created_at'])) ?>
-                        </td>
+                            <!-- STATUS -->
+                            <td class="text-center align-middle">
+                                <?php
+                                $statusLabels = [
+                                    'PENDING'   => ['secondary', 'Menunggu'],
+                                    'KARU'      => ['info', 'Dibaca KARU'],
+                                    'TERKIRIM'  => ['primary', 'Terkirim'],
+                                    'INSTALASI' => ['warning', 'Instalasi'],
+                                    'SELESAI'   => ['success', 'Selesai']
+                                ];
+                                $s = $row['status_laporan'] ?? 'PENDING';
+                                $badge = $statusLabels[$s] ?? ['secondary', $s];
+                                ?>
+                                <span class="badge bg-<?= $badge[0] ?>"><?= $badge[1] ?></span>
+                                <?php if ($s === 'SELESAI' && !empty($row['komite_nama'])): ?>
+                                    <small class="d-block text-muted mt-1" style="font-size:10px; line-height:1.2;">
+                                        oleh <?= esc($row['komite_nama']) ?>
+                                    </small>
+                                <?php endif; ?>
+                            </td>
 
-                    </tr>
-                <?php endforeach; ?>
+                            <!-- TANGGAL -->
+                            <td class="mailbox-date text-nowrap">
+                                <?= date('d M Y H:i', strtotime($row['created_at'])) ?>
+                            </td>
+
+                        </tr>
+                    <?php endforeach; ?>
+
+                <?php endif; ?>
 
             </tbody>
         </table>
     </div>
 </div>
-<?php endif; ?>
 
 <?php
 $start = $total > 0 ? (($page - 1) * 10) + 1 : 0;
@@ -140,54 +172,32 @@ $end   = $total > 0 ? min($page * 10, $total) : 0;
 
 </div>
 <script>
-    /**
-     * TOGGLE CHECKBOX "PILIH SEMUA"
-     * Sumber kebenaran: CHECKBOX, bukan IKON
-     */
     $(document).on('click', '.checkbox-toggle', function() {
-
         const total = $('.mailbox-checkbox').length;
         const checked = $('.mailbox-checkbox:checked').length;
-
-        const checkAll = checked !== total; // kalau belum semua → centang semua
-
+        const checkAll = checked !== total;
         $('.mailbox-checkbox').prop('checked', checkAll);
-
         updateCheckboxIcon();
     });
 
-    /**
-     * SAAT CHECKBOX MANUAL DIKLIK
-     */
     $(document).on('change', '.mailbox-checkbox', function() {
         updateCheckboxIcon();
     });
 
-    /**
-     * UPDATE IKON SESUAI KONDISI CHECKBOX
-     */
     function updateCheckboxIcon() {
-
         const total = $('.mailbox-checkbox').length;
         const checked = $('.mailbox-checkbox:checked').length;
         const $icon = $('.checkbox-toggle i');
-
-        // reset dulu
         $icon.removeClass('bi-square bi-check-square-fill bi-dash-square');
-
         if (checked === 0) {
-            $icon.addClass('bi-square'); // kosong
+            $icon.addClass('bi-square');
         } else if (checked === total) {
-            $icon.addClass('bi-check-square-fill'); // semua
+            $icon.addClass('bi-check-square-fill');
         } else {
-            $icon.addClass('bi-dash-square'); // sebagian (tri-state)
+            $icon.addClass('bi-dash-square');
         }
     }
 
-    /**
-     * WAJIB: reset ikon setiap konten AJAX reload
-     * panggil ini SETELAH loadPending / reloadPending
-     */
     function resetMailboxSelection() {
         $('.mailbox-checkbox').prop('checked', false);
         updateCheckboxIcon();
@@ -195,10 +205,6 @@ $end   = $total > 0 ? min($page * 10, $total) : 0;
 </script>
 
 <style>
-    /* ===============================
-    GLOBAL BUTTON (SEMUA MODE)
-    ================================ */
-
     .btn-mailbox {
         background: var(--bs-secondary-bg);
         border: 1px solid var(--bs-border-color);
@@ -206,22 +212,16 @@ $end   = $total > 0 ? min($page * 10, $total) : 0;
         transition: all 0.2s ease;
     }
 
-    /* HOVER */
     .btn-mailbox:hover {
         background: var(--bs-tertiary-bg);
         border-color: var(--bs-border-color);
         color: var(--bs-body-color);
     }
 
-    /* ACTIVE */
     .btn-mailbox:active {
         background: var(--bs-secondary-bg);
         transform: scale(0.95);
     }
-
-    /* ===============================
-    DARK MODE
-    ================================ */
 
     .dark-mode .btn-mailbox {
         background: #2b2b2b;
@@ -239,7 +239,6 @@ $end   = $total > 0 ? min($page * 10, $total) : 0;
         background: #262626;
     }
 
-    /* Google-style font sizing */
     .mailbox-name div {
         font-size: 14px;
         font-weight: normal;
@@ -247,22 +246,30 @@ $end   = $total > 0 ? min($page * 10, $total) : 0;
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    
+
+    .notif-dot.blink {
+        animation: blink 1.5s infinite;
+    }
+
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+    }
+
     .mailbox-subject strong {
         font-size: 14px;
         font-weight: normal;
     }
-    
+
     .mailbox-date {
         font-size: 14px;
         font-weight: normal;
     }
-    
+
     .mailbox-star {
         font-size: 14px;
     }
-    
-    /* Override any Bootstrap bold styles */
+
     .mailbox-name,
     .mailbox-subject,
     .mailbox-date {
