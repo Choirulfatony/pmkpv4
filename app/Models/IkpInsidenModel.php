@@ -335,17 +335,11 @@ class IkpInsidenModel extends Model
 
         $builder = $this->db->table('ikprssm_insiden i');
 
-        if ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
-            $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id', 'left');
-            $builder->where('n.hris_user_id', $user_id);
-            $builder->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
-        } elseif ($role == 'PELAPOR') {
-            $builder->where('i.user_id', $user_id);
-            // Tampilkan semua item yang sudah ada respon (bukan PENDING murni)
-            $builder->where("(i.status_laporan IN ('KARU','TERKIRIM','INSTALASI','SELESAI') OR (i.status_laporan = 'PENDING' AND i.karu_read_at IS NOT NULL))", null, false);
-        } else {
-            return 0;
-        }
+    if ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
+        $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id AND n.is_read = 0 AND n.type = 'to_komite'', 'left');
+        $builder->where('n.hris_user_id', $user_id);
+        $builder->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
+    }
 
         if ($keyword) {
             $builder->groupStart()

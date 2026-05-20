@@ -747,6 +747,7 @@ class Ikprs extends AppController
                 ->join('ikprssm_notifikasi n', 'n.insiden_id = i.id', 'left')
                 ->where('n.hris_user_id', $user_id)
                 ->where('n.is_read', 0)
+                ->where('n.type', 'to_komite')
                 ->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI'])
                 ->groupBy('i.id')
                 ->countAllResults();
