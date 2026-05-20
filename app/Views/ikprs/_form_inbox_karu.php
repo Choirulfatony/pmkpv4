@@ -82,11 +82,43 @@
                                 <span class="text-muted d-block text-truncate">
                                     <?= esc(substr(strip_tags($row['insiden']), 0, 50)) ?>...
                                 </span>
+                                <?php if (($row['status_laporan'] ?? '') === 'SELESAI'): ?>
+                                    <span class="text-success d-block small mt-1" style="border-left:3px solid #198754; padding-left:6px;">
+                                        <i class="bi bi-check-circle-fill" style="font-size:10px;"></i>
+                                        <strong><?= esc($row['grading_final'] ?? '-') ?></strong> – 
+                                        <?= esc(substr(strip_tags($row['catatan_komite'] ?? ''), 0, 200)) ?>
+                                    </span>
+                                    <span class="d-block small mt-1" style="font-size:11px; color:#6c757d;">
+                                        <i class="bi bi-person-check"></i> <?= esc($row['komite_nama'] ?? 'Komite PMKP') ?>
+                                        <i class="bi bi-clock ms-2"></i> <?= date('d M Y H:i', strtotime($row['validated_at'] ?? $row['selesai_at'] ?? '')) ?>
+                                    </span>
+                                <?php elseif (($row['status_laporan'] ?? '') === 'KARU' && !empty($row['catatan_atasan'])): ?>
+                                    <span class="text-info d-block small mt-1" style="border-left:3px solid #0dcaf0; padding-left:6px;">
+                                        <i class="bi bi-chat-dots" style="font-size:10px;"></i>
+                                        <?= esc(substr(strip_tags($row['catatan_atasan']), 0, 60)) ?>
+                                    </span>
+                                <?php endif; ?>
                             </td>
 
                             <!-- STATUS -->
-                            <td class="text-center">
-                                <span class="badge bg-info">KARU</span>
+                            <td class="text-center align-middle">
+                                <?php
+                                $statusLabels = [
+                                    'PENDING'   => ['secondary', 'Menunggu'],
+                                    'KARU'      => ['info', 'Dibaca KARU'],
+                                    'TERKIRIM'  => ['primary', 'Terkirim'],
+                                    'INSTALASI' => ['warning', 'Instalasi'],
+                                    'SELESAI'   => ['success', 'Selesai']
+                                ];
+                                $s = $row['status_laporan'] ?? 'PENDING';
+                                $badge = $statusLabels[$s] ?? ['secondary', $s];
+                                ?>
+                                <span class="badge bg-<?= $badge[0] ?>"><?= $badge[1] ?></span>
+                                <?php if ($s === 'SELESAI' && !empty($row['komite_nama'])): ?>
+                                    <small class="d-block text-muted mt-1" style="font-size:10px; line-height:1.2;">
+                                        oleh <?= esc($row['komite_nama']) ?>
+                                    </small>
+                                <?php endif; ?>
                             </td>
 
                             <!-- TANGGAL -->

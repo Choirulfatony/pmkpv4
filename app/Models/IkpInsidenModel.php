@@ -23,8 +23,8 @@ class IkpInsidenModel extends Model
         // Verifikasi KARU
         'grading_risiko', 'catatan_atasan', 'penerima_laporan', 'tgl_terima', 'karu_read_at',
         // Instalasi
-        'instalasi_id', 'karu_id', 'current_receiver_id', 'current_receiver_role',
-        'status_laporan', 'created_at', 'komite_read_at', 'validated_at', 'grading_final', 'selesai_at', 'updated_at'
+        'instalasi_id', 'karu_id', 'komite_id', 'current_receiver_id', 'current_receiver_role',
+        'status_laporan', 'created_at', 'komite_read_at', 'komite_opened_by', 'validated_at', 'grading_final', 'selesai_at', 'updated_at'
     ];
 
     protected $useTimestamps = true;
@@ -344,7 +344,8 @@ class IkpInsidenModel extends Model
             $builder->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
         } elseif ($role == 'PELAPOR') {
             $builder->where('i.user_id', $user_id);
-            $builder->where('i.status_laporan', 'SELESAI');
+            // Tampilkan semua item yang sudah ada respon (bukan PENDING murni)
+            $builder->where("(i.status_laporan IN ('KARU','TERKIRIM','INSTALASI','SELESAI') OR (i.status_laporan = 'PENDING' AND i.karu_read_at IS NOT NULL))", null, false);
         } else {
             return 0;
         }
@@ -374,9 +375,11 @@ class IkpInsidenModel extends Model
             // KARU Inbox: semua laporan untuk KARU ini
             $sql = "SELECT i.*, 
                             d.department_name as unit_insiden,
+                            uk.nama as komite_nama,
                             CASE WHEN i.karu_read_at IS NULL THEN 0 ELSE 1 END as is_read
                         FROM ikprssm_insiden i
                         LEFT JOIN master_institution_department d ON d.department_id = i.tempat_insiden
+                        LEFT JOIN unit_karu uk ON uk.hris_user_id = i.komite_id
                         WHERE i.karu_id = ?
                         ORDER BY i.created_at DESC
                         LIMIT ? OFFSET ?";
@@ -386,22 +389,24 @@ class IkpInsidenModel extends Model
 
         $builder = $this->db->table('ikprssm_insiden i');
 
-        if ($role == 'KOMITE') {
-            $builder->select('i.*, d.department_name as unit_insiden, n.is_read');
-            $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id AND n.hris_user_id = ' . $this->db->escape($user_id), 'left');
-        } else {
-            $builder->select('i.*, d.department_name as unit_insiden, 0 as is_read');
-        }
-
         $builder->join('master_institution_department d', 'd.department_id = i.tempat_insiden', 'left');
+        $builder->join('unit_karu uk', 'uk.hris_user_id = i.komite_id', 'left');
 
         if ($role == 'KOMITE') {
+            $builder->select('i.*, d.department_name as unit_insiden, n.is_read, uk.nama as komite_nama');
+            $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id AND n.hris_user_id = ' . $this->db->escape($user_id), 'left');
             $builder->where('n.hris_user_id', $user_id);
             $builder->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
         } elseif ($role == 'PELAPOR') {
+            $db = \Config\Database::connect();
+            $userIdEsc = $db->escape($user_id);
+            $readSubquery = "(SELECT COALESCE(n2.is_read, 0) FROM ikprssm_notifikasi n2 WHERE n2.insiden_id = i.id AND n2.hris_user_id = {$userIdEsc} ORDER BY n2.id DESC LIMIT 1)";
+            $builder->select("i.*, d.department_name as unit_insiden, {$readSubquery} as is_read, uk.nama as komite_nama");
             $builder->where('i.user_id', $user_id);
-            $builder->where('i.status_laporan', 'SELESAI');
+            // Tampilkan semua item yang sudah ada respon (bukan PENDING murni)
+            $builder->where("(i.status_laporan IN ('KARU','TERKIRIM','INSTALASI','SELESAI') OR (i.status_laporan = 'PENDING' AND i.karu_read_at IS NOT NULL))", null, false);
         } else {
+            $builder->select('i.*, d.department_name as unit_insiden, 0 as is_read, uk.nama as komite_nama');
             return [];
         }
 

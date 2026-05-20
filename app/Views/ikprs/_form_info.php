@@ -133,6 +133,22 @@
                             <div class="notif-status <?= $warna_status ?> small">
                                 <i class="<?= $iconStatus ?>"></i> <?= $status_read ?>
                             </div>
+                            <?php if (($row['status_laporan'] ?? '') === 'SELESAI' && !empty($row['grading_final'])): ?>
+                                <div class="small mt-1" style="border-left:3px solid #198754; padding-left:8px;">
+                                    <span class="text-success">
+                                        <i class="bi bi-check-circle-fill" style="font-size:10px;"></i>
+                                        <strong><?= esc($row['grading_final']) ?></strong>
+                                    </span>
+                                    <span class="text-muted d-block text-truncate">
+                                        <?= esc(substr(strip_tags($row['catatan_komite'] ?? ''), 0, 200)) ?>
+                                    </span>
+                                    <span style="font-size:11px; color:#6c757d;">
+                                        <i class="bi bi-person-check"></i> <?= esc($row['komite_nama'] ?: 'Komite PMKP') ?>
+                                        <i class="bi bi-clock ms-2"></i>
+                                        <?= date('d M Y H:i', strtotime($row['validated_at'] ?? $row['selesai_at'] ?? '')) ?>
+                                    </span>
+                                </div>
+                            <?php endif; ?>
                         </td>
 
                         <!-- STATUS LAPORAN -->

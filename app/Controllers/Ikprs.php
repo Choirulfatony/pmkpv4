@@ -1577,13 +1577,20 @@ class Ikprs extends AppController
                 n.hris_user_id as receiver_id,
                 i.jenis_insiden,
                 i.status_laporan,
+                i.grading_final,
+                i.catatan_komite,
+                i.validated_at,
+                i.selesai_at,
+                i.komite_id,
                 i.karu_read_at,
                 i.komite_read_at,
                 COALESCE(i.current_receiver_id,0) as current_receiver_id,
-                d.department_name as unit_ruangan
+                d.department_name as unit_ruangan,
+                uk.nama as komite_nama
             FROM ikprssm_notifikasi n
             LEFT JOIN ikprssm_insiden i ON i.id = n.insiden_id
             LEFT JOIN master_institution_department d ON d.department_id = i.tempat_insiden
+            LEFT JOIN unit_karu uk ON uk.hris_user_id = i.komite_id
             WHERE n.hris_user_id = ?
             AND n.status IN ('INFO', 'NEW')
         ";
@@ -1624,6 +1631,11 @@ class Ikprs extends AppController
                 'waktu_lalu' => waktu_lalu($row['notif_time']),
                 'status_text' => $row['pesan'],
                 'status_read' => $status_read,
+                'grading_final' => $row['grading_final'] ?? '',
+                'catatan_komite' => $row['catatan_komite'] ?? '',
+                'validated_at' => $row['validated_at'] ?? '',
+                'selesai_at' => $row['selesai_at'] ?? '',
+                'komite_nama' => $row['komite_nama'] ?? '',
                 'karu_read_at'   => $row['karu_read_at'],
                 'komite_read_at' => $row['komite_read_at'],
                 'is_read' => $row['is_read']
@@ -2133,6 +2145,20 @@ class Ikprs extends AppController
             $insiden['status_laporan'] = 'INBOX'; // hanya tampilan
         }
 
+        // Ambil nama KOMITE dari unit_karu
+        $komiteUser = null;
+        if (!empty($insiden['komite_id'])) {
+            $komiteUk = $db->table('unit_karu')
+                ->select('nama')
+                ->where('hris_user_id', $insiden['komite_id'])
+                ->where('role_id', 2)
+                ->get()
+                ->getRow();
+            if ($komiteUk) {
+                $komiteUser = (object)['full_name' => $komiteUk->nama, 'nip' => ''];
+            }
+        }
+
         /* NEXT (id lebih kecil karena inbox DESC) */
         $next = $db->table('ikprssm_insiden')
             ->select('id')
@@ -2156,7 +2182,8 @@ class Ikprs extends AppController
         return view('ikprs/_detail_view_karu', [
             'insiden' => $insiden,
             'next_id' => $next->id ?? '',
-            'prev_id' => $prev->id ?? ''
+            'prev_id' => $prev->id ?? '',
+            'komite_user' => $komiteUser
         ]);
     }
 
@@ -2210,7 +2237,22 @@ class Ikprs extends AppController
             } catch (\Exception $e) {
                 log_message('error', 'Error get komite: ' . $e->getMessage());
             }
+            // Fallback: ambil dari unit_karu jika db2 gagal
+            if (!$komiteUser) {
+                $komiteUk = $db->table('unit_karu')
+                    ->select('nama')
+                    ->where('hris_user_id', $insiden['komite_id'])
+                    ->where('role_id', 2)
+                    ->get()
+                    ->getRow();
+                if ($komiteUk) {
+                    $komiteUser = (object)['full_name' => $komiteUk->nama, 'nip' => ''];
+                }
+            }
         }
+
+        // Ambil tanggal verifikasi dari validated_at atau selesai_at
+        $verifDate = $insiden['validated_at'] ?? $insiden['selesai_at'] ?? '';
 
         /* =============================
        NEXT & PREV berdasarkan tipe
@@ -2269,8 +2311,8 @@ class Ikprs extends AppController
             'tipe' => $tipe,
             'user_role' => $user_role,
             'karu_user' => $karuUser,
-            'komite_user' => $komiteUser
-
+            'komite_user' => $komiteUser,
+            'verif_date' => $verifDate
         ]);
     }
 
@@ -2539,7 +2581,7 @@ class Ikprs extends AppController
         // 🔥 1. AMBIL DATA INSIDEN
         // ==========================
         $insiden = $db->table('ikprssm_insiden')
-            ->select('id, user_id, karu_id, status_laporan')
+            ->select('id, user_id, karu_id, status_laporan, karu_read_at, grading_final')
             ->where('id', $insiden_id)
             ->get()
             ->getRow();
@@ -2552,9 +2594,21 @@ class Ikprs extends AppController
         log_message('error', "tandaiDibaca(): insiden status=" . $insiden->status_laporan);
 
         // ==========================
-        // ✅ 2. UPDATE is_read di notifikasi (KARU & KOMITE)
+        // ✅ 2. UPDATE is_read di notifikasi (PELAPOR, KARU & KOMITE)
         // ==========================
-        if ($role == 'KARU') {
+        if ($role == 'PELAPOR') {
+
+            log_message('error', "tandaiDibaca(): updating PELAPOR notifications");
+
+            $db->table('ikprssm_notifikasi')
+                ->where('insiden_id', $insiden_id)
+                ->where('hris_user_id', $user_id)
+                ->where('is_read', 0)
+                ->update([
+                    'is_read' => 1
+                ]);
+
+        } elseif ($role == 'KARU') {
 
             log_message('error', "tandaiDibaca(): updating KARU notifications");
 
@@ -2579,11 +2633,14 @@ class Ikprs extends AppController
             }
 
             // Track KARU baca di insiden - update karu_read_at jika NULL
-            if (empty($insiden->karu_read_at)) {
+            if (empty($insiden->karu_read_at) && $insiden->status_laporan !== 'SELESAI') {
                 $updateData = ['karu_read_at' => date('Y-m-d H:i:s')];
 
                 // Ubah status ke KARU setelah KARU membaca (belum diverifikasi)
-                $updateData['status_laporan'] = 'KARU';
+                // Jangan override jika sudah SELESAI
+                if ($insiden->status_laporan === 'PENDING') {
+                    $updateData['status_laporan'] = 'KARU';
+                }
 
                 $db->table('ikprssm_insiden')
                     ->where('id', $insiden_id)
@@ -2825,11 +2882,12 @@ class Ikprs extends AppController
                 ->update(['is_read' => 1]);
 
             // Insert notifikasi baru untuk PELAPOR
+            $catatanPreview = strlen(trim($catatan)) > 80 ? substr(trim($catatan), 0, 80) . '...' : trim($catatan);
             $db->table('ikprssm_notifikasi')->insert([
                 'sender_id'    => $user_id,
                 'hris_user_id' => $insiden->user_id,
                 'insiden_id'   => $id,
-                'pesan'        => 'Laporan Anda telah divalidasi oleh Komite PMKP dan dinyatakan selesai',
+                'pesan'        => "Laporan selesai – Grading: {$grading}, Catatan: {$catatanPreview}",
                 'status'       => 'INFO',
                 'type'         => 'to_pelapor',
                 'is_read'      => 0,

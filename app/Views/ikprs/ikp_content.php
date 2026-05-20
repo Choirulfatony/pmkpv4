@@ -1023,10 +1023,13 @@
           loadInfo(1);
       });
 
-      /* ===== KLIK ROW INFO - NONAKTIFKAN (TIDAK BISA BUKA DARI INFO) ===== */
-      // $(document).on('click', '.info-row', function() {
-      //     // DIBISAKAN - tidak ada action
-      // });
+      /* ===== KLIK ROW INFO ===== */
+      $(document).on('click', '.info-row', function() {
+          const id = $(this).data('id');
+          if (id) {
+              loadDetailInsiden(id, 'inbox');
+          }
+      });
 
 
       /* ===== tandaiBaca ===== */
