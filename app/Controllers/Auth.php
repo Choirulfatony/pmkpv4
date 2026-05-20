@@ -313,6 +313,10 @@ class Auth extends BaseController
             if ($user->role_id == 2) {
                 return 'KOMITE';
             }
+
+            if ($user->role_id == 4) {
+                return 'KEPALA_KEPERAWATAN';
+            }
         }
 
         return 'PELAPOR';
