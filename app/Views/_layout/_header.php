@@ -525,26 +525,17 @@
                     } catch (e) {}
                 }
 
-                if (inbox > lastInboxCount) {
-                    console.log("Inbox baru masuk");
-                    if (typeof loadInbox === "function") {
-                        loadInbox();
+                // Auto-refresh konten tab IKP yang sedang aktif (setiap 8 detik)
+                // Info tab punya interval sendiri (30 detik) — tidak perlu di-refresh dari sini
+                if ($('#btnInbox').length) {
+                    if ($('#btnInbox').hasClass('active') && typeof loadInbox === 'function') {
+                        loadInbox(1);
+                    } else if ($('#btnPending').hasClass('active') && typeof loadPending === 'function') {
+                        loadPending(1);
+                    } else if ($('#btnSend').hasClass('active') && typeof loadSend === 'function') {
+                        loadSend(1);
                     }
                 }
-
-                // if (draft > lastDraftCount) {
-                //     console.log("Draft baru masuk");
-                //     if (typeof loadDrafts === "function") {
-                //         loadDrafts();
-                //     }
-                // }
-
-                // if (send > lastSendCount) {
-                //     console.log("Sent baru masuk");
-                //     if (typeof loadSend === "function") {
-                //         loadSend();
-                //     }
-                // }
 
                 lastInboxCount = inbox;
                 lastPendingCount = pending;

@@ -407,7 +407,9 @@
 
         $(document).ready(function() {
 
-            // Load inbox pertama kali
+            // Load inbox pertama kali + tandai tab aktif
+            $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
+            $('#btnInbox').addClass('active');
             loadInbox(1);
 
             // Load info jika ada parameter ?info=1
