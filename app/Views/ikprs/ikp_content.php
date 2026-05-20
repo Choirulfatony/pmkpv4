@@ -381,6 +381,19 @@
   </div>
 
   <script>
+      /* =====================================================
+           TOAST HELPER (SweetAlert2) — DEFINED FIRST agar selalu tersedia
+         ===================================================== */
+      function toastWarning(msg) {
+          Swal.fire({toast:true, position:'top-end', icon:'warning', iconColor:'#f0ad4e', title:msg, showConfirmButton:false, timer:3000, timerProgressBar:true});
+      }
+      function toastError(msg) {
+          Swal.fire({toast:true, position:'top-end', icon:'error', iconColor:'#d9534f', title:msg, showConfirmButton:false, timer:3000, timerProgressBar:true});
+      }
+      function toastSuccess(msg) {
+          Swal.fire({toast:true, position:'top-end', icon:'success', iconColor:'#5cb85c', title:msg, showConfirmButton:false, timer:3000, timerProgressBar:true});
+      }
+
       let inboxLoading = false;
       let pendingLoading = false;
       let sendLoading = false;
@@ -1105,30 +1118,23 @@
                   grading: grading
               },
               success: function(res) {
-
+                  // Sukses — tampilkan toast hijau + refresh inbox
                   if (res.status) {
-
-                      toastr.success(res.message, 'Berhasil');
-                      $('#verifikasi_error').html('<div class="text-success fw-bold">' + res.message + '</div>');
-
+                      toastSuccess(res.message);
                       setTimeout(function() {
                           loadInbox(1);
                           refreshNotif();
                       }, 1500);
-
                   } else {
-
-                      $('#verifikasi_error').html(res.message);
+                      // Gagal dari server — tampilkan toast kuning
+                      toastWarning(res.message);
                       $(btn).prop('disabled', false);
-
                   }
-
               },
               error: function() {
-
-                  $('#verifikasi_error').html('Terjadi kesalahan server');
+                  // Error koneksi/server — tampilkan toast merah
+                  toastError('Terjadi kesalahan server');
                   $(btn).prop('disabled', false);
-
               }
           });
 
@@ -1227,20 +1233,23 @@
               },
               dataType: 'json',
               success: function(res) {
+                  // Sukses — toast hijau + reload halaman
                   if (res.status == 'success') {
-                      toastr.success(res.message, 'Berhasil');
+                      toastSuccess(res.message);
                       setTimeout(function() {
                           location.reload();
                       }, 1000);
                   } else {
-                      $('#komite_error').text(res.message);
+                      // Validasi gagal — toast kuning
+                      toastWarning(res.message);
                       $(btn).prop('disabled', false);
                   }
               },
-               error: function() {
-                   $('#komite_error').text('Terjadi kesalahan server');
-                   $(btn).prop('disabled', false);
-               }
+              error: function() {
+                  // Error server — toast merah
+                  toastError('Terjadi kesalahan server');
+                  $(btn).prop('disabled', false);
+              }
            });
        }
 
@@ -1256,7 +1265,53 @@
        });
 
        /* ===== START AUTO REFRESH IF INFO TAB ACTIVE ON LOAD ===== */
-       if ($('#info').hasClass('active')) {
-           startInfoAutoRefresh();
-       }
-   </script>
+        if ($('#info').hasClass('active')) {
+            startInfoAutoRefresh();
+        }
+
+    /* =====================================================
+         TOAST HELPER (SweetAlert2) — notifikasi pop-up di pojok kanan atas
+         Digunakan oleh: kirimVerifikasi(), validasiKomite(), dll.
+       ===================================================== */
+    // Peringatan kuning (warning) — untuk validasi client-side gagal
+    function toastWarning(msg) {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'warning',
+            iconColor: '#f0ad4e',
+            title: msg,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    }
+
+    // Error merah — untuk server error / unexpected error
+    function toastError(msg) {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            iconColor: '#d9534f',
+            title: msg,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    }
+
+    // Sukses hijau + icon centang — untuk operasi berhasil
+    function toastSuccess(msg) {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            iconColor: '#5cb85c',
+            title: msg,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    }
+    </script>

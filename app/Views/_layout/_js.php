@@ -304,4 +304,51 @@
     //     console.log('🚀 Submit IKP');
     //     // AJAX submit di sini
     // }
+
+    /* =====================================================
+         TOAST HELPER (SweetAlert2) — fallback global
+         Dipanggil dari halaman yang tidak punya definisi lokal
+         (dicari dulu definisi lokal di masing-masing halaman)
+       ===================================================== */
+    // Peringatan kuning (warning)
+    function toastWarning(msg) {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'warning',
+            iconColor: '#f0ad4e',
+            title: msg,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    }
+
+    // Error merah
+    function toastError(msg) {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            iconColor: '#d9534f',
+            title: msg,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    }
+
+    // Sukses hijau + icon centang
+    function toastSuccess(msg) {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            iconColor: '#5cb85c',
+            title: msg,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    }
 </script>

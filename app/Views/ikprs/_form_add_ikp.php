@@ -1709,49 +1709,47 @@
             dataType: "json",
 
             success: function(res) {
-
+                // Reset error styling
                 $('.invalid-feedback').text('');
                 $('.is-invalid').removeClass('is-invalid');
 
                 if (!res.status) {
-
+                    // Tampilkan error validasi per-field
                     if (res.errors) {
                         $.each(res.errors, function(field, msg) {
                             $('[name="' + field + '"]').addClass('is-invalid');
                             $('#error_' + field).text(msg);
                         });
                     }
-
+                    // Gagal — toast merah
                     toastError(res.message);
-
-                    // ❌ HENTIKAN loading kalau gagal
                     hideIKPLoading();
                     return;
                 }
 
+                // Sukses — toast hijau + reload inbox
                 toastSuccess(res.message);
-                // showIKPLoading();
-
-                // 🔄 load inbox setelah simpan
                 $('#inbox-wrapper').load(
                     "<?= site_url('ikprs/form_inbox_karu') ?>",
                     function() {
-                        // ✅ STOP loading setelah load selesai
                         hideIKPLoading();
                     }
                 );
             },
 
             error: function() {
-                toastr.error('Terjadi kesalahan server');
+                // Error server — toast merah
+                toastError('Terjadi kesalahan server');
                 hideIKPLoading();
             }
         });
     }
 
     /* =====================================================
-         TOAST HELPER
+         TOAST HELPER (SweetAlert2) — notifikasi pop-up di pojok kanan atas
+         Dipanggil oleh: submitIkp(), kirimDraft()
        ===================================================== */
+    // Peringatan kuning (warning) — validasi client-side gagal
     function toastWarning(msg) {
         Swal.fire({
             toast: true,
@@ -1765,6 +1763,7 @@
         });
     }
 
+    // Error merah — server error / unexpected error
     function toastError(msg) {
         Swal.fire({
             toast: true,
@@ -1778,6 +1777,7 @@
         });
     }
 
+    // Sukses hijau + icon centang — operasi sukses
     function toastSuccess(msg) {
         Swal.fire({
             toast: true,
