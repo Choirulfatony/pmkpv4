@@ -384,10 +384,6 @@ class IkpInsidenModel extends Model
         $builder = $this->db->table('ikprssm_insiden i');
 
         if ($role == 'KOMITE') {
-            $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id AND n.type = "to_komite"', 'left');
-            $builder->where('n.hris_user_id', $user_id);
-            $builder->where('n.is_read', 0);
-            $builder->where('n.type', 'to_komite');
             $builder->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
         } elseif ($role == 'KEPALA_KEPERAWATAN') {
             $builder->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
@@ -442,11 +438,10 @@ class IkpInsidenModel extends Model
         $builder->join('unit_karu uk', 'uk.hris_user_id = i.komite_id', 'left');
 
         if ($role == 'KOMITE') {
-            $builder->select('i.*, d.department_name as unit_insiden, n.is_read, uk.nama as komite_nama');
-            $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id AND n.type = "to_komite" AND n.hris_user_id = ' . $this->db->escape($user_id), 'left');
-            $builder->where('n.hris_user_id', $user_id);
-            $builder->where('n.is_read', 0);
-            $builder->where('n.type', 'to_komite');
+            $db = \Config\Database::connect();
+            $userIdEsc = $db->escape($user_id);
+            $readSubquery = "(SELECT COALESCE(MAX(n.is_read), 0) FROM ikprssm_notifikasi n WHERE n.insiden_id = i.id AND n.type = 'to_komite' AND n.hris_user_id = {$userIdEsc})";
+            $builder->select("i.*, d.department_name as unit_insiden, {$readSubquery} as is_read, uk.nama as komite_nama");
             $builder->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
         } elseif ($role == 'KEPALA_KEPERAWATAN') {
             $db = \Config\Database::connect();
