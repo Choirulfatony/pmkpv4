@@ -11,21 +11,61 @@
 </head>
 
 <body>
+    <?php
+    if (!function_exists('buildQueryString')) {
+        function buildQueryString($status, $search, $per_page) {
+            $params = [];
+            if (!empty($status)) $params[] = 'status=' . urlencode($status);
+            if (!empty($search)) $params[] = 'search=' . urlencode($search);
+            if ($per_page && $per_page != 20) $params[] = 'per_page=' . $per_page;
+            return count($params) > 0 ? '&' . implode('&', $params) : '';
+        }
+    }
+    ?>
     <div class="container mt-4">
         <h3>📱 Monitoring WhatsApp Messages</h3>
 
         <div class="card mt-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span><strong>Filter Status</strong></span>
-                <div>
-                    <button onclick="reloadData()" class="btn btn-sm btn-outline-primary me-2" id="btnReload">
-                        <i class="bi bi-arrow-clockwise"></i> <span id="reloadText">Reload</span>
-                    </button>
-                    <a href="<?= site_url('ikprs/wa-monitoring') ?>" class="btn btn-sm <?= empty($current_status) ? 'btn-primary' : 'btn-outline-secondary' ?>">All</a>
-                    <a href="<?= site_url('ikprs/wa-monitoring?status=SENT') ?>" class="btn btn-sm <?= $current_status == 'SENT' ? 'btn-success' : 'btn-outline-success' ?>">Sent</a>
-                    <a href="<?= site_url('ikprs/wa-monitoring?status=PENDING') ?>" class="btn btn-sm <?= $current_status == 'PENDING' ? 'btn-warning' : 'btn-outline-warning' ?>">Pending</a>
-                    <a href="<?= site_url('ikprs/wa-monitoring?status=FAILED') ?>" class="btn btn-sm <?= $current_status == 'FAILED' ? 'btn-danger' : 'btn-outline-danger' ?>">Failed</a>
-                    <a href="<?= site_url('ikprs/wa-monitoring?status=NO_PHONE') ?>" class="btn btn-sm <?= $current_status == 'NO_PHONE' ? 'btn-secondary' : 'btn-outline-secondary' ?>">No Phone</a>
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                    <span><strong>Filter Status</strong></span>
+                    <div>
+                        <button onclick="reloadData()" class="btn btn-sm btn-outline-primary me-2" id="btnReload">
+                            <i class="bi bi-arrow-clockwise"></i> <span id="reloadText">Reload</span>
+                        </button>
+                        <a href="<?= site_url('ikprs/wa-monitoring') ?>" class="btn btn-sm <?= empty($current_status) ? 'btn-primary' : 'btn-outline-secondary' ?>">All</a>
+                        <a href="<?= site_url('ikprs/wa-monitoring?status=SENT') ?>" class="btn btn-sm <?= $current_status == 'SENT' ? 'btn-success' : 'btn-outline-success' ?>">Sent</a>
+                        <a href="<?= site_url('ikprs/wa-monitoring?status=PENDING') ?>" class="btn btn-sm <?= $current_status == 'PENDING' ? 'btn-warning' : 'btn-outline-warning' ?>">Pending</a>
+                        <a href="<?= site_url('ikprs/wa-monitoring?status=FAILED') ?>" class="btn btn-sm <?= $current_status == 'FAILED' ? 'btn-danger' : 'btn-outline-danger' ?>">Failed</a>
+                        <a href="<?= site_url('ikprs/wa-monitoring?status=NO_PHONE') ?>" class="btn btn-sm <?= $current_status == 'NO_PHONE' ? 'btn-secondary' : 'btn-outline-secondary' ?>">No Phone</a>
+                    </div>
+                </div>
+
+                <!-- Search & Per Page -->
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <form method="GET" action="<?= site_url('ikprs/wa-monitoring') ?>" class="d-flex gap-2">
+                        <?php if (!empty($current_status)): ?>
+                            <input type="hidden" name="status" value="<?= esc($current_status) ?>">
+                        <?php endif; ?>
+                        <div class="input-group input-group-sm" style="width: 300px;">
+                            <input type="text" name="search" class="form-control" placeholder="Cari nama, pesan, type..." value="<?= esc($current_search ?? '') ?>">
+                            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i></button>
+                            <?php if (!empty($current_search)): ?>
+                                <a href="<?= site_url('ikprs/wa-monitoring' . (!empty($current_status) ? '?status=' . $current_status : '')) ?>" class="btn btn-outline-secondary"><i class="bi bi-x"></i></a>
+                            <?php endif; ?>
+                        </div>
+                    </form>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="small text-muted mb-0">Tampilkan:</label>
+                        <select id="perPageSelect" class="form-select form-select-sm" style="width: 80px;" onchange="changePerPage(this.value)">
+                            <option value="10" <?= $per_page == 10 ? 'selected' : '' ?>>10</option>
+                            <option value="20" <?= $per_page == 20 ? 'selected' : '' ?>>20</option>
+                            <option value="50" <?= $per_page == 50 ? 'selected' : '' ?>>50</option>
+                            <option value="100" <?= $per_page == 100 ? 'selected' : '' ?>>100</option>
+                        </select>
+                        <span class="small text-muted">per halaman</span>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
@@ -108,17 +148,43 @@
                 </div>
 
                 <!-- Pagination -->
-                <?php if ($total_pages > 1): ?>
-                    <nav>
-                        <ul class="pagination justify-content-center">
-                            <?php for ($p = 1; $p <= $total_pages; $p++): ?>
-                                <li class="page-item <?= $p == $page ? 'active' : '' ?>">
-                                    <a class="page-link" href="<?= site_url('ikprs/wa-monitoring?page=' . $p . (!empty($current_status) ? '&status=' . $current_status : '')) ?>"><?= $p ?></a>
-                                </li>
-                            <?php endfor; ?>
-                        </ul>
-                    </nav>
-                <?php endif; ?>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+                    <div class="small text-muted">
+                        Total: <strong><?= $total ?></strong> data
+                    </div>
+                    <?php if ($total_pages > 1): ?>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <?php if ($page > 1): ?>
+                                    <li class="page-item">
+                                        <a class="page-link" href="<?= site_url('ikprs/wa-monitoring?page=' . ($page - 1) . buildQueryString($current_status, $current_search, $per_page)) ?>">&laquo;</a>
+                                    </li>
+                                <?php endif; ?>
+                                <?php
+                                $start = max(1, $page - 2);
+                                $end = min($total_pages, $page + 2);
+                                if ($start > 1): ?>
+                                    <li class="page-item"><a class="page-link" href="<?= site_url('ikprs/wa-monitoring?page=1' . buildQueryString($current_status, $current_search, $per_page)) ?>">1</a></li>
+                                    <?php if ($start > 2): ?><li class="page-item disabled"><span class="page-link">...</span></li><?php endif; ?>
+                                <?php endif; ?>
+                                <?php for ($p = $start; $p <= $end; $p++): ?>
+                                    <li class="page-item <?= $p == $page ? 'active' : '' ?>">
+                                        <a class="page-link" href="<?= site_url('ikprs/wa-monitoring?page=' . $p . buildQueryString($current_status, $current_search, $per_page)) ?>"><?= $p ?></a>
+                                    </li>
+                                <?php endfor; ?>
+                                <?php if ($end < $total_pages): ?>
+                                    <?php if ($end < $total_pages - 1): ?><li class="page-item disabled"><span class="page-link">...</span></li><?php endif; ?>
+                                    <li class="page-item"><a class="page-link" href="<?= site_url('ikprs/wa-monitoring?page=' . $total_pages . buildQueryString($current_status, $current_search, $per_page)) ?>"><?= $total_pages ?></a></li>
+                                <?php endif; ?>
+                                <?php if ($page < $total_pages): ?>
+                                    <li class="page-item">
+                                        <a class="page-link" href="<?= site_url('ikprs/wa-monitoring?page=' . ($page + 1) . buildQueryString($current_status, $current_search, $per_page)) ?>">&raquo;</a>
+                                    </li>
+                                <?php endif; ?>
+                            </ul>
+                        </nav>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
 
@@ -129,6 +195,21 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function buildQueryString(status, search, per_page) {
+            let params = [];
+            if (status) params.push('status=' + encodeURIComponent(status));
+            if (search) params.push('search=' + encodeURIComponent(search));
+            if (per_page && per_page != 20) params.push('per_page=' + per_page);
+            return params.length > 0 ? '&' + params.join('&') : '';
+        }
+
+        function changePerPage(val) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('per_page', val);
+            urlParams.set('page', '1');
+            window.location.href = '<?= site_url('ikprs/wa-monitoring') ?>?' + urlParams.toString();
+        }
+
         function reloadData() {
             const btn = document.getElementById('btnReload');
             const reloadText = document.getElementById('reloadText');
@@ -162,6 +243,19 @@
                     reloadText.textContent = 'Reload';
                 });
         }
+
+        // Search on Enter key
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.querySelector('input[name="search"]');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.form.submit();
+                    }
+                });
+            }
+        });
 
         function updateTable(data) {
             const tbody = document.querySelector('table tbody');

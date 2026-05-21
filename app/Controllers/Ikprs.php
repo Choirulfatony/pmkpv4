@@ -3391,8 +3391,13 @@ class Ikprs extends AppController
         $db = db_connect();
 
         $status = $this->request->getGet('status') ?? '';
+        $search = $this->request->getGet('search') ?? '';
         $page = (int)($this->request->getGet('page') ?? 1);
-        $limit = 20;
+        $per_page = (int)($this->request->getGet('per_page') ?? 20);
+        if (!in_array($per_page, [10, 20, 50, 100])) {
+            $per_page = 20;
+        }
+        $limit = $per_page;
         $offset = ($page - 1) * $limit;
         $format = $this->request->getGet('format') ?? '';
 
@@ -3402,6 +3407,14 @@ class Ikprs extends AppController
 
         if (in_array($status, ['SENT', 'PENDING', 'FAILED', 'NO_PHONE'])) {
             $builder->where('n.wa_status', $status);
+        }
+
+        if (!empty($search)) {
+            $builder->groupStart()
+                ->like('uk.nama', $search)
+                ->orLike('n.pesan', $search)
+                ->orLike('n.type', $search)
+                ->groupEnd();
         }
 
         $total = $builder->countAllResults(false);
@@ -3426,7 +3439,9 @@ class Ikprs extends AppController
             'total' => $total,
             'page' => $page,
             'total_pages' => ceil($total / $limit),
-            'current_status' => $status
+            'current_status' => $status,
+            'current_search' => $search,
+            'per_page' => $per_page
         ]);
     }
 
