@@ -3045,6 +3045,89 @@ class Ikprs extends AppController
 
         /*
         ==========================
+        NOTIF KE KEPALA_KEPERAWATAN
+        ==========================
+        */
+
+        $catatanPreview = strlen(trim($catatan)) > 80 ? substr(trim($catatan), 0, 80) . '...' : trim($catatan);
+
+        $kepala_kep = $db->table('unit_karu')
+            ->where('role_id', 4)
+            ->where('aktif', 1)
+            ->get()
+            ->getRow();
+
+        if ($kepala_kep) {
+            $notifKepalaId = null;
+            $db->table('ikprssm_notifikasi')->insert([
+                'sender_id'    => $user_id,
+                'hris_user_id' => $kepala_kep->hris_user_id,
+                'insiden_id'   => $id,
+                'pesan'        => "Laporan selesai – Grading: {$grading}, Catatan: {$catatanPreview}",
+                'status'       => 'INFO',
+                'type'         => 'to_komite',
+                'is_read'      => 0,
+                'created_at'   => date('Y-m-d H:i:s'),
+                'wa_status'    => null
+            ]);
+            $notifKepalaId = $db->insertID();
+
+            // Kirim WA ke KEPALA_KEPERAWATAN (template hello)
+            if (!empty($kepala_kep->phone)) {
+                $phone = preg_replace('/^0/', '62', $kepala_kep->phone);
+                $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZD';
+                $url = "https://graph.facebook.com/v19.0/1128976353628313/messages";
+                $headers = [
+                    'Authorization: Bearer ' . $token,
+                    'Content-Type: application/json'
+                ];
+                $waData = [
+                    'messaging_product' => 'whatsapp',
+                    'to' => $phone,
+                    'type' => 'template',
+                    'template' => [
+                        'name' => 'hello',
+                        'language' => ['code' => 'id'],
+                        'components' => [
+                            [
+                                'type' => 'body',
+                                'parameters' => [
+                                    ['type' => 'text', 'text' => $kepala_kep->nama ?? 'Kepala Keperawatan'],
+                                    ['type' => 'text', 'text' => $insiden->nama_pasien ?? '-'],
+                                    ['type' => 'text', 'text' => $grading],
+                                    ['type' => 'text', 'text' => $catatanPreview],
+                                    ['type' => 'text', 'text' => session('hris_full_name') ?? 'KOMITE']
+                                ]
+                            ]
+                        ]
+                    ]
+                ];
+
+                $ch = curl_init($url);
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($waData));
+                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                $waRes = curl_exec($ch);
+                $waErr = curl_error($ch);
+                $waHttp = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+
+                $waStatus = 'FAILED';
+                if (!$waErr && $waHttp >= 200 && $waHttp < 300) {
+                    $respJson = json_decode($waRes, true);
+                    $waStatus = isset($respJson['messages'][0]['id']) ? 'SENT' : 'FAILED';
+                }
+                $db->table('ikprssm_notifikasi')
+                    ->where('id', $notifKepalaId)
+                    ->update(['wa_status' => $waStatus]);
+                log_message('error', 'validasi_komite: WA to KEPALA_KEPERAWATAN - phone=' . $phone . ', status=' . $waStatus);
+            }
+        }
+
+        /*
+        ==========================
         NOTIF KE PELAPOR
         ==========================
         */
@@ -3058,7 +3141,6 @@ class Ikprs extends AppController
                 ->update(['is_read' => 1]);
 
             // Insert notifikasi baru untuk PELAPOR
-            $catatanPreview = strlen(trim($catatan)) > 80 ? substr(trim($catatan), 0, 80) . '...' : trim($catatan);
             $db->table('ikprssm_notifikasi')->insert([
                 'sender_id'    => $user_id,
                 'hris_user_id' => $insiden->user_id,
