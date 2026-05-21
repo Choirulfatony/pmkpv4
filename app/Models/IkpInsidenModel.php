@@ -39,7 +39,37 @@ class IkpInsidenModel extends Model
         $role = session('user_role');
         $db = $this->db;
 
-        if ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
+        if ($role == 'KEPALA_KEPERAWATAN') {
+            $builder = $db->table('ikprssm_insiden i');
+            $builder->join('unit_karu uk', 'uk.hris_user_id = i.komite_id', 'left');
+
+            $builder->select('
+            i.id, i.nama_pasien, i.kd_pasien, i.jenis_insiden, i.insiden, i.kronologis_insiden,
+            i.status_laporan, i.grading_final, i.catatan_komite, i.catatan_atasan,
+            i.validated_at, i.selesai_at, i.komite_id, i.created_at,
+            0 as is_read,
+            uk.nama as komite_nama
+            ');
+
+            $builder->where('i.status_laporan', 'PENDING');
+            $builder->where('i.komite_read_at', null);
+
+            if ($search !== '') {
+                $builder->groupStart()
+                    ->like('i.nama_pasien', $search)
+                    ->orLike('i.kd_pasien', $search)
+                    ->orLike('i.jenis_insiden', $search)
+                    ->groupEnd();
+            }
+
+            $this->applyFilters($builder, $filters, 'i');
+
+            return $builder
+                ->orderBy('i.created_at', 'DESC')
+                ->limit($limit, $offset)
+                ->get()
+                ->getResultArray();
+        } elseif ($role == 'KOMITE') {
             return [];
         }
 
@@ -55,9 +85,8 @@ class IkpInsidenModel extends Model
         ');
 
         if ($role == 'KARU') {
-            $builder->whereIn('i.status_laporan', ['PENDING']);
+            $builder->whereIn('status_laporan', ['PENDING']);
             $builder->where('i.karu_id', $user_id);
-            $builder->where('i.karu_read_at IS NOT NULL', null, false);
             $builder->where('i.komite_read_at', null);
         } elseif ($role == 'PELAPOR') {
             $builder->where('i.user_id', $user_id);
@@ -126,7 +155,13 @@ class IkpInsidenModel extends Model
     {
         $role = session('user_role');
 
-        if ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
+        if ($role == 'KEPALA_KEPERAWATAN') {
+            $builder = $this->db->table('ikprssm_insiden i');
+            $builder->where('i.status_laporan', 'PENDING');
+            $builder->where('i.komite_read_at', null);
+            $this->applyFilters($builder, $filters, 'i');
+            return $builder->countAllResults();
+        } elseif ($role == 'KOMITE') {
             return 0;
         }
 
@@ -135,8 +170,6 @@ class IkpInsidenModel extends Model
         if ($role == 'KARU') {
             $builder->whereIn('status_laporan', ['PENDING']);
             $builder->where('karu_id', $user_id);
-            $builder->where('karu_read_at IS NOT NULL', null, false);
-            $builder->where('komite_read_at', null);
         } elseif ($role == 'PELAPOR') {
             $builder->where('user_id', $user_id);
             $builder->where('status_laporan', 'PENDING');
@@ -172,6 +205,12 @@ class IkpInsidenModel extends Model
      * ===================== */
     public function countSendByUser($user_id)
     {
+        $role = session('user_role');
+
+        if ($role == 'KEPALA_KEPERAWATAN') {
+            return 0;
+        }
+
         $builder = $this->db->table($this->table);
 
         $builder->groupStart()
@@ -190,14 +229,16 @@ class IkpInsidenModel extends Model
     {
         $role = session('user_role');
 
-        if ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
+        if ($role == 'KOMITE') {
             $builder = $this->db->table('ikprssm_insiden i');
-            $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id');
+            $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id AND n.type = "to_komite"');
             $builder->where('n.hris_user_id', $user_id);
             $builder->where('n.is_read', 1);
             $builder->whereIn('i.status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
             $this->applyFilters($builder, $filters, 'i');
             return $builder->countAllResults();
+        } elseif ($role == 'KEPALA_KEPERAWATAN') {
+            return 0;
         }
 
         $builder = $this->db->table($this->table);
@@ -208,7 +249,10 @@ class IkpInsidenModel extends Model
             $builder->where('(status_laporan IN ("KARU","TERKIRIM","INSTALASI","SELESAI") OR (status_laporan = "PENDING" AND karu_read_at IS NOT NULL))');
         } elseif ($role == 'KARU') {
             $builder->where('karu_id', $user_id);
-            $builder->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
+            $builder->groupStart()
+                ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI'])
+                ->orWhere('komite_read_at IS NOT NULL', null, false)
+                ->groupEnd();
         } else {
             $builder->where('user_id', $user_id);
             $builder->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
@@ -235,10 +279,10 @@ class IkpInsidenModel extends Model
     {
         $role = session('user_role');
 
-        if ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
+        if ($role == 'KOMITE') {
             $builder = $this->db->table('ikprssm_insiden i');
             $builder->select('i.id, i.nama_pasien, i.kd_pasien, i.jenis_insiden, i.insiden, i.kronologis_insiden, i.grading_risiko, i.created_at');
-            $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id');
+            $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id AND n.type = "to_komite"');
             $builder->where('n.hris_user_id', $user_id);
             $builder->where('n.is_read', 1);
             $builder->whereIn('i.status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
@@ -258,6 +302,8 @@ class IkpInsidenModel extends Model
                 ->limit($limit, $offset)
                 ->get()
                 ->getResultArray();
+        } elseif ($role == 'KEPALA_KEPERAWATAN') {
+            return [];
         }
 
         $builder = $this->db->table($this->table);
@@ -269,9 +315,11 @@ class IkpInsidenModel extends Model
             $builder->where('user_id', $user_id);
             $builder->where('(status_laporan IN ("KARU","TERKIRIM","INSTALASI","SELESAI") OR (status_laporan = "PENDING" AND karu_read_at IS NOT NULL))');
         } elseif ($role == 'KARU') {
-            // KARU Sent: item yang sudah selesai diproses
             $builder->where('karu_id', $user_id);
-            $builder->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
+            $builder->groupStart()
+                ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI'])
+                ->orWhere('komite_read_at IS NOT NULL', null, false)
+                ->groupEnd();
         } else {
             $builder->where('user_id', $user_id);
             $builder->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI']);
@@ -335,11 +383,13 @@ class IkpInsidenModel extends Model
 
         $builder = $this->db->table('ikprssm_insiden i');
 
-        if ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
-            $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id AND n.is_read = 0 AND n.type = "to_komite"', 'left');
+        if ($role == 'KOMITE') {
+            $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id AND n.type = "to_komite"', 'left');
             $builder->where('n.hris_user_id', $user_id);
             $builder->where('n.is_read', 0);
             $builder->where('n.type', 'to_komite');
+            $builder->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
+        } elseif ($role == 'KEPALA_KEPERAWATAN') {
             $builder->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
         } elseif ($role == 'PELAPOR') {
             $builder->where('i.user_id', $user_id);
@@ -348,30 +398,6 @@ class IkpInsidenModel extends Model
         } else {
             return 0;
         }
-
-        if ($keyword) {
-            $builder->groupStart()
-                ->like('i.nama_pasien', $keyword)
-                ->orLike('i.jenis_insiden', $keyword)
-                ->orLike('i.nama_unit', $keyword)
-                ->groupEnd();
-        }
-
-        $tablePrefix = ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') ? 'i' : '';
-        $this->applyFilters($builder, $filters, $tablePrefix);
-
-        return $builder->countAllResults();
-    }
-
-        $builder = $this->db->table('ikprssm_insiden i');
-
-    if ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
-        $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id AND n.hris_user_id = ' . $this->db->escape($user_id) . ' AND n.is_read = 0 AND n.type = "to_komite"', 'left');
-        $builder->where('n.hris_user_id', $user_id);
-        $builder->where('n.is_read', 0);
-        $builder->where('n.type', 'to_komite');
-        $builder->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
-    }
 
         if ($keyword) {
             $builder->groupStart()
@@ -415,13 +441,30 @@ class IkpInsidenModel extends Model
         $builder->join('master_institution_department d', 'd.department_id = i.tempat_insiden', 'left');
         $builder->join('unit_karu uk', 'uk.hris_user_id = i.komite_id', 'left');
 
-        if ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
+        if ($role == 'KOMITE') {
             $builder->select('i.*, d.department_name as unit_insiden, n.is_read, uk.nama as komite_nama');
-            $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id AND n.hris_user_id = ' . $this->db->escape($user_id) . ' AND n.is_read = 0 AND n.type = "to_komite"', 'left');
+            $builder->join('ikprssm_notifikasi n', 'n.insiden_id = i.id AND n.type = "to_komite" AND n.hris_user_id = ' . $this->db->escape($user_id), 'left');
             $builder->where('n.hris_user_id', $user_id);
             $builder->where('n.is_read', 0);
             $builder->where('n.type', 'to_komite');
             $builder->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
+        } elseif ($role == 'KEPALA_KEPERAWATAN') {
+            $db = \Config\Database::connect();
+            $userIdEsc = $db->escape($user_id);
+            $readSubquery = "(SELECT COALESCE(n2.is_read, 0) FROM ikprssm_notifikasi n2 WHERE n2.insiden_id = i.id AND n2.hris_user_id = {$userIdEsc} ORDER BY n2.id DESC LIMIT 1)";
+            $builder->select("i.*, d.department_name as unit_insiden, {$readSubquery} as is_read, uk.nama as komite_nama");
+            $builder->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI']);
+        } elseif ($role == 'PELAPOR') {
+            $db = \Config\Database::connect();
+            $userIdEsc = $db->escape($user_id);
+            $readSubquery = "(SELECT COALESCE(n2.is_read, 0) FROM ikprssm_notifikasi n2 WHERE n2.insiden_id = i.id AND n2.hris_user_id = {$userIdEsc} ORDER BY n2.id DESC LIMIT 1)";
+            $builder->select("i.*, d.department_name as unit_insiden, {$readSubquery} as is_read, uk.nama as komite_nama");
+            $builder->where('i.user_id', $user_id);
+            // Tampilkan semua item yang sudah ada respon (bukan PENDING murni)
+            $builder->where("(i.status_laporan IN ('KARU','TERKIRIM','INSTALASI','SELESAI') OR (i.status_laporan = 'PENDING' AND i.karu_read_at IS NOT NULL))", null, false);
+        } else {
+            $builder->select('i.*, d.department_name as unit_insiden, 0 as is_read, uk.nama as komite_nama');
+            return [];
         }
 
         if ($keyword) {
@@ -435,10 +478,8 @@ class IkpInsidenModel extends Model
         $tablePrefix = ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') ? 'i' : '';
         $this->applyFilters($builder, $filters, $tablePrefix);
 
-        $orderField = ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') ? 'i.created_at' : 'created_at';
-
         return $builder
-            ->orderBy($orderField, 'DESC')
+            ->orderBy('i.created_at', 'DESC')
             ->limit($limit, $offset)
             ->get()
             ->getResultArray();

@@ -736,15 +736,14 @@ class Ikprs extends AppController
             $total_pending = $db->table('ikprssm_insiden')
                 ->where('karu_id', $user_id)
                 ->where('status_laporan', 'PENDING')
-                ->where('karu_read_at IS NOT NULL', null, false)
                 ->where('komite_read_at', null)
                 ->countAllResults();
             $total_send = 0;
-        } elseif ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
-            // KOMITE / KEPALA_KEPERAWATAN inbox = item yang belum dibaca (is_read=0)
+        } elseif ($role == 'KOMITE') {
+            // KOMITE inbox = item yang belum dibaca (is_read=0)
             $total_inbox = $db->table('ikprssm_insiden i')
                 ->select('i.id')
-                ->join('ikprssm_notifikasi n', 'n.insiden_id = i.id', 'left')
+                ->join('ikprssm_notifikasi n', 'n.insiden_id = i.id AND n.type = "to_komite"', 'left')
                 ->where('n.hris_user_id', $user_id)
                 ->where('n.is_read', 0)
                 ->where('n.type', 'to_komite')
@@ -752,7 +751,25 @@ class Ikprs extends AppController
                 ->groupBy('i.id')
                 ->countAllResults();
 
+            // KOMITE pending = 0 (semua masuk inbox)
             $total_pending = 0;
+        } elseif ($role == 'KEPALA_KEPERAWATAN') {
+            // KEPALA_KEPERAWATAN inbox = item yang belum dibaca (is_read=0)
+            $total_inbox = $db->table('ikprssm_insiden i')
+                ->select('i.id')
+                ->join('ikprssm_notifikasi n', 'n.insiden_id = i.id AND n.type = "to_komite"', 'left')
+                ->where('n.hris_user_id', $user_id)
+                ->where('n.is_read', 0)
+                ->whereIn('i.status_laporan', ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI', 'SELESAI'])
+                ->groupBy('i.id')
+                ->countAllResults();
+
+            $total_pending = $db->table('ikprssm_insiden')
+                ->where('status_laporan', 'PENDING')
+                ->where('komite_read_at', null)
+                ->countAllResults();
+            
+            log_message('error', "KEPALA_KEPERAWATAN pending count: $total_pending (komite_read_at IS NULL)");
         } else {
             // PELAPOR inbox: 0 — hanya history, tidak perlu badge
             $total_inbox = 0;
@@ -769,7 +786,13 @@ class Ikprs extends AppController
         // SENT
         // ==========================
         if ($role == 'KARU') {
-            $total_send = 0;
+            $total_send = $db->table('ikprssm_insiden')
+                ->where('karu_id', $user_id)
+                ->groupStart()
+                    ->whereIn('status_laporan', ['TERKIRIM', 'INSTALASI', 'SELESAI'])
+                    ->orWhere('komite_read_at IS NOT NULL', null, false)
+                ->groupEnd()
+                ->countAllResults();
         } elseif ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
             $total_send = 0;
         } elseif ($role == 'PELAPOR') {
@@ -2823,6 +2846,12 @@ class Ikprs extends AppController
                 ->update([
                     'komite_read_at' => date('Y-m-d H:i:s')
                 ]);
+
+            // Tandai semua notif to_komite untuk insiden ini sebagai sudah dibaca
+            $db->table('ikprssm_notifikasi')
+                ->where('insiden_id', $insiden_id)
+                ->where('type', 'to_komite')
+                ->update(['is_read' => 1]);
 
             // Tandai semua notif KARU untuk insiden ini sebagai sudah dibaca
             if ($insiden->karu_id) {
