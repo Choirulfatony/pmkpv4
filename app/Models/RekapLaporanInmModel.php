@@ -239,7 +239,7 @@ class RekapLaporanInmModel extends Model
         $userDepartmentId = session('department_id') ?? 0;
 
         // ADMINISTRATOR & KOMITE → Buka semua
-        // KENDALI_MUTU → Filter by department_id
+        // KENDALI_MUTU, APP → Filter by department_id
         if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
             $builder->where('master_institution_department.department_id', $userDepartmentId);
         }
@@ -380,7 +380,7 @@ class RekapLaporanInmModel extends Model
     /**
      * Ambil semua ruangan untuk indicator tertentu
      */
-    public function getDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [])
+    public function getDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [], ?int $departmentId = null)
     {
         $db = db_connect();
 
@@ -388,6 +388,11 @@ class RekapLaporanInmModel extends Model
         if (isset($post['search']['value']) && !empty($post['search']['value'])) {
             $searchValue = addslashes($post['search']['value']);
             $searchCondition = "AND master_institution_department.department_name LIKE '%{$searchValue}%'";
+        }
+
+        $deptCondition = '';
+        if ($departmentId !== null) {
+            $deptCondition = "AND master_institution_department.department_id = " . (int) $departmentId;
         }
 
         $limit = '';
@@ -412,6 +417,7 @@ class RekapLaporanInmModel extends Model
             AND quality_indicator_group.group_record_status = 'A'
             AND quality_indicator_group.group_indicator_id = ?
             {$searchCondition}
+            {$deptCondition}
             GROUP BY master_institution_department.department_id
             ORDER BY master_institution_department.department_name ASC
             {$limit}
@@ -447,10 +453,10 @@ class RekapLaporanInmModel extends Model
     /**
      * Ambil semua data detail per ruangan dalam 1 query
      */
-    public function getAllDetailData(int $indicatorId, int $tahun)
+    public function getAllDetailData(int $indicatorId, int $tahun, ?int $departmentId = null)
     {
         $cache = \Config\Services::cache();
-        $cacheKey = 'detail_data_' . $indicatorId . '_' . $tahun;
+        $cacheKey = 'detail_data_' . $indicatorId . '_' . $tahun . '_dept_' . ($departmentId ?? 'all');
 
         $db = db_connect();
         $builder = $db->table('quality_indicator_result qir');
@@ -489,6 +495,9 @@ class RekapLaporanInmModel extends Model
 
         $builder->where('YEAR(qir.result_period)', $tahun);
         $builder->where('qir.result_indicator_id', $indicatorId);
+        if ($departmentId !== null) {
+            $builder->where('qir.result_department_id', $departmentId);
+        }
 
         $builder->groupBy([
             'qir.result_department_id',
@@ -514,7 +523,7 @@ class RekapLaporanInmModel extends Model
     /**
      * Hitung jumlah ruangan untuk indicator tertentu
      */
-    public function countDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [])
+    public function countDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [], ?int $departmentId = null)
     {
         $db = db_connect();
 
@@ -522,6 +531,11 @@ class RekapLaporanInmModel extends Model
         if (isset($post['search']['value']) && !empty($post['search']['value'])) {
             $searchValue = addslashes($post['search']['value']);
             $searchCondition = "AND master_institution_department.department_name LIKE '%{$searchValue}%'";
+        }
+
+        $deptCondition = '';
+        if ($departmentId !== null) {
+            $deptCondition = "AND master_institution_department.department_id = " . (int) $departmentId;
         }
 
         $query = $db->query("
@@ -532,6 +546,7 @@ class RekapLaporanInmModel extends Model
             WHERE quality_indicator_group.group_indicator_id = ?
             AND quality_indicator.indicator_category_id = '4' 
             AND quality_indicator.indicator_record_status = 'A'
+            {$deptCondition}
             {$searchCondition}
         ", [$indicatorId]);
 
@@ -847,7 +862,7 @@ class RekapLaporanInmModel extends Model
     /**
      * Ambil data bulanan untuk satu indikator
      */
-    public function getMonthlyDataByIndicator(int $indicatorId, int $tahun): array
+    public function getMonthlyDataByIndicator(int $indicatorId, int $tahun, ?int $departmentId = null): array
     {
         $db = db_connect();
         $builder = $db->table('quality_indicator_result qir');
@@ -861,6 +876,9 @@ class RekapLaporanInmModel extends Model
         $builder->join('quality_indicator qi', 'qir.result_indicator_id = qi.indicator_id', 'LEFT');
         $builder->where('qir.result_indicator_id', $indicatorId);
         $builder->where("YEAR(qir.result_period)", $tahun);
+        if ($departmentId !== null) {
+            $builder->where('qir.result_department_id', $departmentId);
+        }
         $builder->groupBy('MONTH(qir.result_period)');
 
         $results = $builder->get()->getResult();
@@ -891,9 +909,9 @@ class RekapLaporanInmModel extends Model
     /**
      * Ambil nilai triwulan
      */
-    public function getNilaiTriwulan(int $indicatorId, int $tahun): array
+    public function getNilaiTriwulan(int $indicatorId, int $tahun, ?int $departmentId = null): array
     {
-        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
+        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun, $departmentId);
 
         $indicator = $this->getDetailByIdInm($indicatorId);
         $target = (float) ($indicator->indicator_target ?? 0);
@@ -924,9 +942,9 @@ class RekapLaporanInmModel extends Model
     /**
      * Ambil nilai semester
      */
-    public function getNilaiSemester(int $indicatorId, int $tahun): array
+    public function getNilaiSemester(int $indicatorId, int $tahun, ?int $departmentId = null): array
     {
-        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
+        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun, $departmentId);
 
         $indicator = $this->getDetailByIdInm($indicatorId);
         $target = (float) ($indicator->indicator_target ?? 0);
@@ -957,9 +975,9 @@ class RekapLaporanInmModel extends Model
     /**
      * Ambil nilai tahunan
      */
-    public function getNilaiTahun(int $indicatorId, int $tahun): array
+    public function getNilaiTahun(int $indicatorId, int $tahun, ?int $departmentId = null): array
     {
-        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
+        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun, $departmentId);
 
         $indicator = $this->getDetailByIdInm($indicatorId);
         $target = (float) ($indicator->indicator_target ?? 0);
@@ -982,7 +1000,7 @@ class RekapLaporanInmModel extends Model
     /**
      * Ambil nilai per tahun (5 tahun terakhir)
      */
-    public function getNilaiPerTahun(int $indicatorId, int $tahun): array
+    public function getNilaiPerTahun(int $indicatorId, int $tahun, ?int $departmentId = null): array
     {
         $indicator = $this->getDetailByIdInm($indicatorId);
         $target = (float) ($indicator->indicator_target ?? 0);
@@ -993,7 +1011,7 @@ class RekapLaporanInmModel extends Model
         $tahunMulai = $tahun - 4;
 
         for ($th = $tahunMulai; $th <= $tahun; $th++) {
-            $monthly = $this->getMonthlyDataByIndicator($indicatorId, $th);
+            $monthly = $this->getMonthlyDataByIndicator($indicatorId, $th, $departmentId);
 
             $totalNum = 0;
             $totalDenum = 0;

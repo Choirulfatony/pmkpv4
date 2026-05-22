@@ -54,17 +54,25 @@ class GrafikInm extends AppController
             return $this->response->setJSON(['error' => 'Indicator ID diperlukan']);
         }
 
-        // Ambil data bulanan
-        $monthlyData = $this->rekapModel->getMonthlyDataByIndicator($indicatorId, $tahun);
+        // ADMINISTRATOR & KOMITE → lihat semua data (tanpa filter department)
+        // KENDALI_MUTU, APP → filter by department
+        $role = session()->get('user_role') ?? '';
+        $departmentId = null;
+        if (!in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
+            $departmentId = session()->get('department_id') ?? null;
+        }
+
+        // Ambil data bulanan (filter by department jika bukan ADMIN)
+        $monthlyData = $this->rekapModel->getMonthlyDataByIndicator($indicatorId, $tahun, $departmentId);
         
         // Ambil detail indikator
         $indicator = $this->rekapModel->getDetailByIdInm($indicatorId);
 
-        // Hitung triwulan dan semester
-        $triwulan = $this->rekapModel->getNilaiTriwulan($indicatorId, $tahun);
-        $semester = $this->rekapModel->getNilaiSemester($indicatorId, $tahun);
-        $tahunan = $this->rekapModel->getNilaiTahun($indicatorId, $tahun);
-        $perTahun = $this->rekapModel->getNilaiPerTahun($indicatorId, $tahun);
+        // Hitung triwulan dan semester (filter by department jika bukan ADMIN)
+        $triwulan = $this->rekapModel->getNilaiTriwulan($indicatorId, $tahun, $departmentId);
+        $semester = $this->rekapModel->getNilaiSemester($indicatorId, $tahun, $departmentId);
+        $tahunan = $this->rekapModel->getNilaiTahun($indicatorId, $tahun, $departmentId);
+        $perTahun = $this->rekapModel->getNilaiPerTahun($indicatorId, $tahun, $departmentId);
 
         return $this->response->setJSON([
             'indicator'  => $indicator,

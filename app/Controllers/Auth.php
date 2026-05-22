@@ -161,6 +161,7 @@ class Auth extends BaseController
 
         $roleMap = [
             'Kendali Mutu dan Tim Pokja' => 'KENDALI_MUTU',
+            'Kendali Mutu'             => 'KENDALI_MUTU',
             'Komite'                    => 'KOMITE',
             'Administrator'             => 'ADMINISTRATOR'
         ];
