@@ -54,13 +54,24 @@ class GrafikInm extends AppController
             return $this->response->setJSON(['error' => 'Indicator ID diperlukan']);
         }
 
-        // ADMINISTRATOR & KOMITE → lihat semua data (tanpa filter department)
-        // KENDALI_MUTU, APP → filter by department
+        // ADMINISTRATOR & KOMITE → bisa filter per departemen atau global
+        // KENDALI_MUTU, APP → filter by department login saja
         $role = session()->get('user_role') ?? '';
+        $sessionDeptId = session()->get('department_id') ?? null;
         $departmentId = null;
-        if (!in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
-            $departmentId = session()->get('department_id') ?? null;
+
+        if (in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
+            // Ambil dari POST jika ada, null = semua departemen
+            $departmentId = isset($post['department_id']) && $post['department_id'] !== ''
+                ? (int) $post['department_id']
+                : null;
+        } else {
+            // User departemen: paksa pakai department login
+            $departmentId = $sessionDeptId;
         }
+
+        // Ambil daftar departemen untuk indikator ini (untuk dropdown)
+        $departments = $this->rekapModel->getDepartmentsByIndicator($indicatorId, $tahun);
 
         // Ambil data bulanan (filter by department jika bukan ADMIN)
         $monthlyData = $this->rekapModel->getMonthlyDataByIndicator($indicatorId, $tahun, $departmentId);
@@ -75,13 +86,16 @@ class GrafikInm extends AppController
         $perTahun = $this->rekapModel->getNilaiPerTahun($indicatorId, $tahun, $departmentId);
 
         return $this->response->setJSON([
-            'indicator'  => $indicator,
-            'bulanan'    => $monthlyData,
-            'triwulan'   => $triwulan,
-            'semester'   => $semester,
-            'tahunan'    => $tahunan,
-            'per_tahun'  => $perTahun,
-            'tahun'      => $tahun
+            'indicator'     => $indicator,
+            'bulanan'       => $monthlyData,
+            'triwulan'      => $triwulan,
+            'semester'      => $semester,
+            'tahunan'       => $tahunan,
+            'per_tahun'     => $perTahun,
+            'tahun'         => $tahun,
+            'departments'   => $departments,
+            'user_role'     => $role,
+            'user_department_id' => $sessionDeptId,
         ]);
     }
 }
