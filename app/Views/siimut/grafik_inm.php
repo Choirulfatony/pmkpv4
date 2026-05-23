@@ -230,16 +230,10 @@
                             </select>
                         </div>
 
-                        <div class="col-md-3">
+                        <div class="col-md-5">
                             <select class="form-select form-select-sm select2" id="department_id" style="width:100%;">
                                 <option value="">Semua Departemen</option>
                             </select>
-                        </div>
-
-                        <div class="col-md-2">
-                            <button type="button" class="btn btn-sm btn-success w-100" id="btn-reload" title="Tampilkan Grafik">
-                                <i class="bi bi-search me-1"></i>Tampilkan
-                            </button>
                         </div>
 
                     </div>
@@ -456,13 +450,15 @@
             width: '100%'
         });
 
-        // Handle indicator change -> reset departemen
+        // Handle indicator change -> load grafik
         $indicator.on('change', function() {
             $department.val('').trigger('change.select2');
+            loadGrafik();
         });
 
-        // Tombol reload -> load grafik
-        $('#btn-reload').on('click', function() {
+        // Handle department change
+        $department.on('change', function() {
+            if (window._populatingDept) return;
             loadGrafik();
         });
 
