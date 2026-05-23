@@ -230,10 +230,16 @@
                             </select>
                         </div>
 
-                        <div class="col-md-5">
+                        <div class="col-md-3">
                             <select class="form-select form-select-sm select2" id="department_id" style="width:100%;">
                                 <option value="">Semua Departemen</option>
                             </select>
+                        </div>
+
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-sm btn-success w-100" id="btn-reload" title="Tampilkan Grafik">
+                                <i class="bi bi-search me-1"></i>Tampilkan
+                            </button>
                         </div>
 
                     </div>
@@ -450,28 +456,20 @@
             width: '100%'
         });
 
-        // Handle tahun change - reload graph without resetting indicator
-        $tahun.on('change', function() {
-            loadGrafik(true);
-        });
-
-        // Handle indicator change
+        // Handle indicator change -> reset departemen
         $indicator.on('change', function() {
-            // Reset departemen saat ganti indikator (tanpa trigger load)
             $department.val('').trigger('change.select2');
-            loadGrafik(false);
         });
 
-        // Handle department change (skip saat populate dari response)
-        $department.on('change', function() {
-            if (window._populatingDept) return;
-            loadGrafik(true);
+        // Tombol reload -> load grafik
+        $('#btn-reload').on('click', function() {
+            loadGrafik();
         });
 
-        // Clear indicator selection on page load if no URL indicator_id param
+        // Auto-load jika ada indicator_id di URL (page load pertama)
         var urlParams = new URLSearchParams(window.location.search);
-        if (!urlParams.has('indicator_id')) {
-            $indicator.val('').trigger('change');
+        if (urlParams.has('indicator_id')) {
+            loadGrafik();
         }
     });
 
