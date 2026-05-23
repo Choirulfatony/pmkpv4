@@ -484,7 +484,7 @@ $(document).ready(function() {
                 $.each(resp.dept_data, function(idx, dept) {
                     bodyHtml += '<tr>';
                     bodyHtml += '<td class="text-center fw-bold">' + (idx + 1) + '</td>';
-                    bodyHtml += '<td class="text-start">' + dept.department_name + '</td>';
+                    bodyHtml += '<td class="text-start"><div class="py-1 text-start ps-2 text-nowrap">' + dept.department_name + '</div></td>';
 
                     $.each(dept.daily, function(i, item) {
                         var cellClass = 'text-center text-nowrap';
