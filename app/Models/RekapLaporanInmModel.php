@@ -860,6 +860,58 @@ class RekapLaporanInmModel extends Model
     }
 
     /**
+     * Ambil data harian untuk satu indikator, bulan, dan tahun (semua departemen)
+     */
+    public function getDailyDataAllDepartments(int $indicatorId, int $tahun, int $bulan)
+    {
+        $db = db_connect();
+        $builder = $db->table('quality_indicator_result qir');
+
+        $builder->select("
+            qir.result_department_id,
+            DAY(qir.result_period) AS tanggal,
+            SUM(qir.result_numerator_value) AS num,
+            SUM(qir.result_denumerator_value) AS denum
+        ");
+
+        $builder->where('qir.result_indicator_id', $indicatorId);
+        $builder->where('YEAR(qir.result_period)', $tahun);
+        $builder->where('MONTH(qir.result_period)', $bulan);
+
+        $builder->groupBy(['qir.result_department_id', 'qir.result_period']);
+        $builder->orderBy('qir.result_department_id');
+        $builder->orderBy('qir.result_period', 'ASC');
+
+        return $builder->get()->getResult();
+    }
+
+    /**
+     * Ambil data harian per departemen untuk satu indikator, bulan, dan tahun
+     */
+    public function getDailyDataByDepartment(int $indicatorId, int $departmentId, int $tahun, int $bulan)
+    {
+        $db = db_connect();
+        $builder = $db->table('quality_indicator_result qir');
+
+        $builder->select("
+            DAY(qir.result_period) AS tanggal,
+            qir.result_period,
+            SUM(qir.result_numerator_value) AS num,
+            SUM(qir.result_denumerator_value) AS denum
+        ");
+
+        $builder->where('qir.result_indicator_id', $indicatorId);
+        $builder->where('qir.result_department_id', $departmentId);
+        $builder->where('YEAR(qir.result_period)', $tahun);
+        $builder->where('MONTH(qir.result_period)', $bulan);
+
+        $builder->groupBy('qir.result_period');
+        $builder->orderBy('qir.result_period', 'ASC');
+
+        return $builder->get()->getResult();
+    }
+
+    /**
      * Ambil data bulanan untuk satu indikator
      */
     public function getMonthlyDataByIndicator(int $indicatorId, int $tahun, ?int $departmentId = null): array
