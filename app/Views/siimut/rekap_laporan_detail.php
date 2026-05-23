@@ -261,7 +261,7 @@
                     <h6 id="daily-info" class="mb-1"></h6>
                     <small class="text-muted" id="daily-target-info"></small>
                 </div>
-                <div class="table-responsive p-3" style="max-height: 450px; overflow-y: auto; overflow-x: auto;">
+                <div class="p-3">
                     <div id="daily-loading" class="text-center py-4" style="display:none;">
                         <div class="spinner-border text-info" role="status">
                             <span class="visually-hidden">Loading...</span>
@@ -275,12 +275,17 @@
                     <table id="daily-table" class="table table-bordered table-hover table-sm mb-0" style="display:none; width:100%;">
                         <thead>
                             <tr id="daily-headers">
-                                <th class="text-center" style="min-width:30px;">#</th>
+                                <th class="text-center" style="width:35px;">#</th>
                                 <th class="text-start" style="min-width:120px;">Ruangan</th>
+                                <th class="text-center" style="width:90px;">Nilai</th>
+                                <th class="text-center" style="width:90px;">Num/Denum</th>
+                                <th>Kendala</th>
+                                <th>Perbaikan</th>
                             </tr>
                         </thead>
                         <tbody id="daily-body"></tbody>
                     </table>
+
                 </div>
             </div>
             <div class="card-footer">
@@ -520,24 +525,43 @@ $(document).ready(function() {
 
                     bodyHtml += '</tr>';
 
-                    // Row detail kendala/perbaikan (hidden)
-                    var hasKp = dept.daily.some(function(item) { return item.kendala || item.perbaikan; });
-                    if (hasKp) {
-                        bodyHtml += '<tr class="daily-kp-row" data-dept-idx="' + idx + '" style="display:none;">' +
-                            '<td colspan="' + (days + 2) + '" class="p-0">' +
-                                '<div class="kp-accordion-body p-3 bg-light" style="border-top:2px solid #ffc107;">' +
-                                    '<div class="kp-accordion-content"></div>' +
-                                '</div>' +
-                            '</td>' +
-                        '</tr>';
-                    }
                 });
 
                 $('#daily-body').html(bodyHtml);
+
+                // Hancurkan DataTable lama jika ada
+                if ($.fn.DataTable.isDataTable('#daily-table')) {
+                    $('#daily-table').DataTable().destroy();
+                }
+
                 $('#daily-table').show();
 
-                // Click handler: icon warning -> toggle accordion kendala/perbaikan
-                $('.kp-icon').off('click').on('click', function() {
+                // Inisialisasi DataTable untuk daily table
+                var dailyTable = $('#daily-table').DataTable({
+                    scrollX: true,
+                    scrollCollapse: true,
+                    pageLength: 25,
+                    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'Semua']],
+                    language: {
+                        emptyTable: 'Tidak ada data',
+                        info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
+                        lengthMenu: 'Tampilkan _MENU_ data',
+                        search: 'Cari:',
+                        paginate: {
+                            first: 'Pertama',
+                            last: 'Terakhir',
+                            next: 'Berikutnya',
+                            previous: 'Sebelumnya'
+                        }
+                    },
+                    columnDefs: [
+                        { orderable: false, targets: '_all' }
+                    ],
+                    destroy: true
+                });
+
+                // Click handler: icon warning -> toggle child row kendala/perbaikan
+                $('#daily-body').off('click', '.kp-icon').on('click', '.kp-icon', function() {
                     var deptIdx = $(this).data('dept-idx');
                     var hari = $(this).data('hari');
                     var deptData = resp.dept_data[deptIdx];
@@ -550,25 +574,41 @@ $(document).ready(function() {
                     });
                     if (!dayData) return;
 
-                    var $kpRow = $('.daily-kp-row[data-dept-idx="' + deptIdx + '"]');
-                    var $content = $kpRow.find('.kp-accordion-content');
+                    // Cari baris DataTable berdasarkan dept-idx
+                    var tr = $(this).closest('tr');
+                    var row = dailyTable.row(tr);
+                    var activeKey = deptIdx + '-' + hari;
 
-                    if ($kpRow.is(':visible') && $content.data('active-hari') === hari) {
-                        $kpRow.hide();
+                    // Jika child row sudah terbuka untuk data yg sama -> tutup
+                    if (row.child.isShown() && tr.data('active-key') === activeKey) {
+                        row.child.hide();
+                        tr.removeData('active-key');
+                        tr.toggleClass('kp-row-open');
                         return;
                     }
 
-                    var html = '<div class="d-flex align-items-start gap-3 flex-wrap">';
-                    html += '<div class="badge bg-warning text-dark fs-6 me-2">Hari ke-' + hari + '</div>';
+                    // Tutup semua child row lain
+                    dailyTable.rows().every(function() {
+                        if (this.child.isShown()) {
+                            this.child.hide();
+                            $(this.node()).removeData('active-key');
+                            $(this.node()).removeClass('kp-row-open');
+                        }
+                    });
+
+                    var html = '<div class="kp-accordion-body p-3 bg-light" style="border-top:2px solid #ffc107;">';
+                    html += '<div class="d-flex align-items-start gap-3 flex-wrap">';
+                    html += '<div><strong>Ruangan:</strong> ' + $('<span>').text(deptData.department_name).html() + '</div>';
+                    html += '<div class="badge bg-warning text-dark fs-6">Hari ke-' + hari + '</div>';
+                    html += '</div>';
+                    html += '<hr class="my-2">';
+                    html += '<div class="d-flex align-items-start gap-3 flex-wrap">';
                     html += '<div><strong>Kendala:</strong> ' + $('<span>').text(dayData.kendala || '-').html() + '</div>';
                     html += '<div><strong>Perbaikan:</strong> ' + $('<span>').text(dayData.perbaikan || '-').html() + '</div>';
-                    html += '</div>';
+                    html += '</div></div>';
 
-                    $content.html(html).data('active-hari', hari);
-
-                    // Tutup semua row KP lain
-                    $('.daily-kp-row').not($kpRow).hide();
-                    $kpRow.show();
+                    row.child(html).show();
+                    tr.data('active-key', activeKey).addClass('kp-row-open');
                 });
             },
             error: function() {
