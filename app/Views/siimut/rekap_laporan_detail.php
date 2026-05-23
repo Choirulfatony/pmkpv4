@@ -479,10 +479,10 @@ $(document).ready(function() {
                 }
                 $('#daily-headers').html(headerHtml);
 
-                // Bangun baris per departemen
+                // Bangun baris per departemen + row detail kendala/perbaikan
                 var bodyHtml = '';
                 $.each(resp.dept_data, function(idx, dept) {
-                    bodyHtml += '<tr>';
+                    bodyHtml += '<tr class="daily-dept-row" data-dept-idx="' + idx + '">';
                     bodyHtml += '<td class="text-center fw-bold">' + (idx + 1) + '</td>';
                     bodyHtml += '<td class="text-start"><div class="py-1 text-start ps-2 text-nowrap">' + dept.department_name + '</div></td>';
 
@@ -505,8 +505,13 @@ $(document).ready(function() {
                             }
                         }
 
-                        bodyHtml += '<td class="' + cellClass + '">' +
-                            '<div class="py-1"><span class="fw-bold" style="font-size:13px;">' + nilaiDisplay + '</span>' +
+                        var kpIcon = '';
+                        if (item.kendala || item.perbaikan) {
+                            kpIcon = '<i class="fas fa-exclamation-circle text-warning ms-1 kp-icon" style="font-size:10px;cursor:pointer;" data-dept-idx="' + idx + '" data-hari="' + item.hari + '"></i>';
+                        }
+
+                        bodyHtml += '<td class="' + cellClass + '" data-hari="' + item.hari + '">' +
+                            '<div class="py-1"><span class="fw-bold" style="font-size:13px;">' + nilaiDisplay + kpIcon + '</span>' +
                             '<div class="small text-muted mt-1">' +
                                 '<span>' + (item.num || 0) + '</span> | <span>' + (item.denum || 0) + '</span>' +
                             '</div></div>' +
@@ -514,10 +519,57 @@ $(document).ready(function() {
                     });
 
                     bodyHtml += '</tr>';
+
+                    // Row detail kendala/perbaikan (hidden)
+                    var hasKp = dept.daily.some(function(item) { return item.kendala || item.perbaikan; });
+                    if (hasKp) {
+                        bodyHtml += '<tr class="daily-kp-row" data-dept-idx="' + idx + '" style="display:none;">' +
+                            '<td colspan="' + (days + 2) + '" class="p-0">' +
+                                '<div class="kp-accordion-body p-3 bg-light" style="border-top:2px solid #ffc107;">' +
+                                    '<div class="kp-accordion-content"></div>' +
+                                '</div>' +
+                            '</td>' +
+                        '</tr>';
+                    }
                 });
 
                 $('#daily-body').html(bodyHtml);
                 $('#daily-table').show();
+
+                // Click handler: icon warning -> toggle accordion kendala/perbaikan
+                $('.kp-icon').off('click').on('click', function() {
+                    var deptIdx = $(this).data('dept-idx');
+                    var hari = $(this).data('hari');
+                    var deptData = resp.dept_data[deptIdx];
+                    if (!deptData) return;
+
+                    // Cari data hari itu
+                    var dayData = null;
+                    $.each(deptData.daily, function(i, d) {
+                        if (d.hari === hari) dayData = d;
+                    });
+                    if (!dayData) return;
+
+                    var $kpRow = $('.daily-kp-row[data-dept-idx="' + deptIdx + '"]');
+                    var $content = $kpRow.find('.kp-accordion-content');
+
+                    if ($kpRow.is(':visible') && $content.data('active-hari') === hari) {
+                        $kpRow.hide();
+                        return;
+                    }
+
+                    var html = '<div class="d-flex align-items-start gap-3 flex-wrap">';
+                    html += '<div class="badge bg-warning text-dark fs-6 me-2">Hari ke-' + hari + '</div>';
+                    html += '<div><strong>Kendala:</strong> ' + $('<span>').text(dayData.kendala || '-').html() + '</div>';
+                    html += '<div><strong>Perbaikan:</strong> ' + $('<span>').text(dayData.perbaikan || '-').html() + '</div>';
+                    html += '</div>';
+
+                    $content.html(html).data('active-hari', hari);
+
+                    // Tutup semua row KP lain
+                    $('.daily-kp-row').not($kpRow).hide();
+                    $kpRow.show();
+                });
             },
             error: function() {
                 $('#daily-loading').hide();

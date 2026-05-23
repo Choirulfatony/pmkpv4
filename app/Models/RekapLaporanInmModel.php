@@ -886,6 +886,44 @@ class RekapLaporanInmModel extends Model
     }
 
     /**
+     * Ambil kendala & perbaikan dari local_rencana_perbaikan
+     */
+    public function getKendalaPerbaikan(int $indicatorId, int $tahun, int $bulan, ?int $departmentId = null): array
+    {
+        $db = db_connect();
+        $builder = $db->table('local_rencana_perbaikan');
+
+        $builder->select("
+            result_department_id,
+            DAY(result_period) AS tanggal,
+            kendala,
+            perbaikan
+        ");
+
+        $builder->where('result_indicator_id', $indicatorId);
+        $builder->where('indicator_category_id', '4');
+        $builder->where('YEAR(result_period)', $tahun);
+        $builder->where('MONTH(result_period)', $bulan);
+
+        if ($departmentId !== null) {
+            $builder->where('result_department_id', $departmentId);
+        }
+
+        $results = $builder->get()->getResult();
+
+        $map = [];
+        foreach ($results as $row) {
+            $did = (int) $row->result_department_id;
+            $tgl = (int) $row->tanggal;
+            $map[$did . '_' . $tgl] = [
+                'kendala'   => $row->kendala,
+                'perbaikan' => $row->perbaikan,
+            ];
+        }
+        return $map;
+    }
+
+    /**
      * Ambil data harian per departemen untuk satu indikator, bulan, dan tahun
      */
     public function getDailyDataByDepartment(int $indicatorId, int $departmentId, int $tahun, int $bulan)

@@ -297,6 +297,7 @@ class RekapLaporanInm extends AppController
         // Ambil departemen & data harian
         $departments = $this->rekapModel->getDepartmentsByIndicator($indicatorId, $tahun, [], $userDeptId);
         $rawData     = $this->rekapModel->getDailyDataAllDepartments($indicatorId, $tahun, $bulan);
+        $kendalaMap  = $this->rekapModel->getKendalaPerbaikan($indicatorId, $tahun, $bulan, $userDeptId);
 
         // Group by department_id => [day => data]
         $byDept = [];
@@ -321,12 +322,18 @@ class RekapLaporanInm extends AppController
                     $denum = 0;
                     $nilai = null;
                 }
+                $kpKey = $did . '_' . $d;
+                $kendala   = isset($kendalaMap[$kpKey]) ? $kendalaMap[$kpKey]['kendala'] : null;
+                $perbaikan = isset($kendalaMap[$kpKey]) ? $kendalaMap[$kpKey]['perbaikan'] : null;
+
                 $daily[] = [
-                    'hari'     => $d,
-                    'num'      => $num,
-                    'denum'    => $denum,
-                    'nilai'    => $nilai,
-                    'tercapai' => $nilai !== null ? $this->hitungTercapai($nilai, $target, $operator) : null,
+                    'hari'      => $d,
+                    'num'       => $num,
+                    'denum'     => $denum,
+                    'nilai'     => $nilai,
+                    'tercapai'  => $nilai !== null ? $this->hitungTercapai($nilai, $target, $operator) : null,
+                    'kendala'   => $kendala,
+                    'perbaikan' => $perbaikan,
                 ];
             }
             $deptDaily[] = [
@@ -349,6 +356,7 @@ class RekapLaporanInm extends AppController
             'units'       => $units,
             'operator'    => $operator,
             'bulan'       => $namaBulan[$bulan] ?? $bulan,
+            'bulan_angka' => $bulan,
             'tahun'       => $tahun,
             'indicator'   => $info ? $info->indicator_element : '',
         ]);
