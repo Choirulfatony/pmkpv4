@@ -56,6 +56,7 @@ $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
     // Grafik INM
     $routes->get('grafik-inm', 'GrafikInm::index');
     $routes->post('grafik-inm/data', 'GrafikInm::getDataGrafik');
+    $routes->post('grafik-inm/indicators', 'GrafikInm::getIndicatorsByYear');
 
     // Grafik IMPRS
     $routes->get('grafik-imprs', 'GrafikImprs::index');

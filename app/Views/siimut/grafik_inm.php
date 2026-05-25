@@ -225,6 +225,9 @@
                                     <option value="<?= $ind->indicator_id ?>"
                                         <?= ($ind->indicator_id == $indicatorId) ? 'selected' : '' ?>>
                                         <?= esc($ind->indicator_element) ?>
+                                        <?php if (isset($ind->indicator_record_status) && $ind->indicator_record_status === 'D'): ?>
+                                            [Non-Aktif]
+                                        <?php endif; ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -450,6 +453,39 @@
             width: '100%'
         });
 
+        // [CHANGED] Handle year change -> reload indicator dropdown via AJAX
+        $tahun.on('change', function() {
+            var newTahun = $(this).val();
+            $.ajax({
+                url: '<?= site_url('siimut/grafik-inm/indicators') ?>',
+                type: 'POST',
+                data: { tahun: newTahun },
+                dataType: 'json',
+                beforeSend: function() {
+                    // Reset indicator
+                    $indicator.empty().append('<option value="">Memuat...</option>').prop('disabled', true).trigger('change');
+                },
+                success: function(indicators) {
+                    $indicator.empty().append('<option value="">--Pilih Indikator--</option>');
+                    $.each(indicators, function(i, ind) {
+                        var label = ind.indicator_element;
+                        if (ind.indicator_record_status === 'D') {
+                            label += ' [Non-Aktif]';
+                        }
+                        $indicator.append('<option value="' + ind.indicator_id + '">' + label + '</option>');
+                    });
+                    $indicator.prop('disabled', false).trigger('change');
+                },
+                error: function() {
+                    $indicator.empty().append('<option value="">--Pilih Indikator--</option>').prop('disabled', false).trigger('change');
+                }
+            });
+            // Sembunyikan grafik yang sedang tampil
+            if (document.getElementById('grafikContainer')) document.getElementById('grafikContainer').style.display = 'none';
+            if (document.getElementById('indicatorInfo')) document.getElementById('indicatorInfo').style.display = 'none';
+            resetSummaryCards();
+        });
+
         // Handle indicator change -> load grafik
         $indicator.on('change', function() {
             $department.val('').trigger('change.select2');
@@ -573,7 +609,14 @@
                     
                     if (grafikContainer) grafikContainer.style.display = 'block';
                     if (indicatorInfo) indicatorInfo.style.display = 'block';
-                    if (indicatorName) indicatorName.textContent = response.indicator.indicator_element;
+                    // [CHANGED] Tampilkan badge kalo indikator non-aktif
+                    if (indicatorName) {
+                        var nameText = response.indicator.indicator_element || '';
+                        if (response.indicator.indicator_record_status === 'D') {
+                            nameText += ' <span class="badge bg-secondary ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>';
+                        }
+                        indicatorName.innerHTML = nameText;
+                    }
                     if (indicatorTarget) indicatorTarget.textContent = response.indicator.indicator_target;
                     var units = response.indicator.indicator_units || '';
                     if (indicatorUnits) indicatorUnits.textContent = units;

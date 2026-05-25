@@ -663,7 +663,8 @@ class RekapLaporanInmModel extends Model
 
         $builder = $db->table('quality_indicator');
         $builder->distinct();
-        $builder->select('quality_indicator.indicator_id, quality_indicator.indicator_element, quality_indicator.indicator_target, quality_indicator.indicator_factors, quality_indicator.indicator_units, quality_indicator.indicator_target_calculation');
+        // [CHANGED] Tambah indicator_record_status biar bisa nampilin badge Non-Aktif di view
+        $builder->select('quality_indicator.indicator_id, quality_indicator.indicator_element, quality_indicator.indicator_target, quality_indicator.indicator_factors, quality_indicator.indicator_units, quality_indicator.indicator_target_calculation, quality_indicator.indicator_record_status');
         $builder->join('quality_indicator_group', 'quality_indicator.indicator_id = quality_indicator_group.group_indicator_id');
         $builder->where('quality_indicator.indicator_category_id', '4');
         // [CHANGED] Biar indikator non-aktif (status 'D') tetap ikut di rekap periode
@@ -784,6 +785,8 @@ class RekapLaporanInmModel extends Model
             $results[] = [
                 'indicator_id' => $id,
                 'indicator_element' => $indicator->indicator_element,
+                // [CHANGED] Biar view tau indikator ini non-aktif atau tidak
+                'indicator_record_status' => $indicator->indicator_record_status ?? 'A',
                 'target' => $target,
                 'satuan' => $indicator->indicator_units,
 

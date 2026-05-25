@@ -44,6 +44,16 @@ class GrafikInm extends AppController
         ]);
     }
 
+    /**
+     * [CHANGED] Ambil daftar indikator untuk tahun tertentu (biar dropdown refresh pas ganti tahun)
+     */
+    public function getIndicatorsByYear()
+    {
+        $tahun = $this->request->getPost('tahun') ?? date('Y');
+        $indicators = $this->rekapModel->getIndicatorInm(['vtahun' => (int) $tahun]);
+        return $this->response->setJSON($indicators);
+    }
+
     public function getDataGrafik()
     {
         $post = $this->request->getPost();
