@@ -131,6 +131,33 @@
             box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
         }
     }
+
+    #daily-table td,
+    #daily-table th {
+        font-size: 13px;
+        vertical-align: middle;
+        text-align: center;
+        padding: 8px 6px !important;
+    }
+
+    .daily-tercapai {
+        background-color: rgba(41, 185, 92) !important;
+        font-weight: bold;
+    }
+
+    .daily-tidak-tercapai {
+        background-color: rgba(220, 57, 57) !important;
+        color: #fff !important;
+        font-weight: bold;
+    }
+
+    .cell-clickable {
+        cursor: pointer;
+    }
+
+    .cell-clickable:hover {
+        box-shadow: inset 0 0 0 2px rgba(108, 117, 125, 0.5);
+    }
 </style>
 
 <!-- ==================== HEADER INFO ==================== -->
@@ -256,6 +283,46 @@
     </div>
 </div>
 
+<!-- ==================== DAILY SECTION ==================== -->
+<div class="row mt-3" id="daily-section" style="display:none;">
+    <div class="col-12">
+        <div class="card card-outline card-info">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-calendar-day me-2"></i>
+                    <span id="daily-title">Detail Harian</span>
+                </h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="$('#daily-section').slideUp(300);">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="p-3">
+                    <h6 id="daily-info" class="mb-1"></h6>
+                    <small id="daily-target-info" class="text-muted"></small>
+                </div>
+                <div id="daily-loading" class="text-center py-4" style="display:none;">
+                    <i class="loader"></i>
+                </div>
+                <div id="daily-empty" class="text-center py-4" style="display:none;">
+                    <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">Tidak ada data harian</p>
+                </div>
+                <div class="table-responsive">
+                    <table id="daily-table" class="table table-bordered table-hover table-sm mb-0" style="display:none; table-layout:fixed;">
+                        <thead>
+                            <tr id="daily-headers"></tr>
+                        </thead>
+                        <tbody id="daily-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ==================== SCRIPT ==================== -->
 <script>
     var table_detail;
@@ -355,6 +422,9 @@
                                     }
                                 }
                             }
+                            // Buat cell bisa diklik untuk daily detail
+                            $(td).addClass('cell-clickable');
+                            $(td).attr('title', 'Klik untuk lihat detail harian');
                         } catch (e) {}
                     }
                 }
@@ -371,6 +441,191 @@
                     previous: 'Sebelumnya'
                 }
             }
+        });
+
+        // Click handler untuk cell bulan -> tampilkan daily detail
+        $('#ajax_detail_imprs tbody').on('click', 'td.cell-clickable', function() {
+            var $cell = $(this);
+            var col = $cell.index(); // 3=Jan, 4=Feb, ... 14=Des
+            var bulan = col - 2; // 1=Jan, 2=Feb, ... 12=Des
+
+            var bulanNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            var bulanLabel = bulanNames[bulan - 1];
+
+            // Tampilkan daily di bawah tabel
+            $('#daily-title').text('Detail Harian - ' + bulanLabel + ' ' + vtahun);
+            $('#daily-info').text('Memuat data...');
+            $('#daily-target-info').html('');
+            $('#daily-table').hide();
+            $('#daily-body').empty();
+            $('#daily-empty').hide();
+            $('#daily-loading').show();
+            $('#daily-section').show();
+
+            // AJAX fetch daily data (semua departemen)
+            $.ajax({
+                url: '<?= site_url('siimut/rekap-laporan-imprs/ajax-daily-detail-imprs') ?>',
+                type: 'POST',
+                data: {
+                    indicator_id: indicatorId,
+                    tahun: vtahun,
+                    bulan: bulan
+                },
+                dataType: 'json',
+                success: function(resp) {
+                    $('#daily-loading').hide();
+
+                    if (!resp || !resp.dept_data || resp.dept_data.length === 0) {
+                        $('#daily-empty').show();
+                        return;
+                    }
+
+                    var targetText = resp.target || 0;
+                    var operatorText = resp.operator || '>=';
+                    var unitsText = resp.units || '%';
+                    var operatorDisplay = operatorText;
+                    if (operatorDisplay === '>=') operatorDisplay = '≥';
+                    if (operatorDisplay === '<=') operatorDisplay = '≤';
+
+                    $('#daily-info').text(resp.indicator || '');
+                    $('#daily-target-info').html(
+                        'Target: ' + operatorDisplay + ' ' + targetText + ' ' + unitsText +
+                        ' | Ruangan: ' + resp.dept_data.length + ' departemen'
+                    );
+
+                    var days = resp.days || 31;
+
+                    // Bangun header: #, Ruangan, 1, 2, 3, ... , days
+                    var headerHtml = '<th style="width:50px;" class="text-center">#</th><th style="width:200px;text-align:left!important;padding-left:15px!important;">Ruangan</th>';
+                    for (var d = 1; d <= days; d++) {
+                        headerHtml += '<th class="text-center" style="width:60px;">' + d + '</th>';
+                    }
+
+                    // Bangun baris per departemen
+                    var bodyHtml = '';
+                    $.each(resp.dept_data, function(idx, dept) {
+                        bodyHtml += '<tr class="daily-dept-row" data-dept-idx="' + idx + '">';
+                        bodyHtml += '<td class="text-center fw-bold" style="width:50px;">' + (idx + 1) + '</td>';
+                        bodyHtml += '<td class="text-center"><div class="py-1 text-start ps-2 text-nowrap" style="overflow:hidden;text-overflow:ellipsis;">' + dept.department_name + '</div></td>';
+
+                        $.each(dept.daily, function(i, item) {
+                            var cellClass = 'text-center text-nowrap';
+                            var nilaiDisplay = '-';
+
+                            if (item.nilai !== null) {
+                                nilaiDisplay = item.nilai + ' ' + unitsText;
+                                if (item.tercapai === true) {
+                                    cellClass += ' cell-target';
+                                } else if (item.tercapai === false) {
+                                    cellClass += ' cell-fail';
+                                }
+                            } else {
+                                if (item.num > 0 || item.denum > 0) {
+                                    cellClass += ' cell-fail';
+                                } else {
+                                    cellClass += ' cell-empty';
+                                }
+                            }
+
+                            var kpIcon = '';
+                            if (item.kendala || item.perbaikan) {
+                                kpIcon = '<i class="fas fa-exclamation-circle text-warning ms-1 kp-icon" style="font-size:10px;cursor:pointer;" data-dept-idx="' + idx + '" data-hari="' + item.hari + '"></i>';
+                            }
+
+                            bodyHtml += '<td class="' + cellClass + '" style="width:60px;" data-hari="' + item.hari + '">' +
+                                '<div class="py-1"><span class="fw-bold" style="font-size:13px;">' + nilaiDisplay + kpIcon + '</span>' +
+                                '<div class="small text-muted mt-1">' +
+                                '<span>' + (item.num || 0) + '</span> | <span>' + (item.denum || 0) + '</span>' +
+                                '</div></div>' +
+                                '</td>';
+                        });
+
+                        bodyHtml += '</tr>';
+                    });
+
+                    $('#daily-body').html(bodyHtml);
+                    $('#daily-headers').html(headerHtml);
+
+                    // Hancurkan DataTable lama jika ada
+                    if ($.fn.DataTable.isDataTable('#daily-table')) {
+                        $('#daily-table').DataTable().destroy();
+                    }
+
+                    $('#daily-table').show();
+                    if (!$('#daily-table').parent().is('.daily-table-scroll')) {
+                        $('#daily-table').wrap('<div class="daily-table-scroll" style="overflow-x:auto;max-width:100%;"></div>');
+                    }
+
+                    // Inisialisasi DataTable untuk daily table
+                    var dailyTable = $('#daily-table').DataTable({
+                        autoWidth: false,
+                        pageLength: 25,
+                        lengthMenu: [
+                            [10, 25, 50, -1],
+                            [10, 25, 50, 'Semua']
+                        ],
+                        language: {
+                            emptyTable: 'Tidak ada data',
+                            info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
+                            lengthMenu: 'Tampilkan _MENU_ data',
+                            search: 'Cari:',
+                            paginate: {
+                                first: 'Pertama',
+                                last: 'Terakhir',
+                                next: 'Berikutnya',
+                                previous: 'Sebelumnya'
+                            }
+                        },
+                        columnDefs: [{
+                            orderable: false,
+                            targets: '_all'
+                        }],
+                        destroy: true
+                    });
+
+                    // Click handler: icon warning -> toggle child row kendala/perbaikan
+                    $('#daily-body').off('click', '.kp-icon').on('click', '.kp-icon', function() {
+                        var deptIdx = $(this).data('dept-idx');
+                        var hari = $(this).data('hari');
+                        var deptData = resp.dept_data[deptIdx];
+                        if (!deptData) return;
+
+                        // Cari data hari itu
+                        var dayData = null;
+                        $.each(deptData.daily, function(i, d) {
+                            if (d.hari === hari) dayData = d;
+                        });
+                        if (!dayData) return;
+
+                        var row = $(this).closest('tr');
+                        var kpRow = row.next('.kp-row');
+
+                        if (kpRow.length) {
+                            kpRow.remove();
+                            return;
+                        }
+
+                        var kendalaText = dayData.kendala || '-';
+                        var perbaikanText = dayData.perbaikan || '-';
+
+                        var childHtml = '<tr class="kp-row">' +
+                            '<td colspan="' + (days + 2) + '" class="text-start p-3" style="background:#f8f9fa;">' +
+                            '<div class="row">' +
+                            '<div class="col-md-6"><strong>Kendala:</strong><br>' + kendalaText + '</div>' +
+                            '<div class="col-md-6"><strong>Tindak Lanjut:</strong><br>' + perbaikanText + '</div>' +
+                            '</div>' +
+                            '</td>' +
+                            '</tr>';
+
+                        row.after(childHtml);
+                    });
+                },
+                error: function() {
+                    $('#daily-loading').hide();
+                    $('#daily-empty').show();
+                    $('#daily-empty').html('<i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i><p class="text-danger">Gagal memuat data</p>');
+                }
+            });
         });
     });
 

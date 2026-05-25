@@ -854,4 +854,125 @@ class RekapLaporanImprs extends AppController
                 return 'TIDAK ADA DATA';
         }
     }
+
+    /**
+     * AJAX: Daily detail semua departemen untuk satu bulan (IMPRS)
+     */
+    public function getAjaxDailyDetail()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['error' => 'Invalid request']);
+        }
+
+        $indicatorId  = (int) $this->request->getPost('indicator_id');
+        $tahun        = (int) $this->request->getPost('tahun');
+        $bulan        = (int) $this->request->getPost('bulan');
+
+        $role = session()->get('user_role') ?? '';
+        $userDeptId = null;
+        if (!in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
+            $userDeptId = session()->get('department_id') ?? null;
+        }
+
+        $info = $this->rekapModel->getDetailByIdImprs($indicatorId);
+        $target  = $info ? (float) ($info->indicator_target ?? 0) : 0;
+        $factors = $info ? (float) ($info->indicator_factors ?? 1) : 1;
+        $operator = $info ? ($info->indicator_target_calculation ?? '>=') : '>=';
+        $units   = $info ? ($info->indicator_units ?? '%') : '%';
+
+        $daysInMonth = $this->getDaysInMonth($bulan, $tahun);
+
+        // Ambil departemen & data harian
+        $departments = $this->rekapModel->getDepartmentsByIndicator($indicatorId, $tahun, [], $userDeptId);
+        $rawData     = $this->rekapModel->getDailyDataAllDepartments($indicatorId, $tahun, $bulan);
+        $kendalaMap  = $this->rekapModel->getKendalaPerbaikan($indicatorId, $tahun, $bulan, $userDeptId);
+
+        // Group by department_id => [day => data]
+        $byDept = [];
+        foreach ($rawData as $row) {
+            $deptId = (int) $row->result_department_id;
+            $day    = (int) $row->tanggal;
+            $byDept[$deptId][$day] = $row;
+        }
+
+        $deptDaily = [];
+        foreach ($departments as $dept) {
+            $did = (int) $dept->department_id;
+            $daily = [];
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                if (isset($byDept[$did][$d])) {
+                    $r     = $byDept[$did][$d];
+                    $num   = (float) $r->num;
+                    $denum = (float) $r->denum;
+                    $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
+                } else {
+                    $num   = 0;
+                    $denum = 0;
+                    $nilai = null;
+                }
+                $kpKey = $did . '_' . $d;
+                $kendala   = isset($kendalaMap[$kpKey]) ? $kendalaMap[$kpKey]['kendala'] : null;
+                $perbaikan = isset($kendalaMap[$kpKey]) ? $kendalaMap[$kpKey]['perbaikan'] : null;
+
+                $daily[] = [
+                    'hari'      => $d,
+                    'num'       => $num,
+                    'denum'     => $denum,
+                    'nilai'     => $nilai,
+                    'tercapai'  => $nilai !== null ? $this->hitungTercapai($nilai, $target, $operator) : null,
+                    'kendala'   => $kendala,
+                    'perbaikan' => $perbaikan,
+                ];
+            }
+            $deptDaily[] = [
+                'department_id'   => $did,
+                'department_name' => $dept->department_name,
+                'daily'           => $daily,
+            ];
+        }
+
+        $namaBulan = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        return $this->response->setJSON([
+            'dept_data'   => $deptDaily,
+            'days'        => $daysInMonth,
+            'target'      => $target,
+            'units'       => $units,
+            'operator'    => $operator,
+            'bulan'       => $namaBulan[$bulan] ?? $bulan,
+            'bulan_angka' => $bulan,
+            'tahun'       => $tahun,
+            'indicator'   => $info ? $info->indicator_element : '',
+        ]);
+    }
+
+    /**
+     * Cek apakah nilai tercapai
+     */
+    private function hitungTercapai(?float $nilai, float $target, string $operator): ?bool
+    {
+        if ($nilai === null) return null;
+        return match ($operator) {
+            '>=' => $nilai >= $target,
+            '<=' => $nilai <= $target,
+            '>'  => $nilai > $target,
+            '<'  => $nilai < $target,
+            '='  => $nilai == $target,
+            default => $nilai >= $target,
+        };
+    }
+
+    private function getDaysInMonth(int $bulan, int $tahun): int
+    {
+        return match ($bulan) {
+            1, 3, 5, 7, 8, 10, 12 => 31,
+            4, 6, 9, 11 => 30,
+            2 => ($tahun % 4 == 0 && ($tahun % 100 != 0 || $tahun % 400 == 0)) ? 29 : 28,
+            default => 30,
+        };
+    }
 }

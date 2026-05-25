@@ -1146,4 +1146,68 @@ protected $column_order = [
 
         return $perTahun;
     }
+
+    /**
+     * Ambil data harian semua departemen untuk satu indikator, bulan, dan tahun
+     */
+    public function getDailyDataAllDepartments(int $indicatorId, int $tahun, int $bulan)
+    {
+        $db = db_connect();
+        $builder = $db->table('local_quality_indicator_result lqir');
+
+        $builder->select("
+            lqir.result_department_id,
+            DAY(lqir.result_period) AS tanggal,
+            SUM(lqir.result_numerator_value) AS num,
+            SUM(lqir.result_denumerator_value) AS denum
+        ");
+
+        $builder->where('lqir.result_indicator_id', $indicatorId);
+        $builder->where('YEAR(lqir.result_period)', $tahun);
+        $builder->where('MONTH(lqir.result_period)', $bulan);
+
+        $builder->groupBy(['lqir.result_department_id', 'lqir.result_period']);
+        $builder->orderBy('lqir.result_department_id');
+        $builder->orderBy('lqir.result_period', 'ASC');
+
+        return $builder->get()->getResult();
+    }
+
+    /**
+     * Ambil kendala & perbaikan dari local_rencana_perbaikan
+     */
+    public function getKendalaPerbaikan(int $indicatorId, int $tahun, int $bulan, ?int $departmentId = null): array
+    {
+        $db = db_connect();
+        $builder = $db->table('local_rencana_perbaikan');
+
+        $builder->select("
+            result_department_id,
+            DAY(result_period) AS tanggal,
+            kendala,
+            perbaikan
+        ");
+
+        $builder->where('result_indicator_id', $indicatorId);
+        $builder->where('indicator_category_id', '5');
+        $builder->where('YEAR(result_period)', $tahun);
+        $builder->where('MONTH(result_period)', $bulan);
+
+        if ($departmentId !== null) {
+            $builder->where('result_department_id', $departmentId);
+        }
+
+        $results = $builder->get()->getResult();
+
+        $map = [];
+        foreach ($results as $row) {
+            $did = (int) $row->result_department_id;
+            $tgl = (int) $row->tanggal;
+            $map[$did . '_' . $tgl] = [
+                'kendala'   => $row->kendala,
+                'perbaikan' => $row->perbaikan,
+            ];
+        }
+        return $map;
+    }
 }

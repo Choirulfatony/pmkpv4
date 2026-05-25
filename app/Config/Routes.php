@@ -83,6 +83,7 @@ $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
     $routes->get('rekap-laporan-imprs/export', 'RekapLaporanImprs::exportExcel');
     $routes->get('rekap-laporan-imprs/export-indicator/(:num)', 'RekapLaporanImprs::exportExcelIndicator/$1');
     $routes->get('rekap-laporan-imprs/detail/(:num)', 'RekapLaporanImprs::viewDetailImprs/$1');
+    $routes->post('rekap-laporan-imprs/ajax-daily-detail-imprs', 'RekapLaporanImprs::getAjaxDailyDetail');
 
     // Rekap Laporan IMPUnit
     $routes->get('rekap-laporan-impunit', 'RekapLaporanImpunit::index');
