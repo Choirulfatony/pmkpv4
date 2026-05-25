@@ -1173,15 +1173,17 @@ class Ikprs extends AppController
                     $phone = preg_replace('/^0/', '62', $kepala->phone);
                     $waKepalaParams = [
                         ['type' => 'text', 'text' => $kepala->nama ?? 'Kepala Keperawatan'],
+                        ['type' => 'text', 'text' => $dataInsiden['nama_pasien'] ?? '-'],
                         ['type' => 'text', 'text' => $dataInsiden['jenis_insiden'] ?? 'Insiden'],
-                        ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? 'Unit']
+                        ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? 'Unit'],
+                        ['type' => 'text', 'text' => session('hris_full_name') ?? 'Petugas']
                     ];
                     $waKepalaData = [
                         'messaging_product' => 'whatsapp',
                         'to' => $phone,
                         'type' => 'template',
                         'template' => [
-                            'name' => 'ikprs_to_karu',
+                            'name' => 'hello',
                             'language' => ['code' => 'id'],
                             'components' => [['type' => 'body', 'parameters' => $waKepalaParams]]
                         ]
@@ -1224,11 +1226,13 @@ class Ikprs extends AppController
             // Format nomor: 08xx -> 62xx (standar internasional)
             $phone = preg_replace('/^0/', '62', $karuPhone->phone);
 
-            // Parameters untuk template ikprs_to_karu: Nama Karu, Jenis Insiden, Unit
+            // Parameters untuk template hello: Nama Karu, Nama Pasien, Jenis Insiden, Unit, Pelapor
             $templateParams = [
-                ['type' => 'text', 'text' => $karu->nama ?? 'Karu'],  // Nama Karu dari tabel unit_karu
-                ['type' => 'text', 'text' => $dataInsiden['jenis_insiden'] ?? 'Insiden'],  // Jenis Insiden
-                ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? 'Unit']  // Kamar
+                ['type' => 'text', 'text' => $karu->nama ?? 'Karu'],
+                ['type' => 'text', 'text' => $dataInsiden['nama_pasien'] ?? '-'],
+                ['type' => 'text', 'text' => $dataInsiden['jenis_insiden'] ?? 'Insiden'],
+                ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? 'Unit'],
+                ['type' => 'text', 'text' => session('hris_full_name') ?? 'Petugas']
             ];
 
             $data = [
@@ -1236,7 +1240,7 @@ class Ikprs extends AppController
                 'to' => $phone,
                 'type' => 'template',
                 'template' => [
-                    'name' => 'ikprs_to_karu',
+                    'name' => 'hello',
                     'language' => ['code' => 'id'],
                     'components' => [
                         [
@@ -1796,15 +1800,17 @@ class Ikprs extends AppController
             'to' => $phone,
             'type' => 'template',
             'template' => [
-                'name' => 'ikprs_to_karu',
+                'name' => 'hello',
                 'language' => ['code' => 'id'],
                 'components' => [
                     [
                         'type' => 'body',
                         'parameters' => [
                             ['type' => 'text', 'text' => 'Karu'],
+                            ['type' => 'text', 'text' => 'Pasien A'],
                             ['type' => 'text', 'text' => 'Jatuh'],
-                            ['type' => 'text', 'text' => 'Rawat Inap']
+                            ['type' => 'text', 'text' => 'Rawat Inap'],
+                            ['type' => 'text', 'text' => 'Petugas']
                         ]
                     ]
                 ]
@@ -1831,7 +1837,7 @@ class Ikprs extends AppController
 
         echo "<h3>WhatsApp Template Test</h3>";
         echo "Phone: " . htmlspecialchars($phone) . "<br>";
-        echo "Template: ikprs_to_karu<br>";
+        echo "Template: hello<br>";
         echo "HTTP Code: " . $httpCode . "<br>";
         echo "Response: <pre>" . htmlspecialchars($response) . "</pre>";
         if ($error) echo "Error: " . htmlspecialchars($error) . "<br>";
@@ -1851,7 +1857,7 @@ class Ikprs extends AppController
             'to' => $phone,
             'type' => 'template',
             'template' => [
-                'name' => 'ikprs_to_karu',
+                'name' => 'hello',
                 'language' => [
                     'code' => 'id'
                 ],
@@ -1865,11 +1871,19 @@ class Ikprs extends AppController
                             ],
                             [
                                 'type' => 'text',
+                                'text' => 'Pasien A'
+                            ],
+                            [
+                                'type' => 'text',
                                 'text' => 'Jatuh'
                             ],
                             [
                                 'type' => 'text',
                                 'text' => 'Rawat Inap'
+                            ],
+                            [
+                                'type' => 'text',
+                                'text' => 'Petugas'
                             ]
                         ]
                     ]
@@ -2082,23 +2096,23 @@ class Ikprs extends AppController
                         'to' => $phone,
                         'type' => 'template',
                         'template' => [
-                            'name' => 'ikprs_to_komite',
+                        'name' => 'hello',
                             'language' => ['code' => 'id'],
                             'components' => [
                                 [
                                     'type' => 'body',
                                     'parameters' => [
                                         ['type' => 'text', 'text' => $komite->nama ?? 'KOMITE'],
+                                        ['type' => 'text', 'text' => $insiden->nama_pasien ?? '-'],
                                         ['type' => 'text', 'text' => $insiden->jenis_insiden ?? '-'],
-                                        ['type' => 'text', 'text' => $grading],
-                                        ['type' => 'text', 'text' => $insiden->department_name ?? $insiden->nama_unit ?? '-'],
+                                        ['type' => 'text', 'text' => $grading . ' - ' . ($insiden->department_name ?? $insiden->nama_unit ?? '-')],
                                         ['type' => 'text', 'text' => session('hris_full_name') ?? 'KARU']
                                     ]
                                 ]
                             ]
                         ]
                     ];
-
+    
                     $ch = curl_init($url);
                     curl_setopt($ch, CURLOPT_POST, 1);
                     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
@@ -2185,7 +2199,7 @@ class Ikprs extends AppController
                 $notifKepalaId = $db->insertID();
                 log_message('error', 'verifikasi_karu: notif to KEPALA_KEPERAWATAN inserted, user_id=' . $kepala->hris_user_id);
 
-                // Kirim WA ke KEPALA_KEPERAWATAN (pakai template ikprs_to_komite)
+                // Kirim WA ke KEPALA_KEPERAWATAN (pakai template hello)
                 if (!empty($kepala->phone)) {
                     $phone = preg_replace('/^0/', '62', $kepala->phone);
                     $waKepalaData = [
@@ -2193,16 +2207,16 @@ class Ikprs extends AppController
                         'to' => $phone,
                         'type' => 'template',
                         'template' => [
-                            'name' => 'ikprs_to_komite',
+                            'name' => 'hello',
                             'language' => ['code' => 'id'],
                             'components' => [
                                 [
                                     'type' => 'body',
                                     'parameters' => [
                                         ['type' => 'text', 'text' => $kepala->nama ?? 'Kepala Keperawatan'],
+                                        ['type' => 'text', 'text' => $insiden->nama_pasien ?? '-'],
                                         ['type' => 'text', 'text' => $insiden->jenis_insiden ?? '-'],
-                                        ['type' => 'text', 'text' => $grading],
-                                        ['type' => 'text', 'text' => $insiden->department_name ?? $insiden->nama_unit ?? '-'],
+                                        ['type' => 'text', 'text' => $grading . ' - ' . ($insiden->department_name ?? $insiden->nama_unit ?? '-')],
                                         ['type' => 'text', 'text' => session('hris_full_name') ?? 'KARU']
                                     ]
                                 ]
@@ -3237,14 +3251,16 @@ class Ikprs extends AppController
 
             // Tentukan template berdasarkan type
             if ($notif->type === 'to_karu') {
-                $templateName = 'ikprs_to_karu';
+                $templateName = 'hello';
                 $params = [
                     ['type' => 'text', 'text' => $notif->nama ?? 'User'],
+                    ['type' => 'text', 'text' => '-'],
                     ['type' => 'text', 'text' => 'Insiden'],
-                    ['type' => 'text', 'text' => 'Unit']
+                    ['type' => 'text', 'text' => 'Unit'],
+                    ['type' => 'text', 'text' => 'Sistem']
                 ];
             } elseif ($notif->type === 'to_komite') {
-                $templateName = 'ikprs_to_komite';
+                $templateName = 'hello';
                 $params = [
                     ['type' => 'text', 'text' => $notif->nama ?? 'KOMITE'],
                     ['type' => 'text', 'text' => '-'],
