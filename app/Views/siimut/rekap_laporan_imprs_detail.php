@@ -171,6 +171,9 @@
                 <h3 class="card-title">
                     <i class="fas fa-table me-2"></i>
                     Detail Per Ruangan
+                    <?php if (isset($detail->indicator_record_status) && $detail->indicator_record_status === 'D'): ?>
+                        <span class="badge bg-secondary ms-2" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>
+                    <?php endif; ?>
                 </h3>
                 <div class="card-tools d-flex align-items-center gap-2">
                     <!-- Tombol Back -->
