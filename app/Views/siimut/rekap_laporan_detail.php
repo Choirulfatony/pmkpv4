@@ -184,7 +184,12 @@
                 </div>
                 <div class="flex-grow-1">
                     <h5 class="mb-1"><strong>Detail Rekap Indikator Nasional Mutu (INM)</strong></h5>
-                    <p class="mb-0">Indikator: <strong><?= isset($detail->indicator_element) ? esc($detail->indicator_element) : 'Data Detail' ?></strong></p>
+                    <p class="mb-0">Indikator: <strong><?= isset($detail->indicator_element) ? esc($detail->indicator_element) : 'Data Detail' ?></strong>
+                        <?php // [CHANGED] Tampilkan badge kalo indicator_record_status = 'D' (non-aktif) ?>
+                        <?php if (isset($detail->indicator_record_status) && $detail->indicator_record_status === 'D'): ?>
+                            <span class="badge bg-secondary ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>
+                        <?php endif; ?>
+                    </p>
                     <p class="mb-0">Target: <strong><?= isset($detail->indicator_target) ? esc($detail->indicator_target) : '-' ?></strong>
                         <span class="text-muted"><?= isset($detail->indicator_units) ? esc($detail->indicator_units) : '' ?></span>
                     </p>
@@ -207,6 +212,10 @@
                 <h3 class="card-title">
                     <i class="fas fa-table me-2"></i>
                     Detail Per Ruangan
+                    <?php // [CHANGED] Tampilkan badge di judul card kalo indikator non-aktif ?>
+                    <?php if (isset($detail->indicator_record_status) && $detail->indicator_record_status === 'D'): ?>
+                        <span class="badge bg-secondary ms-2" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>
+                    <?php endif; ?>
                 </h3>
                 <div class="card-tools d-flex align-items-center gap-2">
                     <!-- Tombol Back -->

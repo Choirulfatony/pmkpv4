@@ -91,9 +91,14 @@ class RekapLaporanInm extends AppController
 
             $row[] = '<div class="fw-bold">' . $no . '</div>';
 
+            // [CHANGED] Tampilkan badge "Non-Aktif" kalo indicator_record_status = 'D'
+            $badge = '';
+            if (isset($indicator->indicator_record_status) && $indicator->indicator_record_status === 'D') {
+                $badge = ' <span class="badge bg-secondary ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>';
+            }
             $row[] = '<div class="py-1 text-start ps-2">
                 <a href="javascript:void(0);" class="fw-semibold text-decoration-none" title="Detail Rekapan Ruangan" onclick="view_detail_inm(' . $indicator->indicator_id . ');">' 
-                    . esc($indicator->indicator_element) . '
+                    . esc($indicator->indicator_element) . $badge . '
                 </a>
             </div>';
 

@@ -88,6 +88,22 @@
         color: #ced4da !important;
     }
 
+    /* [CHANGED] Badge buat nandain indikator non-aktif (record_status = 'D') */
+    .badge-non-aktif {
+        background-color: #6c757d;
+        color: #fff;
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        vertical-align: middle;
+        margin-left: 4px;
+    }
+
+    [data-bs-theme="dark"] .badge-non-aktif {
+        background-color: #495057;
+        color: #dee2e6;
+    }
+
     .dataTables_wrapper .dataTables_processing {
         display: none !important;
     }

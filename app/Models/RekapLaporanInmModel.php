@@ -89,7 +89,8 @@ class RekapLaporanInmModel extends Model
         $builder->where('qir.result_period <=', $endDate);
 
         $builder->where('qi.indicator_category_id', '4');
-        $builder->where('qi.indicator_record_status', 'A');
+        // [CHANGED] Biar indikator non-aktif (status 'D') tetap muncul hasil rekapan historisnya
+        $builder->whereIn('qi.indicator_record_status', ['A', 'D']);
         $builder->where('qi.indicator_id', $indicator);
 
         $builder->groupBy([
@@ -169,9 +170,10 @@ class RekapLaporanInmModel extends Model
 
         $builder->where("YEAR(qir.result_period)", $tahun);
         $builder->where("qi.indicator_category_id", '4');
-        $builder->where("qi.indicator_record_status", 'A');
+        // [CHANGED] Biar indikator non-aktif tetap ikut diambil data bulanannya
+        $builder->whereIn("qi.indicator_record_status", ['A', 'D']);
         $builder->whereIn('qi.indicator_id', $indicatorIds);
-
+    
         if ($departmentId !== null && $departmentId > 0) {
             $builder->where('qir.result_department_id', $departmentId);
         }
@@ -217,14 +219,16 @@ class RekapLaporanInmModel extends Model
             quality_indicator.indicator_units,
             quality_indicator.indicator_target_unit,
             quality_indicator.indicator_target_calculation AS operator,
-            quality_indicator.indicator_factors AS factors
+            quality_indicator.indicator_factors AS factors,
+            quality_indicator.indicator_record_status
         ");
 
         $builder->join('quality_indicator', 'quality_indicator.indicator_id = quality_indicator_group.group_indicator_id');
         $builder->join('master_institution_department', 'master_institution_department.department_id = quality_indicator_group.group_department_id');
 
         $builder->where("quality_indicator.indicator_category_id", '4');
-        $builder->where("quality_indicator.indicator_record_status", 'A');
+        // [CHANGED] Biar indikator non-aktif (status 'D') tetap muncul di daftar rekap
+        $builder->whereIn("quality_indicator.indicator_record_status", ['A', 'D']);
 
         $vtahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
 
@@ -232,11 +236,13 @@ class RekapLaporanInmModel extends Model
         $availablePeriods = $this->getAvailableGroupPeriods();
         $usePeriod = in_array($vtahun, $availablePeriods) ? $vtahun : min($availablePeriods);
 
-        $builder->groupStart();
-        $builder->where("quality_indicator_group.group_period", $usePeriod);
-        $builder->orWhere('quality_indicator_group.group_period', $usePeriod - 1);
-        $builder->orWhere('quality_indicator_group.group_period', $usePeriod - 2);
-        $builder->groupEnd();
+        // [CHANGED] 'D': pake range 3 tahun ke belakang dari tahun dipilih (group_period >= tahun-3)
+        // [CHANGED] 'A': tetap pake range 3 tahun (tahun, tahun-1, tahun-2)
+        $builder->where("(
+            (quality_indicator.indicator_record_status = 'D' AND quality_indicator_group.group_period >= ($vtahun - 3))
+            OR
+            (quality_indicator.indicator_record_status = 'A' AND quality_indicator_group.group_period IN ($usePeriod, " . ($usePeriod - 1) . ", " . ($usePeriod - 2) . "))
+        )");
 
         // Filter by user role
         $userRole = session('user_role') ?? '';
@@ -364,14 +370,19 @@ class RekapLaporanInmModel extends Model
                 JOIN quality_indicator ON quality_indicator.indicator_id = quality_indicator_group.group_indicator_id
                 JOIN master_institution_department ON master_institution_department.department_id = quality_indicator_group.group_department_id
                 WHERE quality_indicator.indicator_category_id = '4'
-                AND quality_indicator.indicator_record_status = 'A'
-                AND (quality_indicator_group.group_period = ? 
-                     OR quality_indicator_group.group_period = ? 
-                     OR quality_indicator_group.group_period = ?)
+                -- [CHANGED] Pake IN ('A', 'D') biar non-aktif ikut dihitung
+                AND quality_indicator.indicator_record_status IN ('A', 'D')
+                -- [CHANGED] 'D': group_period >= (tahun-3) biar range 3 tahun ke belakang
+                -- [CHANGED] 'A': pake range 3 tahun
+                AND (
+                    (quality_indicator.indicator_record_status = 'D' AND quality_indicator_group.group_period >= ?)
+                    OR
+                    (quality_indicator.indicator_record_status = 'A' AND quality_indicator_group.group_period IN (?, ?, ?))
+                )
                 " . ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? "AND master_institution_department.department_id = " . $userDepartmentId : "") . "
                 GROUP BY quality_indicator.indicator_id
             ) as counted
-        ", [$vtahun, $vtahun - 1, $vtahun - 2]);
+        ", [$vtahun - 3, $vtahun, $vtahun - 1, $vtahun - 2]);
 
         $count = $query->getRow()->total ?? 0;
 
@@ -417,7 +428,8 @@ class RekapLaporanInmModel extends Model
             JOIN quality_indicator ON quality_indicator.indicator_id = quality_indicator_group.group_indicator_id
             JOIN master_institution_department ON master_institution_department.department_id = quality_indicator_group.group_department_id
             WHERE quality_indicator.indicator_category_id = '4' 
-            AND quality_indicator.indicator_record_status = 'A' 
+            -- [CHANGED] Pake IN ('A', 'D') biar departemen indikator non-aktif tetap tampil di detail
+            AND quality_indicator.indicator_record_status IN ('A', 'D') 
             AND quality_indicator_group.group_record_status = 'A'
             AND quality_indicator_group.group_indicator_id = ?
             {$searchCondition}
@@ -444,11 +456,14 @@ class RekapLaporanInmModel extends Model
                 quality_indicator.indicator_target,
                 quality_indicator.indicator_factors,
                 quality_indicator.indicator_target_calculation,
-                quality_indicator.indicator_units
+                quality_indicator.indicator_units,
+                -- [CHANGED] Ambil indicator_record_status biar tau indikator ini non-aktif atau tidak
+                quality_indicator.indicator_record_status
             FROM quality_indicator
             WHERE quality_indicator.indicator_id = ?
             AND quality_indicator.indicator_category_id = '4' 
-            AND quality_indicator.indicator_record_status = 'A'
+            -- [CHANGED] Pake IN ('A', 'D') biar detail indikator non-aktif tetap bisa dibuka
+            AND quality_indicator.indicator_record_status IN ('A', 'D')
         ", [$indicatorId]);
 
         return $query->getRow();
@@ -549,7 +564,8 @@ class RekapLaporanInmModel extends Model
             JOIN master_institution_department ON master_institution_department.department_id = quality_indicator_group.group_department_id
             WHERE quality_indicator_group.group_indicator_id = ?
             AND quality_indicator.indicator_category_id = '4' 
-            AND quality_indicator.indicator_record_status = 'A'
+            -- [CHANGED] Pake IN ('A', 'D') biar hitungan departemen indikator non-aktif tetap akurat
+            AND quality_indicator.indicator_record_status IN ('A', 'D')
             {$deptCondition}
             {$searchCondition}
         ", [$indicatorId]);
@@ -584,15 +600,20 @@ class RekapLaporanInmModel extends Model
                 JOIN quality_indicator ON quality_indicator.indicator_id = quality_indicator_group.group_indicator_id
                 JOIN master_institution_department ON master_institution_department.department_id = quality_indicator_group.group_department_id
                 WHERE quality_indicator.indicator_category_id = '4'
-                AND quality_indicator.indicator_record_status = 'A'
-                AND (quality_indicator_group.group_period = ? 
-                     OR quality_indicator_group.group_period = ? 
-                     OR quality_indicator_group.group_period = ?)
+                -- [CHANGED] Pake IN ('A', 'D') biar non-aktif ikut dihitung
+                AND quality_indicator.indicator_record_status IN ('A', 'D')
+                -- [CHANGED] 'D': group_period >= (tahun-3) biar range 3 tahun ke belakang
+                -- [CHANGED] 'A': pake range 3 tahun
+                AND (
+                    (quality_indicator.indicator_record_status = 'D' AND quality_indicator_group.group_period >= ?)
+                    OR
+                    (quality_indicator.indicator_record_status = 'A' AND quality_indicator_group.group_period IN (?, ?, ?))
+                )
                 " . ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? "AND master_institution_department.department_id = " . $userDepartmentId : "") . "
                 {$searchCondition}
                 GROUP BY quality_indicator.indicator_id
             ) as counted
-        ", [$vtahun, $vtahun - 1, $vtahun - 2]);
+        ", [$vtahun - 3, $vtahun, $vtahun - 1, $vtahun - 2]);
 
         return $query->getRow()->total ?? 0;
     }
@@ -645,12 +666,15 @@ class RekapLaporanInmModel extends Model
         $builder->select('quality_indicator.indicator_id, quality_indicator.indicator_element, quality_indicator.indicator_target, quality_indicator.indicator_factors, quality_indicator.indicator_units, quality_indicator.indicator_target_calculation');
         $builder->join('quality_indicator_group', 'quality_indicator.indicator_id = quality_indicator_group.group_indicator_id');
         $builder->where('quality_indicator.indicator_category_id', '4');
-        $builder->where('quality_indicator.indicator_record_status', 'A');
-        $builder->groupStart();
-        $builder->where('quality_indicator_group.group_period', $usePeriod);
-        $builder->orWhere('quality_indicator_group.group_period', $usePeriod - 1);
-        $builder->orWhere('quality_indicator_group.group_period', $usePeriod - 2);
-        $builder->groupEnd();
+        // [CHANGED] Biar indikator non-aktif (status 'D') tetap ikut di rekap periode
+        $builder->whereIn('quality_indicator.indicator_record_status', ['A', 'D']);
+        // [CHANGED] 'D': group_period >= (tahun-3) biar range 3 tahun ke belakang
+        // [CHANGED] 'A': pake range 3 tahun seperti biasa
+        $builder->where("(
+            (quality_indicator.indicator_record_status = 'D' AND quality_indicator_group.group_period >= ($tahun - 3))
+            OR
+            (quality_indicator.indicator_record_status = 'A' AND quality_indicator_group.group_period IN ($usePeriod, " . ($usePeriod - 1) . ", " . ($usePeriod - 2) . "))
+        )");
 
         // Filter by user role
         $userRole = session('user_role') ?? '';
