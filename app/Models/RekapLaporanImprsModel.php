@@ -146,7 +146,7 @@ protected $column_order = [
     /**
      * Ambil SEMUA data bulanan dalam 1 query (OPTIMIZED + CACHE)
      */
-    public function getAllMonthlyData(array $indicatorIds, int $tahun)
+    public function getAllMonthlyData(array $indicatorIds, int $tahun, ?int $departmentId = null)
     {
         if (empty($indicatorIds)) {
             return [];
@@ -196,6 +196,10 @@ protected $column_order = [
         // [CHANGED] Biar indikator non-aktif tetap ikut diambil data bulanannya
         $builder->whereIn("lqi.indicator_record_status", ['A', 'D']);
         $builder->whereIn('lqi.indicator_id', $indicatorIds);
+
+        if ($departmentId !== null && $departmentId > 0) {
+            $builder->where('lqir.result_department_id', $departmentId);
+        }
 
         $builder->groupBy([
             'lqi.indicator_id',
@@ -715,6 +719,16 @@ protected $column_order = [
         $builder->whereIn("lqi.indicator_record_status", ['A', 'D']);
         $builder->where('lqig.group_record_status', 'A');
 
+        // Filter by user role
+        $userRole = session('user_role') ?? '';
+        $userDepartmentId = session('department_id') ?? 0;
+
+        $filterDepartmentId = null;
+        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
+            $builder->where('lqig.group_department_id', $userDepartmentId);
+            $filterDepartmentId = $userDepartmentId;
+        }
+
         $this->filterActiveOrHasData($builder, $tahun . '-01-01', $tahun . '-12-31');
 
         // Convert YEAR() to date range checks to avoid CI4 parameter binding issues
@@ -735,7 +749,7 @@ protected $column_order = [
         if (empty($indicators)) return [];
 
         $indicatorIds = array_column($indicators, 'indicator_id');
-        $allMonthlyData = $this->getAllMonthlyData($indicatorIds, $tahun);
+        $allMonthlyData = $this->getAllMonthlyData($indicatorIds, $tahun, $filterDepartmentId);
 
         // mapping
         $monthlyByIndicator = [];
@@ -982,7 +996,7 @@ protected $column_order = [
     /**
      * Ambil data bulanan untuk satu indikator
      */
-    public function getMonthlyDataByIndicator(int $indicatorId, int $tahun): array
+    public function getMonthlyDataByIndicator(int $indicatorId, int $tahun, ?int $departmentId = null): array
     {
         $db = db_connect();
         $builder = $db->table('local_quality_indicator_result lqir');
@@ -997,6 +1011,19 @@ protected $column_order = [
         $builder->where('lqir.result_indicator_id', $indicatorId);
         $builder->where("lqir.result_period >=", $tahun . '-01-01');
         $builder->where("lqir.result_period <=", $tahun . '-12-31');
+
+        // Filter by department
+        if ($departmentId === null) {
+            $userRole = session('user_role') ?? '';
+            $userDepartmentId = session('department_id') ?? 0;
+            if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
+                $departmentId = $userDepartmentId;
+            }
+        }
+        if ($departmentId !== null && $departmentId > 0) {
+            $builder->where('lqir.result_department_id', $departmentId);
+        }
+
         $builder->groupBy('MONTH(lqir.result_period)');
 
         $results = $builder->get()->getResult();
@@ -1027,9 +1054,9 @@ protected $column_order = [
     /**
      * Ambil nilai triwulan
      */
-    public function getNilaiTriwulan(int $indicatorId, int $tahun): array
+    public function getNilaiTriwulan(int $indicatorId, int $tahun, ?int $departmentId = null): array
     {
-        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
+        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun, $departmentId);
 
         $indicator = $this->getDetailByIdImprs($indicatorId);
         $target = (float) ($indicator->indicator_target ?? 0);
@@ -1060,9 +1087,9 @@ protected $column_order = [
     /**
      * Ambil nilai semester
      */
-    public function getNilaiSemester(int $indicatorId, int $tahun): array
+    public function getNilaiSemester(int $indicatorId, int $tahun, ?int $departmentId = null): array
     {
-        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
+        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun, $departmentId);
 
         $indicator = $this->getDetailByIdImprs($indicatorId);
         $target = (float) ($indicator->indicator_target ?? 0);
@@ -1093,9 +1120,9 @@ protected $column_order = [
     /**
      * Ambil nilai tahunan
      */
-    public function getNilaiTahun(int $indicatorId, int $tahun): array
+    public function getNilaiTahun(int $indicatorId, int $tahun, ?int $departmentId = null): array
     {
-        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
+        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun, $departmentId);
 
         $indicator = $this->getDetailByIdImprs($indicatorId);
         $target = (float) ($indicator->indicator_target ?? 0);
@@ -1118,7 +1145,7 @@ protected $column_order = [
     /**
      * Ambil nilai per tahun (5 tahun terakhir)
      */
-    public function getNilaiPerTahun(int $indicatorId, int $tahun): array
+    public function getNilaiPerTahun(int $indicatorId, int $tahun, ?int $departmentId = null): array
     {
         $indicator = $this->getDetailByIdImprs($indicatorId);
         $target = (float) ($indicator->indicator_target ?? 0);
@@ -1129,7 +1156,7 @@ protected $column_order = [
         $tahunMulai = $tahun - 4;
 
         for ($th = $tahunMulai; $th <= $tahun; $th++) {
-            $monthly = $this->getMonthlyDataByIndicator($indicatorId, $th);
+            $monthly = $this->getMonthlyDataByIndicator($indicatorId, $th, $departmentId);
 
             $totalNum = 0;
             $totalDenum = 0;

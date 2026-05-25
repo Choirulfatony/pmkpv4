@@ -60,10 +60,12 @@ $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
 
     // Grafik IMPRS
     $routes->get('grafik-imprs', 'GrafikImprs::index');
+    $routes->post('grafik-imprs/indicators', 'GrafikImprs::getIndicatorsByYear');
     $routes->post('grafik-imprs/data', 'GrafikImprs::getDataGrafik');
 
     // Grafik IMPUnit
     $routes->get('grafik-impunit', 'GrafikImpunit::index');
+    $routes->post('grafik-impunit/indicators', 'GrafikImpunit::getIndicatorsByYear');
     $routes->post('grafik-impunit/data', 'GrafikImpunit::getDataGrafik');
 
     // Rekap Periode IMPRS
@@ -89,6 +91,7 @@ $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
     $routes->get('rekap-laporan-impunit', 'RekapLaporanImpunit::index');
     $routes->post('rekap-laporan-impunit/ajax_rekap_impunit', 'RekapLaporanImpunit::getAjaxDataRekapImpunit');
     $routes->post('rekap-laporan-impunit/ajax-detail-impunit', 'RekapLaporanImpunit::getAjaxDataRekapImpunitDetail');
+    $routes->post('rekap-laporan-impunit/ajax-daily-detail-impunit', 'RekapLaporanImpunit::getAjaxDailyDetail');
     $routes->get('rekap-laporan-impunit/export', 'RekapLaporanImpunit::exportExcel');
     $routes->get('rekap-laporan-impunit/export-indicator/(:num)', 'RekapLaporanImpunit::exportExcelIndicator/$1');
     $routes->get('rekap-laporan-impunit/detail/(:num)', 'RekapLaporanImpunit::viewDetailImpunit/$1');

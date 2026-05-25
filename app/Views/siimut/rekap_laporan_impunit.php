@@ -24,6 +24,11 @@
         color: #000 !important;
     }
 
+    .badge-non-aktif {
+        font-size: 10px;
+        vertical-align: middle;
+    }
+
     .legend-dot {
         width: 12px;
         height: 12px;

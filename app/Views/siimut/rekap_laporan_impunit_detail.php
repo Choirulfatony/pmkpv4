@@ -15,6 +15,23 @@
         font-weight: bold;
     }
 
+    .cell-clickable {
+        cursor: pointer !important;
+        position: relative;
+    }
+
+    .cell-clickable:hover::after {
+        content: "\f133";
+        font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "Font Awesome 6 Pro";
+        font-weight: 900;
+        position: absolute;
+        top: 2px;
+        right: 4px;
+        font-size: 10px;
+        color: rgba(0, 0, 0, 0.3);
+        opacity: 0.6;
+    }
+
     .legend-dot {
         width: 12px;
         height: 12px;
@@ -131,6 +148,30 @@
             box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
         }
     }
+
+    #daily-table td,
+    #daily-table th {
+        font-size: 13px;
+        vertical-align: middle;
+        text-align: center;
+        padding: 8px 6px !important;
+    }
+
+    .daily-tercapai {
+        background-color: rgba(41, 185, 92) !important;
+        font-weight: bold;
+    }
+
+    .daily-tidak-tercapai {
+        background-color: rgba(220, 57, 57) !important;
+        color: #fff !important;
+        font-weight: bold;
+    }
+
+    .daily-tanpa-data {
+        background-color: rgba(255, 222, 60) !important;
+        font-weight: bold;
+    }
 </style>
 
 <!-- ==================== HEADER INFO ==================== -->
@@ -143,7 +184,7 @@
                 </div>
                 <div class="flex-grow-1">
                     <h5 class="mb-1"><strong>Detail Rekap Indikator Mutu Prioritas Unit (IMPUnit)</strong></h5>
-                    <p class="mb-0">Indikator: <strong><?= isset($detail->indicator_element) ? esc($detail->indicator_element) : 'Data Detail' ?></strong></p>
+                    <p class="mb-0">Indikator: <strong><?= isset($detail->indicator_element) ? esc($detail->indicator_element) : 'Data Detail' ?><?php if (isset($detail->indicator_record_status) && $detail->indicator_record_status === 'D'): ?> <span class="badge bg-secondary ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span><?php endif; ?></strong></p>
                     <p class="mb-0">Target: <strong><?= isset($detail->indicator_target) ? esc($detail->indicator_target) : '-' ?></strong>
                         <span class="text-muted"><?= isset($detail->indicator_units) ? esc($detail->indicator_units) : '' ?></span>
                     </p>
@@ -167,6 +208,12 @@
                 <h3 class="card-title">
                     <i class="fas fa-table me-2"></i>
                     Detail Per Ruangan
+                    <?php if (isset($detail->indicator_element)): ?>
+                        <small class="ms-2">- <?= esc($detail->indicator_element) ?></small>
+                        <?php if (isset($detail->indicator_record_status) && $detail->indicator_record_status === 'D'): ?>
+                            <span class="badge bg-secondary ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>
+                        <?php endif; ?>
+                    <?php endif; ?>
                 </h3>
                 <div class="card-tools d-flex align-items-center gap-2">
                     <!-- Tombol Back -->
@@ -245,6 +292,72 @@
                     <div class="d-flex align-items-center">
                         <span class="legend-dot me-2" style="background-color: rgba(220, 57, 57);"></span>
                         <small class="text-muted">Tidak tercapai</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== DAILY DETAIL SECTION ==================== -->
+<div class="row mt-3" id="daily-section" style="display:none;">
+    <div class="col-12">
+        <div class="card card-outline card-info">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-calendar-day me-2"></i>
+                    <span id="daily-title">Detail Harian</span>
+                </h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeDaily()" title="Tutup">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="px-3 pt-3 pb-1">
+                    <h6 id="daily-info" class="mb-1"></h6>
+                    <small class="text-muted" id="daily-target-info"></small>
+                </div>
+                <div class="p-3">
+                    <div id="daily-loading" class="text-center py-4" style="display:none;">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Memuat data harian...</p>
+                    </div>
+                    <div id="daily-empty" class="text-center py-4" style="display:none;">
+                        <i class="fas fa-info-circle fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">Belum ada data untuk bulan ini</p>
+                    </div>
+                    <table id="daily-table" class="table table-bordered table-hover table-sm mb-0" style="display:none; table-layout:fixed;">
+                        <thead>
+                            <tr id="daily-headers">
+                                <th style="width: 50px;" class="text-center">#</th>
+                                <th style="width: 200px; text-align: left !important; padding-left: 15px !important;">Ruangan</th>
+                                <th class="text-center" style="width:90px;">Nilai</th>
+                                <th class="text-center" style="width:90px;">Num/Denum</th>
+                                <th>Kendala</th>
+                                <th>Perbaikan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="daily-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex flex-wrap gap-3 align-items-center">
+                    <div class="d-flex align-items-center">
+                        <span class="legend-dot me-2" style="background-color: rgba(41, 185, 92);"></span>
+                        <small>Mencapai target</small>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="legend-dot me-2" style="background-color: rgba(255, 222, 60);"></span>
+                        <small>Belum terisi</small>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="legend-dot me-2" style="background-color: rgba(220, 57, 57);"></span>
+                        <small>Tidak tercapai</small>
                     </div>
                 </div>
             </div>
@@ -356,6 +469,9 @@
                                     }
                                 }
                             }
+                            // Buat cell bisa diklik untuk daily detail
+                            $(td).addClass('cell-clickable');
+                            $(td).attr('title', 'Klik untuk lihat detail harian');
                         } catch (e) {}
                     }
                 }
@@ -391,16 +507,223 @@
                 $('#ajax_detail_impunit').show();
             }
         });
+
+        // Click handler untuk cell bulan -> tampilkan daily detail
+        $('#ajax_detail_impunit tbody').on('click', 'td.cell-clickable', function() {
+            var $cell = $(this);
+            var col = $cell.index(); // 3=Jan, 4=Feb, ... 14=Des
+            var bulan = col - 2; // 1=Jan, 2=Feb, ... 12=Des
+
+            var bulanNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            var bulanLabel = bulanNames[bulan - 1];
+
+            // Tampilkan daily di bawah tabel
+            $('#daily-title').text('Detail Harian - ' + bulanLabel + ' ' + vtahun);
+            $('#daily-info').text('Memuat data...');
+            $('#daily-target-info').html('');
+            $('#daily-table').hide();
+            $('#daily-body').empty();
+            $('#daily-empty').hide();
+            $('#daily-loading').show();
+            $('#daily-section').show();
+
+            // AJAX fetch daily data (semua departemen)
+            $.ajax({
+                url: '<?= site_url('siimut/rekap-laporan-impunit/ajax-daily-detail-impunit') ?>',
+                type: 'POST',
+                data: {
+                    indicator_id: indicatorId,
+                    tahun: vtahun,
+                    bulan: bulan
+                },
+                dataType: 'json',
+                success: function(resp) {
+                    $('#daily-loading').hide();
+
+                    if (!resp || !resp.dept_data || resp.dept_data.length === 0) {
+                        $('#daily-empty').show();
+                        return;
+                    }
+
+                    var targetText = resp.target || 0;
+                    var operatorText = resp.operator || '>=';
+                    var unitsText = resp.units || '%';
+                    var operatorDisplay = operatorText;
+                    if (operatorDisplay === '>=') operatorDisplay = '≥';
+                    if (operatorDisplay === '<=') operatorDisplay = '≤';
+
+                    $('#daily-info').text(resp.indicator || '');
+                    $('#daily-target-info').html(
+                        'Target: ' + operatorDisplay + ' ' + targetText + ' ' + unitsText +
+                        ' | Ruangan: ' + resp.dept_data.length + ' departemen'
+                    );
+
+                    var days = resp.days || 31;
+
+                    // Bangun header: #, Ruangan, 1, 2, 3, ... , days
+                    var headerHtml = '<th style="width:50px;" class="text-center">#</th><th style="width:200px;text-align:left!important;padding-left:15px!important;">Ruangan</th>';
+                    for (var d = 1; d <= days; d++) {
+                        headerHtml += '<th class="text-center" style="width:60px;">' + d + '</th>';
+                    }
+
+                    // Bangun baris per departemen + row detail kendala/perbaikan
+                    var bodyHtml = '';
+                    $.each(resp.dept_data, function(idx, dept) {
+                        bodyHtml += '<tr class="daily-dept-row" data-dept-idx="' + idx + '">';
+                        bodyHtml += '<td class="text-center fw-bold" style="width:50px;">' + (idx + 1) + '</td>';
+                        bodyHtml += '<td class="text-center"><div class="py-1 text-start ps-2 text-nowrap" style="overflow:hidden;text-overflow:ellipsis;">' + dept.department_name + '</div></td>';
+
+                        $.each(dept.daily, function(i, item) {
+                            var cellClass = 'text-center text-nowrap';
+                            var nilaiDisplay = '-';
+
+                            if (item.nilai !== null) {
+                                nilaiDisplay = item.nilai + ' ' + unitsText;
+                                if (item.tercapai === true) {
+                                    cellClass += ' cell-target';
+                                } else if (item.tercapai === false) {
+                                    cellClass += ' cell-fail';
+                                }
+                            } else {
+                                if (item.num > 0 || item.denum > 0) {
+                                    cellClass += ' cell-fail';
+                                } else {
+                                    cellClass += ' cell-empty';
+                                }
+                            }
+
+                            var kpIcon = '';
+                            if (item.kendala || item.perbaikan) {
+                                kpIcon = '<i class="fas fa-exclamation-circle text-warning ms-1 kp-icon" style="font-size:10px;cursor:pointer;" data-dept-idx="' + idx + '" data-hari="' + item.hari + '"></i>';
+                            }
+
+                            bodyHtml += '<td class="' + cellClass + '" style="width:60px;" data-hari="' + item.hari + '">' +
+                                '<div class="py-1"><span class="fw-bold" style="font-size:13px;">' + nilaiDisplay + kpIcon + '</span>' +
+                                '<div class="small text-muted mt-1">' +
+                                '<span>' + (item.num || 0) + '</span> | <span>' + (item.denum || 0) + '</span>' +
+                                '</div></div>' +
+                                '</td>';
+                        });
+
+                        bodyHtml += '</tr>';
+
+                    });
+
+                    $('#daily-body').html(bodyHtml);
+                    $('#daily-headers').html(headerHtml);
+
+                    // Hancurkan DataTable lama jika ada
+                    if ($.fn.DataTable.isDataTable('#daily-table')) {
+                        $('#daily-table').DataTable().destroy();
+                    }
+
+                    $('#daily-table').show();
+                    if (!$('#daily-table').parent().is('.daily-table-scroll')) {
+                        $('#daily-table').wrap('<div class="daily-table-scroll" style="overflow-x:auto;max-width:100%;"></div>');
+                    }
+
+                    // Inisialisasi DataTable untuk daily table
+                    var dailyTable = $('#daily-table').DataTable({
+                        autoWidth: false,
+                        pageLength: 25,
+                        lengthMenu: [
+                            [10, 25, 50, -1],
+                            [10, 25, 50, 'Semua']
+                        ],
+                        language: {
+                            emptyTable: 'Tidak ada data',
+                            info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
+                            lengthMenu: 'Tampilkan _MENU_ data',
+                            search: 'Cari:',
+                            paginate: {
+                                first: 'Pertama',
+                                last: 'Terakhir',
+                                next: 'Berikutnya',
+                                previous: 'Sebelumnya'
+                            }
+                        },
+                        columnDefs: [{
+                            orderable: false,
+                            targets: '_all'
+                        }],
+                        destroy: true
+                    });
+
+                    // Click handler: icon warning -> toggle child row kendala/perbaikan
+                    $('#daily-body').off('click', '.kp-icon').on('click', '.kp-icon', function() {
+                        var deptIdx = $(this).data('dept-idx');
+                        var hari = $(this).data('hari');
+                        var deptData = resp.dept_data[deptIdx];
+                        if (!deptData) return;
+
+                        // Cari data hari itu
+                        var dayData = null;
+                        $.each(deptData.daily, function(i, d) {
+                            if (d.hari === hari) dayData = d;
+                        });
+                        if (!dayData) return;
+
+                        // Cari baris DataTable berdasarkan dept-idx
+                        var tr = $(this).closest('tr');
+                        var row = dailyTable.row(tr);
+                        var activeKey = deptIdx + '-' + hari;
+
+                        // Jika child row sudah terbuka untuk data yg sama -> tutup
+                        if (row.child.isShown() && tr.data('active-key') === activeKey) {
+                            row.child.hide();
+                            tr.removeData('active-key');
+                            tr.toggleClass('kp-row-open');
+                            return;
+                        }
+
+                        // Tutup semua child row lain
+                        dailyTable.rows().every(function() {
+                            if (this.child.isShown()) {
+                                this.child.hide();
+                                $(this.node()).removeData('active-key');
+                                $(this.node()).removeClass('kp-row-open');
+                            }
+                        });
+
+                        var html = '<div class="kp-accordion-body p-3 bg-light" style="border-top:2px solid #ffc107;">';
+                        html += '<div class="d-flex align-items-start gap-3 flex-wrap">';
+                        html += '<div><strong>Ruangan:</strong> ' + $('<span>').text(deptData.department_name).html() + '</div>';
+                        html += '<div class="badge bg-warning text-dark fs-6">Hari ke-' + hari + '</div>';
+                        html += '</div>';
+                        html += '<hr class="my-2">';
+                        html += '<div class="d-flex align-items-start gap-3 flex-wrap">';
+                        html += '<div><strong>Kendala:</strong> ' + $('<span>').text(dayData.kendala || '-').html() + '</div>';
+                        html += '<div><strong>Perbaikan:</strong> ' + $('<span>').text(dayData.perbaikan || '-').html() + '</div>';
+                        html += '</div></div>';
+
+                        row.child(html).show();
+                        tr.data('active-key', activeKey).addClass('kp-row-open');
+                    });
+                },
+                error: function() {
+                    $('#daily-loading').hide();
+                    $('#daily-empty').show();
+                    $('#daily-empty').html('<i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i><p class="text-danger">Gagal memuat data</p>');
+                    toastr.error('Gagal memuat data harian');
+                }
+            });
+        });
     });
+
+    function closeDaily() {
+        $('#daily-section').slideUp(300);
+    }
 
     function gantiTahun() {
         vtahun = $('#tahun').val();
+        closeDaily();
         if (table_detail) {
             table_detail.ajax.reload();
         }
     }
 
     function reload_table_impunit() {
+        closeDaily();
         if (table_detail) {
             table_detail.ajax.reload();
         }

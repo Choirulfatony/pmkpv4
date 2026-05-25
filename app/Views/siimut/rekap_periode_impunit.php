@@ -344,7 +344,11 @@
                 {
                     data: 'indicator_element',
                     render: function(data, type, row) {
-                        return '<div class="text-start">' + data + '</div>';
+                        var badge = '';
+                        if (row.indicator_record_status === 'D') {
+                            badge = ' <span class="badge bg-secondary ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>';
+                        }
+                        return '<div class="text-start">' + data + badge + '</div>';
                     }
                 },
                 {

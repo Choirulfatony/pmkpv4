@@ -209,7 +209,7 @@
                 <div class="col-md-6">
                     <div class="row g-2 justify-content-end">
 
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <select class="form-select form-select-sm" id="tahun">
                                 <?php for ($y = date('Y'); $y >= date('Y') - 5; $y--): ?>
                                     <option value="<?= $y ?>" <?= ($y == $tahun) ? 'selected' : '' ?>>
@@ -219,15 +219,24 @@
                             </select>
                         </div>
 
-                        <div class="col-md-8">
+                        <div class="col-md-5">
                             <select class="form-select form-select-sm select2" id="indicator_id" style="width:100%;">
                                 <option value="">Pilih indikator...</option>
                                 <?php foreach ($indicators as $ind): ?>
                                     <option value="<?= $ind->indicator_id ?>"
                                         <?= ($ind->indicator_id == $indicatorId) ? 'selected' : '' ?>>
                                         <?= esc($ind->indicator_element) ?>
+                                        <?php if (isset($ind->indicator_record_status) && $ind->indicator_record_status === 'D'): ?>
+                                            [Non-Aktif]
+                                        <?php endif; ?>
                                     </option>
                                 <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <select class="form-select form-select-sm select2" id="department_id" style="width:100%;">
+                                <option value="">Semua Departemen</option>
                             </select>
                         </div>
 
@@ -409,7 +418,7 @@
     var currentIndicatorData = null;
 
     $(document).ready(function() {
-        // Initialize Select2 for both dropdowns
+        // Initialize Select2 for dropdowns
         var $tahun = $('#tahun').select2({
             theme: 'bootstrap-5',
             placeholder: 'Pilih Tahun',
@@ -424,14 +433,54 @@
             width: '100%'
         });
 
-        // Handle tahun change - reload graph without resetting indicator
+        var $department = $('#department_id').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Semua Departemen',
+            allowClear: true,
+            width: '100%'
+        });
+
+        // Handle tahun change - reload indicators via AJAX
         $tahun.on('change', function() {
-            loadGrafik(true);
+            var newTahun = $(this).val();
+            $.ajax({
+                url: '<?= site_url('siimut/grafik-imprs/indicators') ?>',
+                type: 'POST',
+                data: { tahun: newTahun },
+                dataType: 'json',
+                beforeSend: function() {
+                    $indicator.empty().append('<option value="">Memuat...</option>').prop('disabled', true).trigger('change');
+                },
+                success: function(indicators) {
+                    $indicator.empty().append('<option value="">--Pilih Indikator--</option>');
+                    $.each(indicators, function(i, ind) {
+                        var label = ind.indicator_element;
+                        if (ind.indicator_record_status === 'D') {
+                            label += ' [Non-Aktif]';
+                        }
+                        $indicator.append('<option value="' + ind.indicator_id + '">' + label + '</option>');
+                    });
+                    $indicator.prop('disabled', false).trigger('change');
+                },
+                error: function() {
+                    $indicator.empty().append('<option value="">--Pilih Indikator--</option>').prop('disabled', false).trigger('change');
+                }
+            });
+            if (document.getElementById('grafikContainer')) document.getElementById('grafikContainer').style.display = 'none';
+            if (document.getElementById('indicatorInfo')) document.getElementById('indicatorInfo').style.display = 'none';
+            resetSummaryCards();
         });
 
         // Handle indicator change
         $indicator.on('change', function() {
             loadGrafik(false);
+        });
+
+        // Handle department change
+        $department.on('change', function() {
+            if (!window._populatingDept) {
+                loadGrafik(false);
+            }
         });
 
         // Clear indicator selection on page load if no URL indicator_id param
@@ -541,7 +590,11 @@
                         document.getElementById('indicatorInfo').style.display = 'block';
                     }
                     if (document.getElementById('indicatorName')) {
-                        document.getElementById('indicatorName').textContent = response.indicator.indicator_element;
+                        var nameText = response.indicator.indicator_element || '';
+                        if (response.indicator.indicator_record_status === 'D') {
+                            nameText += ' <span class="badge bg-secondary ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>';
+                        }
+                        document.getElementById('indicatorName').innerHTML = nameText;
                     }
                     if (document.getElementById('indicatorTarget')) {
                         document.getElementById('indicatorTarget').textContent = response.indicator.indicator_target;
@@ -553,6 +606,34 @@
                     if (document.getElementById('indicatorUnitsLabel')) {
                         document.getElementById('indicatorUnitsLabel').textContent = units;
                     }
+
+                    // Populate department dropdown
+                    window._populatingDept = true;
+                    var $deptSelect = $('#department_id');
+                    var currentDept = $deptSelect.val();
+                    $deptSelect.find('option:not([value=""])').remove();
+                    if (response.departments && response.departments.length > 0) {
+                        $.each(response.departments, function(i, dept) {
+                            $deptSelect.append('<option value="' + dept.department_id + '">' + dept.department_name + '</option>');
+                        });
+                        var userRole = response.user_role || '';
+                        if (!['ADMINISTRATOR', 'KOMITE'].includes(userRole)) {
+                            if (response.user_department_id) {
+                                $deptSelect.val(response.user_department_id);
+                                $deptSelect.prop('disabled', true);
+                            }
+                        } else {
+                            $deptSelect.prop('disabled', false);
+                            if (currentDept) {
+                                $deptSelect.val(currentDept);
+                            }
+                        }
+                    } else {
+                        $deptSelect.prop('disabled', true);
+                    }
+                    $deptSelect.trigger('change.select2');
+                    window._populatingDept = false;
+
                     var statusBadge = document.getElementById('statusBadge');
                     var target = parseFloat(response.indicator.indicator_target || 0);
                     var nilai = response.tahunan.nilai || 0;
@@ -671,7 +752,8 @@
                 }
             }
         };
-        xhr.send('tahun=' + tahun + '&indicator_id=' + indicatorId);
+        var departmentId = document.getElementById('department_id').value;
+        xhr.send('tahun=' + tahun + '&indicator_id=' + indicatorId + '&department_id=' + departmentId);
     }
 
     function renderLineChart(bulanan, indicator) {
