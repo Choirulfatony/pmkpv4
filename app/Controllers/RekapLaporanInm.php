@@ -199,7 +199,7 @@ class RekapLaporanInm extends AppController
                 $row[] = '<div class="fw-bold" data-dept-id="' . $dept->department_id . '" data-dept-name="' . esc($dept->department_name) . '">' . $no . '</div>';
 
                 // Ruangan
-                $row[] = '<div class="py-1 text-start ps-2">' . esc($dept->department_name) . '</div>';
+                $row[] = '<div class="py-1 text-start ps-2 text-nowrap" style="overflow:hidden;text-overflow:ellipsis;">' . esc($dept->department_name) . '</div>';
 
                 // Target - tampilkan dengan units
                 $row[] = '<div class="py-1">

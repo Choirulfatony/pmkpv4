@@ -123,7 +123,7 @@ class RekapLaporanInmModel extends Model
     /**
      * Ambil SEMUA data bulanan dalam 1 query (OPTIMIZED + CACHE)
      */
-    public function getAllMonthlyData(array $indicatorIds, int $tahun)
+    public function getAllMonthlyData(array $indicatorIds, int $tahun, ?int $departmentId = null)
     {
         if (empty($indicatorIds)) {
             return [];
@@ -171,6 +171,10 @@ class RekapLaporanInmModel extends Model
         $builder->where("qi.indicator_category_id", '4');
         $builder->where("qi.indicator_record_status", 'A');
         $builder->whereIn('qi.indicator_id', $indicatorIds);
+
+        if ($departmentId !== null && $departmentId > 0) {
+            $builder->where('qir.result_department_id', $departmentId);
+        }
 
         $builder->groupBy([
             'qi.indicator_id',
@@ -629,17 +633,41 @@ class RekapLaporanInmModel extends Model
     {
         $db = db_connect();
 
-        $indicators = $db->table('quality_indicator')
-            ->select('indicator_id, indicator_element, indicator_target, indicator_factors, indicator_units, indicator_target_calculation')
-            ->where('indicator_category_id', '4')
-            ->where('indicator_record_status', 'A')
-            ->get()
-            ->getResult();
+        // Cek available group_period - gunakan tahun dipilih jika ada, kalau tidak gunakan yang tersedia
+        $availablePeriods = $this->getAvailableGroupPeriods();
+        if (empty($availablePeriods)) {
+            return [];
+        }
+        $usePeriod = in_array($tahun, $availablePeriods) ? $tahun : min($availablePeriods);
+
+        $builder = $db->table('quality_indicator');
+        $builder->distinct();
+        $builder->select('quality_indicator.indicator_id, quality_indicator.indicator_element, quality_indicator.indicator_target, quality_indicator.indicator_factors, quality_indicator.indicator_units, quality_indicator.indicator_target_calculation');
+        $builder->join('quality_indicator_group', 'quality_indicator.indicator_id = quality_indicator_group.group_indicator_id');
+        $builder->where('quality_indicator.indicator_category_id', '4');
+        $builder->where('quality_indicator.indicator_record_status', 'A');
+        $builder->groupStart();
+        $builder->where('quality_indicator_group.group_period', $usePeriod);
+        $builder->orWhere('quality_indicator_group.group_period', $usePeriod - 1);
+        $builder->orWhere('quality_indicator_group.group_period', $usePeriod - 2);
+        $builder->groupEnd();
+
+        // Filter by user role
+        $userRole = session('user_role') ?? '';
+        $userDepartmentId = session('department_id') ?? 0;
+
+        $filterDepartmentId = null;
+        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
+            $builder->where('quality_indicator_group.group_department_id', $userDepartmentId);
+            $filterDepartmentId = $userDepartmentId;
+        }
+
+        $indicators = $builder->get()->getResult();
 
         if (empty($indicators)) return [];
 
         $indicatorIds = array_column($indicators, 'indicator_id');
-        $allMonthlyData = $this->getAllMonthlyData($indicatorIds, $tahun);
+        $allMonthlyData = $this->getAllMonthlyData($indicatorIds, $tahun, $filterDepartmentId);
 
         // mapping
         $monthlyByIndicator = [];
