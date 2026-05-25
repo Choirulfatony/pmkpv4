@@ -111,7 +111,8 @@ protected $column_order = [
         $builder->where('lqir.result_period <=', $endDate);
 
         $builder->where('lqi.indicator_category_id', '5');
-        $builder->where('lqi.indicator_record_status', 'A');
+        // [CHANGED] Biar indikator non-aktif tetap muncul hasil rekapan historisnya
+        $builder->whereIn('lqi.indicator_record_status', ['A', 'D']);
         $builder->where('lqi.indicator_id', $indicator);
 
         $builder->groupBy([
@@ -192,7 +193,8 @@ protected $column_order = [
         $builder->where("lqir.result_period >=", $tahun . '-01-01');
         $builder->where("lqir.result_period <=", $tahun . '-12-31');
         $builder->where("lqi.indicator_category_id", '5');
-        $builder->where("lqi.indicator_record_status", 'A');
+        // [CHANGED] Biar indikator non-aktif tetap ikut diambil data bulanannya
+        $builder->whereIn("lqi.indicator_record_status", ['A', 'D']);
         $builder->whereIn('lqi.indicator_id', $indicatorIds);
 
         $builder->groupBy([
@@ -243,18 +245,22 @@ protected $column_order = [
                 lqi.indicator_units,
                 lqi.indicator_target_unit,
                 lqi.indicator_target_calculation AS operator,
-                lqi.indicator_factors AS factors
+                lqi.indicator_factors AS factors,
+                lqi.indicator_record_status
             FROM local_quality_indicator_group lqig
             JOIN local_quality_indicator lqi ON lqi.indicator_id = lqig.group_indicator_id
             JOIN master_institution_department mid ON mid.department_id = lqig.group_department_id
             LEFT JOIN local_quality_indicator lqi2 ON lqi2.indicator_id = lqig.group_indicator_id
             WHERE lqi.indicator_category_id = '5'
-            AND lqi.indicator_record_status = 'A'
+            -- [CHANGED] Pake IN ('A', 'D') biar non-aktif ikut tampil
+            AND lqi.indicator_record_status IN ('A', 'D')
             AND lqig.group_record_status = 'A'
+            -- [CHANGED] 'D': pake range 3 tahun ke belakang dari tahun dipilih
+            -- [CHANGED] 'A': pake range 3 tahun
             AND (
-                lqig.group_period = {$usePeriod}
-                OR lqig.group_period = " . ($usePeriod - 1) . "
-                OR lqig.group_period = " . ($usePeriod - 2) . "
+                (lqi.indicator_record_status = 'D' AND lqig.group_period >= {$vtahun} - 3)
+                OR
+                (lqi.indicator_record_status = 'A' AND lqig.group_period IN ({$usePeriod}, " . ($usePeriod - 1) . ", " . ($usePeriod - 2) . "))
             )
             AND (
                 (lqi2.indicator_active_to IS NULL OR lqi2.indicator_active_to >= '{$vtahun}-01-01')
@@ -400,15 +406,20 @@ protected $column_order = [
                 JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id
                 JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_group.group_department_id
                 WHERE local_quality_indicator.indicator_category_id = '5'
-                AND local_quality_indicator.indicator_record_status = 'A'
+                -- [CHANGED] Pake IN ('A', 'D') biar non-aktif ikut
+                AND local_quality_indicator.indicator_record_status IN ('A', 'D')
                 AND local_quality_indicator_group.group_record_status = 'A'
-                AND (local_quality_indicator_group.group_period = ? 
-                     OR local_quality_indicator_group.group_period = ? 
-                     OR local_quality_indicator_group.group_period = ?)
+                AND (
+                    (local_quality_indicator.indicator_record_status = 'D' AND local_quality_indicator_group.group_period >= ? - 3)
+                    OR
+                    (local_quality_indicator.indicator_record_status = 'A' AND (local_quality_indicator_group.group_period = ? 
+                         OR local_quality_indicator_group.group_period = ? 
+                         OR local_quality_indicator_group.group_period = ?))
+                )
                 " . ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? "AND local_quality_indicator_group.group_department_id = " . $userDepartmentId : "") . "
                 GROUP BY local_quality_indicator.indicator_id
             ) as counted
-        ", [$vtahun, $vtahun - 1, $vtahun - 2]);
+        ", [$vtahun, $vtahun, $vtahun - 1, $vtahun - 2]);
 
         $count = $query->getRow()->total ?? 0;
 
@@ -449,7 +460,7 @@ protected $column_order = [
             JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id
             JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_group.group_department_id
             WHERE local_quality_indicator.indicator_category_id = '5' 
-            AND local_quality_indicator.indicator_record_status = 'A' 
+            AND local_quality_indicator.indicator_record_status IN ('A', 'D') 
             AND local_quality_indicator_group.group_record_status = 'A'
             AND local_quality_indicator_group.group_indicator_id = ?
             {$searchCondition}
@@ -475,11 +486,12 @@ protected $column_order = [
                 local_quality_indicator.indicator_target,
                 local_quality_indicator.indicator_factors,
                 local_quality_indicator.indicator_target_calculation,
-                local_quality_indicator.indicator_units
+                local_quality_indicator.indicator_units,
+                local_quality_indicator.indicator_record_status
             FROM local_quality_indicator
             WHERE local_quality_indicator.indicator_id = ?
             AND local_quality_indicator.indicator_category_id = '5' 
-            AND local_quality_indicator.indicator_record_status = 'A'
+            AND local_quality_indicator.indicator_record_status IN ('A', 'D')
         ", [$indicatorId]);
 
         return $query->getRow();
@@ -573,7 +585,7 @@ protected $column_order = [
             JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_group.group_department_id
             WHERE local_quality_indicator_group.group_indicator_id = ?
             AND local_quality_indicator.indicator_category_id = '5' 
-            AND local_quality_indicator.indicator_record_status = 'A'
+            AND local_quality_indicator.indicator_record_status IN ('A', 'D')
             {$searchCondition}
         ", [$indicatorId]);
 
@@ -607,16 +619,21 @@ protected $column_order = [
                 JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id
                 JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_group.group_department_id
                 WHERE local_quality_indicator.indicator_category_id = '5'
-                AND local_quality_indicator.indicator_record_status = 'A'
+                -- [CHANGED] Pake IN ('A', 'D') biar non-aktif ikut
+                AND local_quality_indicator.indicator_record_status IN ('A', 'D')
                 AND local_quality_indicator_group.group_record_status = 'A'
-                AND (local_quality_indicator_group.group_period = ? 
-                     OR local_quality_indicator_group.group_period = ? 
-                     OR local_quality_indicator_group.group_period = ?)
+                AND (
+                    (local_quality_indicator.indicator_record_status = 'D' AND local_quality_indicator_group.group_period >= ? - 3)
+                    OR
+                    (local_quality_indicator.indicator_record_status = 'A' AND (local_quality_indicator_group.group_period = ? 
+                         OR local_quality_indicator_group.group_period = ? 
+                         OR local_quality_indicator_group.group_period = ?))
+                )
                 " . ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? "AND local_quality_indicator_group.group_department_id = " . $userDepartmentId : "") . "
                 {$searchCondition}
                 GROUP BY local_quality_indicator.indicator_id
             ) as counted
-        ", [$vtahun, $vtahun - 1, $vtahun - 2]);
+        ", [$vtahun, $vtahun, $vtahun - 1, $vtahun - 2]);
 
         return $query->getRow()->total ?? 0;
     }
@@ -672,13 +689,15 @@ protected $column_order = [
             lqi.indicator_target,
             lqi.indicator_factors,
             lqi.indicator_units,
-            lqi.indicator_target_calculation
+            lqi.indicator_target_calculation,
+            lqi.indicator_record_status
         ");
 
         $builder->join('local_quality_indicator_group lqig', 'lqi.indicator_id = lqig.group_indicator_id', 'left');
 
         $builder->where("lqi.indicator_category_id", '5');
-        $builder->where("lqi.indicator_record_status", 'A');
+        // [CHANGED] Biar indikator non-aktif ikut tampil di rekap periode
+        $builder->whereIn("lqi.indicator_record_status", ['A', 'D']);
         $builder->where('lqig.group_record_status', 'A');
 
         $this->filterActiveOrHasData($builder, $tahun . '-01-01', $tahun . '-12-31');

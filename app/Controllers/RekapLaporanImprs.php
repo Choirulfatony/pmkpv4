@@ -96,9 +96,12 @@ class RekapLaporanImprs extends AppController
 
             $row[] = '<div class="fw-bold">' . $no . '</div>';
 
+            $nonActiveBadge = !empty($indicator->indicator_record_status) && $indicator->indicator_record_status === 'D'
+                ? ' <span class="badge bg-warning-subtle text-warning border border-warning small py-0 px-1">Non-Aktif</span>'
+                : '';
             $row[] = '<div class="py-1 text-start ps-2">
                 <a href="javascript:void(0);" class="fw-semibold text-decoration-none" title="Detail Rekapan Ruangan" onclick="view_detail_imprs(' . $indicator->indicator_id . ');">'
-                . esc($indicator->indicator_element) . '
+                . esc($indicator->indicator_element) . $nonActiveBadge . '
                 </a>
             </div>';
 

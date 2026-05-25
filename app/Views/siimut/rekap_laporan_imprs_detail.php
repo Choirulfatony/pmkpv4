@@ -143,7 +143,12 @@
                 </div>
                 <div class="flex-grow-1">
                     <h5 class="mb-1"><strong>Detail Rekap Indikator Mutu Prioritas RS (IMPRS)</strong></h5>
-                    <p class="mb-0">Indikator: <strong><?= isset($detail->indicator_element) ? esc($detail->indicator_element) : 'Data Detail' ?></strong></p>
+                    <?php $isNonActive = isset($detail->indicator_record_status) && $detail->indicator_record_status === 'D'; ?>
+                    <p class="mb-0">Indikator: <strong><?= isset($detail->indicator_element) ? esc($detail->indicator_element) : 'Data Detail' ?></strong>
+                        <?php if ($isNonActive): ?>
+                            <span class="badge bg-warning-subtle text-warning border border-warning ms-2">Non-Aktif</span>
+                        <?php endif; ?>
+                    </p>
                     <p class="mb-0">Target: <strong><?= isset($detail->indicator_target) ? esc($detail->indicator_target) : '-' ?></strong>
                         <span class="text-muted"><?= isset($detail->indicator_units) ? esc($detail->indicator_units) : '' ?></span>
                     </p>
