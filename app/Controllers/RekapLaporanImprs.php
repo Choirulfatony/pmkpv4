@@ -171,12 +171,20 @@ class RekapLaporanImprs extends AppController
                 return $this->response->setJSON(['error' => 'Invalid indicator_id']);
             }
 
-            // Ambil semua ruangan untuk indicator ini
-            $departments = $this->rekapModel->getDepartmentsByIndicator($indicatorId, $tahun, $post);
+            // ADMINISTRATOR & KOMITE → lihat semua ruangan
+            // lainnya → filter by department
+            $role = session()->get('user_role') ?? '';
+            $departmentId = null;
+            if (!in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
+                $departmentId = session()->get('department_id') ?? null;
+            }
+
+            // Ambil semua ruangan untuk indicator ini (filter by department jika bukan ADMIN)
+            $departments = $this->rekapModel->getDepartmentsByIndicator($indicatorId, $tahun, $post, $departmentId);
             log_message('error', 'DETAIL: departments count=' . count($departments));
 
-            // Ambil semua data detail sekaligus
-            $allDetailData = $this->rekapModel->getAllDetailData($indicatorId, $tahun);
+            // Ambil semua data detail sekaligus (filter by department jika bukan ADMIN)
+            $allDetailData = $this->rekapModel->getAllDetailData($indicatorId, $tahun, $departmentId);
             log_message('error', 'DETAIL: allDetailData count=' . count($allDetailData));
 
             // Ambil info indicator

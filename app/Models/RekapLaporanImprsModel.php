@@ -432,7 +432,7 @@ protected $column_order = [
     /**
      * Ambil semua ruangan untuk indicator tertentu
      */
-    public function getDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [])
+    public function getDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [], ?int $departmentId = null)
     {
         $db = db_connect();
 
@@ -440,6 +440,11 @@ protected $column_order = [
         if (isset($post['search']['value']) && !empty($post['search']['value'])) {
             $searchValue = addslashes($post['search']['value']);
             $searchCondition = "AND master_institution_department.department_name LIKE '%{$searchValue}%'";
+        }
+
+        $deptCondition = '';
+        if ($departmentId !== null) {
+            $deptCondition = "AND master_institution_department.department_id = " . (int) $departmentId;
         }
 
         $limit = '';
@@ -464,6 +469,7 @@ protected $column_order = [
             AND local_quality_indicator_group.group_record_status = 'A'
             AND local_quality_indicator_group.group_indicator_id = ?
             {$searchCondition}
+            {$deptCondition}
             GROUP BY master_institution_department.department_id
             ORDER BY master_institution_department.department_name ASC
             {$limit}
@@ -500,10 +506,10 @@ protected $column_order = [
     /**
      * Ambil semua data detail per ruangan dalam 1 query
      */
-    public function getAllDetailData(int $indicatorId, int $tahun)
+    public function getAllDetailData(int $indicatorId, int $tahun, ?int $departmentId = null)
     {
         $cache = \Config\Services::cache();
-        $cacheKey = 'detail_data_' . $indicatorId . '_' . $tahun;
+        $cacheKey = 'detail_data_' . $indicatorId . '_' . $tahun . '_dept_' . ($departmentId ?? 'all');
 
         $db = db_connect();
         $builder = $db->table('local_quality_indicator_result lqir');
@@ -543,6 +549,9 @@ protected $column_order = [
         $builder->where("lqir.result_period >=", $tahun . '-01-01');
         $builder->where("lqir.result_period <=", $tahun . '-12-31');
         $builder->where('lqir.result_indicator_id', $indicatorId);
+        if ($departmentId !== null) {
+            $builder->where('lqir.result_department_id', $departmentId);
+        }
 
         $builder->groupBy([
             'lqir.result_department_id',
@@ -568,7 +577,7 @@ protected $column_order = [
     /**
      * Hitung jumlah ruangan untuk indicator tertentu
      */
-    public function countDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [])
+    public function countDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [], ?int $departmentId = null)
     {
         $db = db_connect();
 
@@ -576,6 +585,11 @@ protected $column_order = [
         if (isset($post['search']['value']) && !empty($post['search']['value'])) {
             $searchValue = addslashes($post['search']['value']);
             $searchCondition = "AND master_institution_department.department_name LIKE '%{$searchValue}%'";
+        }
+
+        $deptCondition = '';
+        if ($departmentId !== null) {
+            $deptCondition = "AND master_institution_department.department_id = " . (int) $departmentId;
         }
 
         $query = $db->query("
@@ -587,6 +601,7 @@ protected $column_order = [
             AND local_quality_indicator.indicator_category_id = '5' 
             AND local_quality_indicator.indicator_record_status IN ('A', 'D')
             {$searchCondition}
+            {$deptCondition}
         ", [$indicatorId]);
 
         return $query->getRow()->total ?? 0;
