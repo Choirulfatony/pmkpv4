@@ -314,7 +314,6 @@
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '<?= site_url('siimut/load-module-forminput/get-indicator-detail') ?>', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.send('indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + document.getElementById('input_tanggal').value);
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var response = JSON.parse(xhr.responseText);
@@ -356,7 +355,7 @@
                 modalInput.show();
             }
         };
-        xhr.send();
+        xhr.send('indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + document.getElementById('input_tanggal').value);
     }
 
     function loadExistingData() {
@@ -368,7 +367,6 @@
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '<?= site_url('siimut/load-module-forminput/get-indicator-detail') ?>', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.send('indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + tanggal);
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var response = JSON.parse(xhr.responseText);
@@ -383,7 +381,7 @@
                 hitungHasil();
             }
         };
-        xhr.send();
+        xhr.send('indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + tanggal);
     }
 
     function hitungHasil() {
