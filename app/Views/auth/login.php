@@ -374,7 +374,8 @@ $registerName = session('register_name');
     }
 
     window.addEventListener("message", function(event) {
-        if (event.origin !== "<?= base_url() ?>") return;
+        var allowedOrigin = "<?php $bu = base_url(); $scheme = parse_url($bu, PHP_URL_SCHEME); $host = parse_url($bu, PHP_URL_HOST); $port = parse_url($bu, PHP_URL_PORT); echo $scheme . '://' . $host . ($port && $port != 80 && $port != 443 ? ':' . $port : ''); ?>";
+        if (event.origin !== allowedOrigin) return;
         if (event.data.status === "success") {
             window.location.href = event.data.redirect;
         } else if (event.data.status === "error" && event.data.message) {

@@ -979,11 +979,17 @@ class Auth extends BaseController
         $response = '<!DOCTYPE html><html><head><title>Redirecting...</title></head><body>';
         $response .= '<script>';
         $response .= 'if (window.opener) {';
-        $response .= '  window.opener.postMessage({status: "' . $status . '", redirect: "' . $redirectUrl . '", message: "' . $message . '"}, "' . base_url() . '");';
+        $bu = base_url();
+        $scheme = parse_url($bu, PHP_URL_SCHEME);
+        $host = parse_url($bu, PHP_URL_HOST);
+        $port = parse_url($bu, PHP_URL_PORT);
+        $origin = $scheme . '://' . $host . ($port && $port != 80 && $port != 443 ? ':' . $port : '');
+        $response .= '  window.opener.postMessage({status: "' . $status . '", redirect: "' . $redirectUrl . '", message: "' . $message . '"}, "' . $origin . '");';
         $response .= '}';
         $response .= 'window.close();';
         $response .= '</script>';
         $response .= '</body></html>';
+        session_write_close();
         return $this->response->setContentType('text/html')->setBody($response);
     }
 
