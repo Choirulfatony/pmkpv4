@@ -160,4 +160,34 @@ class LoadModuleForminputModel extends Model
         
         return $db->affectedRows() > 0;
     }
+
+    public function getFillStatus(int $tahun, string $bulan)
+    {
+        $db = db_connect();
+
+        $userRole = session()->get('user_role') ?? '';
+        $userDepartmentId = session()->get('department_id') ?? 0;
+
+        $builder = $db->table('quality_indicator_result qir');
+        $builder->select('
+            qir.result_indicator_id AS indicator_id,
+            qir.result_department_id AS department_id,
+            MAX(qir.result_period) AS last_fill_date,
+            COUNT(qir.result_id) AS fill_count,
+            SUM(qir.result_numerator_value) AS monthly_num,
+            SUM(qir.result_denumerator_value) AS monthly_den
+        ');
+        $builder->join('quality_indicator qi', 'qi.indicator_id = qir.result_indicator_id', 'left');
+        $builder->where('qi.indicator_category_id', '4');
+        $builder->where('YEAR(qir.result_period)', $tahun);
+        $builder->where('MONTH(qir.result_period)', $bulan);
+
+        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
+            $builder->where('qir.result_department_id', $userDepartmentId);
+        }
+
+        $builder->groupBy('qir.result_indicator_id, qir.result_department_id');
+
+        return $builder->get()->getResult();
+    }
 }

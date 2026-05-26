@@ -137,7 +137,8 @@
                             <th>Indikator</th>
                             <th>Ruangan</th>
                             <th class="text-center">Target</th>
-                            <th class="text-center" style="width: 150px;">Pilih Ruangan</th>
+                            <th class="text-center">Terakhir Diisi</th>
+                            <th class="text-center">Bulan Ini</th>
                             <th class="text-center" style="width: 120px;">Aksi</th>
                         </tr>
                     </thead>
@@ -245,7 +246,7 @@
         var department_id = document.getElementById('filter_department').value;
 
         var tbody = document.getElementById('tabelBody');
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><i class="bi bi-hourglass-split me-2"></i>Memuat data...</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><i class="bi bi-hourglass-split me-2"></i>Memuat data...</td></tr>';
         document.getElementById('loadingIndicator').classList.remove('d-none');
 
         var xhr = new XMLHttpRequest();
@@ -257,7 +258,7 @@
                 var response = JSON.parse(xhr.responseText);
                 renderIndicators(response);
             } else {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i> Gagal memuat data</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i> Gagal memuat data</td></tr>';
             }
         };
         xhr.onerror = function() {
@@ -270,7 +271,7 @@
     function renderIndicators(data) {
         var tbody = document.getElementById('tabelBody');
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><i class="bi bi-info-circle me-2"></i>Tidak ada data indikator</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4"><i class="bi bi-info-circle me-2"></i>Tidak ada data indikator</td></tr>';
             return;
         }
 
@@ -278,38 +279,35 @@
         for (var i = 0; i < data.length; i++) {
             var row = data[i];
             var no = i + 1;
-            var departmentOptions = '<option value="">-- Pilih Ruangan --</option>';
-            departmentOptions += '<option value="' + row.department_id + '" selected>' + escHtml(row.department_name) + '</option>';
+
+            var statusBadge = '';
+            if (row.fill_count > 0) {
+                var d = row.last_fill_date ? new Date(row.last_fill_date) : null;
+                var dateStr = d ? d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
+                statusBadge = '<span class="badge bg-success" title="Terakhir: ' + dateStr + '"><i class="bi bi-check-circle"></i> ' + dateStr + '</span>';
+            } else {
+                statusBadge = '<span class="badge bg-secondary"><i class="bi bi-dash-circle"></i> Belum</span>';
+            }
+
+            var monthlyStr = row.monthly_num !== undefined ? (row.monthly_num + ' / ' + row.monthly_den) : '-';
 
             html += '<tr>';
             html += '<td class="text-center">' + no + '</td>';
             html += '<td>' + escHtml(row.indicator_element) + '</td>';
             html += '<td>' + escHtml(row.department_name) + '</td>';
             html += '<td class="text-center">' + escHtml(row.indicator_target) + ' ' + escHtml(row.indicator_units) + '</td>';
-            html += '<td class="text-center"><select class="form-select form-select-sm department-select" data-indicator="' + row.indicator_id + '">' + departmentOptions + '</select></td>';
-            html += '<td class="text-center"><button type="button" class="btn btn-success btn-sm" onclick="showInputForm(' + row.indicator_id + ', ' + row.department_id + ')"><i class="bi bi-pencil"></i> Input</button></td>';
+            html += '<td class="text-center">' + statusBadge + '</td>';
+            html += '<td class="text-center">' + monthlyStr + '</td>';
+            html += '<td class="text-center"><button type="button" class="btn btn-success btn-sm" onclick="showInputForm(' + row.indicator_id + ', ' + row.department_id + ', \'' + escHtml(row.department_name) + '\')"><i class="bi bi-pencil"></i> Input</button></td>';
             html += '</tr>';
         }
         tbody.innerHTML = html;
-
-        document.querySelectorAll('.department-select').forEach(function(sel) {
-            sel.addEventListener('change', function() {
-                var indicatorId = this.getAttribute('data-indicator');
-                var deptId = this.value;
-                var btn = this.closest('tr').querySelector('button');
-                if (deptId) {
-                    btn.setAttribute('onclick', 'showInputForm(' + indicatorId + ', ' + deptId + ')');
-                    btn.disabled = false;
-                } else {
-                    btn.disabled = true;
-                }
-            });
-        });
     }
 
-    function showInputForm(indicatorId, departmentId) {
+    function showInputForm(indicatorId, departmentId, departmentName) {
         document.getElementById('input_indicator_id').value = indicatorId;
         document.getElementById('input_department_id').value = departmentId;
+        document.getElementById('input_department_name').value = departmentName || '';
 
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '<?= site_url('siimut/load-module-forminput/get-indicator-detail') ?>', true);
@@ -323,12 +321,6 @@
                     document.getElementById('modalSatuan').textContent = response.indicator.indicator_units || '-';
                     document.getElementById('num_unit').textContent = response.indicator.indicator_units || '-';
                     document.getElementById('denum_unit').textContent = response.indicator.indicator_target_unit || '-';
-                }
-
-                var deptSelect = document.querySelector('.department-select');
-                if (deptSelect) {
-                    var deptName = deptSelect.closest('tr').querySelector('td:nth-child(3)').textContent;
-                    document.getElementById('input_department_name').value = deptName.trim();
                 }
 
                 if (response.existing_data && response.existing_data.length > 0) {

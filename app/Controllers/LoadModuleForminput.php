@@ -61,10 +61,37 @@ class LoadModuleForminput extends AppController
 
     public function get_indicators()
     {
-        $tahun = $this->request->getGet('tahun') ?? date('Y');
-        $department_id = $this->request->getGet('department_id') ?? 0;
+        $tahun = $this->request->getPost('tahun') ?? date('Y');
+        $department_id = $this->request->getPost('department_id') ?? 0;
 
         $indicators = $this->model->getFormIndicators($tahun, $department_id);
+
+        // Get fill status for each indicator
+        $bulan = date('m');
+        $statusList = $this->model->getFillStatus($tahun, $bulan);
+
+        // Map status by indicator_id + department_id
+        $statusMap = [];
+        foreach ($statusList as $s) {
+            $key = $s->indicator_id . '_' . $s->department_id;
+            $statusMap[$key] = $s;
+        }
+
+        // Attach status to each indicator
+        foreach ($indicators as &$ind) {
+            $key = $ind->indicator_id . '_' . $ind->department_id;
+            if (isset($statusMap[$key])) {
+                $ind->last_fill_date = $statusMap[$key]->last_fill_date;
+                $ind->fill_count = $statusMap[$key]->fill_count;
+                $ind->monthly_num = $statusMap[$key]->monthly_num;
+                $ind->monthly_den = $statusMap[$key]->monthly_den;
+            } else {
+                $ind->last_fill_date = null;
+                $ind->fill_count = 0;
+                $ind->monthly_num = 0;
+                $ind->monthly_den = 0;
+            }
+        }
 
         return $this->response->setJSON($indicators);
     }
@@ -75,9 +102,9 @@ class LoadModuleForminput extends AppController
             return $this->response->setJSON(['error' => 'Invalid request']);
         }
 
-        $indicator_id = $this->request->getGet('indicator_id') ?? 0;
-        $tanggal = $this->request->getGet('tanggal') ?? date('Y-m-d');
-        $department_id = $this->request->getGet('department_id') ?? 0;
+        $indicator_id = $this->request->getPost('indicator_id') ?? 0;
+        $tanggal = $this->request->getPost('tanggal') ?? date('Y-m-d');
+        $department_id = $this->request->getPost('department_id') ?? 0;
 
         $data = $this->model->getIndicatorDetail($indicator_id, $department_id, $tanggal);
 
