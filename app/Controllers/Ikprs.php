@@ -1403,11 +1403,19 @@ class Ikprs extends AppController
                             ],
                             [
                                 'type' => 'text',
-                                'text' => 'KNC'
+                                'text' => 'KNC Kejadian Nyaris Cedera'
+                            ],
+                            [
+                                'type' => 'text',
+                                'text' => 'Biru'
                             ],
                             [
                                 'type' => 'text',
                                 'text' => 'IRNA Wijaya Kusuma A'
+                            ],
+                            [
+                                'type' => 'text',
+                                'text' => 'Bima'
                             ]
                         ]
                     ]
@@ -1628,7 +1636,9 @@ class Ikprs extends AppController
                                     'parameters' => [
                                         ['type' => 'text', 'text' => $komite->nama ?? 'KOMITE'],
                                         ['type' => 'text', 'text' => $insiden->jenis_insiden ?? '-'],
-                                        ['type' => 'text', 'text' => $insiden->department_name ?? $insiden->nama_kamar ?? $insiden->nama_unit ?? '-']
+                                        ['type' => 'text', 'text' => $grading ?? '-'],
+                                        ['type' => 'text', 'text' => $insiden->department_name ?? $insiden->nama_kamar ?? $insiden->nama_unit ?? '-'],
+                                        ['type' => 'text', 'text' => session('hris_full_name') ?? 'KARU']
                                     ]
                                 ]
                             ]
