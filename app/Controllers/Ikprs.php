@@ -766,13 +766,11 @@ class Ikprs extends AppController
             // Format nomor: 08xx -> 62xx (standar internasional)
             $phone = preg_replace('/^0/', '62', $karuPhone->phone);
 
-            // Parameters untuk template hello: Nama Karu, Nama Pasien, Jenis Insiden, Unit, Pelapor
+            // Parameters untuk template ikprs_to_karu: Nama Karu, Jenis Insiden, Unit
             $templateParams = [
                 ['type' => 'text', 'text' => $karu->nama ?? 'Karu'],
-                ['type' => 'text', 'text' => $dataInsiden['nama_pasien'] ?? '-'],
                 ['type' => 'text', 'text' => $dataInsiden['jenis_insiden'] ?? 'Insiden'],
-                ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? 'Unit'],
-                ['type' => 'text', 'text' => session('hris_full_name') ?? 'Petugas']
+                ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? 'Unit']
             ];
 
             $data = [
@@ -780,7 +778,7 @@ class Ikprs extends AppController
                 'to' => $phone,
                 'type' => 'template',
                 'template' => [
-                    'name' => 'hello',
+                    'name' => 'ikprs_to_karu',
                     'language' => ['code' => 'id'],
                     'components' => [
                         [
@@ -2483,13 +2481,11 @@ class Ikprs extends AppController
 
             // Tentukan template berdasarkan type
             if ($notif->type === 'to_karu') {
-                $templateName = 'hello';
+                $templateName = 'ikprs_to_karu';
                 $params = [
                     ['type' => 'text', 'text' => $notif->nama ?? 'User'],
                     ['type' => 'text', 'text' => '-'],
-                    ['type' => 'text', 'text' => 'Insiden'],
-                    ['type' => 'text', 'text' => 'Unit'],
-                    ['type' => 'text', 'text' => 'Sistem']
+                    ['type' => 'text', 'text' => '-']
                 ];
             } elseif ($notif->type === 'to_komite') {
                 $templateName = 'ikprs_to_keperawatan';
