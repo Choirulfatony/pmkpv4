@@ -115,6 +115,10 @@
                     <button type="button" class="btn btn-inm-primary w-100" onclick="loadIndicators()">
                         <i class="bi bi-search me-1"></i> Tampilkan
                     </button>
+                    <span id="loadingIndicator" class="ms-2 d-none">
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span class="visually-hidden">Loading...</span>
+                    </span>
                 </div>
             </div>
         </div>
