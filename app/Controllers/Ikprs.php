@@ -715,8 +715,8 @@ class Ikprs extends AppController
                     $phone = preg_replace('/^0/', '62', $kepala->phone);
                     $waKepalaParams = [
                         ['type' => 'text', 'text' => $kepala->nama ?? 'Kepala Keperawatan'],
-                        ['type' => 'text', 'text' => $dataInsiden['insiden'] ?? '-'],
-                        ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? $dataInsiden['nama_unit'] ?? 'Unit']
+                        ['type' => 'text', 'text' => $dataInsiden['jenis_insiden'] ?? 'Insiden'],
+                        ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? 'Unit']
                     ];
                     $waKepalaData = [
                         'messaging_product' => 'whatsapp',
@@ -1750,8 +1750,8 @@ class Ikprs extends AppController
                                     'type' => 'body',
                                     'parameters' => [
                                         ['type' => 'text', 'text' => $kepala->nama ?? 'Kepala Keperawatan'],
-                                        ['type' => 'text', 'text' => $insiden->insiden ?? '-'],
-                                        ['type' => 'text', 'text' => $insiden->department_name ?? $insiden->nama_unit ?? $insiden->nama_kamar ?? '-']
+                                        ['type' => 'text', 'text' => $insiden->jenis_insiden ?? '-'],
+                                        ['type' => 'text', 'text' => $insiden->nama_kamar ?? '-']
                                     ]
                                 ]
                             ]
@@ -2221,10 +2221,8 @@ class Ikprs extends AppController
         }
 
         // ambil data insiden
-        $insiden = $db->table('ikprssm_insiden i')
-            ->select('i.*, d.department_name')
-            ->join('master_institution_department d', 'd.department_id = i.tempat_insiden', 'left')
-            ->where('i.id', $id)
+        $insiden = $db->table('ikprssm_insiden')
+            ->where('id', $id)
             ->get()
             ->getRow();
 
@@ -2343,8 +2341,8 @@ class Ikprs extends AppController
                                 'type' => 'body',
                                 'parameters' => [
                                     ['type' => 'text', 'text' => $kepala_kep->nama ?? 'Kepala Keperawatan'],
-                                    ['type' => 'text', 'text' => $insiden->insiden ?? $insiden->jenis_insiden ?? '-'],
-                                    ['type' => 'text', 'text' => $insiden->department_name ?? $insiden->nama_kamar ?? $insiden->nama_unit ?? '-']
+                                    ['type' => 'text', 'text' => $insiden->jenis_insiden ?? '-'],
+                                    ['type' => 'text', 'text' => $insiden->nama_kamar ?? '-']
                                 ]
                             ]
                         ]
