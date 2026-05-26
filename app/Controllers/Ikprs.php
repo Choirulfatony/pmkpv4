@@ -716,8 +716,7 @@ class Ikprs extends AppController
                     $waKepalaParams = [
                         ['type' => 'text', 'text' => $kepala->nama ?? 'Kepala Keperawatan'],
                         ['type' => 'text', 'text' => $dataInsiden['insiden'] ?? '-'],
-                        ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? 'Unit'],
-                        ['type' => 'text', 'text' => $dataInsiden['jenis_insiden'] ?? 'Insiden']
+                        ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? 'Unit']
                     ];
                     $waKepalaData = [
                         'messaging_product' => 'whatsapp',
@@ -1752,8 +1751,7 @@ class Ikprs extends AppController
                                     'parameters' => [
                                         ['type' => 'text', 'text' => $kepala->nama ?? 'Kepala Keperawatan'],
                                         ['type' => 'text', 'text' => $insiden->insiden ?? '-'],
-                                        ['type' => 'text', 'text' => $insiden->department_name ?? $insiden->nama_kamar ?? '-'],
-                                        ['type' => 'text', 'text' => $insiden->jenis_insiden ?? '-']
+                                        ['type' => 'text', 'text' => $insiden->department_name ?? $insiden->nama_kamar ?? '-']
                                     ]
                                 ]
                             ]
@@ -2344,8 +2342,7 @@ class Ikprs extends AppController
                                 'parameters' => [
                                     ['type' => 'text', 'text' => $kepala_kep->nama ?? 'Kepala Keperawatan'],
                                     ['type' => 'text', 'text' => $insiden->insiden ?? '-'],
-                                    ['type' => 'text', 'text' => $insiden->nama_kamar ?? '-'],
-                                    ['type' => 'text', 'text' => $insiden->jenis_insiden ?? '-']
+                                    ['type' => 'text', 'text' => $insiden->nama_kamar ?? '-']
                                 ]
                             ]
                         ]
@@ -2498,7 +2495,6 @@ class Ikprs extends AppController
                 $templateName = 'ikprs_to_keperawatan';
                 $params = [
                     ['type' => 'text', 'text' => $notif->nama ?? 'Kepala Keperawatan'],
-                    ['type' => 'text', 'text' => '-'],
                     ['type' => 'text', 'text' => '-'],
                     ['type' => 'text', 'text' => '-']
                 ];
