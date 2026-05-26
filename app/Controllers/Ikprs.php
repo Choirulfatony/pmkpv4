@@ -2221,8 +2221,10 @@ class Ikprs extends AppController
         }
 
         // ambil data insiden
-        $insiden = $db->table('ikprssm_insiden')
-            ->where('id', $id)
+        $insiden = $db->table('ikprssm_insiden i')
+            ->select('i.*, d.department_name')
+            ->join('master_institution_department d', 'd.department_id = i.tempat_insiden', 'left')
+            ->where('i.id', $id)
             ->get()
             ->getRow();
 
@@ -2341,8 +2343,8 @@ class Ikprs extends AppController
                                 'type' => 'body',
                                 'parameters' => [
                                     ['type' => 'text', 'text' => $kepala_kep->nama ?? 'Kepala Keperawatan'],
-                                    ['type' => 'text', 'text' => $insiden->insiden ?? '-'],
-                                    ['type' => 'text', 'text' => $insiden->nama_kamar ?? $insiden->nama_unit ?? '-']
+                                    ['type' => 'text', 'text' => $insiden->insiden ?? $insiden->jenis_insiden ?? '-'],
+                                    ['type' => 'text', 'text' => $insiden->department_name ?? $insiden->nama_kamar ?? $insiden->nama_unit ?? '-']
                                 ]
                             ]
                         ]
