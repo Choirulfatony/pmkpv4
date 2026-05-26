@@ -2486,9 +2486,11 @@ class Ikprs extends AppController
                     ['type' => 'text', 'text' => '-']
                 ];
             } elseif ($notif->type === 'to_komite') {
-                $templateName = 'ikprs_to_keperawatan';
+                $templateName = 'ikprs_to_komite';
                 $params = [
-                    ['type' => 'text', 'text' => $notif->nama ?? 'Kepala Keperawatan'],
+                    ['type' => 'text', 'text' => $notif->nama ?? 'KOMITE'],
+                    ['type' => 'text', 'text' => '-'],
+                    ['type' => 'text', 'text' => '-'],
                     ['type' => 'text', 'text' => '-'],
                     ['type' => 'text', 'text' => '-']
                 ];
