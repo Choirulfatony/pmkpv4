@@ -41,14 +41,21 @@ class LoadModuleForminput extends AppController
         }
         $departments = array_values($deptMap);
 
+        // Determine if we should show the "all departments" option
+        $role = session()->get('user_role');
+        $userDepartmentId = session()->get('department_id') ?? 0;
+        $showAllOption = in_array($role, ['ADMINISTRATOR', 'KOMITE']) || empty($userDepartmentId);
+
         return $this->render('siimut/form_inm', [
-            'judul'      => 'Form Input INM',
-            'icon'       => '<i class="bi bi-pencil-square"></i>',
-            '_content'   => view('siimut/form_inm', [
-                'tahun'        => $tahun,
-                'departments'  => $departments,
+            'judul'          => 'Form Input INM',
+            'icon'           => '<i class="bi bi-pencil-square"></i>',
+            '_content'       => view('siimut/form_inm', [
+                'tahun'            => $tahun,
+                'departments'      => $departments,
+                'showAllOption'    => $showAllOption,
+                'userDepartmentId' => $userDepartmentId
             ]),
-            'menus'      => $menus
+            'menus'        => $menus
         ]);
     }
 

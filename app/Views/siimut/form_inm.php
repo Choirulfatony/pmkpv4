@@ -99,9 +99,15 @@
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Ruangan</label>
                     <select class="form-select" id="filter_department">
-                        <option value="">-- Semua Ruangan --</option>
+                        <?php if (!empty($showAllOption) && $showAllOption): ?>
+                            <option value="">-- Semua Ruangan --</option>
+                        <?php endif; ?>
                         <?php foreach ($departments as $dept): ?>
-                            <option value="<?= $dept['department_id'] ?>"><?= esc($dept['department_name']) ?></option>
+                            <?php if (!empty($userDepartmentId) && $dept['department_id'] == $userDepartmentId): ?>
+                                <option value="<?= $dept['department_id'] ?>" selected><?= esc($dept['department_name']) ?></option>
+                            <?php else: ?>
+                                <option value="<?= $dept['department_id'] ?>"><?= esc($dept['department_name']) ?></option>
+                            <?php endif; ?>
                         <?php endforeach; ?>
                     </select>
                 </div>
