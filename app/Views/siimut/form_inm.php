@@ -221,29 +221,43 @@
 <script>
     var modalInput = null;
 
-    document.addEventListener('DOMContentLoaded', function() {
-        modalInput = new bootstrap.Modal(document.getElementById('modalInput'));
+            document.addEventListener('DOMContentLoaded', function() {
+                modalInput = new bootstrap.Modal(document.getElementById('modalInput'));
 
-        document.getElementById('input_numerator').addEventListener('input', hitungHasil);
-        document.getElementById('input_denumerator').addEventListener('input', hitungHasil);
-        document.getElementById('input_tanggal').addEventListener('change', loadExistingData);
-    });
+                document.getElementById('input_numerator').addEventListener('input', hitungHasil);
+                document.getElementById('input_denumerator').addEventListener('input', hitungHasil);
+                document.getElementById('input_tanggal').addEventListener('change', loadExistingData);
+                
+                // Auto-load on filter change
+                document.getElementById('filter_tahun').addEventListener('change', loadIndicators);
+                document.getElementById('filter_department').addEventListener('change', loadIndicators);
+            });
 
-    function loadIndicators() {
-        var tahun = document.getElementById('filter_tahun').value;
-        var department_id = document.getElementById('filter_department').value;
+            function loadIndicators() {
+                var tahun = document.getElementById('filter_tahun').value;
+                var department_id = document.getElementById('filter_department').value;
 
-        var tbody = document.getElementById('tabelBody');
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><i class="bi bi-hourglass-split me-2"></i>Memuat data...</td></tr>';
+                var tbody = document.getElementById('tabelBody');
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><i class="bi bi-hourglass-split me-2"></i>Memuat data...</td></tr>';
+                document.getElementById('loadingIndicator').classList.remove('d-none');
 
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', '<?= site_url('siimut/load-module-forminput/get-indicators') ?>', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.send('tahun=' + tahun + '&department_id=' + department_id);
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                var response = JSON.parse(xhr.responseText);
-                renderIndicators(response);
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '<?= site_url('siimut/load-module-forminput/get-indicators') ?>', true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                xhr.onload = function() {
+                    document.getElementById('loadingIndicator').classList.add('d-none');
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        renderIndicators(response);
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i> Gagal memuat data</td></tr>';
+                    }
+                };
+                xhr.onerror = function() {
+                    document.getElementById('loadingIndicator').classList.add('d-none');
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i> Kesalahan jaringan</td></tr>';
+                };
+                xhr.send('tahun=' + tahun + '&department_id=' + department_id);
             }
         };
         xhr.send();
