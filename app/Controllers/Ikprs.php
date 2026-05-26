@@ -707,48 +707,7 @@ class Ikprs extends AppController
                     'created_at'   => date('Y-m-d H:i:s'),
                     'wa_status'    => null
                 ]);
-                $notifKepalaId = $db->insertID();
                 log_message('error', 'simpanikp: notif to KEPALA_KEPERAWATAN inserted, user_id=' . $kepala->hris_user_id);
-
-                // Kirim WA ke KEPALA_KEPERAWATAN
-                if (!empty($kepala->phone)) {
-                    $phone = preg_replace('/^0/', '62', $kepala->phone);
-                    $waKepalaParams = [
-                        ['type' => 'text', 'text' => $kepala->nama ?? 'Kepala Keperawatan'],
-                        ['type' => 'text', 'text' => $dataInsiden['insiden'] ?? '-'],
-                        ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? 'Unit'],
-                        ['type' => 'text', 'text' => $dataInsiden['jenis_insiden'] ?? 'Insiden']
-                    ];
-                    $waKepalaData = [
-                        'messaging_product' => 'whatsapp',
-                        'to' => $phone,
-                        'type' => 'template',
-                        'template' => [
-                            'name' => 'ikprs_to_keperawatan',
-                            'language' => ['code' => 'id'],
-                            'components' => [['type' => 'body', 'parameters' => $waKepalaParams]]
-                        ]
-                    ];
-                    $ch = curl_init($url);
-                    curl_setopt($ch, CURLOPT_POST, 1);
-                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($waKepalaData));
-                    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                    $waKepalaRes = curl_exec($ch);
-                    $waKepalaErr = curl_error($ch);
-                    $waKepalaHttp = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                    curl_close($ch);
-                    $waKepalaStatus = 'FAILED';
-                    if (!$waKepalaErr && $waKepalaHttp >= 200 && $waKepalaHttp < 300) {
-                        $respJson = json_decode($waKepalaRes, true);
-                        $waKepalaStatus = isset($respJson['messages'][0]['id']) ? 'SENT' : 'FAILED';
-                    }
-                    $db->table('ikprssm_notifikasi')
-                        ->where('id', $notifKepalaId)
-                        ->update(['wa_status' => $waKepalaStatus]);
-                    log_message('error', 'simpanikp: WA to KEPALA_KEPERAWATAN - phone=' . $phone . ', status=' . $waKepalaStatus);
-                }
             }
         }
 
