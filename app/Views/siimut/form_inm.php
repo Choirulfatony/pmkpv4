@@ -101,7 +101,7 @@
                     <select class="form-select" id="filter_department">
                         <option value="">-- Semua Ruangan --</option>
                         <?php foreach ($departments as $dept): ?>
-                            <option value="<?= $dept->department_id ?>"><?= esc($dept->department_name) ?></option>
+                            <option value="<?= $dept['department_id'] ?>"><?= esc($dept['department_name']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
