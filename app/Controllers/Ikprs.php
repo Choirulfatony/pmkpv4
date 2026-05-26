@@ -1173,17 +1173,16 @@ class Ikprs extends AppController
                     $phone = preg_replace('/^0/', '62', $kepala->phone);
                     $waKepalaParams = [
                         ['type' => 'text', 'text' => $kepala->nama ?? 'Kepala Keperawatan'],
-                        ['type' => 'text', 'text' => $dataInsiden['nama_pasien'] ?? '-'],
-                        ['type' => 'text', 'text' => $dataInsiden['jenis_insiden'] ?? 'Insiden'],
+                        ['type' => 'text', 'text' => $dataInsiden['insiden'] ?? '-'],
                         ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? 'Unit'],
-                        ['type' => 'text', 'text' => session('hris_full_name') ?? 'Petugas']
+                        ['type' => 'text', 'text' => $dataInsiden['jenis_insiden'] ?? 'Insiden']
                     ];
                     $waKepalaData = [
                         'messaging_product' => 'whatsapp',
                         'to' => $phone,
                         'type' => 'template',
                         'template' => [
-                            'name' => 'hello',
+                            'name' => 'ikprs_to_keperawatan',
                             'language' => ['code' => 'id'],
                             'components' => [['type' => 'body', 'parameters' => $waKepalaParams]]
                         ]
@@ -2199,7 +2198,7 @@ class Ikprs extends AppController
                 $notifKepalaId = $db->insertID();
                 log_message('error', 'verifikasi_karu: notif to KEPALA_KEPERAWATAN inserted, user_id=' . $kepala->hris_user_id);
 
-                // Kirim WA ke KEPALA_KEPERAWATAN (pakai template hello)
+                // Kirim WA ke KEPALA_KEPERAWATAN
                 if (!empty($kepala->phone)) {
                     $phone = preg_replace('/^0/', '62', $kepala->phone);
                     $waKepalaData = [
@@ -2207,17 +2206,16 @@ class Ikprs extends AppController
                         'to' => $phone,
                         'type' => 'template',
                         'template' => [
-                            'name' => 'hello',
+                            'name' => 'ikprs_to_keperawatan',
                             'language' => ['code' => 'id'],
                             'components' => [
                                 [
                                     'type' => 'body',
                                     'parameters' => [
                                         ['type' => 'text', 'text' => $kepala->nama ?? 'Kepala Keperawatan'],
-                                        ['type' => 'text', 'text' => $insiden->nama_pasien ?? '-'],
-                                        ['type' => 'text', 'text' => $insiden->jenis_insiden ?? '-'],
-                                        ['type' => 'text', 'text' => $grading . ' - ' . ($insiden->department_name ?? $insiden->nama_unit ?? '-')],
-                                        ['type' => 'text', 'text' => session('hris_full_name') ?? 'KARU']
+                                        ['type' => 'text', 'text' => $insiden->insiden ?? '-'],
+                                        ['type' => 'text', 'text' => $insiden->department_name ?? $insiden->nama_kamar ?? '-'],
+                                        ['type' => 'text', 'text' => $insiden->jenis_insiden ?? '-']
                                     ]
                                 ]
                             ]
@@ -3100,17 +3098,16 @@ class Ikprs extends AppController
                     'to' => $phone,
                     'type' => 'template',
                     'template' => [
-                        'name' => 'hello',
+                        'name' => 'ikprs_to_keperawatan',
                         'language' => ['code' => 'id'],
                         'components' => [
                             [
                                 'type' => 'body',
                                 'parameters' => [
                                     ['type' => 'text', 'text' => $kepala_kep->nama ?? 'Kepala Keperawatan'],
-                                    ['type' => 'text', 'text' => $insiden->nama_pasien ?? '-'],
-                                    ['type' => 'text', 'text' => $grading],
-                                    ['type' => 'text', 'text' => $catatanPreview],
-                                    ['type' => 'text', 'text' => session('hris_full_name') ?? 'KOMITE']
+                                    ['type' => 'text', 'text' => $insiden->insiden ?? '-'],
+                                    ['type' => 'text', 'text' => $insiden->nama_kamar ?? '-'],
+                                    ['type' => 'text', 'text' => $insiden->jenis_insiden ?? '-']
                                 ]
                             ]
                         ]
@@ -3260,10 +3257,9 @@ class Ikprs extends AppController
                     ['type' => 'text', 'text' => 'Sistem']
                 ];
             } elseif ($notif->type === 'to_komite') {
-                $templateName = 'hello';
+                $templateName = 'ikprs_to_keperawatan';
                 $params = [
-                    ['type' => 'text', 'text' => $notif->nama ?? 'KOMITE'],
-                    ['type' => 'text', 'text' => '-'],
+                    ['type' => 'text', 'text' => $notif->nama ?? 'Kepala Keperawatan'],
                     ['type' => 'text', 'text' => '-'],
                     ['type' => 'text', 'text' => '-'],
                     ['type' => 'text', 'text' => '-']
