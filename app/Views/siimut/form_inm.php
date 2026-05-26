@@ -235,6 +235,9 @@
         // Auto-load on filter change
         document.getElementById('filter_tahun').addEventListener('change', loadIndicators);
         document.getElementById('filter_department').addEventListener('change', loadIndicators);
+
+        // Initial load
+        loadIndicators();
     });
 
     function loadIndicators() {
