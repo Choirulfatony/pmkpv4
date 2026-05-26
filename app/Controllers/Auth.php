@@ -1143,8 +1143,8 @@ class Auth extends BaseController
 
                 log_message('error', 'GOOGLE CALLBACK: Login success - ' . $email . ' role: ' . $userRole);
 
-                if ($isPopup) return $this->_popupResponse('success', '/siimut/dashboard');
-                return redirect()->to('/siimut/dashboard');
+                if ($isPopup) return $this->_popupResponse('success', site_url('siimut/dashboard'));
+                return redirect()->to(site_url('siimut/dashboard'));
             } else {
                 // Email tidak terdaftar - redirect ke halaman register
                 session()->set([
