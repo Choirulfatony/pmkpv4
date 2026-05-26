@@ -716,7 +716,7 @@ class Ikprs extends AppController
                     $waKepalaParams = [
                         ['type' => 'text', 'text' => $kepala->nama ?? 'Kepala Keperawatan'],
                         ['type' => 'text', 'text' => $dataInsiden['insiden'] ?? '-'],
-                        ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? 'Unit']
+                        ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? $dataInsiden['nama_unit'] ?? 'Unit']
                     ];
                     $waKepalaData = [
                         'messaging_product' => 'whatsapp',
@@ -1751,7 +1751,7 @@ class Ikprs extends AppController
                                     'parameters' => [
                                         ['type' => 'text', 'text' => $kepala->nama ?? 'Kepala Keperawatan'],
                                         ['type' => 'text', 'text' => $insiden->insiden ?? '-'],
-                                        ['type' => 'text', 'text' => $insiden->department_name ?? $insiden->nama_kamar ?? '-']
+                                        ['type' => 'text', 'text' => $insiden->department_name ?? $insiden->nama_unit ?? $insiden->nama_kamar ?? '-']
                                     ]
                                 ]
                             ]
@@ -2342,7 +2342,7 @@ class Ikprs extends AppController
                                 'parameters' => [
                                     ['type' => 'text', 'text' => $kepala_kep->nama ?? 'Kepala Keperawatan'],
                                     ['type' => 'text', 'text' => $insiden->insiden ?? '-'],
-                                    ['type' => 'text', 'text' => $insiden->nama_kamar ?? '-']
+                                    ['type' => 'text', 'text' => $insiden->nama_kamar ?? $insiden->nama_unit ?? '-']
                                 ]
                             ]
                         ]
