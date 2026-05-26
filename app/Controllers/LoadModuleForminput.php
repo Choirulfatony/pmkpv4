@@ -28,6 +28,7 @@ class LoadModuleForminput extends AppController
         $menus = $menuModel->getMenuByRole($role);
 
         $tahun = $this->request->getGet('tahun') ?? date('Y');
+        $bulan = $this->request->getGet('bulan') ?? date('m');
         $department_id = session()->get('department_id') ?? 0;
 
         $departments = $this->model->getFormIndicators($tahun, $department_id);
@@ -51,6 +52,7 @@ class LoadModuleForminput extends AppController
             'icon'           => '<i class="bi bi-pencil-square"></i>',
             '_content'       => view('siimut/form_inm', [
                 'tahun'            => $tahun,
+                'bulan'            => $bulan,
                 'departments'      => $departments,
                 'showAllOption'    => $showAllOption,
                 'userDepartmentId' => $userDepartmentId
@@ -62,12 +64,12 @@ class LoadModuleForminput extends AppController
     public function get_indicators()
     {
         $tahun = $this->request->getPost('tahun') ?? date('Y');
+        $bulan = $this->request->getPost('bulan') ?? date('m');
         $department_id = $this->request->getPost('department_id') ?? 0;
 
         $indicators = $this->model->getFormIndicators($tahun, $department_id);
 
         // Get fill status for each indicator
-        $bulan = date('m');
         $statusList = $this->model->getFillStatus($tahun, $bulan);
 
         // Map status by indicator_id + department_id

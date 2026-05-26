@@ -88,7 +88,7 @@
         </div>
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-2">
                     <label class="form-label fw-bold">Tahun</label>
                     <select class="form-select" id="filter_tahun">
                         <?php for ($y = date('Y'); $y >= date('Y') - 5; $y--): ?>
@@ -96,7 +96,16 @@
                         <?php endfor; ?>
                     </select>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Bulan</label>
+                    <select class="form-select" id="filter_bulan">
+                        <?php $namaBulan = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']; ?>
+                        <?php for ($m = 1; $m <= 12; $m++): ?>
+                            <option value="<?= str_pad($m, 2, '0', STR_PAD_LEFT) ?>" <?= (str_pad($m, 2, '0', STR_PAD_LEFT) == $bulan) ? 'selected' : '' ?>><?= $namaBulan[$m] ?></option>
+                        <?php endfor; ?>
+                    </select>
+                </div>
+                <div class="col-md-5">
                     <label class="form-label fw-bold">Ruangan</label>
                     <select class="form-select" id="filter_department">
                         <?php if (!empty($showAllOption) && $showAllOption): ?>
@@ -111,13 +120,12 @@
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="button" class="btn btn-inm-primary w-100" onclick="loadIndicators()">
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="button" class="btn btn-inm-primary flex-grow-1" onclick="loadIndicators()">
                         <i class="bi bi-search me-1"></i> Tampilkan
                     </button>
-                    <span id="loadingIndicator" class="ms-2 d-none">
+                    <span id="loadingIndicator" class="d-none">
                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        <span class="visually-hidden">Loading...</span>
                     </span>
                 </div>
             </div>
@@ -138,7 +146,7 @@
                             <th>Ruangan</th>
                             <th class="text-center">Target</th>
                             <th class="text-center">Terakhir Diisi</th>
-                            <th class="text-center">Bulan Ini</th>
+                            <th class="text-center">Isian Bulan</th>
                             <th class="text-center" style="width: 120px;">Aksi</th>
                         </tr>
                     </thead>
@@ -235,6 +243,7 @@
         
         // Auto-load on filter change
         document.getElementById('filter_tahun').addEventListener('change', loadIndicators);
+        document.getElementById('filter_bulan').addEventListener('change', loadIndicators);
         document.getElementById('filter_department').addEventListener('change', loadIndicators);
 
         // Initial load
@@ -243,6 +252,7 @@
 
     function loadIndicators() {
         var tahun = document.getElementById('filter_tahun').value;
+        var bulan = document.getElementById('filter_bulan').value;
         var department_id = document.getElementById('filter_department').value;
 
         var tbody = document.getElementById('tabelBody');
@@ -265,7 +275,7 @@
             document.getElementById('loadingIndicator').classList.add('d-none');
             tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i> Kesalahan jaringan</td></tr>';
         };
-        xhr.send('tahun=' + tahun + '&department_id=' + department_id);
+        xhr.send('tahun=' + tahun + '&bulan=' + bulan + '&department_id=' + department_id);
     }
 
     function renderIndicators(data) {
@@ -284,7 +294,7 @@
             if (row.fill_count > 0) {
                 var d = row.last_fill_date ? new Date(row.last_fill_date) : null;
                 var dateStr = d ? d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
-                statusBadge = '<span class="badge bg-success" title="Terakhir: ' + dateStr + '"><i class="bi bi-check-circle"></i> ' + dateStr + '</span>';
+                statusBadge = '<span class="badge bg-success" title="Terakhir: ' + dateStr + ', ' + row.fill_count + ' hari terisi"><i class="bi bi-check-circle"></i> ' + dateStr + ' (' + row.fill_count + ')</span>';
             } else {
                 statusBadge = '<span class="badge bg-secondary"><i class="bi bi-dash-circle"></i> Belum</span>';
             }
