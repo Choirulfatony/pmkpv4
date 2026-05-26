@@ -231,7 +231,7 @@
         tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><i class="bi bi-hourglass-split me-2"></i>Memuat data...</td></tr>';
 
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', '<?= site_url('load-module-forminput/get-indicators') ?>?tahun=' + tahun + '&department_id=' + department_id, true);
+        xhr.open('GET', '<?= site_url('siimut/load-module-forminput/get-indicators') ?>?tahun=' + tahun + '&department_id=' + department_id, true);
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var response = JSON.parse(xhr.responseText);
@@ -286,7 +286,7 @@
         document.getElementById('input_department_id').value = departmentId;
 
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', '<?= site_url('load-module-forminput/get-indicator-detail') ?>?indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + document.getElementById('input_tanggal').value, true);
+        xhr.open('GET', '<?= site_url('siimut/load-module-forminput/get-indicator-detail') ?>?indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + document.getElementById('input_tanggal').value, true);
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var response = JSON.parse(xhr.responseText);
@@ -338,7 +338,7 @@
         if (!indicatorId || !departmentId || !tanggal) return;
 
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', '<?= site_url('load-module-forminput/get-indicator-detail') ?>?indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + tanggal, true);
+        xhr.open('GET', '<?= site_url('siimut/load-module-forminput/get-indicator-detail') ?>?indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + tanggal, true);
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var response = JSON.parse(xhr.responseText);
@@ -372,7 +372,7 @@
         var data = new FormData(form);
 
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', '<?= site_url('load-module-forminput/save') ?>', true);
+        xhr.open('POST', '<?= site_url('siimut/load-module-forminput/save') ?>', true);
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4 && xhr.status === 200) {
