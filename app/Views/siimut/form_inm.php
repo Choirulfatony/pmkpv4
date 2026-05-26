@@ -19,10 +19,6 @@
         font-weight: bold;
     }
 
-    .input-group-text {
-        background-color: #e9ecef;
-    }
-
     .btn-inm-primary {
         background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
         border: none;
@@ -39,21 +35,6 @@
         box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
     }
 
-    .table-inm > thead {
-        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-        color: white;
-    }
-
-    .status-tercapai {
-        background-color: #d4edda;
-        color: #155724;
-    }
-
-    .status-tidak-tercapai {
-        background-color: #f8d7da;
-        color: #721c24;
-    }
-
     .modal-header.modal-inm {
         background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
         color: white;
@@ -62,6 +43,149 @@
     .modal-inm .btn-close {
         filter: brightness(0) invert(1);
     }
+
+    .table-wrap {
+        overflow-x: auto;
+        max-width: 100%;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+    }
+
+    .table-inm {
+        margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .table-inm > thead {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+    }
+
+    .table-inm > thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: inherit;
+        border-color: rgba(255,255,255,0.2);
+        font-size: 13px;
+        padding: 8px 6px;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .table-inm > thead th.fixed-col {
+        position: sticky;
+        left: 0;
+        z-index: 3;
+        background: #1e7e34;
+    }
+
+    .table-inm > thead th.fixed-col2 {
+        position: sticky;
+        z-index: 3;
+        background: #1e7e34;
+    }
+
+    .table-inm tbody td {
+        padding: 8px 6px;
+        border: 1px solid #dee2e6;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 13px;
+    }
+
+    .table-inm tbody td.fixed-col {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        background: white;
+    }
+
+    .table-inm tbody td.fixed-col2 {
+        position: sticky;
+        z-index: 1;
+        background: white;
+    }
+
+    .day-cell {
+        cursor: pointer;
+        min-width: 70px;
+        transition: all 0.15s ease;
+    }
+
+    .day-cell:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        z-index: 1;
+        position: relative;
+    }
+
+    .cell-target {
+        background-color: #d4edda !important;
+    }
+
+    .cell-fail {
+        background-color: #f8d7da !important;
+    }
+
+    .cell-empty {
+        background-color: #fff3cd !important;
+    }
+
+    .cell-has-data {
+        font-weight: 600;
+        background-color: #d1ecf1 !important;
+    }
+
+    .day-cell .num-denum {
+        font-size: 11px;
+        color: #6c757d;
+        margin-top: 2px;
+    }
+
+    .day-header {
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+    .table-inm tbody tr.indicator-row:hover td {
+        background-color: #e8f4fd;
+    }
+
+    .table-inm tbody tr.indicator-row:hover td.fixed-col,
+    .table-inm tbody tr.indicator-row:hover td.fixed-col2 {
+        background-color: #e8f4fd;
+    }
+
+    .dataTables_length label,
+    .dataTables_filter label {
+        font-weight: normal;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .dataTables_length select {
+        width: auto;
+        display: inline-block;
+    }
+
+    .dataTables_filter input {
+        width: auto;
+        display: inline-block;
+        margin-left: 4px;
+    }
+
+    .dataTables_info {
+        font-size: 13px;
+        padding-top: 4px;
+    }
+
+    input[type="month"].form-control-sm {
+        min-height: 31px;
+    }
 </style>
 
 <div class="container-fluid py-4">
@@ -69,7 +193,7 @@
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h4 class="mb-1"><i class="bi bi-pencil-square me-2"></i>Form Input Indikator Nasional Mutu (INM)</h4>
-                <p class="mb-0 opacity-75">Input data numerasi dan denumerasi untuk indikator mutu nasional</p>
+                <p class="mb-0 opacity-75">Input data harian — klik sel pada tanggal untuk mengisi</p>
             </div>
             <div class="col-md-4 text-end">
                 <a href="<?= site_url('siimut/grafik-inm') ?>" class="btn btn-light btn-sm">
@@ -84,28 +208,28 @@
 
     <div class="card card-form-inm mb-4">
         <div class="card-header">
-            <i class="bi bi-filter me-2"></i>Filter Data
+            <i class="bi bi-filter me-2"></i>Filter
         </div>
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-2">
-                    <label class="form-label fw-bold">Tahun</label>
-                    <select class="form-select" id="filter_tahun">
-                        <?php for ($y = date('Y'); $y >= date('Y') - 5; $y--): ?>
-                            <option value="<?= $y ?>" <?= ($y == $tahun) ? 'selected' : '' ?>><?= $y ?></option>
-                        <?php endfor; ?>
-                    </select>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Periode (Bulan - Tahun)</label>
+                    <div class="input-group" id="periodeGroup">
+                        <select class="form-select form-select-sm" id="filter_bulan" style="min-width:110px;">
+                            <?php $namaBulan = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']; ?>
+                            <?php for ($m = 1; $m <= 12; $m++): ?>
+                                <option value="<?= str_pad($m, 2, '0', STR_PAD_LEFT) ?>" <?= (str_pad($m, 2, '0', STR_PAD_LEFT) == $bulan) ? 'selected' : '' ?>><?= $namaBulan[$m] ?></option>
+                            <?php endfor; ?>
+                        </select>
+                        <select class="form-select form-select-sm" id="filter_tahun" style="min-width:85px;">
+                            <?php for ($y = date('Y'); $y >= date('Y') - 5; $y--): ?>
+                                <option value="<?= $y ?>" <?= ($y == $tahun) ? 'selected' : '' ?>><?= $y ?></option>
+                            <?php endfor; ?>
+                        </select>
+                        <input type="hidden" id="filter_periode" value="<?= $tahun ?>-<?= $bulan ?>">
+                    </div>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-bold">Bulan</label>
-                    <select class="form-select" id="filter_bulan">
-                        <?php $namaBulan = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']; ?>
-                        <?php for ($m = 1; $m <= 12; $m++): ?>
-                            <option value="<?= str_pad($m, 2, '0', STR_PAD_LEFT) ?>" <?= (str_pad($m, 2, '0', STR_PAD_LEFT) == $bulan) ? 'selected' : '' ?>><?= $namaBulan[$m] ?></option>
-                        <?php endfor; ?>
-                    </select>
-                </div>
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <label class="form-label fw-bold">Ruangan</label>
                     <select class="form-select" id="filter_department">
                         <?php if (!empty($showAllOption) && $showAllOption): ?>
@@ -120,54 +244,73 @@
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-3 d-flex align-items-end gap-2">
-                    <button type="button" class="btn btn-inm-primary flex-grow-1" onclick="loadIndicators()">
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="button" class="btn btn-inm-primary w-100" onclick="loadData()">
                         <i class="bi bi-search me-1"></i> Tampilkan
                     </button>
-                    <span id="loadingIndicator" class="d-none">
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    </span>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="card card-form-inm">
-        <div class="card-header">
-            <i class="bi bi-list-ul me-2"></i>Daftar Indikator INM
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover table-inm" id="tabelIndikator" style="width: 100%;">
-                    <thead>
-                        <tr>
-                            <th class="text-center" style="width: 50px;">No</th>
-                            <th>Indikator</th>
-                            <th>Ruangan</th>
-                            <th class="text-center">Target</th>
-                            <th class="text-center">Terakhir Diisi</th>
-                            <th class="text-center">Isian Bulan</th>
-                            <th class="text-center" style="width: 120px;">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabelBody">
-                        <tr>
-                            <td colspan="6" class="text-center text-muted py-4">
-                                <i class="bi bi-arrow-down-circle me-2"></i>Pilih tahun dan ruangan, lalu klik "Tampilkan"
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+    <div id="loadingIndicator" class="text-center py-5 d-none">
+        <span class="spinner-border text-success" style="width:3rem;height:3rem;" role="status"></span>
+        <p class="mt-3 text-muted">Memuat data...</p>
+    </div>
+
+    <div id="tableContainer" class="d-none">
+        <div class="card table-card">
+            <div class="card-header">
+                <i class="bi bi-list-ul me-2"></i>Daftar Indikator INM
+            </div>
+            <div class="card-body p-2">
+                <div class="row mb-2">
+                    <div class="col-sm-12 col-md-6">
+                        <div class="dataTables_length">
+                            <label>Tampilkan
+                                <select name="page_length" class="form-select form-select-sm" id="pageLength" onchange="changePageLength()">
+                                    <option value="10">10</option>
+                                    <option value="25" selected>25</option>
+                                    <option value="50">50</option>
+                                    <option value="-1">Semua</option>
+                                </select> data
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md-6">
+                        <div class="dataTables_filter text-md-end">
+                            <label>Cari:
+                                <input type="search" class="form-control form-control-sm" id="searchInput" onkeyup="filterIndicators()">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table class="table table-bordered table-inm" id="mainTable">
+                        <thead>
+                            <tr id="headerRow"></tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-sm-12 col-md-6">
+                        <div class="dataTables_info" id="tableInfo">Menampilkan 0 / 0 indikator</div>
+                    </div>
+                    <div class="col-sm-12 col-md-6 text-md-end" id="paginationControls">
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Modal Input -->
 <div class="modal fade" id="modalInput" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header modal-inm">
-                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Input Data Indikator INM</h5>
+                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Input Data Harian INM</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -185,8 +328,8 @@
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Tanggal Input</label>
-                            <input type="date" class="form-control" id="input_tanggal" name="tanggal" value="<?= date('Y-m-d') ?>" required>
+                            <label class="form-label fw-bold">Tanggal</label>
+                            <input type="text" class="form-control" id="input_tanggal" readonly>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Ruangan</label>
@@ -196,16 +339,16 @@
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Numerator (Pembilang)</label>
+                            <label class="form-label fw-bold">Numerator</label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="input_numerator" name="numerator" step="any" min="0" placeholder="Masukkan nilai numerator">
+                                <input type="number" class="form-control" id="input_numerator" name="numerator" step="any" min="0" placeholder="Nilai numerator">
                                 <span class="input-group-text" id="num_unit">-</span>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Denumerator (Penyebut)</label>
+                            <label class="form-label fw-bold">Denumerator</label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="input_denumerator" name="denumerator" step="any" min="0" placeholder="Masukkan nilai denumerator">
+                                <input type="number" class="form-control" id="input_denumerator" name="denumerator" step="any" min="0" placeholder="Nilai denumerator">
                                 <span class="input-group-text" id="denum_unit">-</span>
                             </div>
                         </div>
@@ -220,16 +363,13 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-1"></i> Batal
-                </button>
-                <button type="button" class="btn btn-inm-primary" onclick="saveData()">
-                    <i class="bi bi-save me-1"></i> Simpan Data
-                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i> Batal</button>
+                <button type="button" class="btn btn-inm-primary" onclick="saveData()"><i class="bi bi-save me-1"></i> Simpan</button>
             </div>
         </div>
     </div>
 </div>
+
 
 <script>
     var modalInput = null;
@@ -239,25 +379,31 @@
 
         document.getElementById('input_numerator').addEventListener('input', hitungHasil);
         document.getElementById('input_denumerator').addEventListener('input', hitungHasil);
-        document.getElementById('input_tanggal').addEventListener('change', loadExistingData);
-        
-        // Auto-load on filter change
-        document.getElementById('filter_tahun').addEventListener('change', loadIndicators);
-        document.getElementById('filter_bulan').addEventListener('change', loadIndicators);
-        document.getElementById('filter_department').addEventListener('change', loadIndicators);
 
-        // Initial load
-        loadIndicators();
+        document.getElementById('filter_department').addEventListener('change', loadData);
+        document.getElementById('filter_bulan').addEventListener('change', updatePeriode);
+        document.getElementById('filter_tahun').addEventListener('change', updatePeriode);
+
+        loadData();
     });
 
-    function loadIndicators() {
+    function updatePeriode() {
         var tahun = document.getElementById('filter_tahun').value;
         var bulan = document.getElementById('filter_bulan').value;
+        document.getElementById('filter_periode').value = tahun + '-' + bulan;
+        loadData();
+    }
+
+    function loadData() {
+        var periode = document.getElementById('filter_periode').value;
+        var tahun = periode ? periode.substring(0, 4) : '';
+        var bulan = periode ? periode.substring(5, 7) : '';
         var department_id = document.getElementById('filter_department').value;
 
-        var tbody = document.getElementById('tabelBody');
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><i class="bi bi-hourglass-split me-2"></i>Memuat data...</td></tr>';
+        if (!tahun || !bulan) return;
+
         document.getElementById('loadingIndicator').classList.remove('d-none');
+        document.getElementById('tableContainer').classList.add('d-none');
 
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '<?= site_url('siimut/load-module-forminput/get-indicators') ?>', true);
@@ -265,59 +411,138 @@
         xhr.onload = function() {
             document.getElementById('loadingIndicator').classList.add('d-none');
             if (xhr.status === 200) {
-                var response = JSON.parse(xhr.responseText);
-                renderIndicators(response);
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    renderTable(response);
+                } catch(e) {
+                    alert('Gagal parse response');
+                }
             } else {
-                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i> Gagal memuat data</td></tr>';
+                alert('HTTP error: ' + xhr.status);
             }
         };
         xhr.onerror = function() {
             document.getElementById('loadingIndicator').classList.add('d-none');
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i> Kesalahan jaringan</td></tr>';
+            alert('Gagal memuat data');
         };
         xhr.send('tahun=' + tahun + '&bulan=' + bulan + '&department_id=' + department_id);
     }
 
-    function renderIndicators(data) {
-        var tbody = document.getElementById('tabelBody');
+    var _allData = [];
+
+    function renderTable(response) {
+        var data = response.indicators;
+        var days = response.days || 31;
+
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4"><i class="bi bi-info-circle me-2"></i>Tidak ada data indikator</td></tr>';
+            document.getElementById('tableContainer').classList.add('d-none');
             return;
         }
 
+        _allData = data;
+        document.getElementById('tableInfo').textContent = 'Menampilkan ' + data.length + ' / ' + data.length + ' indikator';
+
+        var headerHtml = '<th class="text-center" style="width:40px;">No</th>' +
+            '<th style="min-width:250px;">Indikator</th>' +
+            '<th style="width:80px;" class="text-center">Target</th>';
+        for (var d = 1; d <= days; d++) {
+            headerHtml += '<th class="text-center" style="width:70px;">' + d + '</th>';
+        }
+        document.getElementById('headerRow').innerHTML = headerHtml;
+
+        document.getElementById('tableBody').innerHTML = buildRows(data, days);
+        document.getElementById('tableContainer').classList.remove('d-none');
+        document.getElementById('searchInput').value = '';
+        applyPagination();
+    }
+
+    function buildRows(data, days) {
         var html = '';
         for (var i = 0; i < data.length; i++) {
             var row = data[i];
-            var no = i + 1;
-
-            var statusBadge = '';
-            if (row.fill_count > 0) {
-                var d = row.last_fill_date ? new Date(row.last_fill_date) : null;
-                var dateStr = d ? d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
-                statusBadge = '<span class="badge bg-success" title="Terakhir: ' + dateStr + ', ' + row.fill_count + ' hari terisi"><i class="bi bi-check-circle"></i> ' + dateStr + ' (' + row.fill_count + ')</span>';
-            } else {
-                statusBadge = '<span class="badge bg-secondary"><i class="bi bi-dash-circle"></i> Belum</span>';
-            }
-
-            var monthlyStr = row.monthly_num !== undefined ? (row.monthly_num + ' / ' + row.monthly_den) : '-';
-
-            html += '<tr>';
-            html += '<td class="text-center">' + no + '</td>';
-            html += '<td>' + escHtml(row.indicator_element) + '</td>';
-            html += '<td>' + escHtml(row.department_name) + '</td>';
+            var daily = row.daily || [];
+            html += '<tr class="indicator-row">';
+            html += '<td class="text-center fw-bold">' + (i + 1) + '</td>';
+            html += '<td class="text-start">' + escHtml(row.indicator_element) + '</td>';
             html += '<td class="text-center">' + escHtml(row.indicator_target) + ' ' + escHtml(row.indicator_units) + '</td>';
-            html += '<td class="text-center">' + statusBadge + '</td>';
-            html += '<td class="text-center">' + monthlyStr + '</td>';
-            html += '<td class="text-center"><button type="button" class="btn btn-success btn-sm" onclick="showInputForm(' + row.indicator_id + ', ' + row.department_id + ', \'' + escHtml(row.department_name) + '\')"><i class="bi bi-pencil"></i> Input</button></td>';
+
+            for (var d = 0; d < daily.length; d++) {
+                var item = daily[d];
+                var cellClass = 'day-cell text-center';
+                var nilaiDisplay = '-';
+
+                if (item.nilai !== null) {
+                    nilaiDisplay = item.nilai + ' ' + escHtml(row.indicator_units);
+                    if (item.tercapai === true) cellClass += ' cell-target cell-has-data';
+                    else if (item.tercapai === false) cellClass += ' cell-fail cell-has-data';
+                    else cellClass += ' cell-has-data';
+                } else {
+                    cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
+                }
+
+                html += '<td class="' + cellClass + '" ' +
+                    'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\')">' +
+                    '<div class="fw-bold">' + nilaiDisplay + '</div>' +
+                    '<div class="num-denum">' + (item.num || 0) + ' / ' + (item.denum || 0) + '</div></td>';
+            }
             html += '</tr>';
         }
-        tbody.innerHTML = html;
+        return html;
     }
 
-    function showInputForm(indicatorId, departmentId, departmentName) {
+    function applyPagination() {
+        var keyword = document.getElementById('searchInput').value.toLowerCase();
+        var limit = parseInt(document.getElementById('pageLength').value);
+        var rows = document.querySelectorAll('#tableBody .indicator-row');
+        var filtered = [];
+
+        rows.forEach(function(row, idx) {
+            var text = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+            var match = text.indexOf(keyword) !== -1;
+            row.dataset.filtered = match ? '1' : '0';
+            if (match) filtered.push(idx);
+        });
+
+        var totalFiltered = filtered.length;
+        var totalAll = _allData.length;
+        document.getElementById('tableInfo').textContent = 'Menampilkan ' + totalFiltered + ' / ' + totalAll + ' indikator';
+
+        var show = (limit === -1) ? totalFiltered : limit;
+
+        rows.forEach(function(row, idx) {
+            if (row.dataset.filtered === '0') {
+                row.style.display = 'none';
+            } else {
+                var pos = filtered.indexOf(idx);
+                row.style.display = (pos < show) ? '' : 'none';
+            }
+        });
+    }
+
+    function changePageLength() {
+        applyPagination();
+    }
+
+    function filterIndicators() {
+        applyPagination();
+    }
+
+    function openModal(indicatorId, departmentId, departmentName, hari, indicatorName, target, units, targetUnit) {
+        var periode = document.getElementById('filter_periode').value;
+        var tahun = periode.substring(0, 4);
+        var bulan = periode.substring(5, 7);
+        var tanggal = tahun + '-' + bulan + '-' + String(hari).padStart(2, '0');
+
         document.getElementById('input_indicator_id').value = indicatorId;
         document.getElementById('input_department_id').value = departmentId;
-        document.getElementById('input_department_name').value = departmentName || '';
+        document.getElementById('input_department_name').value = departmentName;
+        document.getElementById('input_tanggal').value = tanggal;
+
+        document.getElementById('modalIndikatorNama').textContent = indicatorName || '-';
+        document.getElementById('modalTarget').textContent = target || '-';
+        document.getElementById('modalSatuan').textContent = units || '-';
+        document.getElementById('num_unit').textContent = units || '-';
+        document.getElementById('denum_unit').textContent = targetUnit || '-';
 
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '<?= site_url('siimut/load-module-forminput/get-indicator-detail') ?>', true);
@@ -325,14 +550,6 @@
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var response = JSON.parse(xhr.responseText);
-                if (response.indicator) {
-                    document.getElementById('modalIndikatorNama').textContent = response.indicator.indicator_element || '-';
-                    document.getElementById('modalTarget').textContent = response.indicator.indicator_target || '-';
-                    document.getElementById('modalSatuan').textContent = response.indicator.indicator_units || '-';
-                    document.getElementById('num_unit').textContent = response.indicator.indicator_units || '-';
-                    document.getElementById('denum_unit').textContent = response.indicator.indicator_target_unit || '-';
-                }
-
                 if (response.existing_data && response.existing_data.length > 0) {
                     var last = response.existing_data[response.existing_data.length - 1];
                     document.getElementById('input_numerator').value = last.result_numerator_value || '';
@@ -341,46 +558,8 @@
                     document.getElementById('input_numerator').value = '';
                     document.getElementById('input_denumerator').value = '';
                 }
-
-                if (response.monthly_total) {
-                    var hasil = document.getElementById('hasilPersen');
-                    var num = parseFloat(response.monthly_total.num) || 0;
-                    var denum = parseFloat(response.monthly_total.denum) || 0;
-                    if (denum > 0) {
-                        hasil.textContent = num + ' / ' + denum + ' = ' + (num / denum * 100).toFixed(2) + '%';
-                    } else {
-                        hasil.textContent = '-';
-                    }
-                }
-
                 hitungHasil();
                 modalInput.show();
-            }
-        };
-        xhr.send('indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + document.getElementById('input_tanggal').value);
-    }
-
-    function loadExistingData() {
-        var indicatorId = document.getElementById('input_indicator_id').value;
-        var departmentId = document.getElementById('input_department_id').value;
-        var tanggal = document.getElementById('input_tanggal').value;
-        if (!indicatorId || !departmentId || !tanggal) return;
-
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', '<?= site_url('siimut/load-module-forminput/get-indicator-detail') ?>', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                var response = JSON.parse(xhr.responseText);
-                if (response.existing_data && response.existing_data.length > 0) {
-                    var last = response.existing_data[response.existing_data.length - 1];
-                    document.getElementById('input_numerator').value = last.result_numerator_value || '';
-                    document.getElementById('input_denumerator').value = last.result_denumerator_value || '';
-                } else {
-                    document.getElementById('input_numerator').value = '';
-                    document.getElementById('input_denumerator').value = '';
-                }
-                hitungHasil();
             }
         };
         xhr.send('indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + tanggal);
@@ -403,20 +582,19 @@
 
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '<?= site_url('siimut/load-module-forminput/save') ?>', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var response = JSON.parse(xhr.responseText);
                 if (response.status) {
                     modalInput.hide();
-                    alert('Data berhasil disimpan');
+                    loadData();
                 } else {
                     alert('Gagal: ' + (response.message || 'Unknown error'));
                 }
             }
         };
-        xhr.send(new FormData(form));
+        xhr.send(data);
     }
 
     function escHtml(str) {
@@ -424,5 +602,10 @@
         var div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
+    }
+
+    function escJs(str) {
+        if (!str) return '';
+        return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, "\\\"");
     }
 </script>

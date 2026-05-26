@@ -63,14 +63,14 @@ class LoadModuleForminput extends AppController
 
     public function get_indicators()
     {
-        $tahun = $this->request->getPost('tahun') ?? date('Y');
-        $bulan = $this->request->getPost('bulan') ?? date('m');
-        $department_id = $this->request->getPost('department_id') ?? 0;
+        $tahun = (int) ($this->request->getPost('tahun') ?? date('Y'));
+        $bulan = (int) ($this->request->getPost('bulan') ?? date('m'));
+        $department_id = (int) ($this->request->getPost('department_id') ?? 0);
 
         $indicators = $this->model->getFormIndicators($tahun, $department_id);
 
         // Get fill status for each indicator
-        $statusList = $this->model->getFillStatus($tahun, $bulan);
+        $statusList = $this->model->getFillStatus($tahun, str_pad((string) $bulan, 2, '0', STR_PAD_LEFT));
 
         // Map status by indicator_id + department_id
         $statusMap = [];
@@ -79,23 +79,67 @@ class LoadModuleForminput extends AppController
             $statusMap[$key] = $s;
         }
 
-        // Attach status to each indicator
+        // Get daily data for all indicators at once
+        $indicatorIds = array_map(fn($i) => (int) $i->indicator_id, $indicators);
+        $rawDaily = $this->model->getDailyDataForMultipleIndicators($indicatorIds, $tahun, $bulan);
+
+        // Build daily map: [indicatorId_deptId][day] => data
+        $dailyMap = [];
+        foreach ($rawDaily as $d) {
+            $key = $d->result_indicator_id . '_' . $d->result_department_id;
+            $day = (int) $d->tanggal;
+            $dailyMap[$key][$day] = $d;
+        }
+
+        $daysInMonth = $this->model->getDaysInMonth($bulan, $tahun);
+
+        // Attach status and daily data to each indicator
         foreach ($indicators as &$ind) {
             $key = $ind->indicator_id . '_' . $ind->department_id;
+
             if (isset($statusMap[$key])) {
                 $ind->last_fill_date = $statusMap[$key]->last_fill_date;
-                $ind->fill_count = $statusMap[$key]->fill_count;
-                $ind->monthly_num = $statusMap[$key]->monthly_num;
-                $ind->monthly_den = $statusMap[$key]->monthly_den;
+                $ind->fill_count = (int) $statusMap[$key]->fill_count;
+                $ind->monthly_num = (float) $statusMap[$key]->monthly_num;
+                $ind->monthly_den = (float) $statusMap[$key]->monthly_den;
             } else {
                 $ind->last_fill_date = null;
                 $ind->fill_count = 0;
                 $ind->monthly_num = 0;
                 $ind->monthly_den = 0;
             }
+
+            $target  = (float) ($ind->indicator_target ?? 0);
+            $factors = (float) ($ind->indicator_factors ?? 1);
+            $operator = $ind->indicator_target_calculation ?? '>=';
+
+            $daily = [];
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                if (isset($dailyMap[$key][$d])) {
+                    $r     = $dailyMap[$key][$d];
+                    $num   = (float) $r->num;
+                    $denum = (float) $r->denum;
+                    $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
+                } else {
+                    $num   = 0;
+                    $denum = 0;
+                    $nilai = null;
+                }
+                $daily[] = [
+                    'hari'     => $d,
+                    'num'      => $num,
+                    'denum'    => $denum,
+                    'nilai'    => $nilai,
+                    'tercapai' => $nilai !== null ? $this->model->hitungTercapai($nilai, $target, $operator) : null,
+                ];
+            }
+            $ind->daily = $daily;
         }
 
-        return $this->response->setJSON($indicators);
+        return $this->response->setJSON([
+            'indicators' => $indicators,
+            'days'       => $daysInMonth,
+        ]);
     }
 
     public function get_indicator_detail()
@@ -111,6 +155,99 @@ class LoadModuleForminput extends AppController
         $data = $this->model->getIndicatorDetail($indicator_id, $department_id, $tanggal);
 
         return $this->response->setJSON($data);
+    }
+
+    public function get_daily_detail()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['error' => 'Invalid request']);
+        }
+
+        $indicatorId  = (int) $this->request->getPost('indicator_id');
+        $tahun        = (int) $this->request->getPost('tahun');
+        $bulan        = (int) $this->request->getPost('bulan');
+
+        $role = session()->get('user_role') ?? '';
+        $userDeptId = null;
+        if (!in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
+            $userDeptId = session()->get('department_id') ?? null;
+        }
+
+        // Get indicator info
+        $db = db_connect();
+        $info = $db->table('quality_indicator')
+            ->where('indicator_id', $indicatorId)
+            ->where('indicator_category_id', '4')
+            ->whereIn('indicator_record_status', ['A', 'D'])
+            ->get()
+            ->getRow();
+
+        $target  = $info ? (float) ($info->indicator_target ?? 0) : 0;
+        $factors = $info ? (float) ($info->indicator_factors ?? 1) : 1;
+        $operator = $info ? ($info->indicator_target_calculation ?? '>=') : '>=';
+        $units   = $info ? ($info->indicator_units ?? '%') : '%';
+
+        $daysInMonth = $this->model->getDaysInMonth($bulan, $tahun);
+
+        $departments = $this->model->getDepartmentsByIndicator($indicatorId, $tahun, $userDeptId);
+        $rawData     = $this->model->getDailyDataAllDepartments($indicatorId, $tahun, $bulan);
+
+        // Group by department_id => [day => data]
+        $byDept = [];
+        foreach ($rawData as $row) {
+            $deptId = (int) $row->result_department_id;
+            $day    = (int) $row->tanggal;
+            $byDept[$deptId][$day] = $row;
+        }
+
+        $deptDaily = [];
+        foreach ($departments as $dept) {
+            $did = (int) $dept->department_id;
+            $daily = [];
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                if (isset($byDept[$did][$d])) {
+                    $r     = $byDept[$did][$d];
+                    $num   = (float) $r->num;
+                    $denum = (float) $r->denum;
+                    $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
+                } else {
+                    $num   = 0;
+                    $denum = 0;
+                    $nilai = null;
+                }
+
+                $daily[] = [
+                    'hari'     => $d,
+                    'num'      => $num,
+                    'denum'    => $denum,
+                    'nilai'    => $nilai,
+                    'tercapai' => $nilai !== null ? $this->model->hitungTercapai($nilai, $target, $operator) : null,
+                ];
+            }
+            $deptDaily[] = [
+                'department_id'   => $did,
+                'department_name' => $dept->department_name,
+                'daily'           => $daily,
+            ];
+        }
+
+        $namaBulan = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        return $this->response->setJSON([
+            'dept_data'   => $deptDaily,
+            'days'        => $daysInMonth,
+            'target'      => $target,
+            'units'       => $units,
+            'operator'    => $operator,
+            'bulan'       => $namaBulan[$bulan] ?? $bulan,
+            'bulan_angka' => $bulan,
+            'tahun'       => $tahun,
+            'indicator'   => $info ? $info->indicator_element : '',
+        ]);
     }
 
     public function save()

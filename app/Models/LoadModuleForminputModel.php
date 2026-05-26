@@ -190,4 +190,126 @@ class LoadModuleForminputModel extends Model
 
         return $builder->get()->getResult();
     }
+
+    // ==================== DAILY DETAIL TABLE ====================
+
+    public function getDaysInMonth(int $bulan, int $tahun): int
+    {
+        switch ($bulan) {
+            case 1:
+            case 3:
+            case 5:
+            case 7:
+            case 8:
+            case 10:
+            case 12:
+                return 31;
+            case 4:
+            case 6:
+            case 9:
+            case 11:
+                return 30;
+            case 2:
+                return ($tahun % 4 == 0) ? 29 : 28;
+            default:
+                return 30;
+        }
+    }
+
+    public function getDailyDataAllDepartments(int $indicatorId, int $tahun, int $bulan)
+    {
+        $db = db_connect();
+        $builder = $db->table('quality_indicator_result qir');
+
+        $builder->select("
+            qir.result_department_id,
+            DAY(qir.result_period) AS tanggal,
+            SUM(qir.result_numerator_value) AS num,
+            SUM(qir.result_denumerator_value) AS denum
+        ");
+
+        $builder->where('qir.result_indicator_id', $indicatorId);
+        $builder->where('YEAR(qir.result_period)', $tahun);
+        $builder->where('MONTH(qir.result_period)', $bulan);
+
+        $builder->groupBy(['qir.result_department_id', 'qir.result_period']);
+        $builder->orderBy('qir.result_department_id');
+        $builder->orderBy('qir.result_period', 'ASC');
+
+        return $builder->get()->getResult();
+    }
+
+    public function getDailyDataForMultipleIndicators(array $indicatorIds, int $tahun, int $bulan)
+    {
+        if (empty($indicatorIds)) {
+            return [];
+        }
+
+        $db = db_connect();
+        $builder = $db->table('quality_indicator_result qir');
+
+        $builder->select("
+            qir.result_indicator_id,
+            qir.result_department_id,
+            DAY(qir.result_period) AS tanggal,
+            SUM(qir.result_numerator_value) AS num,
+            SUM(qir.result_denumerator_value) AS denum
+        ");
+
+        $builder->whereIn('qir.result_indicator_id', $indicatorIds);
+        $builder->where('YEAR(qir.result_period)', $tahun);
+        $builder->where('MONTH(qir.result_period)', $bulan);
+
+        $builder->groupBy(['qir.result_indicator_id', 'qir.result_department_id', 'qir.result_period']);
+        $builder->orderBy('qir.result_indicator_id');
+        $builder->orderBy('qir.result_department_id');
+        $builder->orderBy('qir.result_period', 'ASC');
+
+        return $builder->get()->getResult();
+    }
+
+    public function getDepartmentsByIndicator(int $indicatorId, int $tahun, ?int $departmentId = null)
+    {
+        $db = db_connect();
+
+        $deptCondition = '';
+        if ($departmentId !== null) {
+            $deptCondition = "AND qig.group_department_id = " . (int) $departmentId;
+        }
+
+        $query = $db->query("
+            SELECT DISTINCT
+                qig.group_indicator_id AS indicator_id,
+                qig.group_department_id AS department_id,
+                mid.department_name
+            FROM quality_indicator_group qig
+            JOIN quality_indicator qi ON qi.indicator_id = qig.group_indicator_id
+            JOIN master_institution_department mid ON mid.department_id = qig.group_department_id
+            WHERE qi.indicator_category_id = '4'
+            AND qi.indicator_record_status IN ('A', 'D')
+            AND qig.group_record_status = 'A'
+            AND qig.group_indicator_id = ?
+            {$deptCondition}
+            GROUP BY mid.department_id
+            ORDER BY mid.department_name ASC
+        ", [$indicatorId]);
+
+        return $query->getResult();
+    }
+
+    public function hitungTercapai(?float $nilai, float $target, string $operator): ?bool
+    {
+        if ($nilai === null) {
+            return null;
+        }
+        $op = empty($operator) ? '>=' : $operator;
+        return match ($op) {
+            '>=' => $nilai >= $target,
+            '<=' => $nilai <= $target,
+            '>'  => $nilai > $target,
+            '<'  => $nilai < $target,
+            '='  => $nilai == $target,
+            default => $nilai >= $target,
+        };
+    }
 }

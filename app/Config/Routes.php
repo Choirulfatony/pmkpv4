@@ -44,6 +44,7 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('load-module-forminput/get-indicators', 'LoadModuleForminput::get_indicators');
         $routes->post('load-module-forminput/get-indicator-detail', 'LoadModuleForminput::get_indicator_detail');
         $routes->post('load-module-forminput/save', 'LoadModuleForminput::save');
+        $routes->post('load-module-forminput/get-daily-detail', 'LoadModuleForminput::get_daily_detail');
 
     // Rekap Laporan INM
     $routes->get('rekap-laporan-inm', 'RekapLaporanInm::index');
