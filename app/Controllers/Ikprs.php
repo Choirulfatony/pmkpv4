@@ -715,9 +715,9 @@ class Ikprs extends AppController
                     $phone = preg_replace('/^0/', '62', $kepala->phone);
                     $waKepalaParams = [
                         ['type' => 'text', 'text' => $kepala->nama ?? 'Kepala Keperawatan'],
-                        ['type' => 'text', 'text' => $dataInsiden['jenis_insiden'] ?? 'Insiden'],
+                        ['type' => 'text', 'text' => $dataInsiden['insiden'] ?? '-'],
                         ['type' => 'text', 'text' => $dataInsiden['nama_kamar'] ?? 'Unit'],
-                        ['type' => 'text', 'text' => '-']
+                        ['type' => 'text', 'text' => $dataInsiden['jenis_insiden'] ?? 'Insiden']
                     ];
                     $waKepalaData = [
                         'messaging_product' => 'whatsapp',
