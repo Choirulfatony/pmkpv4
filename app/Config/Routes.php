@@ -33,11 +33,17 @@ $routes->get('auth/verify_email_notice', 'Auth::verify_email_notice');
 $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
 
 
-// ========== SIIMUT ==========
-$routes->group('siimut', ['filter' => 'auth'], function ($routes) {
-    // Dashboard
-    $routes->get('', 'Dashboard::index');
-    $routes->get('dashboard', 'Dashboard::index');
+    // ========== SIIMUT ==========
+    $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
+        // Dashboard
+        $routes->get('', 'Dashboard::index');
+        $routes->get('dashboard', 'Dashboard::index');
+        
+        // Form Input INM
+        $routes->get('form-inm', 'LoadModuleForminput::index');
+        $routes->post('load-module-forminput/get-indicators', 'LoadModuleForminput::get_indicators');
+        $routes->post('load-module-forminput/get-indicator-detail', 'LoadModuleForminput::get_indicator_detail');
+        $routes->post('load-module-forminput/save', 'LoadModuleForminput::save');
 
     // Rekap Laporan INM
     $routes->get('rekap-laporan-inm', 'RekapLaporanInm::index');
