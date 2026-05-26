@@ -1334,17 +1334,15 @@ class Ikprs extends AppController
             'to' => $phone,
             'type' => 'template',
             'template' => [
-                'name' => 'hello',
+                'name' => 'ikprs_to_karu',
                 'language' => ['code' => 'id'],
                 'components' => [
                     [
                         'type' => 'body',
                         'parameters' => [
-                            ['type' => 'text', 'text' => 'Karu'],
-                            ['type' => 'text', 'text' => 'Pasien A'],
-                            ['type' => 'text', 'text' => 'Jatuh'],
-                            ['type' => 'text', 'text' => 'Rawat Inap'],
-                            ['type' => 'text', 'text' => 'Petugas']
+                            ['type' => 'text', 'text' => 'Choirul'],
+                            ['type' => 'text', 'text' => 'KNC'],
+                            ['type' => 'text', 'text' => 'IRNA Wijaya Kusuma A']
                         ]
                     ]
                 ]
@@ -1371,7 +1369,7 @@ class Ikprs extends AppController
 
         echo "<h3>WhatsApp Template Test</h3>";
         echo "Phone: " . htmlspecialchars($phone) . "<br>";
-        echo "Template: hello<br>";
+        echo "Template: ikprs_to_karu<br>";
         echo "HTTP Code: " . $httpCode . "<br>";
         echo "Response: <pre>" . htmlspecialchars($response) . "</pre>";
         if ($error) echo "Error: " . htmlspecialchars($error) . "<br>";
@@ -1391,7 +1389,7 @@ class Ikprs extends AppController
             'to' => $phone,
             'type' => 'template',
             'template' => [
-                'name' => 'hello',
+                'name' => 'ikprs_to_komite',
                 'language' => [
                     'code' => 'id'
                 ],
@@ -1401,23 +1399,15 @@ class Ikprs extends AppController
                         'parameters' => [
                             [
                                 'type' => 'text',
-                                'text' => 'Karu'
+                                'text' => 'Komite'
                             ],
                             [
                                 'type' => 'text',
-                                'text' => 'Pasien A'
+                                'text' => 'KNC'
                             ],
                             [
                                 'type' => 'text',
-                                'text' => 'Jatuh'
-                            ],
-                            [
-                                'type' => 'text',
-                                'text' => 'Rawat Inap'
-                            ],
-                            [
-                                'type' => 'text',
-                                'text' => 'Petugas'
+                                'text' => 'IRNA Wijaya Kusuma A'
                             ]
                         ]
                     ]
@@ -1630,17 +1620,15 @@ class Ikprs extends AppController
                         'to' => $phone,
                         'type' => 'template',
                         'template' => [
-                            'name' => 'hello',
+                            'name' => 'ikprs_to_komite',
                             'language' => ['code' => 'id'],
                             'components' => [
                                 [
                                     'type' => 'body',
                                     'parameters' => [
                                         ['type' => 'text', 'text' => $komite->nama ?? 'KOMITE'],
-                                        ['type' => 'text', 'text' => $insiden->nama_pasien ?? '-'],
                                         ['type' => 'text', 'text' => $insiden->jenis_insiden ?? '-'],
-                                        ['type' => 'text', 'text' => $grading . ' - ' . ($insiden->department_name ?? $insiden->nama_unit ?? '-')],
-                                        ['type' => 'text', 'text' => session('hris_full_name') ?? 'KARU']
+                                        ['type' => 'text', 'text' => $insiden->department_name ?? $insiden->nama_kamar ?? $insiden->nama_unit ?? '-']
                                     ]
                                 ]
                             ]
