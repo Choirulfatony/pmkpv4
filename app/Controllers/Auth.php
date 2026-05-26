@@ -966,8 +966,25 @@ class Auth extends BaseController
     public function googleLogin()
     {
         $googleLogin = new GoogleLogin();
+        $isPopup = $this->request->getGet('popup') === '1';
+        if ($isPopup) {
+            $googleLogin->setState('popup');
+        }
         $authUrl = $googleLogin->getAuthUrl();
         return redirect()->to($authUrl);
+    }
+
+    private function _popupResponse(string $status, string $redirectUrl, string $message = '')
+    {
+        $response = '<!DOCTYPE html><html><head><title>Redirecting...</title></head><body>';
+        $response .= '<script>';
+        $response .= 'if (window.opener) {';
+        $response .= '  window.opener.postMessage({status: "' . $status . '", redirect: "' . $redirectUrl . '", message: "' . $message . '"}, "' . base_url() . '");';
+        $response .= '}';
+        $response .= 'window.close();';
+        $response .= '</script>';
+        $response .= '</body></html>';
+        return $this->response->setContentType('text/html')->setBody($response);
     }
 
     /**
@@ -978,9 +995,11 @@ class Auth extends BaseController
         log_message('error', 'GOOGLE CALLBACK: Method called');
         
         $code = $this->request->getGet('code');
+        $isPopup = $this->request->getGet('state') === 'popup';
 
         if (!$code) {
             log_message('error', 'GOOGLE CALLBACK: No code received');
+            if ($isPopup) return $this->_popupResponse('error', site_url('auth'), 'Login Google gagal');
             return redirect()->to(site_url('auth'))->with('error', 'Login Google gagal');
         }
 
@@ -991,6 +1010,7 @@ class Auth extends BaseController
 
             if (isset($token['error'])) {
                 log_message('error', 'GOOGLE CALLBACK: Token error - ' . $token['error']);
+                if ($isPopup) return $this->_popupResponse('error', site_url('auth'), 'Gagal mendapatkan akses Google');
                 return redirect()->to(site_url('auth'))->with('error', 'Gagal mendapatkan akses Google');
             }
 
@@ -1006,6 +1026,7 @@ class Auth extends BaseController
             // Validasi apakah email telah diverifikasi oleh Google
             if (!$userInfo->getVerifiedEmail()) {
                 log_message('error', 'GOOGLE CALLBACK: Email not verified by Google - ' . $email);
+                if ($isPopup) return $this->_popupResponse('error', site_url('auth'), 'Email Google belum terverifikasi');
                 return redirect()->to(site_url('auth'))->with('error', 'Email Google belum terverifikasi. Silakan verifikasi email terlebih dahulu.');
             }
 
@@ -1116,6 +1137,7 @@ class Auth extends BaseController
 
                 log_message('error', 'GOOGLE CALLBACK: Login success - ' . $email . ' role: ' . $userRole);
 
+                if ($isPopup) return $this->_popupResponse('success', '/siimut/dashboard');
                 return redirect()->to('/siimut/dashboard');
             } else {
                 // Email tidak terdaftar - redirect ke halaman register
@@ -1127,12 +1149,14 @@ class Auth extends BaseController
 
                 log_message('error', 'GOOGLE CALLBACK: Email not registered - ' . $email . ' - redirect to register');
 
+                if ($isPopup) return $this->_popupResponse('error', site_url('auth'), 'Email belum terdaftar');
                 return redirect()->to(site_url('auth/register'));
             }
         } catch (\Exception $e) {
             log_message('error', 'Google Login Error: ' . $e->getMessage());
             log_message('error', 'Google Login Error Trace: ' . $e->getTraceAsString());
             log_message('error', 'Google Login Error File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+            if ($isPopup) return $this->_popupResponse('error', site_url('auth'), 'Terjadi kesalahan saat login Google');
             return redirect()->to(site_url('auth'))->with('error', 'Terjadi kesalahan saat login Google - ' . $e->getMessage());
         }
     }

@@ -20,6 +20,11 @@ class GoogleLogin
         log_message('error', 'GOOGLE INIT: client_id=' . env('google.client_id') . ', redirect_uri=' . env('google.redirect_uri'));
     }
 
+    public function setState($state)
+    {
+        $this->client->setState($state);
+    }
+
     public function getAuthUrl()
     {
         $this->client->setPrompt('select_account');
