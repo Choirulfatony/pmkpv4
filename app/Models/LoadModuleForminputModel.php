@@ -58,7 +58,8 @@ class LoadModuleForminputModel extends Model
         $builder->join($this->tablePrefix . 'quality_indicator qi', 'qi.indicator_id = qig.group_indicator_id', 'left');
         $builder->join('master_institution_department mid', 'mid.department_id = qig.group_department_id', 'left');
         $builder->where('qi.indicator_category_id', $this->categoryId);
-        $builder->where('qi.indicator_record_status', 'A');
+        // Show both active and inactive indicators to allow viewing history
+        // $builder->where('qi.indicator_record_status', 'A');
         $builder->groupStart();
         $builder->where('qig.group_period', $tahun);
         $builder->orWhere('qig.group_period', $tahun - 1);
@@ -87,7 +88,8 @@ class LoadModuleForminputModel extends Model
         $indicator = $db->table($this->tablePrefix . 'quality_indicator')
             ->where('indicator_id', $indicatorId)
             ->where('indicator_category_id', $this->categoryId)
-            ->whereIn('indicator_record_status', ['A', 'D'])
+            // Show indicator regardless of record status to allow viewing historical data
+            // whereIn('indicator_record_status', ['A', 'D']) // currently allows A and D
             ->get()
             ->getRow();
 
