@@ -62,36 +62,35 @@ class LoadModuleForminputModel extends Model
             // Specific month requested
             $selectedPeriod = $tahun . '-' . str_pad($bulan, 2, '0', STR_PAD_LEFT);
             $currentPeriod = date('Y-m');
+            $tableResult = $this->tablePrefix . 'quality_indicator_result';
+
+            $deptCondition = ($departmentId !== null && $departmentId > 0)
+                ? "qir.result_department_id = {$departmentId}"
+                : "qir.result_department_id = qig.group_department_id";
+
+            $existsSql = "EXISTS (
+                SELECT 1 FROM {$tableResult} qir
+                WHERE qir.result_indicator_id = qi.indicator_id
+                AND {$deptCondition}
+                AND YEAR(qir.result_period) = {$tahun}
+                AND MONTH(qir.result_period) = {$bulan}
+            )";
 
             if ($selectedPeriod == $currentPeriod) {
                 // CURRENT MONTH: Show only active indicators that have input data for this month
                 $builder->where('qi.indicator_record_status', 'A');
-                $builder->whereExists(function ($builder) use ($tahun, $bulan, $departmentId) {
-                    $builder->select('1')
-                        ->from($this->tablePrefix . 'quality_indicator_result qir')
-                        ->where('qir.result_indicator_id = qi.indicator_id')
-                        ->where('qir.result_department_id', $departmentId ?? 'qig.group_department_id')
-                        ->where('YEAR(qir.result_period)', $tahun)
-                        ->where('MONTH(qir.result_period)', $bulan);
-                });
+                $builder->where($existsSql, null, false);
             } else {
                 // PREVIOUS MONTH (HISTORY): Show all indicators that have ever had input data for this month
-                $builder->whereExists(function ($builder) use ($tahun, $bulan, $departmentId) {
-                    $builder->select('1')
-                        ->from($this->tablePrefix . 'quality_indicator_result qir')
-                        ->where('qir.result_indicator_id = qi.indicator_id')
-                        ->where('qir.result_department_id', $departmentId ?? 'qig.group_department_id')
-                        ->where('YEAR(qir.result_period)', $tahun)
-                        ->where('MONTH(qir.result_period)', $bulan);
-                });
+                $builder->where($existsSql, null, false);
             }
         } else {
             // NO SPECIFIC MONTH: Show indicators that have ever had data (for trend analysis)
-            $builder->whereExists(function ($builder) {
-                $builder->select('1')
-                    ->from($this->tablePrefix . 'quality_indicator_result qir')
-                    ->where('qir.result_indicator_id = qi.indicator_id');
-            });
+            $tableResult = $this->tablePrefix . 'quality_indicator_result';
+            $builder->where("EXISTS (
+                SELECT 1 FROM {$tableResult} qir
+                WHERE qir.result_indicator_id = qi.indicator_id
+            )", null, false);
         }
 
         $builder->groupStart();
