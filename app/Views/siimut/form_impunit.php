@@ -429,6 +429,7 @@
     }
 
     var _allData = [];
+    var _currentPage = 1;
 
     function renderTable(response) {
         var data = response.indicators;
@@ -508,22 +509,46 @@
         document.getElementById('tableInfo').textContent = 'Menampilkan ' + totalFiltered + ' / ' + totalAll + ' indikator';
 
         var show = (limit === -1) ? totalFiltered : limit;
+        var totalPages = (limit === -1) ? 1 : Math.ceil(totalFiltered / limit);
+
+        if (_currentPage > totalPages) _currentPage = totalPages;
+        if (_currentPage < 1) _currentPage = 1;
+
+        var start = (_currentPage - 1) * show;
+        var end = start + show;
 
         rows.forEach(function(row, idx) {
             if (row.dataset.filtered === '0') {
                 row.style.display = 'none';
             } else {
                 var pos = filtered.indexOf(idx);
-                row.style.display = (pos < show) ? '' : 'none';
+                row.style.display = (pos >= start && pos < end) ? '' : 'none';
             }
         });
+
+        // Render pagination buttons
+        var controls = document.getElementById('paginationControls');
+        var html = '';
+        if (totalPages > 1) {
+            html += '<button class="btn btn-sm btn-outline-secondary me-1" onclick="changePage(-1)" ' + (_currentPage <= 1 ? 'disabled' : '') + '>Sebelumnya</button>';
+            html += '<span class="mx-2 fw-semibold">' + _currentPage + ' / ' + totalPages + '</span>';
+            html += '<button class="btn btn-sm btn-outline-secondary" onclick="changePage(1)" ' + (_currentPage >= totalPages ? 'disabled' : '') + '>Berikutnya</button>';
+        }
+        controls.innerHTML = html;
+    }
+
+    function changePage(delta) {
+        _currentPage += delta;
+        applyPagination();
     }
 
     function changePageLength() {
+        _currentPage = 1;
         applyPagination();
     }
 
     function filterIndicators() {
+        _currentPage = 1;
         applyPagination();
     }
 
