@@ -672,7 +672,7 @@ protected $column_order = [
     /**
      * Ambil data rekap per Triwulan, Semester, dan Tahun
      */
-    public function getRekapPeriode(int $tahun)
+    public function getRekapPeriode(int $tahun, ?int $departmentId = null)
     {
         $db = db_connect();
 
@@ -691,16 +691,18 @@ protected $column_order = [
         $builder->join('local_quality_indicator_group lqig', 'lqi.indicator_id = lqig.group_indicator_id', 'left');
 
         $builder->where("lqi.indicator_category_id", '5');
-        // Smart filter: only indicators with data in selected year
         $builder->whereIn("lqi.indicator_record_status", ['A', 'D']);
         $builder->where('lqig.group_record_status', 'A');
 
-        // Filter by user role
+        // Filter by user role / department override
         $userRole = session('user_role') ?? '';
         $userDepartmentId = session('department_id') ?? 0;
 
         $filterDepartmentId = null;
-        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
+        if ($departmentId !== null && $departmentId > 0) {
+            $builder->where('lqig.group_department_id', $departmentId);
+            $filterDepartmentId = $departmentId;
+        } elseif (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
             $builder->where('lqig.group_department_id', $userDepartmentId);
             $filterDepartmentId = $userDepartmentId;
         }

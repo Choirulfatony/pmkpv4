@@ -28,11 +28,30 @@ class RekapPeriodeImprs extends AppController
 
         $tahun = $this->request->getGet('tahun') ?? date('Y');
 
+        // Fetch departments for ADMINISTRATOR/KOMITE
+        $departments = [];
+        $showDepartmentFilter = false;
+        if (in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
+            $showDepartmentFilter = true;
+            $db = db_connect();
+            $departments = $db->query("
+                SELECT DISTINCT mid.department_id, mid.department_name
+                FROM local_quality_indicator_group lqig
+                LEFT JOIN local_quality_indicator qi ON qi.indicator_id = lqig.group_indicator_id
+                LEFT JOIN master_institution_department mid ON mid.department_id = lqig.group_department_id
+                WHERE qi.indicator_category_id = '5'
+                AND qi.indicator_record_status = 'A'
+                ORDER BY mid.department_name ASC
+            ")->getResult();
+        }
+
         return $this->render('siimut/rekap_periode_imprs', [
             'judul'    => 'Rekap IMPRS per Periode',
             'icon'     => '<i class="bi bi-calendar-range"></i>',
             '_content' => view('siimut/rekap_periode_imprs', [
-                'tahun' => $tahun,
+                'tahun'                => $tahun,
+                'departments'          => $departments,
+                'showDepartmentFilter' => $showDepartmentFilter,
             ]),
             'menus'    => $menus
         ]);
@@ -44,8 +63,10 @@ class RekapPeriodeImprs extends AppController
 
         $tahun = $tahun ? (int) $tahun : (isset($post['tahun']) ? (int) $post['tahun'] : (int) date('Y'));
 
+        $departmentId = isset($post['department_id']) ? (int) $post['department_id'] : null;
+
         try {
-            $data = $this->rekapModel->getRekapPeriode($tahun);
+            $data = $this->rekapModel->getRekapPeriode($tahun, $departmentId);
 
             return $this->response->setJSON([
                 'draw' => $post['draw'] ?? 1,
@@ -68,13 +89,14 @@ class RekapPeriodeImprs extends AppController
     public function exportExcel()
     {
         $tahun = $this->request->getGet('tahun') ?? date('Y');
+        $departmentId = $this->request->getGet('department_id') ? (int) $this->request->getGet('department_id') : null;
 
         if (ob_get_level()) {
             ob_end_clean();
         }
 
         try {
-            $data = $this->rekapModel->getRekapPeriode($tahun);
+            $data = $this->rekapModel->getRekapPeriode($tahun, $departmentId);
 
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
 

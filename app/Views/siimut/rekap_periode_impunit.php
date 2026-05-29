@@ -142,7 +142,7 @@
 
 <div class="container-fluid py-4">
     <div class="row mb-3 align-items-end">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <label class="form-label fw-semibold mb-1">Pilih Tahun</label>
             <div class="input-group input-group-sm" style="max-width: 220px;">
                 <select class="form-select" id="tahun" onchange="gantiTahun()">
@@ -158,7 +158,19 @@
             </div>
         </div>
 
-        <div class="col-md-8">
+        <?php if (!empty($showDepartmentFilter)): ?>
+        <div class="col-md-3">
+            <label class="form-label fw-semibold mb-1">Pilih Ruangan</label>
+            <select class="form-select form-select-sm" id="filter_department" onchange="gantiDepartemen()" style="max-width: 280px;">
+                <option value="">-- Semua Ruangan --</option>
+                <?php foreach ($departments as $dept): ?>
+                    <option value="<?= $dept->department_id ?>"><?= esc($dept->department_name) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <?php endif; ?>
+
+        <div class="col-md-<?= !empty($showDepartmentFilter) ? '6' : '9' ?>">
             <label class="form-label fw-semibold mb-1">Filter Periode</label>
             <div class="d-flex flex-wrap align-items-center gap-2">
                 <button type="button" class="btn btn-outline-primary btn-filter" data-type="all" onclick="filterPeriode('all')">Semua</button>
@@ -284,6 +296,7 @@
                 type: 'POST',
                 data: function(d) {
                     d.tahun = vtahun;
+                    d.department_id = $('#filter_department').length ? $('#filter_department').val() : '';
                     return d;
                 },
                 dataSrc: 'data',
@@ -493,9 +506,17 @@
         }
     }
 
-$(document).on('click', '#btn-export-periode', function(e) {
+    function gantiDepartemen() {
+        refreshPage();
+    }
+
+    $(document).on('click', '#btn-export-periode', function(e) {
         e.preventDefault();
-        var exportUrl = '<?= site_url('siimut/rekap-periode-impunit/export') ?>?tahun=' + vtahun;
+        var deptParam = '';
+        if ($('#filter_department').length && $('#filter_department').val()) {
+            deptParam = '&department_id=' + $('#filter_department').val();
+        }
+        var exportUrl = '<?= site_url('siimut/rekap-periode-impunit/export') ?>?tahun=' + vtahun + deptParam;
         window.location.href = exportUrl;
     });
 
