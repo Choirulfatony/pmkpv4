@@ -645,7 +645,7 @@ class RekapLaporanInmModel extends Model
     /**
      * Ambil data rekap per Triwulan, Semester, dan Tahun
      */
-    public function getRekapPeriode(int $tahun)
+    public function getRekapPeriode(int $tahun, ?int $departmentId = null)
     {
         $db = db_connect();
 
@@ -670,12 +670,15 @@ class RekapLaporanInmModel extends Model
             $builder->where('quality_indicator.indicator_record_status', 'A');
         }
 
-        // Filter by user role
+        // Filter by user role / department override
         $userRole = session('user_role') ?? '';
         $userDepartmentId = session('department_id') ?? 0;
 
         $filterDepartmentId = null;
-        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
+        if ($departmentId !== null && $departmentId > 0) {
+            $builder->where('quality_indicator_group.group_department_id', $departmentId);
+            $filterDepartmentId = $departmentId;
+        } elseif (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
             $builder->where('quality_indicator_group.group_department_id', $userDepartmentId);
             $filterDepartmentId = $userDepartmentId;
         }
