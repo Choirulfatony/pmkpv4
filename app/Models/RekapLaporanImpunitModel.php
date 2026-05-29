@@ -264,7 +264,27 @@ class RekapLaporanImpunitModel extends Model
             ->where('lqig.group_record_status', 'A')
             ->orWhere('lqig.group_record_status IS NULL', null, false)
         ->groupEnd();
-        $this->filterActiveOrHasData($builder, $vtahun . '-01-01', $vtahun . '-12-31');
+
+        // Smart filter: show only indicators with data in selected year
+        $vtahunNow = (int) date('Y');
+        $builder->groupStart();
+        if ((int) $vtahun === $vtahunNow) {
+            // Current year: only active indicators with data
+            $builder->where('lqi.indicator_record_status', 'A');
+            $builder->where("EXISTS (
+                SELECT 1 FROM local_quality_indicator_result lqir_sub
+                WHERE lqir_sub.result_indicator_id = lqi.indicator_id
+                AND YEAR(lqir_sub.result_period) = {$vtahun}
+            )", null, false);
+        } else {
+            // Past years: any indicator that had data
+            $builder->where("EXISTS (
+                SELECT 1 FROM local_quality_indicator_result lqir_sub
+                WHERE lqir_sub.result_indicator_id = lqi.indicator_id
+                AND YEAR(lqir_sub.result_period) = {$vtahun}
+            )", null, false);
+        }
+        $builder->groupEnd();
 
         // Filter by user role
         $userRole = session('user_role') ?? '';
@@ -383,13 +403,14 @@ class RekapLaporanImpunitModel extends Model
         }
 
         // Query - berdasarkan indicator_category_id = 6
+        $statusFilter = ((int) $vtahun === (int) date('Y')) ? "= 'A'" : "IN ('A', 'D')";
         $query = $db->query("
             SELECT COUNT(DISTINCT local_quality_indicator.indicator_id) as total
             FROM local_quality_indicator
             JOIN local_quality_indicator_result ON local_quality_indicator_result.result_indicator_id = local_quality_indicator.indicator_id
             LEFT JOIN local_quality_indicator_group ON local_quality_indicator_group.group_indicator_id = local_quality_indicator.indicator_id
             WHERE local_quality_indicator.indicator_category_id = '6'
-            AND local_quality_indicator.indicator_record_status IN ('A', 'D')
+            AND local_quality_indicator.indicator_record_status {$statusFilter}
             {$departmentClause}
             AND YEAR(local_quality_indicator_result.result_period) = ?
         ", [$vtahun]);
@@ -599,13 +620,14 @@ class RekapLaporanImpunitModel extends Model
         }
 
         // Query - berdasarkan indicator_category_id = 6
+        $statusFilter = ((int) $vtahun === (int) date('Y')) ? "= 'A'" : "IN ('A', 'D')";
         $query = $db->query("
             SELECT COUNT(DISTINCT local_quality_indicator.indicator_id) as total
             FROM local_quality_indicator
             JOIN local_quality_indicator_result ON local_quality_indicator_result.result_indicator_id = local_quality_indicator.indicator_id
             LEFT JOIN local_quality_indicator_group ON local_quality_indicator_group.group_indicator_id = local_quality_indicator.indicator_id
             WHERE local_quality_indicator.indicator_category_id = '6'
-            AND local_quality_indicator.indicator_record_status IN ('A', 'D')
+            AND local_quality_indicator.indicator_record_status {$statusFilter}
             {$departmentClause}
             AND YEAR(local_quality_indicator_result.result_period) = ?
             {$searchCondition}

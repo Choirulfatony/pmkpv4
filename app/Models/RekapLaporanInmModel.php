@@ -232,17 +232,16 @@ class RekapLaporanInmModel extends Model
 
         $vtahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
 
-        // Cek available group_period - gunakan tahun dipilih jika ada, kalau tidak gunakan yang tersedia
-        $availablePeriods = $this->getAvailableGroupPeriods();
-        $usePeriod = in_array($vtahun, $availablePeriods) ? $vtahun : min($availablePeriods);
-
-        // [CHANGED] 'D': pake range 3 tahun ke belakang dari tahun dipilih (group_period >= tahun-3)
-        // [CHANGED] 'A': tetap pake range 3 tahun (tahun, tahun-1, tahun-2)
-        $builder->where("(
-            (quality_indicator.indicator_record_status = 'D' AND quality_indicator_group.group_period >= ($vtahun - 3))
-            OR
-            (quality_indicator.indicator_record_status = 'A' AND quality_indicator_group.group_period IN ($usePeriod, " . ($usePeriod - 1) . ", " . ($usePeriod - 2) . "))
+        // Smart filter: only indicators with data in selected year
+        $builder->where("EXISTS (
+            SELECT 1 FROM quality_indicator_result lqir
+            WHERE lqir.result_indicator_id = quality_indicator.indicator_id
+            AND YEAR(lqir.result_period) = {$vtahun}
         )");
+        // For current year, override the IN ('A', 'D') to only show active
+        if ((int) $vtahun === (int) date('Y')) {
+            $builder->where('quality_indicator.indicator_record_status', 'A');
+        }
 
         // Filter by user role
         $userRole = session('user_role') ?? '';
@@ -363,6 +362,7 @@ class RekapLaporanInmModel extends Model
         $db = db_connect();
 
         // Query sama dengan getIndicatorInm tapi hanya COUNT
+        $statusFilter = ((int) $vtahun === (int) date('Y')) ? "= 'A'" : "IN ('A', 'D')";
         $query = $db->query("
             SELECT COUNT(*) as total FROM (
                 SELECT DISTINCT quality_indicator.indicator_id
@@ -370,19 +370,16 @@ class RekapLaporanInmModel extends Model
                 JOIN quality_indicator ON quality_indicator.indicator_id = quality_indicator_group.group_indicator_id
                 JOIN master_institution_department ON master_institution_department.department_id = quality_indicator_group.group_department_id
                 WHERE quality_indicator.indicator_category_id = '4'
-                -- [CHANGED] Pake IN ('A', 'D') biar non-aktif ikut dihitung
-                AND quality_indicator.indicator_record_status IN ('A', 'D')
-                -- [CHANGED] 'D': group_period >= (tahun-3) biar range 3 tahun ke belakang
-                -- [CHANGED] 'A': pake range 3 tahun
-                AND (
-                    (quality_indicator.indicator_record_status = 'D' AND quality_indicator_group.group_period >= ?)
-                    OR
-                    (quality_indicator.indicator_record_status = 'A' AND quality_indicator_group.group_period IN (?, ?, ?))
+                AND quality_indicator.indicator_record_status {$statusFilter}
+                AND EXISTS (
+                    SELECT 1 FROM quality_indicator_result lqir
+                    WHERE lqir.result_indicator_id = quality_indicator.indicator_id
+                    AND YEAR(lqir.result_period) = ?
                 )
                 " . ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? "AND master_institution_department.department_id = " . $userDepartmentId : "") . "
                 GROUP BY quality_indicator.indicator_id
             ) as counted
-        ", [$vtahun - 3, $vtahun, $vtahun - 1, $vtahun - 2]);
+        ", [$vtahun]);
 
         $count = $query->getRow()->total ?? 0;
 
@@ -593,6 +590,7 @@ class RekapLaporanInmModel extends Model
         }
 
         // Query sama dengan getIndicatorInm tapi hanya COUNT
+        $statusFilter = ((int) $vtahun === (int) date('Y')) ? "= 'A'" : "IN ('A', 'D')";
         $query = $db->query("
             SELECT COUNT(*) as total FROM (
                 SELECT DISTINCT quality_indicator.indicator_id
@@ -600,20 +598,17 @@ class RekapLaporanInmModel extends Model
                 JOIN quality_indicator ON quality_indicator.indicator_id = quality_indicator_group.group_indicator_id
                 JOIN master_institution_department ON master_institution_department.department_id = quality_indicator_group.group_department_id
                 WHERE quality_indicator.indicator_category_id = '4'
-                -- [CHANGED] Pake IN ('A', 'D') biar non-aktif ikut dihitung
-                AND quality_indicator.indicator_record_status IN ('A', 'D')
-                -- [CHANGED] 'D': group_period >= (tahun-3) biar range 3 tahun ke belakang
-                -- [CHANGED] 'A': pake range 3 tahun
-                AND (
-                    (quality_indicator.indicator_record_status = 'D' AND quality_indicator_group.group_period >= ?)
-                    OR
-                    (quality_indicator.indicator_record_status = 'A' AND quality_indicator_group.group_period IN (?, ?, ?))
+                AND quality_indicator.indicator_record_status {$statusFilter}
+                AND EXISTS (
+                    SELECT 1 FROM quality_indicator_result lqir
+                    WHERE lqir.result_indicator_id = quality_indicator.indicator_id
+                    AND YEAR(lqir.result_period) = ?
                 )
                 " . ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? "AND master_institution_department.department_id = " . $userDepartmentId : "") . "
                 {$searchCondition}
                 GROUP BY quality_indicator.indicator_id
             ) as counted
-        ", [$vtahun - 3, $vtahun, $vtahun - 1, $vtahun - 2]);
+        ", [$vtahun]);
 
         return $query->getRow()->total ?? 0;
     }
