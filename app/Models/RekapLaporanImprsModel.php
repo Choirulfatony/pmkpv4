@@ -1177,7 +1177,7 @@ protected $column_order = [
     /**
      * Ambil data harian semua departemen untuk satu indikator, bulan, dan tahun
      */
-    public function getDailyDataAllDepartments(int $indicatorId, int $tahun, int $bulan)
+    public function getDailyDataAllDepartments(int $indicatorId, int $tahun, int $bulan, ?int $departmentId = null)
     {
         $db = db_connect();
         $builder = $db->table('local_quality_indicator_result lqir');
@@ -1192,6 +1192,10 @@ protected $column_order = [
         $builder->where('lqir.result_indicator_id', $indicatorId);
         $builder->where('YEAR(lqir.result_period)', $tahun);
         $builder->where('MONTH(lqir.result_period)', $bulan);
+
+        if ($departmentId !== null) {
+            $builder->where('lqir.result_department_id', $departmentId);
+        }
 
         $builder->groupBy(['lqir.result_department_id', 'lqir.result_period']);
         $builder->orderBy('lqir.result_department_id');
