@@ -115,49 +115,6 @@ class LoadModuleForminputModel extends Model
         return $builder->get()->getResult();
     }
 
-        $db = db_connect();
-
-        $builder = $db->table($this->tablePrefix . 'quality_indicator_group qig');
-        $builder->select('
-            qig.group_indicator_id,
-            qig.group_department_id,
-            qig.group_days,
-            qi.indicator_id,
-            qi.indicator_element,
-            qi.indicator_target,
-            qi.indicator_units,
-            qi.indicator_target_unit,
-            qi.indicator_target_calculation,
-            qi.indicator_factors,
-            mid.department_id,
-            mid.department_name
-        ');
-        $builder->join($this->tablePrefix . 'quality_indicator qi', 'qi.indicator_id = qig.group_indicator_id', 'left');
-        $builder->join('master_institution_department mid', 'mid.department_id = qig.group_department_id', 'left');
-        $builder->where('qi.indicator_category_id', $this->categoryId);
-        // Show both active and inactive indicators to allow viewing history
-        // $builder->where('qi.indicator_record_status', 'A');
-        $builder->groupStart();
-        $builder->where('qig.group_period', $tahun);
-        $builder->orWhere('qig.group_period', $tahun - 1);
-        $builder->orWhere('qig.group_period', $tahun - 2);
-        $builder->groupEnd();
-
-        if ($departmentId !== null && $departmentId > 0) {
-            $builder->where('qig.group_department_id', $departmentId);
-        }
-
-        $userRole = session()->get('user_role') ?? '';
-        $userDepartmentId = session()->get('department_id') ?? 0;
-        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
-            $builder->where('qig.group_department_id', $userDepartmentId);
-        }
-
-        $builder->groupBy('qig.group_indicator_id, qig.group_department_id');
-
-        return $builder->get()->getResult();
-    }
-
     public function getIndicatorDetail(int $indicatorId, int $departmentId, string $tanggal)
     {
         $db = db_connect();
