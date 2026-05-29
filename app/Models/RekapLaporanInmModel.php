@@ -649,28 +649,26 @@ class RekapLaporanInmModel extends Model
     {
         $db = db_connect();
 
-        // Cek available group_period - gunakan tahun dipilih jika ada, kalau tidak gunakan yang tersedia
-        $availablePeriods = $this->getAvailableGroupPeriods();
-        if (empty($availablePeriods)) {
-            return [];
-        }
-        $usePeriod = in_array($tahun, $availablePeriods) ? $tahun : min($availablePeriods);
-
         $builder = $db->table('quality_indicator');
         $builder->distinct();
         // [CHANGED] Tambah indicator_record_status biar bisa nampilin badge Non-Aktif di view
         $builder->select('quality_indicator.indicator_id, quality_indicator.indicator_element, quality_indicator.indicator_target, quality_indicator.indicator_factors, quality_indicator.indicator_units, quality_indicator.indicator_target_calculation, quality_indicator.indicator_record_status');
         $builder->join('quality_indicator_group', 'quality_indicator.indicator_id = quality_indicator_group.group_indicator_id');
         $builder->where('quality_indicator.indicator_category_id', '4');
-        // [CHANGED] Biar indikator non-aktif (status 'D') tetap ikut di rekap periode
         $builder->whereIn('quality_indicator.indicator_record_status', ['A', 'D']);
-        // [CHANGED] 'D': group_period >= (tahun-3) biar range 3 tahun ke belakang
-        // [CHANGED] 'A': pake range 3 tahun seperti biasa
-        $builder->where("(
-            (quality_indicator.indicator_record_status = 'D' AND quality_indicator_group.group_period >= ($tahun - 3))
-            OR
-            (quality_indicator.indicator_record_status = 'A' AND quality_indicator_group.group_period IN ($usePeriod, " . ($usePeriod - 1) . ", " . ($usePeriod - 2) . "))
+
+        // Smart filter: only indicators with data in selected year
+        $builder->where("EXISTS (
+            SELECT 1 FROM quality_indicator_result lqir_sub
+            WHERE lqir_sub.result_indicator_id = quality_indicator.indicator_id
+            AND YEAR(lqir_sub.result_period) = {$tahun}
         )");
+
+        // For current year: only active indicators
+        $tahunNow = (int) date('Y');
+        if ((int) $tahun === $tahunNow) {
+            $builder->where('quality_indicator.indicator_record_status', 'A');
+        }
 
         // Filter by user role
         $userRole = session('user_role') ?? '';

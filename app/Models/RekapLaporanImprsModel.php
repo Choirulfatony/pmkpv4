@@ -676,10 +676,6 @@ protected $column_order = [
     {
         $db = db_connect();
 
-        // Samakan filter dengan getIndicatorImprs - pakai local_quality_indicator_group
-        $availablePeriods = $this->getAvailableGroupPeriods();
-        $usePeriod = in_array($tahun, $availablePeriods) ? $tahun : min($availablePeriods);
-
         $builder = $db->table('local_quality_indicator lqi');
 
         $builder->select("
@@ -695,7 +691,7 @@ protected $column_order = [
         $builder->join('local_quality_indicator_group lqig', 'lqi.indicator_id = lqig.group_indicator_id', 'left');
 
         $builder->where("lqi.indicator_category_id", '5');
-        // [CHANGED] Biar indikator non-aktif ikut tampil di rekap periode
+        // Smart filter: only indicators with data in selected year
         $builder->whereIn("lqi.indicator_record_status", ['A', 'D']);
         $builder->where('lqig.group_record_status', 'A');
 
@@ -709,18 +705,17 @@ protected $column_order = [
             $filterDepartmentId = $userDepartmentId;
         }
 
-        $this->filterActiveOrHasData($builder, $tahun . '-01-01', $tahun . '-12-31');
+        $builder->where("EXISTS (
+            SELECT 1 FROM local_quality_indicator_result lqir_sub
+            WHERE lqir_sub.result_indicator_id = lqi.indicator_id
+            AND YEAR(lqir_sub.result_period) = {$tahun}
+        )", null, false);
 
-        // Convert YEAR() to date range checks to avoid CI4 parameter binding issues
-        $builder->groupStart();
-        $builder->where('lqi.indicator_active_from IS NULL');
-        $builder->orWhere("lqi.indicator_active_from <", ($tahun + 1) . '-01-01');
-        $builder->groupEnd();
-
-        $builder->groupStart();
-        $builder->where('lqi.indicator_active_to IS NULL');
-        $builder->orWhere("lqi.indicator_active_to >=", $tahun . '-01-01');
-        $builder->groupEnd();
+        // For current year: only active indicators
+        $tahunNow = (int) date('Y');
+        if ((int) $tahun === $tahunNow) {
+            $builder->where('lqi.indicator_record_status', 'A');
+        }
 
         $builder->groupBy('lqi.indicator_id');
 

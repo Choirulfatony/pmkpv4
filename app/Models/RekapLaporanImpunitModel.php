@@ -695,23 +695,19 @@ class RekapLaporanImpunitModel extends Model
             ->where('lqig.group_record_status', 'A')
             ->orWhere('lqig.group_record_status IS NULL', null, false)
         ->groupEnd();
-        // [CHANGED] 'D': group_period >= ($tahun - 3) biar range 3 tahun ke belakang
-        // [CHANGED] 'A': pake range 3 tahun seperti biasa
-        $builder->where("(
-            (lqi.indicator_record_status = 'D' AND lqig.group_period >= ($tahun - 3))
-            OR
-            (lqi.indicator_record_status = 'A' AND (lqig.group_period IS NULL OR lqig.group_period = $tahun OR lqig.group_period = ($tahun - 1) OR lqig.group_period = ($tahun - 2)))
-        )");
-        $this->filterActiveOrHasData($builder, $tahun . '-01-01', $tahun . '-12-31');
 
-        $builder->groupStart()
-            ->where('lqi.indicator_active_from IS NULL', null, false)
-            ->orWhere("YEAR(lqi.indicator_active_from) <= {$tahun}", null, false);
-        $builder->groupEnd();
-        $builder->groupStart()
-            ->where('lqi.indicator_active_to IS NULL', null, false)
-            ->orWhere("YEAR(lqi.indicator_active_to) >= {$tahun}", null, false);
-        $builder->groupEnd();
+        // Smart filter: only indicators with data in selected year
+        $builder->where("EXISTS (
+            SELECT 1 FROM local_quality_indicator_result lqir_sub
+            WHERE lqir_sub.result_indicator_id = lqi.indicator_id
+            AND YEAR(lqir_sub.result_period) = {$tahun}
+        )", null, false);
+
+        // For current year: only active indicators
+        $tahunNow = (int) date('Y');
+        if ((int) $tahun === $tahunNow) {
+            $builder->where('lqi.indicator_record_status', 'A');
+        }
 
         $userRole = session('user_role') ?? '';
         $userDepartmentId = session('department_id') ?? 0;
