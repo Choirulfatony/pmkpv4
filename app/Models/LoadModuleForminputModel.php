@@ -21,16 +21,26 @@ class LoadModuleForminputModel extends Model
     ];
     protected $useTimestamps = false;
 
-    // Get INM indicators for the form datatable
-    public function getFormIndicators($tahun = null, $departmentId = null)
+    protected string $tablePrefix = '';
+    protected string $categoryId = '4';
+
+    public function __construct(string $tablePrefix = '', string $categoryId = '4')
+    {
+        parent::__construct();
+        $this->tablePrefix = $tablePrefix;
+        $this->categoryId = $categoryId;
+        $this->table = $tablePrefix . 'quality_indicator_result';
+    }
+
+    public function getIndicators(int $tahun, ?int $departmentId = null)
     {
         if ($tahun === null) {
-            $tahun = date('Y');
+            $tahun = (int) date('Y');
         }
-        
+
         $db = db_connect();
-        
-        $builder = $db->table('quality_indicator_group qig');
+
+        $builder = $db->table($this->tablePrefix . 'quality_indicator_group qig');
         $builder->select('
             qig.group_indicator_id,
             qig.group_department_id,
@@ -45,9 +55,9 @@ class LoadModuleForminputModel extends Model
             mid.department_id,
             mid.department_name
         ');
-        $builder->join('quality_indicator qi', 'qi.indicator_id = qig.group_indicator_id', 'left');
+        $builder->join($this->tablePrefix . 'quality_indicator qi', 'qi.indicator_id = qig.group_indicator_id', 'left');
         $builder->join('master_institution_department mid', 'mid.department_id = qig.group_department_id', 'left');
-        $builder->where('qi.indicator_category_id', '4');
+        $builder->where('qi.indicator_category_id', $this->categoryId);
         $builder->where('qi.indicator_record_status', 'A');
         $builder->groupStart();
         $builder->where('qig.group_period', $tahun);
@@ -70,25 +80,22 @@ class LoadModuleForminputModel extends Model
         return $builder->get()->getResult();
     }
 
-    // Get indicator detail with existing data for a specific date
-    public function getIndicatorDetail($indicatorId, $departmentId, $tanggal)
+    public function getIndicatorDetail(int $indicatorId, int $departmentId, string $tanggal)
     {
         $db = db_connect();
-        
-        // Get indicator info
-        $indicator = $db->table('quality_indicator')
+
+        $indicator = $db->table($this->tablePrefix . 'quality_indicator')
             ->where('indicator_id', $indicatorId)
-            ->where('indicator_category_id', '4')
+            ->where('indicator_category_id', $this->categoryId)
             ->whereIn('indicator_record_status', ['A', 'D'])
             ->get()
             ->getRow();
 
-        // Get existing data for the date
-        $tahun = date('Y', strtotime($tanggal));
+        $tahun = (int) date('Y', strtotime($tanggal));
         $bulan = date('m', strtotime($tanggal));
         $hari = date('d', strtotime($tanggal));
-        
-        $existingData = $db->table('quality_indicator_result')
+
+        $existingData = $db->table($this->tablePrefix . 'quality_indicator_result')
             ->where('result_indicator_id', $indicatorId)
             ->where('result_department_id', $departmentId)
             ->where('YEAR(result_period)', $tahun)
@@ -97,8 +104,7 @@ class LoadModuleForminputModel extends Model
             ->get()
             ->getResult();
 
-        // Get monthly total
-        $monthlyTotal = $db->table('quality_indicator_result')
+        $monthlyTotal = $db->table($this->tablePrefix . 'quality_indicator_result')
             ->select('
                 SUM(result_numerator_value) AS num,
                 SUM(result_denumerator_value) AS denum
@@ -117,17 +123,15 @@ class LoadModuleForminputModel extends Model
         ];
     }
 
-    // Save INM result data (insert or update)
-    public function saveResult($indicatorId, $departmentId, $tanggal, $numerator, $denumerator)
+    public function saveResult(int $indicatorId, int $departmentId, string $tanggal, float $numerator, float $denumerator): bool
     {
         $db = db_connect();
-        
-        $num = is_numeric($numerator) ? (float) $numerator : 0;
-        $den = is_numeric($denumerator) ? (float) $denumerator : 0;
+
+        $num = $numerator;
+        $den = $denumerator;
         $user_id = session()->get('hris_user_id') ?? session()->get('user_id') ?? 0;
 
-        // Check if record exists
-        $existing = $db->table('quality_indicator_result')
+        $existing = $db->table($this->tablePrefix . 'quality_indicator_result')
             ->where('result_indicator_id', $indicatorId)
             ->where('result_department_id', $departmentId)
             ->where('result_period', $tanggal)
@@ -135,8 +139,7 @@ class LoadModuleForminputModel extends Model
             ->getRow();
 
         if ($existing) {
-            // Update existing
-            $db->table('quality_indicator_result')
+            $db->table($this->tablePrefix . 'quality_indicator_result')
                 ->where('result_id', $existing->result_id)
                 ->update([
                     'result_numerator_value'   => $num,
@@ -145,8 +148,7 @@ class LoadModuleForminputModel extends Model
                     'result_update_at'         => date('Y-m-d H:i:s')
                 ]);
         } else {
-            // Insert new
-            $db->table('quality_indicator_result')
+            $db->table($this->tablePrefix . 'quality_indicator_result')
                 ->insert([
                     'result_indicator_id'       => $indicatorId,
                     'result_department_id'      => $departmentId,
@@ -157,7 +159,7 @@ class LoadModuleForminputModel extends Model
                     'result_create_at'          => date('Y-m-d H:i:s')
                 ]);
         }
-        
+
         return $db->affectedRows() > 0;
     }
 
@@ -168,7 +170,7 @@ class LoadModuleForminputModel extends Model
         $userRole = session()->get('user_role') ?? '';
         $userDepartmentId = session()->get('department_id') ?? 0;
 
-        $builder = $db->table('quality_indicator_result qir');
+        $builder = $db->table($this->tablePrefix . 'quality_indicator_result qir');
         $builder->select('
             qir.result_indicator_id AS indicator_id,
             qir.result_department_id AS department_id,
@@ -177,8 +179,8 @@ class LoadModuleForminputModel extends Model
             SUM(qir.result_numerator_value) AS monthly_num,
             SUM(qir.result_denumerator_value) AS monthly_den
         ');
-        $builder->join('quality_indicator qi', 'qi.indicator_id = qir.result_indicator_id', 'left');
-        $builder->where('qi.indicator_category_id', '4');
+        $builder->join($this->tablePrefix . 'quality_indicator qi', 'qi.indicator_id = qir.result_indicator_id', 'left');
+        $builder->where('qi.indicator_category_id', $this->categoryId);
         $builder->where('YEAR(qir.result_period)', $tahun);
         $builder->where('MONTH(qir.result_period)', $bulan);
 
@@ -190,8 +192,6 @@ class LoadModuleForminputModel extends Model
 
         return $builder->get()->getResult();
     }
-
-    // ==================== DAILY DETAIL TABLE ====================
 
     public function getDaysInMonth(int $bulan, int $tahun): int
     {
@@ -210,7 +210,7 @@ class LoadModuleForminputModel extends Model
             case 11:
                 return 30;
             case 2:
-                return ($tahun % 4 == 0) ? 29 : 28;
+                return ($tahun % 4 == 0 && ($tahun % 100 != 0 || $tahun % 400 == 0)) ? 29 : 28;
             default:
                 return 30;
         }
@@ -219,7 +219,7 @@ class LoadModuleForminputModel extends Model
     public function getDailyDataAllDepartments(int $indicatorId, int $tahun, int $bulan)
     {
         $db = db_connect();
-        $builder = $db->table('quality_indicator_result qir');
+        $builder = $db->table($this->tablePrefix . 'quality_indicator_result qir');
 
         $builder->select("
             qir.result_department_id,
@@ -246,7 +246,7 @@ class LoadModuleForminputModel extends Model
         }
 
         $db = db_connect();
-        $builder = $db->table('quality_indicator_result qir');
+        $builder = $db->table($this->tablePrefix . 'quality_indicator_result qir');
 
         $builder->select("
             qir.result_indicator_id,
@@ -282,19 +282,30 @@ class LoadModuleForminputModel extends Model
                 qig.group_indicator_id AS indicator_id,
                 qig.group_department_id AS department_id,
                 mid.department_name
-            FROM quality_indicator_group qig
-            JOIN quality_indicator qi ON qi.indicator_id = qig.group_indicator_id
+            FROM {$this->tablePrefix}quality_indicator_group qig
+            JOIN {$this->tablePrefix}quality_indicator qi ON qi.indicator_id = qig.group_indicator_id
             JOIN master_institution_department mid ON mid.department_id = qig.group_department_id
-            WHERE qi.indicator_category_id = '4'
+            WHERE qi.indicator_category_id = ?
             AND qi.indicator_record_status IN ('A', 'D')
             AND qig.group_record_status = 'A'
             AND qig.group_indicator_id = ?
             {$deptCondition}
             GROUP BY mid.department_id
             ORDER BY mid.department_name ASC
-        ", [$indicatorId]);
+        ", [$this->categoryId, $indicatorId]);
 
         return $query->getResult();
+    }
+
+    public function getIndicatorById(int $indicatorId)
+    {
+        $db = db_connect();
+        return $db->table($this->tablePrefix . 'quality_indicator')
+            ->where('indicator_id', $indicatorId)
+            ->where('indicator_category_id', $this->categoryId)
+            ->whereIn('indicator_record_status', ['A', 'D'])
+            ->get()
+            ->getRow();
     }
 
     public function hitungTercapai(?float $nilai, float $target, string $operator): ?bool

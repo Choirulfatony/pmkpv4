@@ -487,17 +487,28 @@
             }
         });
 
-        // Click handler untuk cell bulan -> tampilkan daily detail di samping
+        // Cegah race condition: request counter
+        var dailyRequestId = 0;
+
+        // Click handler untuk cell bulan -> tampilkan daily detail per departemen
         $('#ajax_detail tbody').on('click', 'td.cell-clickable', function() {
             var $cell = $(this);
             var col = $cell.index(); // 3=Jan, 4=Feb, ... 14=Des
             var bulan = col - 2; // 1=Jan, 2=Feb, ... 12=Des
 
+            // Ambil department dari HTML cell itu sendiri (data-dept-id dari server)
+            var $cellHtml = $('<div>').html($cell.html());
+            var deptId = $cellHtml.find('[data-dept-id]').attr('data-dept-id') || 0;
+            var deptName = $cellHtml.find('[data-dept-name]').attr('data-dept-name') || '';
+
             var bulanNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
             var bulanLabel = bulanNames[bulan - 1];
 
+            // Tandai request terbaru
+            var myReqId = ++dailyRequestId;
+
             // Tampilkan daily di bawah tabel
-            $('#daily-title').text('Detail Harian - ' + bulanLabel + ' ' + vtahun);
+            $('#daily-title').text('Detail Harian - ' + deptName + ' - ' + bulanLabel + ' ' + vtahun);
             $('#daily-info').text('Memuat data...');
             $('#daily-target-info').html('');
             $('#daily-table').hide();
@@ -506,17 +517,21 @@
             $('#daily-loading').show();
             $('#daily-section').show();
 
-            // AJAX fetch daily data (semua departemen)
+            // AJAX fetch daily data (per departemen)
             $.ajax({
                 url: '<?= site_url('siimut/rekap-laporan-inm/ajax-daily-detail') ?>',
                 type: 'POST',
                 data: {
                     indicator_id: indicatorId,
                     tahun: vtahun,
-                    bulan: bulan
+                    bulan: bulan,
+                    department_id: deptId
                 },
                 dataType: 'json',
                 success: function(resp) {
+                    // Abaikan response stale (dari request yang lebih lama)
+                    if (myReqId !== dailyRequestId) return;
+
                     $('#daily-loading').hide();
 
                     if (!resp || !resp.dept_data || resp.dept_data.length === 0) {
@@ -532,9 +547,12 @@
                     if (operatorDisplay === '<=') operatorDisplay = '≤';
 
                     $('#daily-info').text(resp.indicator || '');
+                    var deptLabel = resp.dept_data.length === 1
+                        ? resp.dept_data[0].department_name
+                        : resp.dept_data.length + ' departemen';
                     $('#daily-target-info').html(
                         'Target: ' + operatorDisplay + ' ' + targetText + ' ' + unitsText +
-                        ' | Ruangan: ' + resp.dept_data.length + ' departemen'
+                        ' | ' + deptLabel
                     );
 
                     var days = resp.days || 31;
@@ -588,15 +606,16 @@
 
                     });
 
-                    $('#daily-body').html(bodyHtml);
-                    $('#daily-headers').html(headerHtml);
-
-                    // Hancurkan DataTable lama jika ada
+                    // Hancurkan DataTable lama SEBELUM update konten
                     if ($.fn.DataTable.isDataTable('#daily-table')) {
                         $('#daily-table').DataTable().destroy();
                     }
 
-                    $('#daily-table').show();
+                    // Update konten setelah destroy
+                    $('#daily-body').html(bodyHtml);
+                    $('#daily-headers').html(headerHtml);
+
+                    $('#daily-table').css('display', 'table');
                     if (!$('#daily-table').parent().is('.daily-table-scroll')) {
                         $('#daily-table').wrap('<div class="daily-table-scroll" style="overflow-x:auto;max-width:100%;"></div>');
                     }
@@ -624,8 +643,7 @@
                         columnDefs: [{
                             orderable: false,
                             targets: '_all'
-                        }],
-                        destroy: true
+                        }]
                     });
 
                     // Click handler: icon warning -> toggle child row kendala/perbaikan
@@ -680,6 +698,7 @@
                     });
                 },
                 error: function() {
+                    if (myReqId !== dailyRequestId) return;
                     $('#daily-loading').hide();
                     $('#daily-empty').show();
                     $('#daily-empty').html('<i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i><p class="text-danger">Gagal memuat data</p>');

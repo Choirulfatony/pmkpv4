@@ -219,8 +219,9 @@ class RekapLaporanInm extends AppController
                     $key = $dept->department_id . '_' . $bulan;
                     $list = isset($allDetailData[$key]) ? $allDetailData[$key] : null;
 
+                    $deptAttr = ' data-dept-id="' . $dept->department_id . '" data-dept-name="' . esc($dept->department_name) . '"';
                     if ($list == null) {
-                        $row[] = '<div class="py-1">
+                        $row[] = '<div class="py-1"' . $deptAttr . '>
                             <span class="text-muted">-</span>
                             <span style="display:none" id="num_det">0</span>
                             <span style="display:none" id="denum_det">0</span>
@@ -230,7 +231,7 @@ class RekapLaporanInm extends AppController
                         $num = $list->num ?? 0;
                         $denum = $list->denum ?? 0;
 
-                        $row[] = '<div class="py-1">
+                        $row[] = '<div class="py-1"' . $deptAttr . '>
                             <span id="total_det">' . esc($total) . '</span>
                             <div class="small text-muted mt-1">
                                 <span id="num_det">' . esc($num) . '</span> | <span id="denum_det">' . esc($denum) . '</span>
@@ -284,12 +285,16 @@ class RekapLaporanInm extends AppController
         $indicatorId  = (int) $this->request->getPost('indicator_id');
         $tahun        = (int) $this->request->getPost('tahun');
         $bulan        = (int) $this->request->getPost('bulan');
+        $deptIdPost   = $this->request->getPost('department_id');
 
         $role = session()->get('user_role') ?? '';
         $userDeptId = null;
         if (!in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
             $userDeptId = session()->get('department_id') ?? null;
         }
+
+        // Prioritaskan department_id dari klik user, fallback ke session
+        $filterDeptId = $deptIdPost ? (int) $deptIdPost : $userDeptId;
 
         $info = $this->rekapModel->getDetailByIdInm($indicatorId);
         $target  = $info ? (float) ($info->indicator_target ?? 0) : 0;
@@ -299,10 +304,10 @@ class RekapLaporanInm extends AppController
 
         $daysInMonth = $this->getDaysInMonth($bulan, $tahun);
 
-        // Ambil departemen & data harian
-        $departments = $this->rekapModel->getDepartmentsByIndicator($indicatorId, $tahun, [], $userDeptId);
-        $rawData     = $this->rekapModel->getDailyDataAllDepartments($indicatorId, $tahun, $bulan);
-        $kendalaMap  = $this->rekapModel->getKendalaPerbaikan($indicatorId, $tahun, $bulan, $userDeptId);
+        // Ambil departemen & data harian (filter per departemen jika diklik)
+        $departments = $this->rekapModel->getDepartmentsByIndicator($indicatorId, $tahun, [], $filterDeptId);
+        $rawData     = $this->rekapModel->getDailyDataAllDepartments($indicatorId, $tahun, $bulan, $filterDeptId);
+        $kendalaMap  = $this->rekapModel->getKendalaPerbaikan($indicatorId, $tahun, $bulan, $filterDeptId);
 
         // Group by department_id => [day => data]
         $byDept = [];
@@ -354,6 +359,8 @@ class RekapLaporanInm extends AppController
             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
         ];
 
+        $deptIds = array_map(function($d) { return (int) $d->department_id; }, $departments);
+
         return $this->response->setJSON([
             'dept_data'   => $deptDaily,
             'days'        => $daysInMonth,
@@ -364,6 +371,15 @@ class RekapLaporanInm extends AppController
             'bulan_angka' => $bulan,
             'tahun'       => $tahun,
             'indicator'   => $info ? $info->indicator_element : '',
+            '_debug'      => [
+                'deptIdPost_raw'    => $deptIdPost,
+                'filterDeptId'      => $filterDeptId,
+                'userDeptId'        => $userDeptId,
+                'role'              => $role,
+                'dept_count'        => count($departments),
+                'dept_ids'          => $deptIds,
+                'dept_data_count'   => count($deptDaily),
+            ],
         ]);
     }
 

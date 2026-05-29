@@ -5,14 +5,14 @@ namespace App\Controllers;
 use App\Models\SiimutMenuModel;
 use App\Models\LoadModuleForminputModel;
 
-class LoadModuleForminput extends AppController
+class LoadModuleForminputImprs extends AppController
 {
     protected $model;
 
     public function __construct()
     {
         parent::__construct();
-        $this->model = new LoadModuleForminputModel();
+        $this->model = new LoadModuleForminputModel('local_', '5');
     }
 
     public function index()
@@ -31,10 +31,9 @@ class LoadModuleForminput extends AppController
         $bulan = $this->request->getGet('bulan') ?? date('m');
         $department_id = session()->get('department_id') ?? 0;
 
-        $departments = $this->model->getIndicators($tahun, $department_id);
-        // Extract unique departments from the indicators list
+        $indicators = $this->model->getIndicators($tahun, $department_id);
         $deptMap = [];
-        foreach ($departments as $dept) {
+        foreach ($indicators as $dept) {
             $deptMap[$dept->department_id] = [
                 'department_id' => $dept->department_id,
                 'department_name' => $dept->department_name
@@ -42,15 +41,14 @@ class LoadModuleForminput extends AppController
         }
         $departments = array_values($deptMap);
 
-        // Determine if we should show the "all departments" option
         $role = session()->get('user_role');
         $userDepartmentId = session()->get('department_id') ?? 0;
         $showAllOption = in_array($role, ['ADMINISTRATOR', 'KOMITE']) || empty($userDepartmentId);
 
-        return $this->render('siimut/form_inm', [
-            'judul'          => 'Form Input INM',
+        return $this->render('siimut/form_imprs', [
+            'judul'          => 'Form Input IMPRS',
             'icon'           => '<i class="bi bi-pencil-square"></i>',
-            '_content'       => view('siimut/form_inm', [
+            '_content'       => view('siimut/form_imprs', [
                 'tahun'            => $tahun,
                 'bulan'            => $bulan,
                 'departments'      => $departments,
@@ -69,21 +67,17 @@ class LoadModuleForminput extends AppController
 
         $indicators = $this->model->getIndicators($tahun, $department_id);
 
-        // Get fill status for each indicator
         $statusList = $this->model->getFillStatus($tahun, str_pad((string) $bulan, 2, '0', STR_PAD_LEFT));
 
-        // Map status by indicator_id + department_id
         $statusMap = [];
         foreach ($statusList as $s) {
             $key = $s->indicator_id . '_' . $s->department_id;
             $statusMap[$key] = $s;
         }
 
-        // Get daily data for all indicators at once
         $indicatorIds = array_map(fn($i) => (int) $i->indicator_id, $indicators);
         $rawDaily = $this->model->getDailyDataForMultipleIndicators($indicatorIds, $tahun, $bulan);
 
-        // Build daily map: [indicatorId_deptId][day] => data
         $dailyMap = [];
         foreach ($rawDaily as $d) {
             $key = $d->result_indicator_id . '_' . $d->result_department_id;
@@ -93,7 +87,6 @@ class LoadModuleForminput extends AppController
 
         $daysInMonth = $this->model->getDaysInMonth($bulan, $tahun);
 
-        // Attach status and daily data to each indicator
         foreach ($indicators as &$ind) {
             $key = $ind->indicator_id . '_' . $ind->department_id;
 
@@ -173,7 +166,6 @@ class LoadModuleForminput extends AppController
             $userDeptId = session()->get('department_id') ?? null;
         }
 
-        // Get indicator info
         $info = $this->model->getIndicatorById($indicatorId);
 
         $target  = $info ? (float) ($info->indicator_target ?? 0) : 0;
@@ -186,7 +178,6 @@ class LoadModuleForminput extends AppController
         $departments = $this->model->getDepartmentsByIndicator($indicatorId, $tahun, $userDeptId);
         $rawData     = $this->model->getDailyDataAllDepartments($indicatorId, $tahun, $bulan);
 
-        // Group by department_id => [day => data]
         $byDept = [];
         foreach ($rawData as $row) {
             $deptId = (int) $row->result_department_id;

@@ -1,6 +1,6 @@
 <style>
     .form-inm-header {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        background: linear-gradient(135deg, #17a2b8 0%, #0f7c8f 100%);
         color: white;
         padding: 20px;
         border-radius: 10px;
@@ -15,28 +15,28 @@
 
     .card-form-inm .card-header {
         background: var(--bs-tertiary-bg);
-        border-bottom: 2px solid #007bff;
+        border-bottom: 2px solid #17a2b8;
         font-weight: bold;
     }
 
     .btn-inm-primary {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        background: linear-gradient(135deg, #17a2b8 0%, #0f7c8f 100%);
         border: none;
         color: white;
     }
 
     .btn-inm-primary:hover {
-        background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
+        background: linear-gradient(135deg, #0f7c8f 0%, #0a5d6b 100%);
         color: white;
     }
 
     .form-control:focus, .form-select:focus {
-        border-color: #007bff;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        border-color: #17a2b8;
+        box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
     }
 
     .modal-header.modal-inm {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        background: linear-gradient(135deg, #17a2b8 0%, #0f7c8f 100%);
         color: white;
     }
 
@@ -58,7 +58,7 @@
     }
 
     .table-inm > thead {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        background: linear-gradient(135deg, #17a2b8 0%, #0f7c8f 100%);
         color: white;
     }
 
@@ -78,13 +78,13 @@
         position: sticky;
         left: 0;
         z-index: 3;
-        background: #0056b3;
+        background: #0f7c8f;
     }
 
     .table-inm > thead th.fixed-col2 {
         position: sticky;
         z-index: 3;
-        background: #0056b3;
+        background: #0f7c8f;
     }
 
     .table-inm tbody td {
@@ -192,14 +192,14 @@
     <div class="form-inm-header">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <h4 class="mb-1"><i class="bi bi-pencil-square me-2"></i>Form Input Indikator Mutu Prioritas RS (IMPRS)</h4>
+                <h4 class="mb-1"><i class="bi bi-pencil-square me-2"></i>Form Input Indikator Mutu Unit (IMPUNIT)</h4>
                 <p class="mb-0 opacity-75">Input data harian — klik sel pada tanggal untuk mengisi</p>
             </div>
             <div class="col-md-4 text-end">
-                <a href="<?= site_url('siimut/grafik-imprs') ?>" class="btn btn-light btn-sm">
+                <a href="<?= site_url('siimut/grafik-impunit') ?>" class="btn btn-light btn-sm">
                     <i class="bi bi-graph-up me-1"></i> Lihat Grafik
                 </a>
-                <a href="<?= site_url('siimut/rekap-periode-imprs') ?>" class="btn btn-light btn-sm">
+                <a href="<?= site_url('siimut/rekap-periode-impunit') ?>" class="btn btn-light btn-sm">
                     <i class="bi bi-file-earmark-bar-graph me-1"></i> Rekap Periode
                 </a>
             </div>
@@ -254,14 +254,14 @@
     </div>
 
     <div id="loadingIndicator" class="text-center py-5 d-none">
-        <span class="spinner-border text-primary" style="width:3rem;height:3rem;" role="status"></span>
+        <span class="spinner-border text-info" style="width:3rem;height:3rem;" role="status"></span>
         <p class="mt-3 text-muted">Memuat data...</p>
     </div>
 
     <div id="tableContainer" class="d-none">
         <div class="card table-card">
             <div class="card-header">
-                <i class="bi bi-list-ul me-2"></i>Daftar Indikator IMPRS
+                <i class="bi bi-list-ul me-2"></i>Daftar Indikator IMPUNIT
             </div>
             <div class="card-body p-2">
                 <div class="row mb-2">
@@ -310,14 +310,14 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header modal-inm">
-                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Input Data Harian IMPRS</h5>
+                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Input Data Harian IMPUNIT</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="alert alert-primary mb-3">
+                <div class="alert alert-info mb-3">
                     <strong id="modalIndikatorNama">-</strong>
                     <div class="mt-2">
-                        <span class="badge bg-primary me-1">Target: <span id="modalTarget">-</span></span>
+                        <span class="badge bg-info me-1">Target: <span id="modalTarget">-</span></span>
                         <span class="badge bg-secondary">Satuan: <span id="modalSatuan">-</span></span>
                     </div>
                 </div>
@@ -406,7 +406,7 @@
         document.getElementById('tableContainer').classList.add('d-none');
 
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', '<?= site_url('siimut/imprs/get-indicators') ?>', true);
+        xhr.open('POST', '<?= site_url('siimut/impunit/get-indicators') ?>', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onload = function() {
             document.getElementById('loadingIndicator').classList.add('d-none');
@@ -545,7 +545,7 @@
         document.getElementById('denum_unit').textContent = targetUnit || '-';
 
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', '<?= site_url('siimut/imprs/get-indicator-detail') ?>', true);
+        xhr.open('POST', '<?= site_url('siimut/impunit/get-indicator-detail') ?>', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4 && xhr.status === 200) {
@@ -581,7 +581,7 @@
         var data = new FormData(form);
 
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', '<?= site_url('siimut/imprs/save') ?>', true);
+        xhr.open('POST', '<?= site_url('siimut/impunit/save') ?>', true);
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4 && xhr.status === 200) {

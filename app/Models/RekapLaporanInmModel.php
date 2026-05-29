@@ -917,7 +917,7 @@ class RekapLaporanInmModel extends Model
     /**
      * Ambil data harian untuk satu indikator, bulan, dan tahun (semua departemen)
      */
-    public function getDailyDataAllDepartments(int $indicatorId, int $tahun, int $bulan)
+    public function getDailyDataAllDepartments(int $indicatorId, int $tahun, int $bulan, ?int $departmentId = null)
     {
         $db = db_connect();
         $builder = $db->table('quality_indicator_result qir');
@@ -932,6 +932,10 @@ class RekapLaporanInmModel extends Model
         $builder->where('qir.result_indicator_id', $indicatorId);
         $builder->where('YEAR(qir.result_period)', $tahun);
         $builder->where('MONTH(qir.result_period)', $bulan);
+
+        if ($departmentId !== null) {
+            $builder->where('qir.result_department_id', $departmentId);
+        }
 
         $builder->groupBy(['qir.result_department_id', 'qir.result_period']);
         $builder->orderBy('qir.result_department_id');

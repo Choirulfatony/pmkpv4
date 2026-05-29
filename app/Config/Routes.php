@@ -46,6 +46,20 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('load-module-forminput/save', 'LoadModuleForminput::save');
         $routes->post('load-module-forminput/get-daily-detail', 'LoadModuleForminput::get_daily_detail');
 
+        // Form Input IMPRS
+        $routes->get('imprs', 'LoadModuleForminputImprs::index');
+        $routes->post('imprs/get-indicators', 'LoadModuleForminputImprs::get_indicators');
+        $routes->post('imprs/get-indicator-detail', 'LoadModuleForminputImprs::get_indicator_detail');
+        $routes->post('imprs/save', 'LoadModuleForminputImprs::save');
+        $routes->post('imprs/get-daily-detail', 'LoadModuleForminputImprs::get_daily_detail');
+
+        // Form Input IMPUNIT
+        $routes->get('impunit', 'LoadModuleForminputImpunit::index');
+        $routes->post('impunit/get-indicators', 'LoadModuleForminputImpunit::get_indicators');
+        $routes->post('impunit/get-indicator-detail', 'LoadModuleForminputImpunit::get_indicator_detail');
+        $routes->post('impunit/save', 'LoadModuleForminputImpunit::save');
+        $routes->post('impunit/get-daily-detail', 'LoadModuleForminputImpunit::get_daily_detail');
+
     // Rekap Laporan INM
     $routes->get('rekap-laporan-inm', 'RekapLaporanInm::index');
     $routes->post('rekap-laporan-inm/ajax_rekap_inm', 'RekapLaporanInm::getAjaxDataRekapInm');
