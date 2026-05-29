@@ -34,14 +34,15 @@ class RekapPeriodeInm extends AppController
         if (in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
             $showDepartmentFilter = true;
             $db = db_connect();
-            $departments = $db->table('quality_indicator_group lqig')
-                ->select('DISTINCT master_institution_department.department_id, master_institution_department.department_name')
-                ->join('quality_indicator', 'quality_indicator.indicator_id = lqig.group_indicator_id', 'left')
-                ->join('master_institution_department', 'master_institution_department.department_id = lqig.group_department_id', 'left')
-                ->where('quality_indicator.indicator_category_id', '4')
-                ->where('quality_indicator.indicator_record_status', 'A')
-                ->get()
-                ->getResult();
+            $departments = $db->query("
+                SELECT DISTINCT mid.department_id, mid.department_name
+                FROM quality_indicator_group lqig
+                LEFT JOIN quality_indicator qi ON qi.indicator_id = lqig.group_indicator_id
+                LEFT JOIN master_institution_department mid ON mid.department_id = lqig.group_department_id
+                WHERE qi.indicator_category_id = '4'
+                AND qi.indicator_record_status = 'A'
+                ORDER BY mid.department_name ASC
+            ")->getResult();
         }
 
         return $this->render('siimut/rekap_periode_inm', [
