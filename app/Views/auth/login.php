@@ -89,7 +89,9 @@
 <section class="login-wallpaper">
     <div class="login-overlay">
 
-        <div class="login-card">
+        <div class="login-card position-relative">
+
+            <button type="button" class="btn-close position-absolute top-0 end-0 mt-3 me-3" style="z-index:5;" aria-label="Close" onclick="window.location.href='<?= site_url() ?>'"></button>
 
             <h4 class="text-center mb-4 fw-bold">Login Sistem</h4>
 
@@ -228,13 +230,20 @@ $registerName = session('register_name');
                 </div>
             <?php endif; ?>
 
-            <div class="modal-body p-4">
-                <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
-                    <i class="bi bi-info-circle-fill me-2 fs-5"></i>
-                    <div>
-                        Lengkapi data berikut untuk menyelesaikan pendaftaran. Email telah terisi otomatis dari akun Google Anda.
+                <div class="modal-body p-4">
+                    <?php if (session()->getFlashdata('info')) : ?>
+                        <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                            <div><?= session()->getFlashdata('info') ?></div>
+                        </div>
+                    <?php else: ?>
+                    <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+                        <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                        <div>
+                            Lengkapi data berikut untuk menyelesaikan pendaftaran. Email telah terisi otomatis dari akun Google Anda.
+                        </div>
                     </div>
-                </div>
+                    <?php endif; ?>
 
                 <form action="<?= site_url('auth/register/process') ?>" method="post" id="registerForm">
                     <div class="row g-3">
@@ -377,6 +386,8 @@ $registerName = session('register_name');
         var allowedOrigin = "<?php $bu = base_url(); $scheme = parse_url($bu, PHP_URL_SCHEME); $host = parse_url($bu, PHP_URL_HOST); $port = parse_url($bu, PHP_URL_PORT); echo $scheme . '://' . $host . ($port && $port != 80 && $port != 443 ? ':' . $port : ''); ?>";
         if (event.origin !== allowedOrigin) return;
         if (event.data.status === "success") {
+            window.location.href = event.data.redirect;
+        } else if (event.data.status === "show_register") {
             window.location.href = event.data.redirect;
         } else if (event.data.status === "error" && event.data.message) {
             alert(event.data.message);

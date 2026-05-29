@@ -1152,10 +1152,11 @@ class Auth extends BaseController
                     'register_name'     => $name,
                     'register_picture'  => $picture,
                 ]);
+                session()->setFlashdata('info', 'Email ' . $email . ' belum terdaftar. Silakan lengkapi data registrasi di bawah ini.');
 
                 log_message('error', 'GOOGLE CALLBACK: Email not registered - ' . $email . ' - redirect to register');
 
-                if ($isPopup) return $this->_popupResponse('error', site_url('auth'), 'Email belum terdaftar');
+                if ($isPopup) return $this->_popupResponse('show_register', site_url('auth?show_register=1'), 'Email belum terdaftar');
                 return redirect()->to(site_url('auth/register'));
             }
         } catch (\Exception $e) {

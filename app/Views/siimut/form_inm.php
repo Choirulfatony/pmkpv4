@@ -186,6 +186,91 @@
     input[type="month"].form-control-sm {
         min-height: 31px;
     }
+
+    .loader {
+        width: 3em;
+        height: 3em;
+        transform: rotate(165deg);
+    }
+
+    .loader:before,
+    .loader:after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        display: block;
+        width: 1em;
+        height: 1em;
+        border-radius: 0.5em;
+        transform: translate(-50%, -50%);
+    }
+
+    .loader:before {
+        animation: before8 2s infinite;
+    }
+
+    .loader:after {
+        animation: after6 2s infinite;
+    }
+
+    @keyframes before8 {
+        0% {
+            width: 1em;
+            box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
+        }
+        35% {
+            width: 4em;
+            box-shadow: 0em -1em rgba(225, 20, 98, 0.75), 0em 1em rgba(111, 202, 220, 0.75);
+        }
+        70% {
+            width: 1em;
+            box-shadow: -2em -1em rgba(225, 20, 98, 0.75), 2em 1em rgba(111, 202, 220, 0.75);
+        }
+        100% {
+            box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
+        }
+    }
+
+    @keyframes after6 {
+        0% {
+            height: 1em;
+            box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
+        }
+        35% {
+            height: 4em;
+            box-shadow: 1em 0em rgba(61, 184, 143, 0.75), -1em 0em rgba(233, 169, 32, 0.75);
+        }
+        70% {
+            height: 1em;
+            box-shadow: 1em -2em rgba(61, 184, 143, 0.75), -1em 2em rgba(233, 169, 32, 0.75);
+        }
+        100% {
+            box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
+        }
+    }
+
+    .overlay-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: transparent;
+    }
+
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: transparent;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
 </style>
 
 <div class="container-fluid py-4">
@@ -253,8 +338,8 @@
         </div>
     </div>
 
-    <div id="loadingIndicator" class="text-center py-5 d-none">
-        <span class="spinner-border text-success" style="width:3rem;height:3rem;" role="status"></span>
+    <div id="loadingIndicator" style="display:none; justify-content:center; align-items:center; min-height:300px; flex-direction:column;">
+        <i class="loader" style="display:inline-block; position:relative;"></i>
         <p class="mt-3 text-muted">Memuat data...</p>
     </div>
 
@@ -402,14 +487,14 @@
 
         if (!tahun || !bulan) return;
 
-        document.getElementById('loadingIndicator').classList.remove('d-none');
+        document.getElementById('loadingIndicator').style.display = 'flex';
         document.getElementById('tableContainer').classList.add('d-none');
 
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '<?= site_url('siimut/load-module-forminput/get-indicators') ?>', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onload = function() {
-            document.getElementById('loadingIndicator').classList.add('d-none');
+            document.getElementById('loadingIndicator').style.display = 'none';
             if (xhr.status === 200) {
                 try {
                     var response = JSON.parse(xhr.responseText);
@@ -422,7 +507,7 @@
             }
         };
         xhr.onerror = function() {
-            document.getElementById('loadingIndicator').classList.add('d-none');
+            document.getElementById('loadingIndicator').style.display = 'none';
             alert('Gagal memuat data');
         };
         xhr.send('tahun=' + tahun + '&bulan=' + bulan + '&department_id=' + department_id);

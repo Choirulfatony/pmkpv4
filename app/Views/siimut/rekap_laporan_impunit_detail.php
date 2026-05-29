@@ -319,12 +319,11 @@
                     <h6 id="daily-info" class="mb-1"></h6>
                     <small class="text-muted" id="daily-target-info"></small>
                 </div>
-                <div class="p-3">
-                    <div id="daily-loading" class="text-center py-4" style="display:none;">
-                        <div class="spinner-border text-info" role="status">
-                            <span class="visually-hidden">Loading...</span>
+                <div class="p-3" style="position:relative; min-height:120px;">
+                    <div class="overlay-wrapper" id="daily-loading" style="display:none;">
+                        <div class="overlay">
+                            <i class="loader"></i>
                         </div>
-                        <p class="mt-2 text-muted">Memuat data harian...</p>
                     </div>
                     <div id="daily-empty" class="text-center py-4" style="display:none;">
                         <i class="fas fa-info-circle fa-2x text-muted mb-2"></i>
