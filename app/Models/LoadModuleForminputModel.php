@@ -32,11 +32,88 @@ class LoadModuleForminputModel extends Model
         $this->table = $tablePrefix . 'quality_indicator_result';
     }
 
-    public function getIndicators(int $tahun, ?int $departmentId = null)
+    public function getIndicators(int $tahun, ?int $departmentId = null, ?string $bulan = null)
     {
         if ($tahun === null) {
             $tahun = (int) date('Y');
         }
+
+        $db = db_connect();
+        $builder = $db->table($this->tablePrefix . 'quality_indicator_group qig');
+        $builder->select('
+            qig.group_indicator_id,
+            qig.group_department_id,
+            qig.group_days,
+            qi.indicator_id,
+            qi.indicator_element,
+            qi.indicator_target,
+            qi.indicator_units,
+            qi.indicator_target_unit,
+            qi.indicator_target_calculation,
+            qi.indicator_factors,
+            mid.department_id,
+            mid.department_name
+        ');
+        $builder->join($this->tablePrefix . 'quality_indicator qi', 'qi.indicator_id = qig.group_indicator_id', 'left');
+        $builder->join('master_institution_department mid', 'mid.department_id = qig.group_department_id', 'left');
+        $builder->where('qi.indicator_category_id', $this->categoryId);
+
+        if ($bulan !== null) {
+            // Specific month requested
+            $selectedPeriod = $tahun . '-' . str_pad($bulan, 2, '0', STR_PAD_LEFT);
+            $currentPeriod = date('Y-m');
+
+            if ($selectedPeriod == $currentPeriod) {
+                // CURRENT MONTH: Show only active indicators that have input data for this month
+                $builder->where('qi.indicator_record_status', 'A');
+                $builder->whereExists(function ($builder) use ($tahun, $bulan, $departmentId) {
+                    $builder->select('1')
+                        ->from($this->tablePrefix . 'quality_indicator_result qir')
+                        ->where('qir.result_indicator_id = qi.indicator_id')
+                        ->where('qir.result_department_id', $departmentId ?? 'qig.group_department_id')
+                        ->where('YEAR(qir.result_period)', $tahun)
+                        ->where('MONTH(qir.result_period)', $bulan);
+                });
+            } else {
+                // PREVIOUS MONTH (HISTORY): Show all indicators that have ever had input data for this month
+                $builder->whereExists(function ($builder) use ($tahun, $bulan, $departmentId) {
+                    $builder->select('1')
+                        ->from($this->tablePrefix . 'quality_indicator_result qir')
+                        ->where('qir.result_indicator_id = qi.indicator_id')
+                        ->where('qir.result_department_id', $departmentId ?? 'qig.group_department_id')
+                        ->where('YEAR(qir.result_period)', $tahun)
+                        ->where('MONTH(qir.result_period)', $bulan);
+                });
+            }
+        } else {
+            // NO SPECIFIC MONTH: Show indicators that have ever had data (for trend analysis)
+            $builder->whereExists(function ($builder) {
+                $builder->select('1')
+                    ->from($this->tablePrefix . 'quality_indicator_result qir')
+                    ->where('qir.result_indicator_id = qi.indicator_id');
+            });
+        }
+
+        $builder->groupStart();
+        $builder->where('qig.group_period', $tahun);
+        $builder->orWhere('qig.group_period', $tahun - 1);
+        $builder->orWhere('qig.group_period', $tahun - 2);
+        $builder->groupEnd();
+
+        if ($departmentId !== null && $departmentId > 0) {
+            $builder->where('qig.group_department_id', $departmentId);
+        }
+
+        $userRole = session()->get('user_role') ?? '';
+        $userDepartmentId = session()->get('department_id') ?? 0;
+        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
+            $builder->where('qig.group_department_id', $userDepartmentId);
+        }
+
+        $builder->groupBy('qig.group_indicator_id, qig.group_department_id');
+
+        return $builder->get()->getResult();
+    }
 
         $db = db_connect();
 

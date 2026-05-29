@@ -31,7 +31,7 @@ class LoadModuleForminput extends AppController
         $bulan = $this->request->getGet('bulan') ?? date('m');
         $department_id = session()->get('department_id') ?? 0;
 
-        $departments = $this->model->getIndicators($tahun, $department_id);
+        $departments = $this->model->getIndicators($tahun, $department_id, $bulan);
         // Extract unique departments from the indicators list
         $deptMap = [];
         foreach ($departments as $dept) {
@@ -67,7 +67,7 @@ class LoadModuleForminput extends AppController
         $bulan = (int) ($this->request->getPost('bulan') ?? date('m'));
         $department_id = (int) ($this->request->getPost('department_id') ?? 0);
 
-        $indicators = $this->model->getIndicators($tahun, $department_id);
+        $indicators = $this->model->getIndicators($tahun, $department_id, $bulan);
 
         // Get fill status for each indicator
         $statusList = $this->model->getFillStatus($tahun, str_pad((string) $bulan, 2, '0', STR_PAD_LEFT));
