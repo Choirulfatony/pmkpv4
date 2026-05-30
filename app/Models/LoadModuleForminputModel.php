@@ -72,6 +72,7 @@ class LoadModuleForminputModel extends Model
                 SELECT 1 FROM {$tableResult} qir
                 WHERE qir.result_indicator_id = qi.indicator_id
                 AND {$deptCondition}
+                AND qir.result_record_status IN ('D', 'A')
                 AND YEAR(qir.result_period) = {$tahun}
                 AND MONTH(qir.result_period) = {$bulan}
             )";
@@ -90,6 +91,7 @@ class LoadModuleForminputModel extends Model
             $builder->where("EXISTS (
                 SELECT 1 FROM {$tableResult} qir
                 WHERE qir.result_indicator_id = qi.indicator_id
+                AND qir.result_record_status IN ('D', 'A')
             )", null, false);
         }
 
@@ -130,12 +132,15 @@ class LoadModuleForminputModel extends Model
         $bulan = date('m', strtotime($tanggal));
         $hari = date('d', strtotime($tanggal));
 
-        $existingData = $db->table($this->tablePrefix . 'quality_indicator_result')
-            ->where('result_indicator_id', $indicatorId)
-            ->where('result_department_id', $departmentId)
-            ->where('YEAR(result_period)', $tahun)
-            ->where('MONTH(result_period)', $bulan)
-            ->where('DAY(result_period)', $hari)
+        $existingData = $db->table($this->tablePrefix . 'quality_indicator_result qir')
+            ->select('qir.*, up.profile_fullname')
+            ->join('user_profile up', 'up.profile_id = qir.result_insert_by', 'left')
+            ->where('qir.result_indicator_id', $indicatorId)
+            ->where('qir.result_department_id', $departmentId)
+            ->whereIn('qir.result_record_status', ['D', 'A'])
+            ->where('YEAR(qir.result_period)', $tahun)
+            ->where('MONTH(qir.result_period)', $bulan)
+            ->where('DAY(qir.result_period)', $hari)
             ->get()
             ->getResult();
 
@@ -146,15 +151,25 @@ class LoadModuleForminputModel extends Model
             ')
             ->where('result_indicator_id', $indicatorId)
             ->where('result_department_id', $departmentId)
+            ->whereIn('result_record_status', ['D', 'A'])
             ->where('YEAR(result_period)', $tahun)
             ->where('MONTH(result_period)', $bulan)
+            ->get()
+            ->getRow();
+
+        $rencanaPerbaikan = $db->table('local_rencana_perbaikan')
+            ->where('result_indicator_id', $indicatorId)
+            ->where('result_department_id', $departmentId)
+            ->where('result_period', $tanggal)
+            ->where('indicator_category_id', $this->categoryId)
             ->get()
             ->getRow();
 
         return [
             'indicator' => $indicator,
             'existing_data' => $existingData,
-            'monthly_total' => $monthlyTotal
+            'monthly_total' => $monthlyTotal,
+            'rencana_perbaikan' => $rencanaPerbaikan
         ];
     }
 
@@ -164,12 +179,14 @@ class LoadModuleForminputModel extends Model
 
         $num = $numerator;
         $den = $denumerator;
-        $user_id = session()->get('hris_user_id') ?? session()->get('user_id') ?? 0;
+        $user_id = session('profile_id') ?? 0;
+        $now = date('Y-m-d H:i:s');
 
         $existing = $db->table($this->tablePrefix . 'quality_indicator_result')
             ->where('result_indicator_id', $indicatorId)
             ->where('result_department_id', $departmentId)
             ->where('result_period', $tanggal)
+            ->where('result_record_status', 'D')
             ->get()
             ->getRow();
 
@@ -180,22 +197,131 @@ class LoadModuleForminputModel extends Model
                     'result_numerator_value'   => $num,
                     'result_denumerator_value' => $den,
                     'result_update_by'         => $user_id,
-                    'result_update_at'         => date('Y-m-d H:i:s')
+                    'result_update_date'       => $now,
+                    'result_record_status'     => 'D'
                 ]);
         } else {
             $db->table($this->tablePrefix . 'quality_indicator_result')
                 ->insert([
                     'result_indicator_id'       => $indicatorId,
-                    'result_department_id'      => $departmentId,
+                    'result_department_id'      => (string) $departmentId,
                     'result_period'             => $tanggal,
-                    'result_numerator_value'    => $num,
-                    'result_denumerator_value'  => $den,
-                    'result_create_by'          => $user_id,
-                    'result_create_at'          => date('Y-m-d H:i:s')
+                    'result_numerator_value'    => (string) $num,
+                    'result_denumerator_value'  => (string) $den,
+                    'result_record_status'      => 'D',
+                    'result_insert_by'          => (string) $user_id,
+                    'result_insert_date'        => $now
                 ]);
         }
 
         return $db->affectedRows() > 0;
+    }
+
+    public function saveRencanaPerbaikan(int $indicatorId, int $departmentId, string $tanggal, float $numerator, float $denumerator, string $kendala = '', string $perbaikan = ''): bool
+    {
+        $db = db_connect();
+        $user_id = (int) (session('profile_id') ?? 0);
+
+        $existing = $db->table('local_rencana_perbaikan')
+            ->where('result_indicator_id', $indicatorId)
+            ->where('result_department_id', $departmentId)
+            ->where('result_period', $tanggal)
+            ->where('indicator_category_id', $this->categoryId)
+            ->get()
+            ->getRow();
+
+        $data = [
+            'result_numerator_value'   => (string) $numerator,
+            'result_denumerator_value' => (string) $denumerator,
+            'kendala'                  => $kendala,
+            'perbaikan'                => $perbaikan
+        ];
+
+        if ($existing) {
+            $db->table('local_rencana_perbaikan')
+                ->where('rencana_id', $existing->rencana_id)
+                ->update($data);
+        } else {
+            $data['result_indicator_id'] = $indicatorId;
+            $data['result_department_id'] = $departmentId;
+            $data['result_period'] = $tanggal;
+            $data['indicator_category_id'] = $this->categoryId;
+            $data['result_insert_date'] = date('Y-m-d');
+            $data['result_insert_by'] = $user_id;
+
+            $db->table('local_rencana_perbaikan')
+                ->insert($data);
+        }
+
+        return $db->affectedRows() > 0;
+    }
+
+    public function deleteResult(int $indicatorId, int $departmentId, string $tanggal): bool
+    {
+        $db = db_connect();
+        $user_id = session('profile_id') ?? 0;
+        $now = date('Y-m-d H:i:s');
+
+        $db->table($this->tablePrefix . 'quality_indicator_result')
+            ->where('result_indicator_id', $indicatorId)
+            ->where('result_department_id', $departmentId)
+            ->where('result_period', $tanggal)
+            ->where('result_record_status', 'D')
+            ->update([
+                'result_record_status'  => 'X',
+                'result_delete_by'      => $user_id,
+                'result_delete_date'    => $now
+            ]);
+
+        $db->table('local_rencana_perbaikan')
+            ->where('result_indicator_id', $indicatorId)
+            ->where('result_department_id', $departmentId)
+            ->where('result_period', $tanggal)
+            ->where('indicator_category_id', $this->categoryId)
+            ->delete();
+
+        return $db->affectedRows() > 0;
+    }
+
+    public function getRiwayat(string $tahun, string $bulan, ?int $departmentId = null)
+    {
+        $db = db_connect();
+
+        $builder = $db->table($this->tablePrefix . 'quality_indicator_result qir');
+        $builder->select("
+            qir.result_id,
+            qir.result_indicator_id,
+            qir.result_department_id,
+            qir.result_period,
+            qir.result_numerator_value,
+            qir.result_denumerator_value,
+            qir.result_insert_by,
+            qir.result_insert_date,
+            qi.indicator_element,
+            lrp.kendala,
+            lrp.perbaikan,
+            up.profile_fullname
+        ");
+        $builder->join($this->tablePrefix . 'quality_indicator qi', 'qi.indicator_id = qir.result_indicator_id', 'left');
+        $builder->join('local_rencana_perbaikan lrp', "lrp.result_indicator_id = qir.result_indicator_id AND lrp.result_department_id = qir.result_department_id AND lrp.result_period = qir.result_period AND lrp.indicator_category_id = {$this->categoryId}", 'left');
+        $builder->join('user_profile up', 'up.profile_id = qir.result_insert_by', 'left');
+        $builder->where('YEAR(qir.result_period)', $tahun);
+        $builder->where('MONTH(qir.result_period)', $bulan);
+        $builder->whereIn('qir.result_record_status', ['D', 'A']);
+
+        if ($departmentId !== null && $departmentId > 0) {
+            $builder->where('qir.result_department_id', $departmentId);
+        }
+
+        $userRole = session()->get('user_role') ?? '';
+        $userDepartmentId = session()->get('department_id') ?? 0;
+        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
+            $builder->where('qir.result_department_id', $userDepartmentId);
+        }
+
+        $builder->orderBy('qir.result_period', 'DESC');
+
+        return $builder->get()->getResult();
     }
 
     public function getFillStatus(int $tahun, string $bulan)
@@ -216,6 +342,7 @@ class LoadModuleForminputModel extends Model
         ');
         $builder->join($this->tablePrefix . 'quality_indicator qi', 'qi.indicator_id = qir.result_indicator_id', 'left');
         $builder->where('qi.indicator_category_id', $this->categoryId);
+        $builder->whereIn('qir.result_record_status', ['D', 'A']);
         $builder->where('YEAR(qir.result_period)', $tahun);
         $builder->where('MONTH(qir.result_period)', $bulan);
 
@@ -259,15 +386,17 @@ class LoadModuleForminputModel extends Model
         $builder->select("
             qir.result_department_id,
             DAY(qir.result_period) AS tanggal,
+            qir.result_record_status,
             SUM(qir.result_numerator_value) AS num,
             SUM(qir.result_denumerator_value) AS denum
         ");
 
         $builder->where('qir.result_indicator_id', $indicatorId);
+        $builder->whereIn('qir.result_record_status', ['D', 'A']);
         $builder->where('YEAR(qir.result_period)', $tahun);
         $builder->where('MONTH(qir.result_period)', $bulan);
 
-        $builder->groupBy(['qir.result_department_id', 'qir.result_period']);
+        $builder->groupBy(['qir.result_department_id', 'qir.result_period', 'qir.result_record_status']);
         $builder->orderBy('qir.result_department_id');
         $builder->orderBy('qir.result_period', 'ASC');
 
@@ -287,15 +416,17 @@ class LoadModuleForminputModel extends Model
             qir.result_indicator_id,
             qir.result_department_id,
             DAY(qir.result_period) AS tanggal,
+            qir.result_record_status,
             SUM(qir.result_numerator_value) AS num,
             SUM(qir.result_denumerator_value) AS denum
         ");
 
         $builder->whereIn('qir.result_indicator_id', $indicatorIds);
+        $builder->whereIn('qir.result_record_status', ['D', 'A']);
         $builder->where('YEAR(qir.result_period)', $tahun);
         $builder->where('MONTH(qir.result_period)', $bulan);
 
-        $builder->groupBy(['qir.result_indicator_id', 'qir.result_department_id', 'qir.result_period']);
+        $builder->groupBy(['qir.result_indicator_id', 'qir.result_department_id', 'qir.result_period', 'qir.result_record_status']);
         $builder->orderBy('qir.result_indicator_id');
         $builder->orderBy('qir.result_department_id');
         $builder->orderBy('qir.result_period', 'ASC');

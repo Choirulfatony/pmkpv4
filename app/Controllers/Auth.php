@@ -32,6 +32,13 @@ class Auth extends BaseController
             $this->session->setFlashdata('error', 'Session Anda berakhir karena tidak aktif.');
         }
 
+        if (!$this->request->getGet('show_register')) {
+            $this->session->remove([
+                'register_email', 'register_name', 'register_picture',
+                'registered_email', 'registered_name', 'requires_verification'
+            ]);
+        }
+
         $captcha = $this->captcha->generate([
             'min' => 1,
             'max' => 20

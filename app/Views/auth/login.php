@@ -394,11 +394,7 @@ $registerName = session('register_name');
         }
     });
 
-    function closeRegisterModal() {
-        const modal = bootstrap.Modal.getInstance(document.getElementById('registerModal'));
-        if (modal) {
-            modal.hide();
-        }
+    function clearRegisterSession() {
         fetch("<?= site_url('auth/clear_register_session') ?>", {
             method: 'POST',
             headers: {
@@ -406,6 +402,23 @@ $registerName = session('register_name');
             }
         });
     }
+
+    function closeRegisterModal() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('registerModal'));
+        if (modal) {
+            modal.hide();
+        }
+        clearRegisterSession();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const registerModalEl = document.getElementById('registerModal');
+        if (registerModalEl) {
+            registerModalEl.addEventListener('hidden.bs.modal', function() {
+                clearRegisterSession();
+            });
+        }
+    });
 
     document.addEventListener('DOMContentLoaded', function() {
         const btn = document.getElementById('btnRefreshCaptcha');

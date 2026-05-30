@@ -53,7 +53,8 @@ class LoadModuleForminputImpunit extends AppController
                 'bulan'            => $bulan,
                 'departments'      => $departments,
                 'showAllOption'    => $showAllOption,
-                'userDepartmentId' => $userDepartmentId
+                'userDepartmentId' => $userDepartmentId,
+                'profileId'        => session('profile_id') ?? 0
             ]),
             'menus'        => $menus
         ]);
@@ -109,14 +110,16 @@ class LoadModuleForminputImpunit extends AppController
             $daily = [];
             for ($d = 1; $d <= $daysInMonth; $d++) {
                 if (isset($dailyMap[$key][$d])) {
-                    $r     = $dailyMap[$key][$d];
-                    $num   = (float) $r->num;
-                    $denum = (float) $r->denum;
-                    $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
+                    $r      = $dailyMap[$key][$d];
+                    $num    = (float) $r->num;
+                    $denum  = (float) $r->denum;
+                    $nilai  = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
+                    $status = $r->result_record_status ?? '';
                 } else {
-                    $num   = 0;
-                    $denum = 0;
-                    $nilai = null;
+                    $num    = 0;
+                    $denum  = 0;
+                    $nilai  = null;
+                    $status = '';
                 }
                 $daily[] = [
                     'hari'     => $d,
@@ -124,6 +127,7 @@ class LoadModuleForminputImpunit extends AppController
                     'denum'    => $denum,
                     'nilai'    => $nilai,
                     'tercapai' => $nilai !== null ? $this->model->hitungTercapai($nilai, $target, $operator) : null,
+                    'status'   => $status,
                 ];
             }
             $ind->daily = $daily;
@@ -146,6 +150,21 @@ class LoadModuleForminputImpunit extends AppController
         $department_id = $this->request->getPost('department_id') ?? 0;
 
         $data = $this->model->getIndicatorDetail($indicator_id, $department_id, $tanggal);
+
+        return $this->response->setJSON($data);
+    }
+
+    public function get_riwayat()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['error' => 'Invalid request']);
+        }
+
+        $tahun = $this->request->getPost('tahun') ?? date('Y');
+        $bulan = $this->request->getPost('bulan') ?? date('m');
+        $department_id = $this->request->getPost('department_id') ?? 0;
+
+        $data = $this->model->getRiwayat($tahun, $bulan, $department_id);
 
         return $this->response->setJSON($data);
     }
@@ -191,14 +210,16 @@ class LoadModuleForminputImpunit extends AppController
             $daily = [];
             for ($d = 1; $d <= $daysInMonth; $d++) {
                 if (isset($byDept[$did][$d])) {
-                    $r     = $byDept[$did][$d];
-                    $num   = (float) $r->num;
-                    $denum = (float) $r->denum;
-                    $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
+                    $r      = $byDept[$did][$d];
+                    $num    = (float) $r->num;
+                    $denum  = (float) $r->denum;
+                    $nilai  = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
+                    $status = $r->result_record_status ?? '';
                 } else {
-                    $num   = 0;
-                    $denum = 0;
-                    $nilai = null;
+                    $num    = 0;
+                    $denum  = 0;
+                    $nilai  = null;
+                    $status = '';
                 }
 
                 $daily[] = [
@@ -207,6 +228,7 @@ class LoadModuleForminputImpunit extends AppController
                     'denum'    => $denum,
                     'nilai'    => $nilai,
                     'tercapai' => $nilai !== null ? $this->model->hitungTercapai($nilai, $target, $operator) : null,
+                    'status'   => $status,
                 ];
             }
             $deptDaily[] = [
@@ -244,14 +266,19 @@ class LoadModuleForminputImpunit extends AppController
         $indicator_id = $this->request->getPost('indicator_id');
         $department_id = $this->request->getPost('department_id');
         $tanggal = $this->request->getPost('tanggal');
-        $numerator = $this->request->getPost('numerator');
-        $denumerator = $this->request->getPost('denumerator');
+        $numerator = (float) ($this->request->getPost('numerator') ?? 0);
+        $denumerator = (float) ($this->request->getPost('denumerator') ?? 0);
+        $kendala = $this->request->getPost('kendala') ?? '';
+        $perbaikan = $this->request->getPost('perbaikan') ?? '';
 
         if (!$indicator_id || !$department_id || !$tanggal) {
             return $this->response->setJSON(['status' => false, 'message' => 'Data tidak lengkap']);
         }
 
-        $success = $this->model->saveResult(
+        $db = db_connect();
+        $db->transStart();
+
+        $this->model->saveResult(
             $indicator_id,
             $department_id,
             $tanggal,
@@ -259,10 +286,45 @@ class LoadModuleForminputImpunit extends AppController
             $denumerator
         );
 
-        if ($success) {
+        $this->model->saveRencanaPerbaikan(
+            $indicator_id,
+            $department_id,
+            $tanggal,
+            $numerator,
+            $denumerator,
+            $kendala,
+            $perbaikan
+        );
+
+        $db->transComplete();
+
+        if ($db->transStatus()) {
             return $this->response->setJSON(['status' => true, 'message' => 'Data berhasil disimpan']);
         } else {
             return $this->response->setJSON(['status' => false, 'message' => 'Gagal menyimpan data']);
+        }
+    }
+
+    public function delete()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
+        }
+
+        $indicator_id = $this->request->getPost('indicator_id');
+        $department_id = $this->request->getPost('department_id');
+        $tanggal = $this->request->getPost('tanggal');
+
+        if (!$indicator_id || !$department_id || !$tanggal) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Data tidak lengkap']);
+        }
+
+        $success = $this->model->deleteResult($indicator_id, $department_id, $tanggal);
+
+        if ($success) {
+            return $this->response->setJSON(['status' => true, 'message' => 'Data berhasil dihapus']);
+        } else {
+            return $this->response->setJSON(['status' => false, 'message' => 'Gagal menghapus data']);
         }
     }
 }
