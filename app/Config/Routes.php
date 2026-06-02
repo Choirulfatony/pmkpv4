@@ -48,6 +48,8 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('load-module-forminput/validasi', 'LoadModuleForminput::validasi');
         $routes->post('load-module-forminput/get-riwayat', 'LoadModuleForminput::get_riwayat');
         $routes->post('load-module-forminput/get-daily-detail', 'LoadModuleForminput::get_daily_detail');
+        $routes->post('load-module-forminput/check-input-allowed', 'LoadModuleForminput::check_input_allowed');
+        $routes->post('load-module-forminput/request-approval', 'LoadModuleForminput::request_approval');
 
         // Form Input IMPRS
         $routes->get('imprs', 'LoadModuleForminputImprs::index');
@@ -58,6 +60,8 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('imprs/validasi', 'LoadModuleForminputImprs::validasi');
         $routes->post('imprs/get-riwayat', 'LoadModuleForminputImprs::get_riwayat');
         $routes->post('imprs/get-daily-detail', 'LoadModuleForminputImprs::get_daily_detail');
+        $routes->post('imprs/check-input-allowed', 'LoadModuleForminputImprs::check_input_allowed');
+        $routes->post('imprs/request-approval', 'LoadModuleForminputImprs::request_approval');
 
         // Form Input IMPUNIT
         $routes->get('impunit', 'LoadModuleForminputImpunit::index');
@@ -68,8 +72,14 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('impunit/validasi', 'LoadModuleForminputImpunit::validasi');
         $routes->post('impunit/get-riwayat', 'LoadModuleForminputImpunit::get_riwayat');
         $routes->post('impunit/get-daily-detail', 'LoadModuleForminputImpunit::get_daily_detail');
+        $routes->post('impunit/check-input-allowed', 'LoadModuleForminputImpunit::check_input_allowed');
+        $routes->post('impunit/request-approval', 'LoadModuleForminputImpunit::request_approval');
 
         // Approval
+        $routes->get('approval/requests-list', 'Approval::requests_list');
+        $routes->post('approval/ajax-get-requests-data', 'Approval::ajaxGetRequestsData');
+        $routes->post('approval/ajax-approve-request', 'Approval::ajaxApproveRequest');
+        $routes->post('approval/ajax-reject-request', 'Approval::ajaxRejectRequest');
         $routes->get('approval/(:any)', 'Approval::index/$1');
         $routes->post('approval/ajax-get-data', 'Approval::ajaxGetData');
         $routes->post('approval/ajax-approve', 'Approval::ajaxApprove');

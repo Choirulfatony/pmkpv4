@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Models\LoadModuleForminputModel;
+use App\Models\ApprovalRequestModel;
+use App\Models\SiimutMenuModel;
 
 class Approval extends AppController
 {
@@ -110,5 +112,87 @@ class Approval extends AppController
         } else {
             return $this->response->setJSON(['status' => false, 'message' => 'Tidak ada data yang divalidasi']);
         }
+    }
+
+    // ========== Approval Requests (user minta edit/hapus) ==========
+
+    public function requests_list()
+    {
+        if (!session()->get('logged_in')) {
+            return redirect()->to('/auth');
+        }
+
+        $this->disableCache();
+
+        $role = session()->get('user_role');
+        $menuModel = new SiimutMenuModel();
+        $menus = $menuModel->getMenuByRole($role);
+
+        return $this->render('siimut/approval_requests', [
+            'judul'    => 'Approval Request',
+            'icon'     => '<i class="bi bi-envelope-open"></i>',
+            'menus'    => $menus,
+            '_content' => view('siimut/approval_requests', [
+                'profileId' => session('profile_id') ?? 0
+            ])
+        ]);
+    }
+
+    public function ajaxGetRequestsData()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
+        }
+
+        $model = new ApprovalRequestModel();
+        $data = $model->getPendingRequests();
+
+        return $this->response->setJSON(['status' => true, 'data' => $data]);
+    }
+
+    public function ajaxApproveRequest()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
+        }
+
+        $id = (int) $this->request->getPost('id');
+        if (!$id) {
+            return $this->response->setJSON(['status' => false, 'message' => 'ID tidak valid']);
+        }
+
+        $model = new ApprovalRequestModel();
+        $adminId = (int) (session('profile_id') ?? 0);
+        $saved = $model->approveRequest($id, $adminId);
+
+        if ($saved) {
+            return $this->response->setJSON(['status' => true, 'message' => 'Permintaan disetujui']);
+        }
+
+        return $this->response->setJSON(['status' => false, 'message' => 'Gagal menyetujui permintaan']);
+    }
+
+    public function ajaxRejectRequest()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
+        }
+
+        $id = (int) $this->request->getPost('id');
+        $notes = trim($this->request->getPost('notes') ?? '');
+
+        if (!$id) {
+            return $this->response->setJSON(['status' => false, 'message' => 'ID tidak valid']);
+        }
+
+        $model = new ApprovalRequestModel();
+        $adminId = (int) (session('profile_id') ?? 0);
+        $saved = $model->rejectRequest($id, $adminId, $notes);
+
+        if ($saved) {
+            return $this->response->setJSON(['status' => true, 'message' => 'Permintaan ditolak']);
+        }
+
+        return $this->response->setJSON(['status' => false, 'message' => 'Gagal menolak permintaan']);
     }
 }

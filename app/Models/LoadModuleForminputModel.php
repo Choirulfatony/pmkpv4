@@ -598,6 +598,67 @@ class LoadModuleForminputModel extends Model
         ", [$tahun, $bulanStr])->getResult();
     }
 
+    public function canInputDate(int $indicatorId, int $departmentId, string $tanggal): array
+    {
+        $db = db_connect();
+        $tahun = date('Y', strtotime($tanggal));
+        $today = new \DateTime();
+        $tgl = new \DateTime($tanggal);
+        $diffDays = (int) $today->diff($tgl)->days;
+
+        // Masa depan
+        if ($tgl > $today) {
+            return ['allowed' => false, 'restricted' => false, 'message' => 'Tidak bisa input untuk tanggal yang akan datang', 'max_days' => 0];
+        }
+
+        // Dalam 7 hari → allowed (full access)
+        if ($diffDays <= 7) {
+            return ['allowed' => true, 'restricted' => false, 'message' => '', 'max_days' => 7];
+        }
+
+        // Cek group_days
+        $row = $db->table($this->tablePrefix . 'quality_indicator_group')
+            ->select('group_days')
+            ->where('group_indicator_id', $indicatorId)
+            ->where('group_department_id', $departmentId)
+            ->where('group_period', $tahun)
+            ->where('group_record_status', 'A')
+            ->get()
+            ->getRow();
+
+        $maxDays = $row ? (int) $row->group_days : 7;
+
+        if ($diffDays <= $maxDays) {
+            $restricted = $diffDays > 7;
+            return [
+                'allowed' => true,
+                'restricted' => $restricted,
+                'message' => $restricted ? 'Data hanya bisa dilihat, hubungi admin untuk edit/hapus' : '',
+                'max_days' => $maxDays
+            ];
+        }
+
+        return [
+            'allowed' => false,
+            'restricted' => false,
+            'message' => "Input maksimal $maxDays hari ke belakang untuk indikator ini",
+            'max_days' => $maxDays
+        ];
+    }
+
+    public function hasExistingData(int $indicatorId, int $departmentId, string $tanggal): bool
+    {
+        $db = db_connect();
+        $row = $db->table($this->tablePrefix . 'quality_indicator_result')
+            ->where('result_indicator_id', $indicatorId)
+            ->where('result_department_id', $departmentId)
+            ->where('result_period', $tanggal)
+            ->whereIn('result_record_status', ['D', 'A'])
+            ->get()
+            ->getRow();
+        return $row !== null;
+    }
+
     public function permanentDelete(array $resultIds): int
     {
         if (empty($resultIds)) {

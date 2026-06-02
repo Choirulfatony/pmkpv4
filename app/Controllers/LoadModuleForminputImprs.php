@@ -275,6 +275,14 @@ class LoadModuleForminputImprs extends AppController
             return $this->response->setJSON(['status' => false, 'message' => 'Data tidak lengkap']);
         }
 
+        $result = $this->model->canInputDate((int)$indicator_id, (int)$department_id, $tanggal);
+        if (!$result['allowed']) {
+            return $this->response->setJSON(['status' => false, 'message' => $result['message']]);
+        }
+        if (!empty($result['restricted']) && $this->model->hasExistingData((int)$indicator_id, (int)$department_id, $tanggal)) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Data sudah ada, tidak bisa diubah tanpa persetujuan admin']);
+        }
+
         $db = db_connect();
         $db->transStart();
 
@@ -319,6 +327,11 @@ class LoadModuleForminputImprs extends AppController
             return $this->response->setJSON(['status' => false, 'message' => 'Data tidak lengkap']);
         }
 
+        $result = $this->model->canInputDate((int)$indicator_id, (int)$department_id, $tanggal);
+        if (!$result['allowed'] || !empty($result['restricted'])) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Tidak bisa menghapus data ini tanpa persetujuan admin']);
+        }
+
         $success = $this->model->deleteResult($indicator_id, $department_id, $tanggal);
 
         if ($success) {
@@ -349,5 +362,66 @@ class LoadModuleForminputImprs extends AppController
         } else {
             return $this->response->setJSON(['status' => false, 'message' => 'Gagal memvalidasi data']);
         }
+    }
+
+    public function check_input_allowed()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['allowed' => false, 'message' => 'Invalid request']);
+        }
+
+        $indicator_id = (int) $this->request->getPost('indicator_id');
+        $department_id = (int) $this->request->getPost('department_id');
+        $tanggal = $this->request->getPost('tanggal') ?? date('Y-m-d');
+
+        $result = $this->model->canInputDate($indicator_id, $department_id, $tanggal);
+
+        // Kalau diblokir tapi ada data existing, tetap bisa buka (view-only)
+        if (!$result['allowed']) {
+            $existing = $this->model->hasExistingData($indicator_id, $department_id, $tanggal);
+            if ($existing) {
+                $result['allowed'] = true;
+                $result['restricted'] = true;
+                $result['message'] = 'Data hanya bisa dilihat, hubungi admin untuk edit/hapus';
+            }
+        }
+
+        // Cek approval request yang sudah disetujui
+        if (!empty($result['restricted'])) {
+            $approvalModel = new \App\Models\ApprovalRequestModel();
+            $userId = (int) (session('profile_id') ?? 0);
+            if ($approvalModel->isApproved($indicator_id, (string)$department_id, $tanggal, $userId)) {
+                $result['restricted'] = false;
+                $result['message'] = '';
+            }
+        }
+
+        return $this->response->setJSON($result);
+    }
+
+    public function request_approval()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
+        }
+
+        $indicatorId = (int) $this->request->getPost('indicator_id');
+        $departmentId = $this->request->getPost('department_id');
+        $tanggal = $this->request->getPost('tanggal');
+        $reason = trim($this->request->getPost('reason') ?? '');
+        $userId = (int) (session('profile_id') ?? 0);
+
+        if (!$indicatorId || !$departmentId || !$tanggal || !$reason) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Data tidak lengkap']);
+        }
+
+        $approvalModel = new \App\Models\ApprovalRequestModel();
+        $saved = $approvalModel->saveRequest($indicatorId, $departmentId, $tanggal, $reason, $userId);
+
+        if ($saved) {
+            return $this->response->setJSON(['status' => true, 'message' => 'Permintaan persetujuan berhasil dikirim']);
+        }
+
+        return $this->response->setJSON(['status' => false, 'message' => 'Gagal mengirim permintaan']);
     }
 }

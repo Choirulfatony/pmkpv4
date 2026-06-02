@@ -309,12 +309,6 @@
                 <a href="<?= site_url('siimut/rekap-periode-imprs') ?>" class="btn btn-light btn-sm">
                     <i class="bi bi-file-earmark-bar-graph me-1"></i> Rekap Periode
                 </a>
-                <a href="<?= site_url('siimut/approval/imprs') ?>" class="btn btn-warning btn-sm">
-                    <i class="bi bi-check2-square me-1"></i> Approval
-                </a>
-                <a href="<?= site_url('siimut/trash/imprs') ?>" class="btn btn-outline-danger btn-sm">
-                    <i class="bi bi-trash3 me-1"></i> Trash
-                </a>
             </div>
         </div>
     </div>
@@ -344,18 +338,20 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label fw-bold">Ruangan</label>
-                    <select class="form-select" id="filter_department">
-                        <?php if (!empty($showAllOption) && $showAllOption): ?>
-                            <option value="">-- Semua Ruangan --</option>
-                        <?php endif; ?>
-                        <?php foreach ($departments as $dept): ?>
-                            <?php if (!empty($userDepartmentId) && $dept['department_id'] == $userDepartmentId): ?>
-                                <option value="<?= $dept['department_id'] ?>" selected><?= esc($dept['department_name']) ?></option>
-                            <?php else: ?>
-                                <option value="<?= $dept['department_id'] ?>"><?= esc($dept['department_name']) ?></option>
+                    <div class="input-group">
+                        <select class="form-select form-select-sm" id="filter_department" style="min-width:110px;">
+                            <?php if (!empty($showAllOption) && $showAllOption): ?>
+                                <option value="">-- Semua Ruangan --</option>
                             <?php endif; ?>
-                        <?php endforeach; ?>
-                    </select>
+                            <?php foreach ($departments as $dept): ?>
+                                <?php if (!empty($userDepartmentId) && $dept['department_id'] == $userDepartmentId): ?>
+                                    <option value="<?= $dept['department_id'] ?>" selected><?= esc($dept['department_name']) ?></option>
+                                <?php else: ?>
+                                    <option value="<?= $dept['department_id'] ?>"><?= esc($dept['department_name']) ?></option>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
                     <button type="button" class="btn btn-inm-primary w-100" onclick="loadData()">
@@ -445,6 +441,9 @@
 
                 <!-- ===== DETAIL VIEW (read-only) ===== -->
                 <div id="detailView" class="d-none">
+                    <div id="restrictedInfo" class="alert alert-warning py-2 px-3 d-none">
+                        <i class="bi bi-info-circle me-1"></i> Data ini hanya bisa dilihat. Hubungi admin untuk edit/hapus
+                    </div>
                     <table class="table table-bordered table-sm mb-3">
                         <tr>
                             <th class="bg-light" style="width:120px;">Tanggal</th>
@@ -483,6 +482,21 @@
                             <td id="detailSavedAt">-</td>
                         </tr>
                     </table>
+                </div>
+
+                <!-- ===== APPROVAL REQUEST (inline) ===== -->
+                <div id="approvalRequestForm" class="d-none">
+                    <hr>
+                    <label class="form-label fw-bold">Alasan meminta persetujuan:</label>
+                    <textarea class="form-control" id="requestReason" rows="3" placeholder="Tulis alasan..."></textarea>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-warning" onclick="submitApprovalRequest()">
+                            <i class="bi bi-send me-1"></i> Kirim
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="cancelApprovalRequest()">
+                            Batal
+                        </button>
+                    </div>
                 </div>
 
                 <!-- ===== FORM EDIT ===== -->
@@ -557,6 +571,9 @@
                     </button>
                     <button type="button" class="btn btn-primary" id="btnEdit" onclick="showEditMode()">
                         <i class="bi bi-pencil me-1"></i> Edit
+                    </button>
+                    <button type="button" class="btn btn-warning" id="btnRequestApproval" onclick="requestApproval()" style="display:none">
+                        <i class="bi bi-send me-1"></i> Minta Persetujuan
                     </button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-1"></i> Tutup
@@ -770,6 +787,44 @@
         var bulan = periode.substring(5, 7);
         var tanggal = tahun + '-' + bulan + '-' + String(hari).padStart(2, '0');
 
+        // Validasi tanggal
+        var today = new Date();
+        var tglDate = new Date(parseInt(tahun), parseInt(bulan) - 1, hari);
+        today.setHours(0, 0, 0, 0);
+        tglDate.setHours(0, 0, 0, 0);
+        var diffDays = Math.round((today - tglDate) / (1000 * 60 * 60 * 24));
+
+        // Masa depan
+        if (diffDays < 0) {
+            Swal.fire({ title: 'Info', text: 'Tidak bisa input untuk tanggal yang akan datang', icon: 'warning' });
+            return;
+        }
+
+        // Dalam 7 hari
+        if (diffDays <= 7) {
+            _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, false);
+            return;
+        }
+
+        // Lebih dari 7 hari → cek group_days
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '<?= site_url('siimut/imprs/check-input-allowed') ?>', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                var resp = JSON.parse(xhr.responseText);
+                if (resp.allowed) {
+                    _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, resp.restricted);
+                } else {
+                    Swal.fire({ title: 'Info', text: resp.message || 'Tidak bisa input untuk tanggal ini', icon: 'warning' });
+                }
+            }
+        };
+        xhr.send('indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + tanggal);
+    }
+
+    function _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, restricted) {
         document.getElementById('input_indicator_id').value = indicatorId;
         document.getElementById('input_department_id').value = departmentId;
         document.getElementById('input_department_name').value = departmentName;
@@ -781,8 +836,11 @@
         document.getElementById('num_unit').textContent = units || '-';
         document.getElementById('denum_unit').textContent = targetUnit || '-';
 
-        // Default ke form mode
         showFormMode();
+
+        document.getElementById('restrictedInfo').classList.add('d-none');
+        document.getElementById('approvalRequestForm').classList.add('d-none');
+        document.getElementById('btnRequestApproval').style.display = 'none';
 
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '<?= site_url('siimut/imprs/get-indicator-detail') ?>', true);
@@ -801,7 +859,6 @@
                     var perbaikan = (response.rencana_perbaikan && response.rencana_perbaikan.perbaikan) || '-';
                     var hasil = parseFloat(den) > 0 ? (parseFloat(num) / parseFloat(den) * 100).toFixed(2) + '%' : '-';
 
-                    // Isi detail view
                     document.getElementById('detailTanggal').textContent = tanggal;
                     document.getElementById('detailRuangan').textContent = departmentName;
                     document.getElementById('detailNumerator').textContent = num;
@@ -812,13 +869,6 @@
                     document.getElementById('detailSavedBy').textContent = last.profile_fullname || last.result_insert_by || '-';
                     document.getElementById('detailSavedAt').textContent = last.result_insert_date || '-';
 
-                    var isOwner = (String(last.result_insert_by) === String(currentUserId));
-                    var isDraft = (String(last.result_record_status) === 'D');
-                    document.getElementById('btnEdit').style.display = isOwner ? '' : 'none';
-                    document.getElementById('btnDelete').style.display = isOwner ? '' : 'none';
-                    document.getElementById('btnValidate').style.display = (isOwner && isDraft) ? '' : 'none';
-
-                    // Isi form untuk edit
                     document.getElementById('input_numerator').value = num;
                     document.getElementById('input_denumerator').value = den;
                     if (response.rencana_perbaikan) {
@@ -827,6 +877,21 @@
                     } else {
                         document.getElementById('input_kendala').value = '';
                         document.getElementById('input_perbaikan').value = '';
+                    }
+
+                    if (restricted) {
+                        document.getElementById('btnEdit').style.display = 'none';
+                        document.getElementById('btnDelete').style.display = 'none';
+                        document.getElementById('btnValidate').style.display = 'none';
+                        document.getElementById('btnRequestApproval').style.display = '';
+                        document.getElementById('restrictedInfo').classList.remove('d-none');
+                    } else {
+                        var isOwner = (String(last.result_insert_by) === String(currentUserId));
+                        var isDraft = (String(last.result_record_status) === 'D');
+                        document.getElementById('btnEdit').style.display = isOwner ? '' : 'none';
+                        document.getElementById('btnDelete').style.display = isOwner ? '' : 'none';
+                        document.getElementById('btnValidate').style.display = (isOwner && isDraft) ? '' : 'none';
+                        document.getElementById('btnRequestApproval').style.display = 'none';
                     }
 
                     showDetailMode();
@@ -842,6 +907,47 @@
             }
         };
         xhr.send('indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + tanggal);
+    }
+
+    function requestApproval() {
+        document.getElementById('btnRequestApproval').style.display = 'none';
+        document.getElementById('approvalRequestForm').classList.remove('d-none');
+        document.getElementById('requestReason').value = '';
+        document.getElementById('requestReason').focus();
+    }
+
+    function cancelApprovalRequest() {
+        document.getElementById('approvalRequestForm').classList.add('d-none');
+        document.getElementById('btnRequestApproval').style.display = '';
+    }
+
+    function submitApprovalRequest() {
+        var reason = document.getElementById('requestReason').value.trim();
+        if (!reason) {
+            Swal.fire({ title: 'Info', text: 'Alasan harus diisi', icon: 'warning' });
+            return;
+        }
+
+        var indicatorId = document.getElementById('input_indicator_id').value;
+        var departmentId = document.getElementById('input_department_id').value;
+        var tanggal = document.getElementById('input_tanggal').value;
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '<?= site_url('siimut/imprs/request-approval') ?>', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                var resp = JSON.parse(xhr.responseText);
+                if (resp.status) {
+                    Swal.fire({ title: 'Berhasil', text: resp.message, icon: 'success' });
+                    cancelApprovalRequest();
+                } else {
+                    Swal.fire({ title: 'Gagal', text: resp.message, icon: 'error' });
+                }
+            }
+        };
+        xhr.send('indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + tanggal + '&reason=' + encodeURIComponent(reason));
     }
 
     function showDetailMode() {
