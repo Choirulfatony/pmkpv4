@@ -84,6 +84,11 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('approval/ajax-get-data', 'Approval::ajaxGetData');
         $routes->post('approval/ajax-approve', 'Approval::ajaxApprove');
 
+        // Validation
+        $routes->get('validation/(:any)/form', 'Validation::form/$1');
+        $routes->post('validation/(:any)/save', 'Validation::save/$1');
+        $routes->get('validation/(:any)', 'Validation::index/$1');
+
         // Trash
         $routes->get('trash/(:any)', 'Trash::index/$1');
         $routes->post('trash/ajax-get-data', 'Trash::ajaxGetData');
