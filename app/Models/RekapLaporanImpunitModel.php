@@ -137,6 +137,7 @@ class RekapLaporanImpunitModel extends Model
         $builder->where('lqi.indicator_category_id', '6');
         $builder->where('lqi.indicator_id', $indicator);
         $builder->whereIn("lqi.indicator_record_status", ['A', 'D']);
+        $builder->where('lqir.result_record_status', 'A');
 
         $builder->groupBy([
             'lqi.indicator_category_id',
@@ -543,6 +544,7 @@ class RekapLaporanImpunitModel extends Model
         $builder->where('lqi.indicator_category_id', '6');
         $builder->where('YEAR(lqir.result_period)', $tahun);
         $builder->where('lqir.result_indicator_id', $indicatorId);
+        $builder->where('lqir.result_record_status', 'A');
 
         if ($departmentId !== null) {
             $builder->where('lqir.result_department_id', $departmentId);

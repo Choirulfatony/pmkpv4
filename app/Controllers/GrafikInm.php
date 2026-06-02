@@ -29,7 +29,6 @@ class GrafikInm extends AppController
         $tahun = $this->request->getGet('tahun') ?? date('Y');
         $indicatorId = $this->request->getGet('indicator_id');
 
-        // Ambil semua indikator untuk dropdown - dengan sorting: indikator dengan data di atas
         $indicators = $this->rekapModel->getIndicatorInm(['vtahun' => (int) $tahun]);
 
         return $this->render('siimut/grafik_inm', [
@@ -88,6 +87,10 @@ class GrafikInm extends AppController
         
         // Ambil detail indikator
         $indicator = $this->rekapModel->getDetailByIdInm($indicatorId);
+
+        if (!$indicator) {
+            return $this->response->setJSON(['error' => 'Data indikator tidak ditemukan']);
+        }
 
         // Hitung triwulan dan semester (filter by department jika bukan ADMIN)
         $triwulan = $this->rekapModel->getNilaiTriwulan($indicatorId, $tahun, $departmentId);

@@ -86,19 +86,17 @@ class GrafikImpunit extends AppController
         $tahunan = $this->rekapModel->getNilaiTahun($indicatorId, $tahun, $departmentId);
         $perTahun = $this->rekapModel->getNilaiPerTahun($indicatorId, $tahun, $departmentId);
 
-        return $this->response
-            ->setContentType('application/json')
-            ->setJSON([
-                'indicator'     => $indicator,
-                'bulanan'       => $monthlyData,
-                'triwulan'      => $triwulan,
-                'semester'      => $semester,
-                'tahunan'       => $tahunan,
-                'per_tahun'     => $perTahun,
-                'tahun'         => $tahun,
-                'departments'   => $departments,
-                'user_role'     => $role,
-                'user_department_id' => $sessionDeptId,
-            ]);
+        return $this->response->setJSON([
+            'indicator'     => $indicator,
+            'bulanan'       => $monthlyData,
+            'triwulan'      => $triwulan,
+            'semester'      => $semester,
+            'tahunan'       => $tahunan,
+            'per_tahun'     => $perTahun,
+            'tahun'         => $tahun,
+            'departments'   => $departments,
+            'user_role'     => $role,
+            'user_department_id' => $sessionDeptId,
+        ]);
     }
 }

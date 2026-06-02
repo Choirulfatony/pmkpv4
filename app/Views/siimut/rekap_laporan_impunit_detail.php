@@ -41,10 +41,9 @@
 
     #ajax_detail_impunit td,
     #ajax_detail_impunit th {
-        font-size: 13px;
+        font-size: 12px;
         vertical-align: middle;
-        white-space: nowrap;
-        padding: 10px 8px !important;
+        padding: 6px 4px !important;
     }
 
     #ajax_detail_impunit th {
@@ -253,21 +252,21 @@
                     <table id="ajax_detail_impunit" class="table table-bordered table-hover table-striped mb-0" style="width: 100%;">
                         <thead>
                             <tr class="align-middle">
-                                <th style="width: 50px;" class="text-center">#</th>
-                                <th style="min-width: 200px; text-align: left !important; padding-left: 15px !important;">Ruangan</th>
-                                <th class="text-center">Target</th>
-                                <th class="text-center">Jan</th>
-                                <th class="text-center">Feb</th>
-                                <th class="text-center">Mar</th>
-                                <th class="text-center">Apr</th>
-                                <th class="text-center">Mei</th>
-                                <th class="text-center">Jun</th>
-                                <th class="text-center">Jul</th>
-                                <th class="text-center">Ags</th>
-                                <th class="text-center">Sep</th>
-                                <th class="text-center">Okt</th>
-                                <th class="text-center">Nov</th>
-                                <th class="text-center">Des</th>
+                                <th style="min-width: 40px;" class="text-center">#</th>
+                                <th style="min-width: 150px; text-align: left !important; padding-left: 15px !important;">Ruangan</th>
+                                <th class="text-center" style="min-width: 80px;">Target</th>
+                                <th class="text-center" style="min-width: 75px;">Jan</th>
+                                <th class="text-center" style="min-width: 75px;">Feb</th>
+                                <th class="text-center" style="min-width: 75px;">Mar</th>
+                                <th class="text-center" style="min-width: 75px;">Apr</th>
+                                <th class="text-center" style="min-width: 75px;">Mei</th>
+                                <th class="text-center" style="min-width: 75px;">Jun</th>
+                                <th class="text-center" style="min-width: 75px;">Jul</th>
+                                <th class="text-center" style="min-width: 75px;">Ags</th>
+                                <th class="text-center" style="min-width: 75px;">Sep</th>
+                                <th class="text-center" style="min-width: 75px;">Okt</th>
+                                <th class="text-center" style="min-width: 75px;">Nov</th>
+                                <th class="text-center" style="min-width: 75px;">Des</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -329,7 +328,7 @@
                         <i class="fas fa-info-circle fa-2x text-muted mb-2"></i>
                         <p class="text-muted">Belum ada data untuk bulan ini</p>
                     </div>
-                    <table id="daily-table" class="table table-bordered table-hover table-sm mb-0" style="display:none; table-layout:fixed;">
+                    <table id="daily-table" class="table table-bordered table-hover table-sm mb-0" style="display:none;">
                         <thead>
                             <tr id="daily-headers">
                                 <th style="width: 50px;" class="text-center">#</th>
@@ -642,6 +641,8 @@
 
                     // Inisialisasi DataTable untuk daily table
                     var dailyTable = $('#daily-table').DataTable({
+                        scrollX: true,
+                        scrollCollapse: true,
                         autoWidth: false,
                         pageLength: 25,
                         lengthMenu: [

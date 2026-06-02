@@ -114,6 +114,7 @@ protected $column_order = [
         // [CHANGED] Biar indikator non-aktif tetap muncul hasil rekapan historisnya
         $builder->whereIn('lqi.indicator_record_status', ['A', 'D']);
         $builder->where('lqi.indicator_id', $indicator);
+        $builder->where('lqir.result_record_status', 'A');
 
         $builder->groupBy([
             'lqi.indicator_category_id',
@@ -535,6 +536,7 @@ protected $column_order = [
         $builder->where("lqir.result_period >=", $tahun . '-01-01');
         $builder->where("lqir.result_period <=", $tahun . '-12-31');
         $builder->where('lqir.result_indicator_id', $indicatorId);
+        $builder->where('lqir.result_record_status', 'A');
         if ($departmentId !== null) {
             $builder->where('lqir.result_department_id', $departmentId);
         }

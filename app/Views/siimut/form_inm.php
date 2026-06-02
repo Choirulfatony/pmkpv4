@@ -309,6 +309,12 @@
                 <a href="<?= site_url('siimut/rekap-periode-inm') ?>" class="btn btn-light btn-sm">
                     <i class="bi bi-file-earmark-bar-graph me-1"></i> Rekap Periode
                 </a>
+                <a href="<?= site_url('siimut/approval/inm') ?>" class="btn btn-warning btn-sm">
+                    <i class="bi bi-check2-square me-1"></i> Approval
+                </a>
+                <a href="<?= site_url('siimut/trash/inm') ?>" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-trash3 me-1"></i> Trash
+                </a>
             </div>
         </div>
     </div>
@@ -543,6 +549,9 @@
             <div class="modal-footer" id="modalFooter">
                 <!-- Mode Detail (ada data) -->
                 <span id="footerDetail">
+                    <button type="button" class="btn btn-outline-success" id="btnValidate" onclick="validateData()" style="display:none">
+                        <i class="bi bi-check-circle me-1"></i> Approved
+                    </button>
                     <button type="button" class="btn btn-outline-danger" id="btnDelete" onclick="deleteData()">
                         <i class="bi bi-trash me-1"></i> Hapus
                     </button>
@@ -816,8 +825,10 @@
                     }
 
                     var isOwner = (String(last.result_insert_by) === String(currentUserId));
+                    var isDraft = (String(last.result_record_status) === 'D');
                     document.getElementById('btnEdit').style.display = isOwner ? '' : 'none';
                     document.getElementById('btnDelete').style.display = isOwner ? '' : 'none';
+                    document.getElementById('btnValidate').style.display = (isOwner && isDraft) ? '' : 'none';
 
                     showDetailMode();
                 } else {
@@ -955,6 +966,43 @@
                     var response = JSON.parse(xhr.responseText);
                     if (response.status) {
                         toastSuccess('Data berhasil dihapus');
+                        modalInput.hide();
+                        loadData();
+                    } else {
+                        toastError('Gagal: ' + (response.message || 'Unknown error'));
+                    }
+                }
+            };
+            xhr.send('indicator_id=' + indicator_id + '&department_id=' + department_id + '&tanggal=' + tanggal);
+        });
+    }
+
+    function validateData() {
+        var indicator_id = document.getElementById('input_indicator_id').value;
+        var department_id = document.getElementById('input_department_id').value;
+        var tanggal = document.getElementById('input_tanggal').value;
+
+        Swal.fire({
+            title: 'Validasi data?',
+            text: 'Data pada tanggal ' + tanggal + ' akan divalidasi (Approved)',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, validasi!',
+            cancelButtonText: 'Batal'
+        }).then(function(result) {
+            if (!result.isConfirmed) return;
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '<?= site_url('siimut/load-module-forminput/validasi') ?>', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.status) {
+                        toastSuccess('Data berhasil divalidasi');
                         modalInput.hide();
                         loadData();
                     } else {

@@ -45,6 +45,7 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('load-module-forminput/get-indicator-detail', 'LoadModuleForminput::get_indicator_detail');
         $routes->post('load-module-forminput/save', 'LoadModuleForminput::save');
         $routes->post('load-module-forminput/delete', 'LoadModuleForminput::delete');
+        $routes->post('load-module-forminput/validasi', 'LoadModuleForminput::validasi');
         $routes->post('load-module-forminput/get-riwayat', 'LoadModuleForminput::get_riwayat');
         $routes->post('load-module-forminput/get-daily-detail', 'LoadModuleForminput::get_daily_detail');
 
@@ -54,6 +55,7 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('imprs/get-indicator-detail', 'LoadModuleForminputImprs::get_indicator_detail');
         $routes->post('imprs/save', 'LoadModuleForminputImprs::save');
         $routes->post('imprs/delete', 'LoadModuleForminputImprs::delete');
+        $routes->post('imprs/validasi', 'LoadModuleForminputImprs::validasi');
         $routes->post('imprs/get-riwayat', 'LoadModuleForminputImprs::get_riwayat');
         $routes->post('imprs/get-daily-detail', 'LoadModuleForminputImprs::get_daily_detail');
 
@@ -63,8 +65,19 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('impunit/get-indicator-detail', 'LoadModuleForminputImpunit::get_indicator_detail');
         $routes->post('impunit/save', 'LoadModuleForminputImpunit::save');
         $routes->post('impunit/delete', 'LoadModuleForminputImpunit::delete');
+        $routes->post('impunit/validasi', 'LoadModuleForminputImpunit::validasi');
         $routes->post('impunit/get-riwayat', 'LoadModuleForminputImpunit::get_riwayat');
         $routes->post('impunit/get-daily-detail', 'LoadModuleForminputImpunit::get_daily_detail');
+
+        // Approval
+        $routes->get('approval/(:any)', 'Approval::index/$1');
+        $routes->post('approval/ajax-get-data', 'Approval::ajaxGetData');
+        $routes->post('approval/ajax-approve', 'Approval::ajaxApprove');
+
+        // Trash
+        $routes->get('trash/(:any)', 'Trash::index/$1');
+        $routes->post('trash/ajax-get-data', 'Trash::ajaxGetData');
+        $routes->post('trash/ajax-permanent-delete', 'Trash::ajaxPermanentDelete');
 
     // Rekap Laporan INM
     $routes->get('rekap-laporan-inm', 'RekapLaporanInm::index');

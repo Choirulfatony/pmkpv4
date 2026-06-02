@@ -327,4 +327,27 @@ class LoadModuleForminputImprs extends AppController
             return $this->response->setJSON(['status' => false, 'message' => 'Gagal menghapus data']);
         }
     }
+
+    public function validasi()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
+        }
+
+        $indicator_id = $this->request->getPost('indicator_id');
+        $department_id = $this->request->getPost('department_id');
+        $tanggal = $this->request->getPost('tanggal');
+
+        if (!$indicator_id || !$department_id || !$tanggal) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Data tidak lengkap']);
+        }
+
+        $success = $this->model->validateResult($indicator_id, $department_id, $tanggal);
+
+        if ($success) {
+            return $this->response->setJSON(['status' => true, 'message' => 'Data berhasil divalidasi']);
+        } else {
+            return $this->response->setJSON(['status' => false, 'message' => 'Gagal memvalidasi data']);
+        }
+    }
 }

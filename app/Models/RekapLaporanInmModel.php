@@ -92,6 +92,7 @@ class RekapLaporanInmModel extends Model
         // [CHANGED] Biar indikator non-aktif (status 'D') tetap muncul hasil rekapan historisnya
         $builder->whereIn('qi.indicator_record_status', ['A', 'D']);
         $builder->where('qi.indicator_id', $indicator);
+        $builder->where('qir.result_record_status', 'A');
 
         $builder->groupBy([
             'qi.indicator_category_id',
@@ -511,6 +512,7 @@ class RekapLaporanInmModel extends Model
 
         $builder->where('YEAR(qir.result_period)', $tahun);
         $builder->where('qir.result_indicator_id', $indicatorId);
+        $builder->where('qir.result_record_status', 'A');
         if ($departmentId !== null) {
             $builder->where('qir.result_department_id', $departmentId);
         }

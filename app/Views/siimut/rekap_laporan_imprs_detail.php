@@ -41,10 +41,16 @@
 
     #ajax_detail_imprs td,
     #ajax_detail_imprs th {
-        font-size: 13px;
+        font-size: 12px;
         vertical-align: middle;
+        padding: 6px 4px !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
         white-space: nowrap;
-        padding: 10px 8px !important;
+    }
+    #ajax_detail_imprs td.text-start {
+        text-align: left !important;
+        padding-left: 15px !important;
     }
 
     #ajax_detail_imprs th {
@@ -250,25 +256,25 @@
                             <i class="loader"></i>
                         </div>
                     </div>
-                    <table id="ajax_detail_imprs" class="table table-bordered table-hover table-striped mb-0" style="width: 100%; table-layout: fixed;">
+                    <table id="ajax_detail_imprs" class="table table-bordered table-hover table-striped mb-0" style="width: 100%;">
                         <thead>
-                            <tr class="align-middle">
-                                <th style="width: 50px;" class="text-center">#</th>
-                                <th style="width: 200px; text-align: left !important; padding-left: 15px !important;">Ruangan</th>
-                                <th class="text-center">Target</th>
-                                <th class="text-center">Jan</th>
-                                <th class="text-center">Feb</th>
-                                <th class="text-center">Mar</th>
-                                <th class="text-center">Apr</th>
-                                <th class="text-center">Mei</th>
-                                <th class="text-center">Jun</th>
-                                <th class="text-center">Jul</th>
-                                <th class="text-center">Ags</th>
-                                <th class="text-center">Sep</th>
-                                <th class="text-center">Okt</th>
-                                <th class="text-center">Nov</th>
-                                <th class="text-center">Des</th>
-                            </tr>
+                         <tr class="align-middle">
+                                 <th style="width: 50px;" class="text-center">#</th>
+                                 <th style="min-width: 250px; text-align: left !important; padding-left: 15px !important;">Ruangan</th>
+                                 <th class="text-center">Target</th>
+                                 <th class="text-center">Jan</th>
+                                 <th class="text-center">Feb</th>
+                                 <th class="text-center">Mar</th>
+                                 <th class="text-center">Apr</th>
+                                 <th class="text-center">Mei</th>
+                                 <th class="text-center">Jun</th>
+                                 <th class="text-center">Jul</th>
+                                 <th class="text-center">Ags</th>
+                                 <th class="text-center">Sep</th>
+                                 <th class="text-center">Okt</th>
+                                 <th class="text-center">Nov</th>
+                                 <th class="text-center">Des</th>
+                             </tr>
                         </thead>
                         <tbody></tbody>
                     </table>
@@ -328,7 +334,7 @@
                         <i class="fas fa-info-circle fa-2x text-muted mb-2"></i>
                         <p class="text-muted">Belum ada data untuk bulan ini</p>
                     </div>
-                    <table id="daily-table" class="table table-bordered table-hover table-sm mb-0" style="display:none; table-layout:fixed;">
+                    <table id="daily-table" class="table table-bordered table-hover table-sm mb-0" style="display:none;">
                         <thead>
                             <tr id="daily-headers">
                                 <th style="width: 50px;" class="text-center">#</th>
@@ -406,70 +412,67 @@
                     $('#loading_overlay_detail_imprs').hide();
                 }
             },
-            columnDefs: [{
-                targets: [0, 2],
-                orderable: false,
-                className: 'text-center'
-            }, {
-                targets: [-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14],
-                orderable: false,
-                className: 'text-center',
-                createdCell: function(td, cellData, rowData, row, col) {
-                    // Kolom Target
-                    if (col == 2) {
-                        try {
-                            let parser = new DOMParser();
-                            const doc = parser.parseFromString(cellData, 'text/html');
-                            var targetEl = doc.getElementById('target_det');
-                            var factorEl = doc.getElementById('factor_det');
-                            var operatorEl = doc.getElementById('operator_det');
-                            if (targetEl) target = targetEl.innerText;
-                            if (factorEl) factor = factorEl.innerText;
-                            if (operatorEl) operator = operatorEl.innerText;
-                            $(td).addClass('cell-target');
-                        } catch (e) {}
+              columnDefs: [
+                  { targets: 1, orderable: false, className: 'text-start' },
+                  { targets: [0], orderable: false, className: 'text-center' },
+                  { targets: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], orderable: false, className: 'text-center',
+                    createdCell: function(td, cellData, rowData, row, col) {
+                      // Kolom Target
+                      if (col == 2) {
+                          try {
+                              let parser = new DOMParser();
+                              const doc = parser.parseFromString(cellData, 'text/html');
+                              var targetEl = doc.getElementById('target_det');
+                              var factorEl = doc.getElementById('factor_det');
+                              var operatorEl = doc.getElementById('operator_det');
+                              if (targetEl) target = targetEl.innerText;
+                              if (factorEl) factor = factorEl.innerText;
+                              if (operatorEl) operator = operatorEl.innerText;
+                              $(td).addClass('cell-target');
+                          } catch (e) {}
+                      }
+                      // Kolom Bulan
+                      if (col > 2) {
+                          try {
+                              let parser = new DOMParser();
+                              const doc = parser.parseFromString(cellData, 'text/html');
+                              var numEl = doc.getElementById('num_det');
+                              var denumEl = doc.getElementById('denum_det');
+
+                              if (numEl && denumEl) {
+                                  var num = parseInt(numEl.innerText) || 0;
+                                  var denum = parseInt(denumEl.innerText) || 0;
+
+                                  if (num == 0 && denum == 0) {
+                                      $(td).addClass('cell-empty');
+                                  } else {
+                                      var totalEl = doc.getElementById('total_det');
+                                      var nilai = totalEl ? parseFloat(totalEl.innerText) || 0 : 0;
+                                      var tgt = parseInt(target) || 0;
+
+                                      if (operator == "<=") {
+                                          if (nilai <= tgt) {
+                                              $(td).addClass('cell-target');
+                                          } else {
+                                              $(td).addClass('cell-fail');
+                                          }
+                                      } else {
+                                          if (nilai >= tgt) {
+                                              $(td).addClass('cell-target');
+                                          } else {
+                                              $(td).addClass('cell-fail');
+                                          }
+                                      }
+                                  }
+                              }
+                              // Buat cell bisa diklik untuk daily detail
+                              $(td).addClass('cell-clickable');
+                              $(td).attr('title', 'Klik untuk lihat detail harian');
+                          } catch (e) {}
+                        }
                     }
-                    // Kolom Bulan
-                    if (col > 2) {
-                        try {
-                            let parser = new DOMParser();
-                            const doc = parser.parseFromString(cellData, 'text/html');
-                            var numEl = doc.getElementById('num_det');
-                            var denumEl = doc.getElementById('denum_det');
-
-                            if (numEl && denumEl) {
-                                var num = parseInt(numEl.innerText) || 0;
-                                var denum = parseInt(denumEl.innerText) || 0;
-
-                                if (num == 0 && denum == 0) {
-                                    $(td).addClass('cell-empty');
-                                } else {
-                                    var totalEl = doc.getElementById('total_det');
-                                    var nilai = totalEl ? parseFloat(totalEl.innerText) || 0 : 0;
-                                    var tgt = parseInt(target) || 0;
-
-                                    if (operator == "<=") {
-                                        if (nilai <= tgt) {
-                                            $(td).addClass('cell-target');
-                                        } else {
-                                            $(td).addClass('cell-fail');
-                                        }
-                                    } else {
-                                        if (nilai >= tgt) {
-                                            $(td).addClass('cell-target');
-                                        } else {
-                                            $(td).addClass('cell-fail');
-                                        }
-                                    }
-                                }
-                            }
-                            // Buat cell bisa diklik untuk daily detail
-                            $(td).addClass('cell-clickable');
-                            $(td).attr('title', 'Klik untuk lihat detail harian');
-                        } catch (e) {}
-                    }
-                }
-            }],
+                  }
+              ],
             language: {
                 emptyTable: 'Tidak ada data',
                 info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
@@ -619,6 +622,8 @@
 
                     // Inisialisasi DataTable untuk daily table
                     var dailyTable = $('#daily-table').DataTable({
+                        scrollX: true,
+                        scrollCollapse: true,
                         autoWidth: false,
                         pageLength: 25,
                         lengthMenu: [

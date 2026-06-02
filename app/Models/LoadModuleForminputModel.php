@@ -283,6 +283,26 @@ class LoadModuleForminputModel extends Model
         return $db->affectedRows() > 0;
     }
 
+    public function validateResult(int $indicatorId, int $departmentId, string $tanggal): bool
+    {
+        $db = db_connect();
+        $user_id = session('profile_id') ?? 0;
+        $now = date('Y-m-d H:i:s');
+
+        $db->table($this->tablePrefix . 'quality_indicator_result')
+            ->where('result_indicator_id', $indicatorId)
+            ->where('result_department_id', $departmentId)
+            ->where('result_period', $tanggal)
+            ->where('result_record_status', 'D')
+            ->update([
+                'result_record_status' => 'A',
+                'result_update_by'     => $user_id,
+                'result_update_date'   => $now
+            ]);
+
+        return $db->affectedRows() > 0;
+    }
+
     public function getRiwayat(string $tahun, string $bulan, ?int $departmentId = null)
     {
         $db = db_connect();
@@ -342,7 +362,7 @@ class LoadModuleForminputModel extends Model
         ');
         $builder->join($this->tablePrefix . 'quality_indicator qi', 'qi.indicator_id = qir.result_indicator_id', 'left');
         $builder->where('qi.indicator_category_id', $this->categoryId);
-        $builder->whereIn('qir.result_record_status', ['D', 'A']);
+        $builder->where('qir.result_record_status', 'A');
         $builder->where('YEAR(qir.result_period)', $tahun);
         $builder->where('MONTH(qir.result_period)', $bulan);
 
@@ -488,5 +508,110 @@ class LoadModuleForminputModel extends Model
             '='  => $nilai == $target,
             default => $nilai >= $target,
         };
+    }
+
+    public function getPendingApproval(int $tahun, int $bulan)
+    {
+        $db = db_connect();
+        $bulanStr = str_pad((string) $bulan, 2, '0', STR_PAD_LEFT);
+
+        return $db->query("
+            SELECT
+                qir.result_id,
+                qir.result_indicator_id,
+                qir.result_department_id,
+                qir.result_period,
+                qir.result_numerator_value,
+                qir.result_denumerator_value,
+                qir.result_record_status,
+                qir.result_insert_by,
+                qi.indicator_element,
+                qi.indicator_target,
+                qi.indicator_units,
+                qi.indicator_target_calculation,
+                qi.indicator_factors,
+                mid.department_name,
+                up.profile_fullname
+            FROM {$this->tablePrefix}quality_indicator_result qir
+            LEFT JOIN {$this->tablePrefix}quality_indicator qi ON qi.indicator_id = qir.result_indicator_id
+            JOIN master_institution_department mid ON mid.department_id = qir.result_department_id
+            LEFT JOIN user_profile up ON up.profile_id = qir.result_insert_by
+            WHERE qir.result_record_status = 'D'
+              AND YEAR(qir.result_period) = ?
+              AND MONTH(qir.result_period) = ?
+            ORDER BY qir.result_indicator_id, qir.result_department_id, qir.result_period ASC
+        ", [$tahun, $bulanStr])->getResult();
+    }
+
+    public function approveBatch(array $resultIds, int $userId): int
+    {
+        if (empty($resultIds)) {
+            return 0;
+        }
+        $db = db_connect();
+        $now = date('Y-m-d H:i:s');
+        $ids = implode(',', array_map('intval', $resultIds));
+
+        $db->query("
+            UPDATE {$this->tablePrefix}quality_indicator_result
+            SET result_record_status = 'A',
+                result_update_by = ?,
+                result_update_date = ?
+            WHERE result_id IN ($ids)
+              AND result_record_status = 'D'
+        ", [$userId, $now]);
+
+        return $db->affectedRows();
+    }
+
+    public function getDeletedData(int $tahun, int $bulan)
+    {
+        $db = db_connect();
+        $bulanStr = str_pad((string) $bulan, 2, '0', STR_PAD_LEFT);
+
+        return $db->query("
+            SELECT
+                qir.result_id,
+                qir.result_indicator_id,
+                qir.result_department_id,
+                qir.result_period,
+                qir.result_numerator_value,
+                qir.result_denumerator_value,
+                qir.result_record_status,
+                qir.result_insert_by,
+                qir.result_delete_by,
+                qir.result_delete_date,
+                qi.indicator_element,
+                qi.indicator_target,
+                qi.indicator_units,
+                qi.indicator_factors,
+                mid.department_name,
+                up.profile_fullname
+            FROM {$this->tablePrefix}quality_indicator_result qir
+            LEFT JOIN {$this->tablePrefix}quality_indicator qi ON qi.indicator_id = qir.result_indicator_id
+            JOIN master_institution_department mid ON mid.department_id = qir.result_department_id
+            LEFT JOIN user_profile up ON up.profile_id = qir.result_insert_by
+            WHERE qir.result_record_status = 'X'
+              AND YEAR(qir.result_period) = ?
+              AND MONTH(qir.result_period) = ?
+            ORDER BY qir.result_delete_date DESC
+        ", [$tahun, $bulanStr])->getResult();
+    }
+
+    public function permanentDelete(array $resultIds): int
+    {
+        if (empty($resultIds)) {
+            return 0;
+        }
+        $db = db_connect();
+        $ids = implode(',', array_map('intval', $resultIds));
+
+        $db->query("
+            DELETE FROM {$this->tablePrefix}quality_indicator_result
+            WHERE result_id IN ($ids)
+              AND result_record_status = 'X'
+        ");
+
+        return $db->affectedRows();
     }
 }

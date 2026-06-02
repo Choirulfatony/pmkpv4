@@ -41,10 +41,10 @@
 
     #ajax_detail td,
     #ajax_detail th {
-        font-size: 13px;
+        font-size: 12px;
         vertical-align: middle;
         white-space: nowrap;
-        padding: 10px 8px !important;
+        padding: 6px 4px !important;
     }
 
     #ajax_detail th {
@@ -252,11 +252,11 @@
                             <i class="loader"></i>
                         </div>
                     </div>
-                    <table id="ajax_detail" class="table table-bordered table-hover table-striped mb-0" style="width: 100%; table-layout: fixed;">
+                    <table id="ajax_detail" class="table table-bordered table-hover table-striped mb-0" style="width: 100%;">
                         <thead>
                             <tr class="align-middle">
                                 <th style="width: 50px;" class="text-center">#</th>
-                                <th style="width: 200px; text-align: left !important; padding-left: 15px !important;">Ruangan</th>
+                                <th style="min-width: 250px; text-align: left !important; padding-left: 15px !important;">Ruangan</th>
                                 <th class="text-center">Target</th>
                                 <th class="text-center">Jan</th>
                                 <th class="text-center">Feb</th>
@@ -330,7 +330,7 @@
                         <i class="fas fa-info-circle fa-2x text-muted mb-2"></i>
                         <p class="text-muted">Belum ada data untuk bulan ini</p>
                     </div>
-                    <table id="daily-table" class="table table-bordered table-hover table-sm mb-0" style="display:none; table-layout:fixed;">
+                    <table id="daily-table" class="table table-bordered table-hover table-sm mb-0" style="display:none;">
                         <thead>
                             <tr id="daily-headers">
                                 <th style="width: 50px;" class="text-center">#</th>
@@ -621,6 +621,8 @@
 
                     // Inisialisasi DataTable untuk daily table
                     var dailyTable = $('#daily-table').DataTable({
+                        scrollX: true,
+                        scrollCollapse: true,
                         autoWidth: false,
                         pageLength: 25,
                         lengthMenu: [
