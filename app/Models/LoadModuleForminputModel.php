@@ -51,6 +51,7 @@ class LoadModuleForminputModel extends Model
             qi.indicator_target_unit,
             qi.indicator_target_calculation,
             qi.indicator_factors,
+            qi.indicator_frequency,
             mid.department_id,
             mid.department_name
         ');
