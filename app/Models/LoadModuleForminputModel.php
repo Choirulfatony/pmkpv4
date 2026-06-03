@@ -508,27 +508,48 @@ class LoadModuleForminputModel extends Model
     {
         $db = db_connect();
 
-        $deptCondition = '';
-        if ($departmentId !== null) {
-            $deptCondition = "AND qig.group_department_id = " . (int) $departmentId;
+        if ($this->tablePrefix === 'local_') {
+            $deptCondition = '';
+            if ($departmentId !== null) {
+                $deptCondition = "AND qir.result_department_id = " . (int) $departmentId;
+            }
+            $query = $db->query("
+                SELECT DISTINCT
+                    qir.result_indicator_id AS indicator_id,
+                    qir.result_department_id AS department_id,
+                    mid.department_name
+                FROM {$this->tablePrefix}quality_indicator_result qir
+                JOIN {$this->tablePrefix}quality_indicator qi ON qi.indicator_id = qir.result_indicator_id
+                JOIN master_institution_department mid ON mid.department_id = qir.result_department_id
+                WHERE qi.indicator_category_id = ?
+                AND qi.indicator_record_status IN ('A', 'D')
+                AND qir.result_indicator_id = ?
+                {$deptCondition}
+                GROUP BY mid.department_id
+                ORDER BY mid.department_name ASC
+            ", [$this->categoryId, $indicatorId]);
+        } else {
+            $deptCondition = '';
+            if ($departmentId !== null) {
+                $deptCondition = "AND qig.group_department_id = " . (int) $departmentId;
+            }
+            $query = $db->query("
+                SELECT DISTINCT
+                    qig.group_indicator_id AS indicator_id,
+                    qig.group_department_id AS department_id,
+                    mid.department_name
+                FROM {$this->tablePrefix}quality_indicator_group qig
+                JOIN {$this->tablePrefix}quality_indicator qi ON qi.indicator_id = qig.group_indicator_id
+                JOIN master_institution_department mid ON mid.department_id = qig.group_department_id
+                WHERE qi.indicator_category_id = ?
+                AND qi.indicator_record_status IN ('A', 'D')
+                AND qig.group_record_status = 'A'
+                AND qig.group_indicator_id = ?
+                {$deptCondition}
+                GROUP BY mid.department_id
+                ORDER BY mid.department_name ASC
+            ", [$this->categoryId, $indicatorId]);
         }
-
-        $query = $db->query("
-            SELECT DISTINCT
-                qig.group_indicator_id AS indicator_id,
-                qig.group_department_id AS department_id,
-                mid.department_name
-            FROM {$this->tablePrefix}quality_indicator_group qig
-            JOIN {$this->tablePrefix}quality_indicator qi ON qi.indicator_id = qig.group_indicator_id
-            JOIN master_institution_department mid ON mid.department_id = qig.group_department_id
-            WHERE qi.indicator_category_id = ?
-            AND qi.indicator_record_status IN ('A', 'D')
-            AND qig.group_record_status = 'A'
-            AND qig.group_indicator_id = ?
-            {$deptCondition}
-            GROUP BY mid.department_id
-            ORDER BY mid.department_name ASC
-        ", [$this->categoryId, $indicatorId]);
 
         return $query->getResult();
     }
@@ -700,17 +721,19 @@ class LoadModuleForminputModel extends Model
             return ['allowed' => true, 'restricted' => false, 'message' => '', 'max_days' => 30];
         }
 
-        // Cek group_days
-        $row = $db->table($this->tablePrefix . 'quality_indicator_group')
-            ->select('group_days')
-            ->where('group_indicator_id', $indicatorId)
-            ->where('group_department_id', $departmentId)
-            ->where('group_period', $tahun)
-            ->where('group_record_status', 'A')
-            ->get()
-            ->getRow();
-
-        $maxDays = $row ? (int) $row->group_days : 30;
+        // Cek group_days (only for non-local modules)
+        $maxDays = 30;
+        if ($this->tablePrefix !== 'local_') {
+            $row = $db->table($this->tablePrefix . 'quality_indicator_group')
+                ->select('group_days')
+                ->where('group_indicator_id', $indicatorId)
+                ->where('group_department_id', $departmentId)
+                ->where('group_period', $tahun)
+                ->where('group_record_status', 'A')
+                ->get()
+                ->getRow();
+            $maxDays = $row ? (int) $row->group_days : 30;
+        }
 
         if ($diffDays <= $maxDays) {
             $restricted = $diffDays > 30;
