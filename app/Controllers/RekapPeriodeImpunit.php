@@ -148,7 +148,7 @@ class RekapPeriodeImpunit extends AppController
 
         $col = 1;
         foreach ($headers as $header) {
-            $sheet->setCellValueByColumnAndRow($col, 1, $header);
+            $sheet->setCellValue([$col, 1], $header);
             $col++;
         }
 
@@ -162,29 +162,29 @@ class RekapPeriodeImpunit extends AppController
         $row = 2;
         $no = 1;
         foreach ($data as $item) {
-            $sheet->setCellValueByColumnAndRow(1, $row, $no);
-            $sheet->setCellValueByColumnAndRow(2, $row, $item['indicator_element']);
-            $sheet->setCellValueByColumnAndRow(3, $row, $item['target'] . ' ' . $item['satuan']);
+            $sheet->setCellValue([1, $row], $no);
+            $sheet->setCellValue([2, $row], $item['indicator_element']);
+            $sheet->setCellValue([3, $row], $item['target'] . ' ' . $item['satuan']);
 
             $colIndex = 4;
             if ($type === 'triwulan') {
                 for ($i = 1; $i <= 4; $i++) {
                     $val = $item['triwulan'][$i] ?? [];
                     $nilai = $val['nilai'] ?? '-';
-                    $sheet->setCellValueByColumnAndRow($colIndex, $row, $nilai . ' ' . $item['satuan']);
+                    $sheet->setCellValue([$colIndex, $row], $nilai . ' ' . $item['satuan']);
                     $colIndex++;
                 }
             } elseif ($type === 'semester') {
                 for ($i = 1; $i <= 2; $i++) {
                     $val = $item['semester'][$i] ?? [];
                     $nilai = $val['nilai'] ?? '-';
-                    $sheet->setCellValueByColumnAndRow($colIndex, $row, $nilai . ' ' . $item['satuan']);
+                    $sheet->setCellValue([$colIndex, $row], $nilai . ' ' . $item['satuan']);
                     $colIndex++;
                 }
             } else {
                 $val = $item['tahun'] ?? [];
                 $nilai = $val['nilai'] ?? '-';
-                $sheet->setCellValueByColumnAndRow($colIndex, $row, $nilai . ' ' . $item['satuan']);
+                $sheet->setCellValue([$colIndex, $row], $nilai . ' ' . $item['satuan']);
             }
 
             $row++;
