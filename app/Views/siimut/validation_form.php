@@ -1,6 +1,3 @@
-<?= $this->extend('_layout/_template') ?>
-
-<?= $this->section('content') ?>
 <div class="card">
     <div class="card-body">
         <div class="mb-3">
@@ -245,4 +242,4 @@
         xhr.send(params.toString());
     });
 </script>
-<?= $this->endSection() ?>
+

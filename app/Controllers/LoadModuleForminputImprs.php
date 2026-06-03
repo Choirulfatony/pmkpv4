@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\SiimutMenuModel;
 use App\Models\LoadModuleForminputModel;
+use App\Models\ApprovalRequestModel;
 
 class LoadModuleForminputImprs extends AppController
 {
@@ -151,6 +152,14 @@ class LoadModuleForminputImprs extends AppController
 
         $data = $this->model->getIndicatorDetail($indicator_id, $department_id, $tanggal);
 
+        $approvalModel = new \App\Models\ApprovalRequestModel();
+        $data['request_status'] = $approvalModel->getRequestStatus(
+            (int)$indicator_id,
+            (string)$department_id,
+            $tanggal,
+            (int) (session('profile_id') ?? 0)
+        );
+
         return $this->response->setJSON($data);
     }
 
@@ -277,10 +286,31 @@ class LoadModuleForminputImprs extends AppController
 
         $result = $this->model->canInputDate((int)$indicator_id, (int)$department_id, $tanggal);
         if (!$result['allowed']) {
+            $existing = $this->model->hasExistingData((int)$indicator_id, (int)$department_id, $tanggal);
+            if ($existing) {
+                $result['allowed'] = true;
+                $result['restricted'] = true;
+            }
+        }
+        if (!$result['allowed']) {
             return $this->response->setJSON(['status' => false, 'message' => $result['message']]);
         }
-        if (!empty($result['restricted']) && $this->model->hasExistingData((int)$indicator_id, (int)$department_id, $tanggal)) {
-            return $this->response->setJSON(['status' => false, 'message' => 'Data sudah ada, tidak bisa diubah tanpa persetujuan admin']);
+
+        $usedApproval = false;
+        if (!empty($result['restricted'])) {
+            $approvalModel = new ApprovalRequestModel();
+            $userId = (int) (session('profile_id') ?? 0);
+            if ($approvalModel->isApprovedForAction((int)$indicator_id, (string)$department_id, $tanggal, $userId, 'edit')) {
+                $result['restricted'] = false;
+                $usedApproval = true;
+            }
+        }
+
+        if (!empty($result['restricted'])) {
+            if ($this->model->hasExistingData((int)$indicator_id, (int)$department_id, $tanggal)) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Data sudah ada, tidak bisa diubah tanpa persetujuan admin']);
+            }
+            return $this->response->setJSON(['status' => false, 'message' => 'Tidak bisa menyimpan data tanpa persetujuan admin']);
         }
 
         $db = db_connect();
@@ -307,6 +337,9 @@ class LoadModuleForminputImprs extends AppController
         $db->transComplete();
 
         if ($db->transStatus()) {
+            if ($usedApproval) {
+                $approvalModel->markApprovalUsed((int)$indicator_id, (string)$department_id, $tanggal, $userId);
+            }
             return $this->response->setJSON(['status' => true, 'message' => 'Data berhasil disimpan']);
         } else {
             return $this->response->setJSON(['status' => false, 'message' => 'Gagal menyimpan data']);
@@ -328,13 +361,37 @@ class LoadModuleForminputImprs extends AppController
         }
 
         $result = $this->model->canInputDate((int)$indicator_id, (int)$department_id, $tanggal);
-        if (!$result['allowed'] || !empty($result['restricted'])) {
+        if (!$result['allowed']) {
+            $existing = $this->model->hasExistingData((int)$indicator_id, (int)$department_id, $tanggal);
+            if ($existing) {
+                $result['allowed'] = true;
+                $result['restricted'] = true;
+            }
+        }
+        if (!$result['allowed']) {
+            return $this->response->setJSON(['status' => false, 'message' => $result['message']]);
+        }
+
+        $usedApproval = false;
+        if (!empty($result['restricted'])) {
+            $approvalModel = new ApprovalRequestModel();
+            $userId = (int) (session('profile_id') ?? 0);
+            if ($approvalModel->isApprovedForAction((int)$indicator_id, (string)$department_id, $tanggal, $userId, 'delete')) {
+                $result['restricted'] = false;
+                $usedApproval = true;
+            }
+        }
+
+        if (!empty($result['restricted'])) {
             return $this->response->setJSON(['status' => false, 'message' => 'Tidak bisa menghapus data ini tanpa persetujuan admin']);
         }
 
         $success = $this->model->deleteResult($indicator_id, $department_id, $tanggal);
 
         if ($success) {
+            if ($usedApproval) {
+                $approvalModel->markApprovalUsed((int)$indicator_id, (string)$department_id, $tanggal, $userId);
+            }
             return $this->response->setJSON(['status' => true, 'message' => 'Data berhasil dihapus']);
         } else {
             return $this->response->setJSON(['status' => false, 'message' => 'Gagal menghapus data']);
@@ -390,9 +447,11 @@ class LoadModuleForminputImprs extends AppController
         if (!empty($result['restricted'])) {
             $approvalModel = new \App\Models\ApprovalRequestModel();
             $userId = (int) (session('profile_id') ?? 0);
-            if ($approvalModel->isApproved($indicator_id, (string)$department_id, $tanggal, $userId)) {
+            $approvedAction = $approvalModel->getApprovedAction($indicator_id, (string)$department_id, $tanggal, $userId);
+            if ($approvedAction !== null) {
                 $result['restricted'] = false;
                 $result['message'] = '';
+                $result['approved_action'] = $approvedAction;
             }
         }
 
@@ -409,19 +468,41 @@ class LoadModuleForminputImprs extends AppController
         $departmentId = $this->request->getPost('department_id');
         $tanggal = $this->request->getPost('tanggal');
         $reason = trim($this->request->getPost('reason') ?? '');
+        $actionType = $this->request->getPost('action_type') ?? 'edit';
         $userId = (int) (session('profile_id') ?? 0);
 
         if (!$indicatorId || !$departmentId || !$tanggal || !$reason) {
             return $this->response->setJSON(['status' => false, 'message' => 'Data tidak lengkap']);
         }
 
+        if (!in_array($actionType, ['edit', 'delete'])) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Tipe aksi tidak valid']);
+        }
+
         $approvalModel = new \App\Models\ApprovalRequestModel();
-        $saved = $approvalModel->saveRequest($indicatorId, $departmentId, $tanggal, $reason, $userId);
+        $saved = $approvalModel->saveRequest($indicatorId, $departmentId, $tanggal, $reason, $userId, $actionType);
 
         if ($saved) {
             return $this->response->setJSON(['status' => true, 'message' => 'Permintaan persetujuan berhasil dikirim']);
         }
 
         return $this->response->setJSON(['status' => false, 'message' => 'Gagal mengirim permintaan']);
+    }
+
+    public function check_request_status()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['status' => false]);
+        }
+
+        $indicatorId = (int) $this->request->getPost('indicator_id');
+        $departmentId = $this->request->getPost('department_id');
+        $tanggal = $this->request->getPost('tanggal');
+        $userId = (int) (session('profile_id') ?? 0);
+
+        $approvalModel = new \App\Models\ApprovalRequestModel();
+        $data = $approvalModel->getRequestStatus($indicatorId, (string)$departmentId, $tanggal, $userId);
+
+        return $this->response->setJSON($data ?: ['status' => null]);
     }
 }

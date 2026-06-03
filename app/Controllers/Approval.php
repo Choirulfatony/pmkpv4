@@ -150,6 +150,18 @@ class Approval extends AppController
         return $this->response->setJSON(['status' => true, 'data' => $data]);
     }
 
+    public function ajaxGetAllRequestsData()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
+        }
+
+        $model = new ApprovalRequestModel();
+        $data = $model->getAllRequests();
+
+        return $this->response->setJSON(['status' => true, 'data' => $data]);
+    }
+
     public function ajaxApproveRequest()
     {
         if (!$this->request->isAJAX()) {

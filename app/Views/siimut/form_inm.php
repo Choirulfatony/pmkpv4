@@ -441,9 +441,6 @@
 
                 <!-- ===== DETAIL VIEW (read-only) ===== -->
                 <div id="detailView" class="d-none">
-                    <div id="restrictedInfo" class="alert alert-warning py-2 px-3 d-none">
-                        <i class="bi bi-info-circle me-1"></i> Data ini hanya bisa dilihat. Hubungi admin untuk edit/hapus
-                    </div>
                     <table class="table table-bordered table-sm mb-3">
                         <tr>
                             <th class="bg-light" style="width:120px;">Tanggal</th>
@@ -484,18 +481,29 @@
                     </table>
                 </div>
 
-                <!-- ===== APPROVAL REQUEST (inline) ===== -->
-                <div id="approvalRequestForm" class="d-none">
+                <!-- ===== REQUEST APPROVAL (trigger + form) ===== -->
+                <div id="requestSection" class="d-none">
                     <hr>
-                    <label class="form-label fw-bold">Alasan meminta persetujuan:</label>
-                    <textarea class="form-control" id="requestReason" rows="3" placeholder="Tulis alasan..."></textarea>
-                    <div class="mt-2">
-                        <button type="button" class="btn btn-warning" onclick="submitApprovalRequest()">
-                            <i class="bi bi-send me-1"></i> Kirim
-                        </button>
-                        <button type="button" class="btn btn-secondary" onclick="cancelApprovalRequest()">
-                            Batal
-                        </button>
+                    <div id="requestStatusAlert"></div>
+                    <a href="javascript:void(0)" id="btnRequestTrigger" onclick="toggleRequestForm()">
+                        <i class="bi bi-send me-1"></i> Kirim Request Approval
+                    </a>
+                    <div id="requestForm" class="d-none">
+                        <div class="alert alert-warning py-2 mb-2">
+                            <i class="bi bi-exclamation-triangle me-1"></i> Data sudah melebihi batas input.
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-bold small mb-1">Alasan</label>
+                            <textarea class="form-control" id="requestReason" rows="2" placeholder="Tulis alasan request..."></textarea>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-warning btn-sm" onclick="submitRequest('edit')">
+                                <i class="bi bi-pencil-square me-1"></i> Request Edit
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="submitRequest('delete')">
+                                <i class="bi bi-trash me-1"></i> Request Hapus
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -563,17 +571,11 @@
             <div class="modal-footer" id="modalFooter">
                 <!-- Mode Detail (ada data) -->
                 <span id="footerDetail">
-                    <button type="button" class="btn btn-outline-success" id="btnValidate" onclick="validateData()" style="display:none">
-                        <i class="bi bi-check-circle me-1"></i> Approved
-                    </button>
                     <button type="button" class="btn btn-outline-danger" id="btnDelete" onclick="deleteData()">
                         <i class="bi bi-trash me-1"></i> Hapus
                     </button>
                     <button type="button" class="btn btn-primary" id="btnEdit" onclick="showEditMode()">
                         <i class="bi bi-pencil me-1"></i> Edit
-                    </button>
-                    <button type="button" class="btn btn-warning" id="btnRequestApproval" onclick="requestApproval()" style="display:none">
-                        <i class="bi bi-send me-1"></i> Minta Persetujuan
                     </button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-1"></i> Tutup
@@ -796,17 +798,17 @@
 
         // Masa depan
         if (diffDays < 0) {
-            Swal.fire({ title: 'Info', text: 'Tidak bisa input untuk tanggal yang akan datang', icon: 'warning' });
+            toastError('Tidak bisa input untuk tanggal yang akan datang');
             return;
         }
 
-        // Dalam 7 hari
-        if (diffDays <= 7) {
-            _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, false);
+        // Dalam 30 hari
+        if (diffDays <= 30) {
+            _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, false, null);
             return;
         }
 
-        // Lebih dari 7 hari → cek group_days
+        // Lebih dari 30 hari → cek group_days
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '<?= site_url('siimut/load-module-forminput/check-input-allowed') ?>', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -815,16 +817,16 @@
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var resp = JSON.parse(xhr.responseText);
                 if (resp.allowed) {
-                    _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, resp.restricted);
+                    _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, resp.restricted, resp.approved_action || null);
                 } else {
-                    Swal.fire({ title: 'Info', text: resp.message || 'Tidak bisa input untuk tanggal ini', icon: 'warning' });
+                    toastError(resp.message || 'Tidak bisa input untuk tanggal ini');
                 }
             }
         };
         xhr.send('indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + tanggal);
     }
 
-    function _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, restricted) {
+    function _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, restricted, approvedAction) {
         document.getElementById('input_indicator_id').value = indicatorId;
         document.getElementById('input_department_id').value = departmentId;
         document.getElementById('input_department_name').value = departmentName;
@@ -838,11 +840,6 @@
 
         showFormMode();
 
-        // Sembunyikan info restricted dan form approval
-        document.getElementById('restrictedInfo').classList.add('d-none');
-        document.getElementById('approvalRequestForm').classList.add('d-none');
-        document.getElementById('btnRequestApproval').style.display = 'none';
-
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '<?= site_url('siimut/load-module-forminput/get-indicator-detail') ?>', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -851,6 +848,12 @@
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var response = JSON.parse(xhr.responseText);
                 var hasData = response.existing_data && response.existing_data.length > 0;
+
+                document.getElementById('requestSection').classList.add('d-none');
+                document.getElementById('requestForm').classList.add('d-none');
+                document.getElementById('requestReason').value = '';
+                document.getElementById('requestStatusAlert').innerHTML = '';
+                document.getElementById('btnRequestTrigger').classList.remove('d-none');
 
                 if (hasData) {
                     var last = response.existing_data[response.existing_data.length - 1];
@@ -884,16 +887,12 @@
                     if (restricted) {
                         document.getElementById('btnEdit').style.display = 'none';
                         document.getElementById('btnDelete').style.display = 'none';
-                        document.getElementById('btnValidate').style.display = 'none';
-                        document.getElementById('btnRequestApproval').style.display = '';
-                        document.getElementById('restrictedInfo').classList.remove('d-none');
+                        document.getElementById('requestSection').classList.remove('d-none');
+                        showRequestStatus(response.request_status);
                     } else {
-                        var isOwner = (String(last.result_insert_by) === String(currentUserId));
-                        var isDraft = (String(last.result_record_status) === 'D');
-                        document.getElementById('btnEdit').style.display = isOwner ? '' : 'none';
-                        document.getElementById('btnDelete').style.display = isOwner ? '' : 'none';
-                        document.getElementById('btnValidate').style.display = (isOwner && isDraft) ? '' : 'none';
-                        document.getElementById('btnRequestApproval').style.display = 'none';
+                        document.getElementById('btnEdit').style.display = (approvedAction && approvedAction !== 'edit') ? 'none' : '';
+                        document.getElementById('btnDelete').style.display = (approvedAction && approvedAction !== 'delete') ? 'none' : '';
+                        document.getElementById('requestSection').classList.add('d-none');
                     }
 
                     showDetailMode();
@@ -911,47 +910,6 @@
         xhr.send('indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + tanggal);
     }
 
-    function requestApproval() {
-        document.getElementById('btnRequestApproval').style.display = 'none';
-        document.getElementById('approvalRequestForm').classList.remove('d-none');
-        document.getElementById('requestReason').value = '';
-        document.getElementById('requestReason').focus();
-    }
-
-    function cancelApprovalRequest() {
-        document.getElementById('approvalRequestForm').classList.add('d-none');
-        document.getElementById('btnRequestApproval').style.display = '';
-    }
-
-    function submitApprovalRequest() {
-        var reason = document.getElementById('requestReason').value.trim();
-        if (!reason) {
-            Swal.fire({ title: 'Info', text: 'Alasan harus diisi', icon: 'warning' });
-            return;
-        }
-
-        var indicatorId = document.getElementById('input_indicator_id').value;
-        var departmentId = document.getElementById('input_department_id').value;
-        var tanggal = document.getElementById('input_tanggal').value;
-
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', '<?= site_url('siimut/load-module-forminput/request-approval') ?>', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                var resp = JSON.parse(xhr.responseText);
-                if (resp.status) {
-                    Swal.fire({ title: 'Berhasil', text: resp.message, icon: 'success' });
-                    cancelApprovalRequest();
-                } else {
-                    Swal.fire({ title: 'Gagal', text: resp.message, icon: 'error' });
-                }
-            }
-        };
-        xhr.send('indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + tanggal + '&reason=' + encodeURIComponent(reason));
-    }
-
     function showDetailMode() {
         document.getElementById('detailView').classList.remove('d-none');
         document.getElementById('formView').classList.add('d-none');
@@ -962,6 +920,7 @@
     function showFormMode() {
         document.getElementById('detailView').classList.add('d-none');
         document.getElementById('formView').classList.remove('d-none');
+        document.getElementById('requestSection').classList.add('d-none');
         document.getElementById('footerDetail').classList.add('d-none');
         document.getElementById('footerForm').classList.remove('d-none');
     }
@@ -1118,6 +1077,69 @@
                 }
             };
             xhr.send('indicator_id=' + indicator_id + '&department_id=' + department_id + '&tanggal=' + tanggal);
+        });
+    }
+
+    function toggleRequestForm() {
+        document.getElementById('btnRequestTrigger').classList.add('d-none');
+        document.getElementById('requestForm').classList.remove('d-none');
+    }
+
+    function showRequestStatus(data) {
+        var alertBox = document.getElementById('requestStatusAlert');
+        if (!data || !data.ar_status) return;
+        if (data.ar_status === 'pending') {
+            alertBox.innerHTML = '<div class="alert alert-info py-1 px-2 small mb-2"><i class="bi bi-clock me-1"></i> Request menunggu persetujuan admin</div>';
+            document.getElementById('btnRequestTrigger').classList.add('d-none');
+        } else if (data.ar_status === 'approved') {
+            alertBox.innerHTML = '<div class="alert alert-success py-1 px-2 small mb-2"><i class="bi bi-check-circle me-1"></i> Disetujui oleh <strong>' + (data.approve_by_name || '-') + '</strong> pada ' + (data.ar_approve_date || '-') + '</div>';
+            document.getElementById('btnRequestTrigger').classList.add('d-none');
+        } else if (data.ar_status === 'rejected') {
+            alertBox.innerHTML = '<div class="alert alert-danger py-1 px-2 small mb-2"><i class="bi bi-x-circle me-1"></i> Ditolak oleh <strong>' + (data.approve_by_name || '-') + '</strong> pada ' + (data.ar_approve_date || '-') + '<br><em class="small">Alasan: ' + (data.ar_notes || '-') + '</em></div>';
+        } else if (data.ar_status === 'completed') {
+            alertBox.innerHTML = '<div class="alert alert-secondary py-1 px-2 small mb-2"><i class="bi bi-check2-all me-1"></i> Request telah digunakan</div>';
+        }
+    }
+
+    function submitRequest(action) {
+        var indicator_id = document.getElementById('input_indicator_id').value;
+        var department_id = document.getElementById('input_department_id').value;
+        var tanggal = document.getElementById('input_tanggal').value;
+        var reason = document.getElementById('requestReason').value.trim();
+
+        if (!reason) {
+            toastError('Alasan harus diisi');
+            return;
+        }
+
+        var actionText = (action === 'edit') ? 'mengedit' : 'menghapus';
+
+        Swal.fire({
+            title: 'Kirim Request ' + (action === 'edit' ? 'Edit' : 'Hapus') + '?',
+            text: 'Data pada tanggal ' + tanggal + ' akan di-' + actionText,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, kirim',
+            cancelButtonText: 'Batal'
+        }).then(function(result) {
+            if (!result.isConfirmed) return;
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '<?= site_url('siimut/load-module-forminput/request-approval') ?>', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var resp = JSON.parse(xhr.responseText);
+                    if (resp.status) {
+                        toastSuccess(resp.message);
+                        modalInput.hide();
+                    } else {
+                        toastError(resp.message);
+                    }
+                }
+            };
+            xhr.send('indicator_id=' + indicator_id + '&department_id=' + department_id + '&tanggal=' + tanggal + '&reason=' + encodeURIComponent(reason) + '&action_type=' + action);
         });
     }
 

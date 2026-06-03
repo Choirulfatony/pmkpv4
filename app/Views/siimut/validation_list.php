@@ -1,6 +1,3 @@
-<?= $this->extend('_layout/_template') ?>
-
-<?= $this->section('content') ?>
 <div class="card">
     <div class="card-body">
         <form class="row g-2 mb-3" method="get">
@@ -71,4 +68,4 @@
         <?php endif; ?>
     </div>
 </div>
-<?= $this->endSection() ?>
+

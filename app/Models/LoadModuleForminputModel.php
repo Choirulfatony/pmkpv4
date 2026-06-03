@@ -611,9 +611,9 @@ class LoadModuleForminputModel extends Model
             return ['allowed' => false, 'restricted' => false, 'message' => 'Tidak bisa input untuk tanggal yang akan datang', 'max_days' => 0];
         }
 
-        // Dalam 7 hari → allowed (full access)
-        if ($diffDays <= 7) {
-            return ['allowed' => true, 'restricted' => false, 'message' => '', 'max_days' => 7];
+        // Dalam 30 hari → allowed (full access)
+        if ($diffDays <= 30) {
+            return ['allowed' => true, 'restricted' => false, 'message' => '', 'max_days' => 30];
         }
 
         // Cek group_days
@@ -626,10 +626,10 @@ class LoadModuleForminputModel extends Model
             ->get()
             ->getRow();
 
-        $maxDays = $row ? (int) $row->group_days : 7;
+        $maxDays = $row ? (int) $row->group_days : 30;
 
         if ($diffDays <= $maxDays) {
-            $restricted = $diffDays > 7;
+            $restricted = $diffDays > 30;
             return [
                 'allowed' => true,
                 'restricted' => $restricted,
@@ -657,6 +657,20 @@ class LoadModuleForminputModel extends Model
             ->get()
             ->getRow();
         return $row !== null;
+    }
+
+    public function getIndicatorInfo(int $indicatorId): ?object
+    {
+        return $this->getIndicatorById($indicatorId);
+    }
+
+    public function getDepartmentInfo(int $departmentId): ?object
+    {
+        $db = db_connect();
+        return $db->table('master_institution_department')
+            ->where('department_id', $departmentId)
+            ->get()
+            ->getRow();
     }
 
     public function permanentDelete(array $resultIds): int
