@@ -234,29 +234,18 @@ protected $column_order = [
 
         // Use raw SQL query to avoid CI4 parameter binding issues
         $sql = "
-            SELECT 
-                lqig.group_indicator_id,
-                lqig.group_department_id,
-                lqig.group_period,
+            SELECT DISTINCT
                 lqi.indicator_id,
                 lqi.indicator_element,
                 lqi.indicator_target,
-                mid.department_id,
-                mid.department_name,
                 lqi.indicator_units,
                 lqi.indicator_target_unit,
                 lqi.indicator_target_calculation AS operator,
                 lqi.indicator_factors AS factors,
                 lqi.indicator_record_status
-            FROM local_quality_indicator_group lqig
-            JOIN local_quality_indicator lqi ON lqi.indicator_id = lqig.group_indicator_id
-            JOIN master_institution_department mid ON mid.department_id = lqig.group_department_id
-            LEFT JOIN local_quality_indicator lqi2 ON lqi2.indicator_id = lqig.group_indicator_id
+            FROM local_quality_indicator lqi
             WHERE lqi.indicator_category_id = '5'
-            -- Smart filter: only indicators with data in selected year
             AND lqi.indicator_record_status " . (((int) $vtahun === (int) date('Y')) ? "= 'A'" : "IN ('A', 'D')") . "
-            AND lqig.group_record_status = 'A'
-            -- Show only indicators that have data in selected year
             AND EXISTS (
                 SELECT 1 FROM local_quality_indicator_result lqir
                 WHERE lqir.result_indicator_id = lqi.indicator_id
@@ -269,7 +258,12 @@ protected $column_order = [
         $userDepartmentId = session('department_id') ?? 0;
 
         if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
-            $sql .= " AND lqig.group_department_id = " . (int)$userDepartmentId;
+            $sql .= " AND EXISTS (
+                SELECT 1 FROM local_quality_indicator_result lqir
+                WHERE lqir.result_indicator_id = lqi.indicator_id
+                AND YEAR(lqir.result_period) = {$vtahun}
+                AND lqir.result_department_id = " . (int)$userDepartmentId . "
+            )";
         }
 
         // Search filter - use WHERE before GROUP BY instead of HAVING
@@ -392,21 +386,22 @@ protected $column_order = [
         $query = $db->query("
             SELECT COUNT(*) as total FROM (
                 SELECT DISTINCT local_quality_indicator.indicator_id
-                FROM local_quality_indicator_group
-                JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id
-                JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_group.group_department_id
+                FROM local_quality_indicator
                 WHERE local_quality_indicator.indicator_category_id = '5'
                 AND local_quality_indicator.indicator_record_status {$statusFilter}
-                AND local_quality_indicator_group.group_record_status = 'A'
                 AND EXISTS (
                     SELECT 1 FROM local_quality_indicator_result lqir
                     WHERE lqir.result_indicator_id = local_quality_indicator.indicator_id
-                    AND YEAR(lqir.result_period) = ?
+                    AND YEAR(lqir.result_period) = {$vtahun}
                 )
-                " . ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? "AND local_quality_indicator_group.group_department_id = " . $userDepartmentId : "") . "
-                GROUP BY local_quality_indicator.indicator_id
+                " . ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? "AND EXISTS (
+                    SELECT 1 FROM local_quality_indicator_result lqir
+                    WHERE lqir.result_indicator_id = local_quality_indicator.indicator_id
+                    AND YEAR(lqir.result_period) = {$vtahun}
+                    AND lqir.result_department_id = " . $userDepartmentId . "
+                )" : "") . "
             ) as counted
-        ", [$vtahun]);
+        ");
 
         $count = $query->getRow()->total ?? 0;
 
@@ -446,21 +441,20 @@ protected $column_order = [
                 local_quality_indicator.indicator_id,
                 local_quality_indicator.indicator_element,
                 master_institution_department.department_id,
-                master_institution_department.department_name,
-                local_quality_indicator_group.group_indicator_id
-            FROM local_quality_indicator_group
-            JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id
-            JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_group.group_department_id
+                master_institution_department.department_name
+            FROM local_quality_indicator_result
+            JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_result.result_indicator_id
+            JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_result.result_department_id
             WHERE local_quality_indicator.indicator_category_id = '5' 
             AND local_quality_indicator.indicator_record_status IN ('A', 'D') 
-            AND local_quality_indicator_group.group_record_status = 'A'
-            AND local_quality_indicator_group.group_indicator_id = ?
+            AND local_quality_indicator_result.result_indicator_id = ?
+            AND YEAR(local_quality_indicator_result.result_period) = ?
             {$searchCondition}
             {$deptCondition}
             GROUP BY master_institution_department.department_id
             ORDER BY master_institution_department.department_name ASC
             {$limit}
-        ", [$indicatorId]);
+        ", [$indicatorId, $tahun]);
 
         return $query->getResult();
     }
@@ -582,15 +576,16 @@ protected $column_order = [
 
         $query = $db->query("
             SELECT COUNT(DISTINCT master_institution_department.department_id) as total
-            FROM local_quality_indicator_group
-            JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id
-            JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_group.group_department_id
-            WHERE local_quality_indicator_group.group_indicator_id = ?
+            FROM local_quality_indicator_result
+            JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_result.result_indicator_id
+            JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_result.result_department_id
+            WHERE local_quality_indicator_result.result_indicator_id = ?
             AND local_quality_indicator.indicator_category_id = '5' 
             AND local_quality_indicator.indicator_record_status IN ('A', 'D')
+            AND YEAR(local_quality_indicator_result.result_period) = ?
             {$searchCondition}
             {$deptCondition}
-        ", [$indicatorId]);
+        ", [$indicatorId, $tahun]);
 
         return $query->getRow()->total ?? 0;
     }
@@ -619,22 +614,23 @@ protected $column_order = [
         $query = $db->query("
             SELECT COUNT(*) as total FROM (
                 SELECT DISTINCT local_quality_indicator.indicator_id
-                FROM local_quality_indicator_group
-                JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id
-                JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_group.group_department_id
+                FROM local_quality_indicator
                 WHERE local_quality_indicator.indicator_category_id = '5'
                 AND local_quality_indicator.indicator_record_status {$statusFilter}
-                AND local_quality_indicator_group.group_record_status = 'A'
                 AND EXISTS (
                     SELECT 1 FROM local_quality_indicator_result lqir
                     WHERE lqir.result_indicator_id = local_quality_indicator.indicator_id
-                    AND YEAR(lqir.result_period) = ?
+                    AND YEAR(lqir.result_period) = {$vtahun}
                 )
-                " . ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? "AND local_quality_indicator_group.group_department_id = " . $userDepartmentId : "") . "
+                " . ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? "AND EXISTS (
+                    SELECT 1 FROM local_quality_indicator_result lqir
+                    WHERE lqir.result_indicator_id = local_quality_indicator.indicator_id
+                    AND YEAR(lqir.result_period) = {$vtahun}
+                    AND lqir.result_department_id = " . $userDepartmentId . "
+                )" : "") . "
                 {$searchCondition}
-                GROUP BY local_quality_indicator.indicator_id
             ) as counted
-        ", [$vtahun]);
+        ");
 
         return $query->getRow()->total ?? 0;
     }
@@ -664,7 +660,7 @@ protected $column_order = [
         }
 
         $db = db_connect();
-        $query = $db->query("SELECT DISTINCT group_period FROM local_quality_indicator_group WHERE group_record_status = 'A' ORDER BY group_period DESC");
+        $query = $db->query("SELECT DISTINCT YEAR(result_period) AS group_period FROM local_quality_indicator_result ORDER BY group_period DESC");
         $periods = array_column($query->getResult(), 'group_period');
 
         $cache->save($cacheKey, $periods, 3600);
@@ -690,11 +686,8 @@ protected $column_order = [
             lqi.indicator_record_status
         ");
 
-        $builder->join('local_quality_indicator_group lqig', 'lqi.indicator_id = lqig.group_indicator_id', 'left');
-
         $builder->where("lqi.indicator_category_id", '5');
         $builder->whereIn("lqi.indicator_record_status", ['A', 'D']);
-        $builder->where('lqig.group_record_status', 'A');
 
         // Filter by user role / department override
         $userRole = session('user_role') ?? '';
@@ -702,10 +695,20 @@ protected $column_order = [
 
         $filterDepartmentId = null;
         if ($departmentId !== null && $departmentId > 0) {
-            $builder->where('lqig.group_department_id', $departmentId);
+            $builder->where("EXISTS (
+                SELECT 1 FROM local_quality_indicator_result lqir_sub
+                WHERE lqir_sub.result_indicator_id = lqi.indicator_id
+                AND YEAR(lqir_sub.result_period) = {$tahun}
+                AND lqir_sub.result_department_id = {$departmentId}
+            )", null, false);
             $filterDepartmentId = $departmentId;
         } elseif (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
-            $builder->where('lqig.group_department_id', $userDepartmentId);
+            $builder->where("EXISTS (
+                SELECT 1 FROM local_quality_indicator_result lqir_sub
+                WHERE lqir_sub.result_indicator_id = lqi.indicator_id
+                AND YEAR(lqir_sub.result_period) = {$tahun}
+                AND lqir_sub.result_department_id = {$userDepartmentId}
+            )", null, false);
             $filterDepartmentId = $userDepartmentId;
         }
 

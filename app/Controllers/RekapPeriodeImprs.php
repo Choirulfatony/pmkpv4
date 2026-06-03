@@ -36,11 +36,10 @@ class RekapPeriodeImprs extends AppController
             $db = db_connect();
             $departments = $db->query("
                 SELECT DISTINCT mid.department_id, mid.department_name
-                FROM local_quality_indicator_group lqig
-                LEFT JOIN local_quality_indicator qi ON qi.indicator_id = lqig.group_indicator_id
-                LEFT JOIN master_institution_department mid ON mid.department_id = lqig.group_department_id
+                FROM local_quality_indicator_result qir
+                JOIN local_quality_indicator qi ON qi.indicator_id = qir.result_indicator_id
+                JOIN master_institution_department mid ON mid.department_id = qir.result_department_id
                 WHERE qi.indicator_category_id = '5'
-                AND qi.indicator_record_status = 'A'
                 ORDER BY mid.department_name ASC
             ")->getResult();
         }
