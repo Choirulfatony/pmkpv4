@@ -525,7 +525,7 @@
                         </div>
 
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-6">
                                 <label class="form-label fw-bold">Numerator <span class="text-danger">*</span></label>
                                 <div class="input-group has-validation">
                                     <input type="number" class="form-control" id="input_numerator" name="numerator" step="any" min="0" placeholder="Nilai numerator" required>
@@ -533,7 +533,7 @@
                                     <div class="invalid-feedback">Numerator wajib diisi</div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-6">
                                 <label class="form-label fw-bold">Denumerator <span class="text-danger">*</span></label>
                                 <div class="input-group has-validation">
                                     <input type="number" class="form-control" id="input_denumerator" name="denumerator" step="any" min="0" placeholder="Nilai denumerator" required>
