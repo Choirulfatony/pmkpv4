@@ -43,10 +43,25 @@ class LoadModuleForminput extends AppController
         }
         $departments = array_values($deptMap);
 
-        // Determine if we should show the "all departments" option
         $role = session()->get('user_role');
         $userDepartmentId = session()->get('department_id') ?? 0;
         $showAllOption = in_array($role, ['ADMINISTRATOR', 'KOMITE']) || empty($userDepartmentId);
+
+        // For admin: get all departments for this category
+        // For regular users: derive from their assigned department
+        if ($showAllOption) {
+            $deptRows = $this->model->getCategoryDepartments();
+            $departments = [];
+            foreach ($deptRows as $d) {
+                $departments[] = [
+                    'department_id' => $d->department_id,
+                    'department_name' => $d->department_name
+                ];
+            }
+        } else {
+            // Keep existing derivation from filtered indicator results
+            $departments = array_values($deptMap);
+        }
 
         return $this->render('siimut/form_inm', [
             'judul'          => 'Form Input INM',

@@ -40,11 +40,25 @@ class LoadModuleForminputImpunit extends AppController
                 'department_name' => $dept->department_name
             ];
         }
-        $departments = array_values($deptMap);
-
         $role = session()->get('user_role');
         $userDepartmentId = session()->get('department_id') ?? 0;
         $showAllOption = in_array($role, ['ADMINISTRATOR', 'KOMITE']) || empty($userDepartmentId);
+
+        // For admin: get all departments for this category
+        // For regular users: derive from their assigned department
+        if ($showAllOption) {
+            $deptRows = $this->model->getCategoryDepartments();
+            $departments = [];
+            foreach ($deptRows as $d) {
+                $departments[] = [
+                    'department_id' => $d->department_id,
+                    'department_name' => $d->department_name
+                ];
+            }
+        } else {
+            // Keep existing derivation from filtered indicator results
+            $departments = array_values($deptMap);
+        }
 
         return $this->render('siimut/form_impunit', [
             'judul'          => 'Form Input IMPUNIT',

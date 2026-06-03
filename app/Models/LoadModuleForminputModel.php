@@ -484,6 +484,25 @@ class LoadModuleForminputModel extends Model
         return $query->getResult();
     }
 
+    public function getCategoryDepartments()
+    {
+        $db = db_connect();
+        $query = $db->query("
+            SELECT DISTINCT
+                qig.group_department_id AS department_id,
+                mid.department_name
+            FROM {$this->tablePrefix}quality_indicator_group qig
+            JOIN {$this->tablePrefix}quality_indicator qi ON qi.indicator_id = qig.group_indicator_id
+            JOIN master_institution_department mid ON mid.department_id = qig.group_department_id
+            WHERE qi.indicator_category_id = ?
+            AND qi.indicator_record_status = 'A'
+            AND qig.group_record_status = 'A'
+            ORDER BY mid.department_name ASC
+        ", [$this->categoryId]);
+
+        return $query->getResult();
+    }
+
     public function getIndicatorById(int $indicatorId)
     {
         $db = db_connect();
