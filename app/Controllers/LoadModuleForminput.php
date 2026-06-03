@@ -114,11 +114,9 @@ class LoadModuleForminput extends AppController
             $target  = (float) ($ind->indicator_target ?? 0);
             $factors = (float) ($ind->indicator_factors ?? 1);
             $operator = $ind->indicator_target_calculation ?? '>=';
-            $frequency = $ind->indicator_frequency ?? 'D';
 
-            if ($frequency === 'M' || $frequency === 'Y') {
-                $daily = [];
-                $d = 1;
+            $daily = [];
+            for ($d = 1; $d <= $daysInMonth; $d++) {
                 if (isset($dailyMap[$key][$d])) {
                     $r      = $dailyMap[$key][$d];
                     $num    = (float) $r->num;
@@ -132,37 +130,13 @@ class LoadModuleForminput extends AppController
                     $status = '';
                 }
                 $daily[] = [
-                    'hari'     => 1,
+                    'hari'     => $d,
                     'num'      => $num,
                     'denum'    => $denum,
                     'nilai'    => $nilai,
                     'tercapai' => $nilai !== null ? $this->model->hitungTercapai($nilai, $target, $operator) : null,
                     'status'   => $status,
                 ];
-            } else {
-                $daily = [];
-                for ($d = 1; $d <= $daysInMonth; $d++) {
-                    if (isset($dailyMap[$key][$d])) {
-                        $r      = $dailyMap[$key][$d];
-                        $num    = (float) $r->num;
-                        $denum  = (float) $r->denum;
-                        $nilai  = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
-                        $status = $r->result_record_status ?? '';
-                    } else {
-                        $num    = 0;
-                        $denum  = 0;
-                        $nilai  = null;
-                        $status = '';
-                    }
-                    $daily[] = [
-                        'hari'     => $d,
-                        'num'      => $num,
-                        'denum'    => $denum,
-                        'nilai'    => $nilai,
-                        'tercapai' => $nilai !== null ? $this->model->hitungTercapai($nilai, $target, $operator) : null,
-                        'status'   => $status,
-                    ];
-                }
             }
             $ind->daily = $daily;
         }

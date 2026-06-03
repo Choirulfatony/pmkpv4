@@ -691,14 +691,13 @@
         for (var i = 0; i < data.length; i++) {
             var row = data[i];
             var daily = row.daily || [];
-            var freq = row.indicator_frequency || 'D';
             html += '<tr class="indicator-row">';
             html += '<td class="text-center fw-bold">' + (i + 1) + '</td>';
-            html += '<td class="text-start">' + escHtml(row.indicator_element) + ' <span class="badge bg-secondary ms-1">' + freq + '</span></td>';
+            html += '<td class="text-start">' + escHtml(row.indicator_element) + '</td>';
             html += '<td class="text-center">' + escHtml(row.indicator_target) + ' ' + escHtml(row.indicator_units) + '</td>';
 
-            if (freq === 'M' || freq === 'Y') {
-                var item = daily[0] || { nilai: null, num: 0, denum: 0, status: '', hari: 1 };
+            for (var d = 0; d < daily.length; d++) {
+                var item = daily[d];
                 var cellClass = 'day-cell text-center';
                 var nilaiDisplay = '-';
 
@@ -713,32 +712,10 @@
                     cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
                 }
 
-                html += '<td class="' + cellClass + '" colspan="' + days + '" ' +
+                html += '<td class="' + cellClass + '" ' +
                     'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\')">' +
                     '<div class="fw-bold">' + nilaiDisplay + '</div>' +
                     '<div class="num-denum">' + (item.num || 0) + ' / ' + (item.denum || 0) + '</div></td>';
-            } else {
-                for (var d = 0; d < daily.length; d++) {
-                    var item = daily[d];
-                    var cellClass = 'day-cell text-center';
-                    var nilaiDisplay = '-';
-
-                    if (item.nilai !== null) {
-                        nilaiDisplay = Number(item.nilai).toFixed(2) + ' ' + escHtml(row.indicator_units);
-                        cellClass += ' cell-has-data';
-                        if (item.status === 'A') cellClass += ' cell-approved';
-                        else if (item.status === 'D') cellClass += ' cell-draft';
-                        if (item.tercapai === true) cellClass += ' cell-target';
-                        else if (item.tercapai === false) cellClass += ' cell-fail';
-                    } else {
-                        cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
-                    }
-
-                    html += '<td class="' + cellClass + '" ' +
-                        'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\')">' +
-                        '<div class="fw-bold">' + nilaiDisplay + '</div>' +
-                        '<div class="num-denum">' + (item.num || 0) + ' / ' + (item.denum || 0) + '</div></td>';
-                }
             }
             html += '</tr>';
         }
