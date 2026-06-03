@@ -146,15 +146,26 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
     $routes->get('rekap-laporan-imprs/detail/(:num)', 'RekapLaporanImprs::viewDetailImprs/$1');
     $routes->post('rekap-laporan-imprs/ajax-daily-detail-imprs', 'RekapLaporanImprs::getAjaxDailyDetail');
 
-    // Rekap Laporan IMPUnit
-    $routes->get('rekap-laporan-impunit', 'RekapLaporanImpunit::index');
-    $routes->post('rekap-laporan-impunit/ajax_rekap_impunit', 'RekapLaporanImpunit::getAjaxDataRekapImpunit');
-    $routes->post('rekap-laporan-impunit/ajax-detail-impunit', 'RekapLaporanImpunit::getAjaxDataRekapImpunitDetail');
-    $routes->post('rekap-laporan-impunit/ajax-daily-detail-impunit', 'RekapLaporanImpunit::getAjaxDailyDetail');
-    $routes->get('rekap-laporan-impunit/export', 'RekapLaporanImpunit::exportExcel');
-    $routes->get('rekap-laporan-impunit/export-indicator/(:num)', 'RekapLaporanImpunit::exportExcelIndicator/$1');
-    $routes->get('rekap-laporan-impunit/detail/(:num)', 'RekapLaporanImpunit::viewDetailImpunit/$1');
-});
+        // Rekap Laporan IMPUnit
+        $routes->get('rekap-laporan-impunit', 'RekapLaporanImpunit::index');
+        $routes->post('rekap-laporan-impunit/ajax_rekap_impunit', 'RekapLaporanImpunit::getAjaxDataRekapImpunit');
+        $routes->post('rekap-laporan-impunit/ajax-detail-impunit', 'RekapLaporanImpunit::getAjaxDataRekapImpunitDetail');
+        $routes->post('rekap-laporan-impunit/ajax-daily-detail-impunit', 'RekapLaporanImpunit::getAjaxDailyDetail');
+        $routes->get('rekap-laporan-impunit/export', 'RekapLaporanImpunit::exportExcel');
+        $routes->get('rekap-laporan-impunit/export-indicator/(:num)', 'RekapLaporanImpunit::exportExcelIndicator/$1');
+        $routes->get('rekap-laporan-impunit/detail/(:num)', 'RekapLaporanImpunit::viewDetailImpunit/$1');
+
+        // Data Indikator Management (CRUD for quality_indicator table)
+        $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
+            $routes->get('data-indikator/(:any)', 'DataIndikator::index/$1');
+            $routes->post('data-indikator/ajax-get-data', 'DataIndikator::ajaxGetData');
+            $routes->post('data-indikator/get-detail', 'DataIndikator::getDetail');
+            $routes->post('data-indikator/save', 'DataIndikator::save');
+            $routes->post('data-indikator/delete', 'DataIndikator::delete');
+            $routes->post('data-indikator/restore', 'DataIndikator::restore');
+        });
+
+        // ========== IKPRS ==========
 
 
     // ========== IKPRS ==========
