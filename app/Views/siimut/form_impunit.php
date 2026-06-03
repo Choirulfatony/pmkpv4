@@ -514,11 +514,11 @@
                         <input type="hidden" id="input_department_id" name="department_id">
 
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-6">
                                 <label class="form-label fw-bold">Tanggal</label>
                                 <input type="text" class="form-control" id="input_tanggal" name="tanggal" readonly>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-6">
                                 <label class="form-label fw-bold">Ruangan</label>
                                 <input type="text" class="form-control" id="input_department_name" readonly>
                             </div>
