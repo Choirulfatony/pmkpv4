@@ -320,14 +320,16 @@
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label fw-bold">Periode (Bulan - Tahun)</label>
+                    <label class="form-label fw-bold" id="filterLabel">Periode (Bulan - Tahun)</label>
                     <div class="input-group" id="periodeGroup">
+                        <span id="monthSelectorWrapper">
                         <select class="form-select form-select-sm" id="filter_bulan" style="min-width:110px;">
                             <?php $namaBulan = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']; ?>
                             <?php for ($m = 1; $m <= 12; $m++): ?>
                                 <option value="<?= str_pad($m, 2, '0', STR_PAD_LEFT) ?>" <?= (str_pad($m, 2, '0', STR_PAD_LEFT) == $bulan) ? 'selected' : '' ?>><?= $namaBulan[$m] ?></option>
                             <?php endfor; ?>
                         </select>
+                        </span>
                         <select class="form-select form-select-sm" id="filter_tahun" style="min-width:85px;">
                             <?php for ($y = date('Y'); $y >= date('Y') - 5; $y--): ?>
                                 <option value="<?= $y ?>" <?= ($y == $tahun) ? 'selected' : '' ?>><?= $y ?></option>
@@ -659,10 +661,13 @@
 
     var _allData = [];
     var _currentPage = 1;
+    var _displayMode = 'D';
 
     function renderTable(response) {
         var data = response.indicators;
         var days = response.days || 31;
+        var displayMode = response.display_mode || 'D';
+        var periodLabels = response.period_labels || [];
 
         if (!data || data.length === 0) {
             document.getElementById('tableContainer').classList.add('d-none');
@@ -670,34 +675,55 @@
         }
 
         _allData = data;
+        _displayMode = displayMode;
         document.getElementById('tableInfo').textContent = 'Menampilkan ' + data.length + ' / ' + data.length + ' indikator';
+
+        // Adjust filter UI for display mode
+        var monthWrapper = document.getElementById('monthSelectorWrapper');
+        var filterLabel = document.getElementById('filterLabel');
+        if (displayMode === 'M' || displayMode === 'Y') {
+            monthWrapper.style.display = 'none';
+            filterLabel.textContent = 'Periode (Tahun)';
+        } else {
+            monthWrapper.style.display = '';
+            filterLabel.textContent = 'Periode (Bulan - Tahun)';
+        }
 
         var headerHtml = '<th class="text-center" style="width:40px;">No</th>' +
             '<th style="min-width:250px;">Indikator</th>' +
             '<th style="width:80px;" class="text-center">Target</th>';
-        for (var d = 1; d <= days; d++) {
-            headerHtml += '<th class="text-center" style="width:70px;">' + d + '</th>';
+        if (periodLabels.length > 0) {
+            for (var d = 0; d < periodLabels.length; d++) {
+                headerHtml += '<th class="text-center" style="width:70px;">' + periodLabels[d] + '</th>';
+            }
+        } else {
+            for (var d = 1; d <= days; d++) {
+                headerHtml += '<th class="text-center" style="width:70px;">' + d + '</th>';
+            }
         }
         document.getElementById('headerRow').innerHTML = headerHtml;
 
-        document.getElementById('tableBody').innerHTML = buildRows(data, days);
+        document.getElementById('tableBody').innerHTML = buildRows(data, days, displayMode, periodLabels);
         document.getElementById('tableContainer').classList.remove('d-none');
         document.getElementById('searchInput').value = '';
         applyPagination();
     }
 
-    function buildRows(data, days) {
+    function buildRows(data, days, displayMode, periodLabels) {
         var html = '';
+        var labels = periodLabels && periodLabels.length > 0 ? periodLabels : [];
+        var count = labels.length > 0 ? labels.length : days;
+
         for (var i = 0; i < data.length; i++) {
             var row = data[i];
             var daily = row.daily || [];
             html += '<tr class="indicator-row">';
             html += '<td class="text-center fw-bold">' + (i + 1) + '</td>';
-            html += '<td class="text-start">' + escHtml(row.indicator_element) + '</td>';
+            html += '<td class="text-start">' + escHtml(row.indicator_element) + ' <span class="badge bg-secondary ms-1">' + displayMode + '</span></td>';
             html += '<td class="text-center">' + escHtml(row.indicator_target) + ' ' + escHtml(row.indicator_units) + '</td>';
 
-            for (var d = 0; d < daily.length; d++) {
-                var item = daily[d];
+            for (var p = 0; p < count; p++) {
+                var item = daily[p] || { nilai: null, num: 0, denum: 0, status: '', hari: (labels[p] || (p + 1)) };
                 var cellClass = 'day-cell text-center';
                 var nilaiDisplay = '-';
 
@@ -787,11 +813,22 @@
         var periode = document.getElementById('filter_periode').value;
         var tahun = periode.substring(0, 4);
         var bulan = periode.substring(5, 7);
-        var tanggal = tahun + '-' + bulan + '-' + String(hari).padStart(2, '0');
+        var tanggal;
+
+        if (_displayMode === 'Y') {
+            tanggal = String(hari) + '-01-01';
+            bulan = '01';
+            tahun = String(hari);
+        } else if (_displayMode === 'M') {
+            tanggal = tahun + '-' + String(hari).padStart(2, '0') + '-01';
+            bulan = String(hari).padStart(2, '0');
+        } else {
+            tanggal = tahun + '-' + bulan + '-' + String(hari).padStart(2, '0');
+        }
 
         // Validasi tanggal
         var today = new Date();
-        var tglDate = new Date(parseInt(tahun), parseInt(bulan) - 1, hari);
+        var tglDate = new Date(parseInt(tahun), parseInt(bulan) - 1, parseInt(hari));
         today.setHours(0, 0, 0, 0);
         tglDate.setHours(0, 0, 0, 0);
         var diffDays = Math.round((today - tglDate) / (1000 * 60 * 60 * 24));

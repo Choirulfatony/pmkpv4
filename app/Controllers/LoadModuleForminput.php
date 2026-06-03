@@ -71,6 +71,35 @@ class LoadModuleForminput extends AppController
 
         $indicators = $this->model->getIndicators($tahun, $department_id, $bulan);
 
+        // Determine display mode from first indicator's frequency
+        $displayMode = 'D';
+        if (!empty($indicators)) {
+            $freq = $indicators[0]->indicator_frequency ?? 'D';
+            $displayMode = in_array($freq, ['M', 'Y']) ? $freq : 'D';
+        }
+
+        // Build period labels based on display mode
+        $periodLabels = [];
+        $periodCount = 0;
+
+        if ($displayMode === 'M') {
+            $periodCount = 12;
+            $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            $periodLabels = $monthNames;
+        } elseif ($displayMode === 'Y') {
+            $yearRange = 5;
+            $periodCount = $yearRange;
+            for ($y = $tahun; $y > $tahun - $yearRange; $y--) {
+                $periodLabels[] = (string) $y;
+                $periodCount = count($periodLabels);
+            }
+        } else {
+            $periodCount = $this->model->getDaysInMonth($bulan, $tahun);
+            for ($d = 1; $d <= $periodCount; $d++) {
+                $periodLabels[] = (string) $d;
+            }
+        }
+
         // Get fill status for each indicator
         $statusList = $this->model->getFillStatus($tahun, str_pad((string) $bulan, 2, '0', STR_PAD_LEFT));
 
@@ -81,19 +110,17 @@ class LoadModuleForminput extends AppController
             $statusMap[$key] = $s;
         }
 
-        // Get daily data for all indicators at once
+        // Get daily/monthly/yearly data for all indicators at once
         $indicatorIds = array_map(fn($i) => (int) $i->indicator_id, $indicators);
-        $rawDaily = $this->model->getDailyDataForMultipleIndicators($indicatorIds, $tahun, $bulan);
+        $rawDaily = $this->model->getDailyDataForMultipleIndicators($indicatorIds, $tahun, $bulan, $displayMode);
 
-        // Build daily map: [indicatorId_deptId][day] => data
+        // Build data map: [indicatorId_deptId][period] => data
         $dailyMap = [];
         foreach ($rawDaily as $d) {
             $key = $d->result_indicator_id . '_' . $d->result_department_id;
-            $day = (int) $d->tanggal;
-            $dailyMap[$key][$day] = $d;
+            $period = (int) $d->tanggal;
+            $dailyMap[$key][$period] = $d;
         }
-
-        $daysInMonth = $this->model->getDaysInMonth($bulan, $tahun);
 
         // Attach status and daily data to each indicator
         foreach ($indicators as &$ind) {
@@ -116,9 +143,13 @@ class LoadModuleForminput extends AppController
             $operator = $ind->indicator_target_calculation ?? '>=';
 
             $daily = [];
-            for ($d = 1; $d <= $daysInMonth; $d++) {
-                if (isset($dailyMap[$key][$d])) {
-                    $r      = $dailyMap[$key][$d];
+            for ($p = 0; $p < $periodCount; $p++) {
+                $periodNum = $p + 1;
+                if ($displayMode === 'Y') {
+                    $periodNum = (int) $periodLabels[$p];
+                }
+                if (isset($dailyMap[$key][$periodNum])) {
+                    $r      = $dailyMap[$key][$periodNum];
                     $num    = (float) $r->num;
                     $denum  = (float) $r->denum;
                     $nilai  = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
@@ -130,7 +161,7 @@ class LoadModuleForminput extends AppController
                     $status = '';
                 }
                 $daily[] = [
-                    'hari'     => $d,
+                    'hari'     => $periodNum,
                     'num'      => $num,
                     'denum'    => $denum,
                     'nilai'    => $nilai,
@@ -142,8 +173,10 @@ class LoadModuleForminput extends AppController
         }
 
         return $this->response->setJSON([
-            'indicators' => $indicators,
-            'days'       => $daysInMonth,
+            'indicators'     => $indicators,
+            'days'           => $periodCount,
+            'display_mode'   => $displayMode,
+            'period_labels'  => $periodLabels,
         ]);
     }
 

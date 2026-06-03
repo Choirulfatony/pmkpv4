@@ -51,6 +51,7 @@ class LoadModuleForminputModel extends Model
             qi.indicator_target_unit,
             qi.indicator_target_calculation,
             qi.indicator_factors,
+            qi.indicator_frequency,
             mid.department_id,
             mid.department_name
         ');
@@ -423,7 +424,7 @@ class LoadModuleForminputModel extends Model
         return $builder->get()->getResult();
     }
 
-    public function getDailyDataForMultipleIndicators(array $indicatorIds, int $tahun, int $bulan)
+    public function getDailyDataForMultipleIndicators(array $indicatorIds, int $tahun, ?int $bulan = null, string $frequency = 'D')
     {
         if (empty($indicatorIds)) {
             return [];
@@ -432,21 +433,48 @@ class LoadModuleForminputModel extends Model
         $db = db_connect();
         $builder = $db->table($this->tablePrefix . 'quality_indicator_result qir');
 
-        $builder->select("
-            qir.result_indicator_id,
-            qir.result_department_id,
-            DAY(qir.result_period) AS tanggal,
-            qir.result_record_status,
-            SUM(qir.result_numerator_value) AS num,
-            SUM(qir.result_denumerator_value) AS denum
-        ");
+        if ($frequency === 'M') {
+            $builder->select("
+                qir.result_indicator_id,
+                qir.result_department_id,
+                MONTH(qir.result_period) AS tanggal,
+                qir.result_record_status,
+                SUM(qir.result_numerator_value) AS num,
+                SUM(qir.result_denumerator_value) AS denum
+            ");
+            $builder->whereIn('qir.result_indicator_id', $indicatorIds);
+            $builder->whereIn('qir.result_record_status', ['D', 'A']);
+            $builder->where('YEAR(qir.result_period)', $tahun);
+            $builder->groupBy(['qir.result_indicator_id', 'qir.result_department_id', 'MONTH(qir.result_period)', 'qir.result_record_status']);
+        } elseif ($frequency === 'Y') {
+            $builder->select("
+                qir.result_indicator_id,
+                qir.result_department_id,
+                YEAR(qir.result_period) AS tanggal,
+                qir.result_record_status,
+                SUM(qir.result_numerator_value) AS num,
+                SUM(qir.result_denumerator_value) AS denum
+            ");
+            $builder->whereIn('qir.result_indicator_id', $indicatorIds);
+            $builder->whereIn('qir.result_record_status', ['D', 'A']);
+            $builder->groupBy(['qir.result_indicator_id', 'qir.result_department_id', 'YEAR(qir.result_period)', 'qir.result_record_status']);
+        } else {
+            // D (Daily) - current behavior
+            $builder->select("
+                qir.result_indicator_id,
+                qir.result_department_id,
+                DAY(qir.result_period) AS tanggal,
+                qir.result_record_status,
+                SUM(qir.result_numerator_value) AS num,
+                SUM(qir.result_denumerator_value) AS denum
+            ");
+            $builder->whereIn('qir.result_indicator_id', $indicatorIds);
+            $builder->whereIn('qir.result_record_status', ['D', 'A']);
+            $builder->where('YEAR(qir.result_period)', $tahun);
+            $builder->where('MONTH(qir.result_period)', $bulan);
+            $builder->groupBy(['qir.result_indicator_id', 'qir.result_department_id', 'qir.result_period', 'qir.result_record_status']);
+        }
 
-        $builder->whereIn('qir.result_indicator_id', $indicatorIds);
-        $builder->whereIn('qir.result_record_status', ['D', 'A']);
-        $builder->where('YEAR(qir.result_period)', $tahun);
-        $builder->where('MONTH(qir.result_period)', $bulan);
-
-        $builder->groupBy(['qir.result_indicator_id', 'qir.result_department_id', 'qir.result_period', 'qir.result_record_status']);
         $builder->orderBy('qir.result_indicator_id');
         $builder->orderBy('qir.result_department_id');
         $builder->orderBy('qir.result_period', 'ASC');

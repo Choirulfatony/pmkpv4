@@ -67,7 +67,36 @@ class LoadModuleForminputImpunit extends AppController
         $bulan = (int) ($this->request->getPost('bulan') ?? date('m'));
         $department_id = (int) ($this->request->getPost('department_id') ?? 0);
 
-        $indicators = $this->model->getIndicators($tahun, $department_id);
+        $indicators = $this->model->getIndicators($tahun, $department_id, $bulan);
+
+        // Determine display mode from first indicator's frequency
+        $displayMode = 'D';
+        if (!empty($indicators)) {
+            $freq = $indicators[0]->indicator_frequency ?? 'D';
+            $displayMode = in_array($freq, ['M', 'Y']) ? $freq : 'D';
+        }
+
+        // Build period labels based on display mode
+        $periodLabels = [];
+        $periodCount = 0;
+
+        if ($displayMode === 'M') {
+            $periodCount = 12;
+            $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            $periodLabels = $monthNames;
+        } elseif ($displayMode === 'Y') {
+            $yearRange = 5;
+            $periodCount = $yearRange;
+            for ($y = $tahun; $y > $tahun - $yearRange; $y--) {
+                $periodLabels[] = (string) $y;
+                $periodCount = count($periodLabels);
+            }
+        } else {
+            $periodCount = $this->model->getDaysInMonth($bulan, $tahun);
+            for ($d = 1; $d <= $periodCount; $d++) {
+                $periodLabels[] = (string) $d;
+            }
+        }
 
         $statusList = $this->model->getFillStatus($tahun, str_pad((string) $bulan, 2, '0', STR_PAD_LEFT));
 
@@ -78,16 +107,14 @@ class LoadModuleForminputImpunit extends AppController
         }
 
         $indicatorIds = array_map(fn($i) => (int) $i->indicator_id, $indicators);
-        $rawDaily = $this->model->getDailyDataForMultipleIndicators($indicatorIds, $tahun, $bulan);
+        $rawDaily = $this->model->getDailyDataForMultipleIndicators($indicatorIds, $tahun, $bulan, $displayMode);
 
         $dailyMap = [];
         foreach ($rawDaily as $d) {
             $key = $d->result_indicator_id . '_' . $d->result_department_id;
-            $day = (int) $d->tanggal;
-            $dailyMap[$key][$day] = $d;
+            $period = (int) $d->tanggal;
+            $dailyMap[$key][$period] = $d;
         }
-
-        $daysInMonth = $this->model->getDaysInMonth($bulan, $tahun);
 
         foreach ($indicators as &$ind) {
             $key = $ind->indicator_id . '_' . $ind->department_id;
@@ -109,9 +136,13 @@ class LoadModuleForminputImpunit extends AppController
             $operator = $ind->indicator_target_calculation ?? '>=';
 
             $daily = [];
-            for ($d = 1; $d <= $daysInMonth; $d++) {
-                if (isset($dailyMap[$key][$d])) {
-                    $r      = $dailyMap[$key][$d];
+            for ($p = 0; $p < $periodCount; $p++) {
+                $periodNum = $p + 1;
+                if ($displayMode === 'Y') {
+                    $periodNum = (int) $periodLabels[$p];
+                }
+                if (isset($dailyMap[$key][$periodNum])) {
+                    $r      = $dailyMap[$key][$periodNum];
                     $num    = (float) $r->num;
                     $denum  = (float) $r->denum;
                     $nilai  = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
@@ -123,7 +154,7 @@ class LoadModuleForminputImpunit extends AppController
                     $status = '';
                 }
                 $daily[] = [
-                    'hari'     => $d,
+                    'hari'     => $periodNum,
                     'num'      => $num,
                     'denum'    => $denum,
                     'nilai'    => $nilai,
@@ -135,8 +166,10 @@ class LoadModuleForminputImpunit extends AppController
         }
 
         return $this->response->setJSON([
-            'indicators' => $indicators,
-            'days'       => $daysInMonth,
+            'indicators'     => $indicators,
+            'days'           => $periodCount,
+            'display_mode'   => $displayMode,
+            'period_labels'  => $periodLabels,
         ]);
     }
 
