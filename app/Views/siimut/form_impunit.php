@@ -148,6 +148,16 @@
         background-color: #e2e3e5 !important;
     }
 
+    td.day-cell.cell-inputable {
+        cursor: pointer;
+    }
+    td.day-cell.cell-inputable .fw-bold {
+        color: #0d6efd !important;
+    }
+    td.day-cell.cell-inputable .num-denum {
+        color: #0d6efd !important;
+    }
+
     .cell-has-data {
         font-weight: 600;
     }
@@ -688,6 +698,19 @@
 
     function buildRows(data, days) {
         var html = '';
+        var periode = document.getElementById('filter_periode').value;
+        var tahun = parseInt(periode.substring(0, 4));
+        var bulan = parseInt(periode.substring(5, 7));
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        function isInputable(day) {
+            var tglDate = new Date(tahun, bulan - 1, day);
+            tglDate.setHours(0, 0, 0, 0);
+            var diff = Math.round((today - tglDate) / (1000 * 60 * 60 * 24));
+            return diff >= 0 && diff <= 30;
+        }
+
         for (var i = 0; i < data.length; i++) {
             var row = data[i];
             var daily = row.daily || [];
@@ -713,6 +736,10 @@
                     cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
                 }
 
+                if (isInputable(item.hari)) {
+                    cellClass += ' cell-inputable';
+                }
+
                 html += '<td class="' + cellClass + '" colspan="' + days + '" ' +
                     'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\')">' +
                     '<div class="fw-bold">' + nilaiDisplay + '</div>' +
@@ -732,6 +759,10 @@
                         else if (item.tercapai === false) cellClass += ' cell-fail';
                     } else {
                         cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
+                    }
+
+                    if (isInputable(item.hari)) {
+                        cellClass += ' cell-inputable';
                     }
 
                     html += '<td class="' + cellClass + '" ' +
