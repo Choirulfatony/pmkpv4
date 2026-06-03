@@ -645,7 +645,7 @@
         document.getElementById('tableContainer').classList.add('d-none');
 
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', '<?= site_url('siimut/load-module-forminput/get-indicators') ?>', true);
+        xhr.open('POST', '<?= site_url('siimut/imprs/get-indicators') ?>', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onload = function() {
             document.getElementById('loadingIndicator').style.display = 'none';
