@@ -105,26 +105,23 @@ class DataIndikator extends AppController
 
         $id = (int) $this->request->getPost('indicator_id');
 
+        $recordStatus = $this->request->getPost('indicator_record_status');
+        $recordStatus = ($recordStatus === 'A') ? 'A' : 'D';
+
         $data = [
-            'indicator_element'         => $this->request->getPost('indicator_element'),
-            'indicator_name_id'         => $this->request->getPost('indicator_name_id') ?? '',
-            'indicator_target'          => $this->request->getPost('indicator_target') ?? '',
+            'indicator_element'            => $this->request->getPost('indicator_element'),
+            'indicator_target'             => $this->request->getPost('indicator_target') ?? '',
             'indicator_target_calculation' => $this->request->getPost('indicator_target_calculation') ?? '',
-            'indicator_factors'         => $this->request->getPost('indicator_factors') ?? '',
-            'indicator_units'           => $this->request->getPost('indicator_units') ?? '',
-            'indicator_target_unit'     => $this->request->getPost('indicator_target_unit') ?? '',
-            'indicator_frequency'       => $this->request->getPost('indicator_frequency') ?? 'D',
-            'indicator_value_standard'  => $this->request->getPost('indicator_value_standard') ?? 0,
-            'indicator_order_number'    => $this->request->getPost('indicator_order_number') ?? 0,
-            'indicator_type'            => $this->request->getPost('indicator_type') ?? '',
-            'indicator_monitoring_area' => $this->request->getPost('indicator_monitoring_area') ?? '',
-            'indicator_source_of_data'  => $this->request->getPost('indicator_source_of_data') ?? '',
-            'indicator_definition'      => $this->request->getPost('indicator_definition') ?? '',
-            'indicator_criteria_inclusive' => $this->request->getPost('indicator_criteria_inclusive') ?? '',
-            'indicator_criteria_exclusive' => $this->request->getPost('indicator_criteria_exclusive') ?? '',
-            'indicator_lcl'             => $this->request->getPost('indicator_lcl') ?? '',
-            'indicator_ucl'             => $this->request->getPost('indicator_ucl') ?? '',
-            'indicator_valid_date'      => $this->request->getPost('indicator_valid_date') ?? null,
+            'indicator_factors'            => $this->request->getPost('indicator_factors') ?? '',
+            'indicator_units'              => $this->request->getPost('indicator_units') ?? '',
+            'indicator_target_unit'        => $this->request->getPost('indicator_target_unit') ?? '',
+            'indicator_frequency'          => $this->request->getPost('metode_pengumpulan_data') ?? 'D',
+            'indicator_type'               => $this->request->getPost('jenis_indikator') ?? '',
+            'indicator_source_of_data'     => $this->request->getPost('sumber_data') ?? '',
+            'indicator_definition'         => $this->request->getPost('definisi_operasional') ?? '',
+            'indicator_criteria_inclusive' => $this->request->getPost('indicator_inclusive') ?? '',
+            'indicator_criteria_exclusive' => $this->request->getPost('indicator_exclusive') ?? '',
+            'indicator_record_status'      => $recordStatus,
         ];
 
         if (empty($data['indicator_element'])) {
@@ -207,6 +204,108 @@ class DataIndikator extends AppController
             return $this->response->setJSON(['status' => true, 'message' => 'Indikator berhasil dipulihkan']);
         } catch (\Exception $e) {
             return $this->response->setJSON(['status' => false, 'message' => 'Gagal memulihkan: ' . $e->getMessage()]);
+        }
+    }
+
+    public function ajaxGetNumDenum()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['error' => 'Unauthorized']);
+        }
+
+        $indicatorId = (int) $this->request->getPost('indicator_id');
+        if (!$indicatorId) {
+            return $this->response->setJSON(['draw' => 1, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => []]);
+        }
+
+        $model = new \App\Models\IndicatorGroupModel();
+        $result = $model->getDatatable($this->request->getPost(), $indicatorId);
+
+        return $this->response->setJSON($result);
+    }
+
+    public function getNumDenumDetail()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $id = (int) $this->request->getPost('id');
+        if (!$id) {
+            return $this->response->setJSON(['status' => false, 'message' => 'ID tidak valid']);
+        }
+
+        $model = new \App\Models\IndicatorGroupModel();
+        $data = $model->getDetail($id);
+
+        if (!$data) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Data tidak ditemukan']);
+        }
+
+        return $this->response->setJSON(['status' => true, 'data' => $data]);
+    }
+
+    public function saveNumDenum()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
+        }
+
+        $model = new \App\Models\IndicatorGroupModel();
+        $id = (int) $this->request->getPost('variable_id');
+
+        $data = [
+            'variable_indicator_id' => $this->request->getPost('variable_indicator_id'),
+            'variable_name'         => $this->request->getPost('variable_name') ?? '',
+            'variable_type'         => $this->request->getPost('variable_type') ?? '',
+            'variable_unit_name'    => $this->request->getPost('variable_unit_name') ?? '',
+        ];
+
+        if (empty($data['variable_type'])) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Tipe variabel harus diisi']);
+        }
+
+        try {
+            if ($id > 0) {
+                $model->updateGroup($id, $data);
+                $message = 'Data berhasil diupdate';
+            } else {
+                $id = $model->insertGroup($data);
+                $message = 'Data berhasil ditambahkan';
+            }
+
+            return $this->response->setJSON(['status' => true, 'message' => $message, 'id' => $id]);
+        } catch (\Exception $e) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Gagal menyimpan: ' . $e->getMessage()]);
+        }
+    }
+
+    public function deleteNumDenum()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
+        }
+
+        $id = (int) $this->request->getPost('id');
+        if (!$id) {
+            return $this->response->setJSON(['status' => false, 'message' => 'ID tidak valid']);
+        }
+
+        $model = new \App\Models\IndicatorGroupModel();
+
+        try {
+            $model->softDelete($id);
+            return $this->response->setJSON(['status' => true, 'message' => 'Data berhasil dihapus']);
+        } catch (\Exception $e) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Gagal menghapus: ' . $e->getMessage()]);
         }
     }
 }

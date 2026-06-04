@@ -69,9 +69,9 @@ class IndicatorModel extends Model
             qi.indicator_value_standard,
             qi.indicator_lcl,
             qi.indicator_ucl,
+            qi.indicator_category_id,
             qi.indicator_valid_date,
-            qi.indicator_last_updated,
-            qi.indicator_valid_date
+            qi.indicator_last_updated
         ');
 
         $builder->where('qi.indicator_category_id', $this->categoryId);
@@ -83,11 +83,13 @@ class IndicatorModel extends Model
         }
 
         $searchValue = $post['search']['value'] ?? '';
-        if (!empty($searchValue)) {
+        $cariInput = $post['cari_input'] ?? '';
+        $searchTerm = !empty($cariInput) ? $cariInput : $searchValue;
+        if (!empty($searchTerm)) {
             $builder->groupStart();
-            $builder->like('qi.indicator_element', $searchValue);
-            $builder->orLike('qi.indicator_name_id', $searchValue);
-            $builder->orLike('qi.indicator_type', $searchValue);
+            $builder->like('qi.indicator_element', $searchTerm);
+            $builder->orLike('qi.indicator_name_id', $searchTerm);
+            $builder->orLike('qi.indicator_type', $searchTerm);
             $builder->groupEnd();
         }
 

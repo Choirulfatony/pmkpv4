@@ -156,17 +156,17 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->get('rekap-laporan-impunit/detail/(:num)', 'RekapLaporanImpunit::viewDetailImpunit/$1');
 
         // Data Indikator Management (CRUD for quality_indicator table)
-        $routes->group('siimut', ['filter' => 'auth'], function ($routes) {
-            $routes->get('data-indikator/(:any)', 'DataIndikator::index/$1');
-            $routes->post('data-indikator/ajax-get-data', 'DataIndikator::ajaxGetData');
-            $routes->post('data-indikator/get-detail', 'DataIndikator::getDetail');
-            $routes->post('data-indikator/save', 'DataIndikator::save');
-            $routes->post('data-indikator/delete', 'DataIndikator::delete');
-            $routes->post('data-indikator/restore', 'DataIndikator::restore');
-        });
-
-        // ========== IKPRS ==========
-
+        $routes->get('data-indikator/(:any)', 'DataIndikator::index/$1');
+        $routes->post('data-indikator/ajax-get-data', 'DataIndikator::ajaxGetData');
+        $routes->post('data-indikator/get-detail', 'DataIndikator::getDetail');
+        $routes->post('data-indikator/save', 'DataIndikator::save');
+        $routes->post('data-indikator/delete', 'DataIndikator::delete');
+        $routes->post('data-indikator/restore', 'DataIndikator::restore');
+        $routes->post('data-indikator/ajax-get-numdenum', 'DataIndikator::ajaxGetNumDenum');
+        $routes->post('data-indikator/get-numdenum-detail', 'DataIndikator::getNumDenumDetail');
+        $routes->post('data-indikator/save-numdenum', 'DataIndikator::saveNumDenum');
+        $routes->post('data-indikator/delete-numdenum', 'DataIndikator::deleteNumDenum');
+    });
 
     // ========== IKPRS ==========
     $routes->group('ikprs', ['filter' => 'auth'], function ($routes) {
