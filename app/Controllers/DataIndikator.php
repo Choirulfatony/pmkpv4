@@ -218,7 +218,10 @@ class DataIndikator extends AppController
             return $this->response->setJSON(['draw' => 1, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => []]);
         }
 
-        $model = new \App\Models\IndicatorGroupModel();
+        $module = $this->request->getPost('module') ?? 'inm';
+        $prefix = $this->modules[$module]['prefix'] ?? '';
+
+        $model = new \App\Models\IndicatorGroupModel($prefix);
         $result = $model->getDatatable($this->request->getPost(), $indicatorId);
 
         return $this->response->setJSON($result);
@@ -235,7 +238,10 @@ class DataIndikator extends AppController
             return $this->response->setJSON(['status' => false, 'message' => 'ID tidak valid']);
         }
 
-        $model = new \App\Models\IndicatorGroupModel();
+        $module = $this->request->getPost('module') ?? 'inm';
+        $prefix = $this->modules[$module]['prefix'] ?? '';
+
+        $model = new \App\Models\IndicatorGroupModel($prefix);
         $data = $model->getDetail($id);
 
         if (!$data) {
@@ -255,7 +261,10 @@ class DataIndikator extends AppController
             return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
         }
 
-        $model = new \App\Models\IndicatorGroupModel();
+        $module = $this->request->getPost('module') ?? 'inm';
+        $prefix = $this->modules[$module]['prefix'] ?? '';
+
+        $model = new \App\Models\IndicatorGroupModel($prefix);
         $id = (int) $this->request->getPost('variable_id');
 
         $data = [
@@ -299,7 +308,10 @@ class DataIndikator extends AppController
             return $this->response->setJSON(['status' => false, 'message' => 'ID tidak valid']);
         }
 
-        $model = new \App\Models\IndicatorGroupModel();
+        $module = $this->request->getPost('module') ?? 'inm';
+        $prefix = $this->modules[$module]['prefix'] ?? '';
+
+        $model = new \App\Models\IndicatorGroupModel($prefix);
 
         try {
             $model->softDelete($id);

@@ -14,19 +14,37 @@ class IndicatorGroupModel extends Model
     ];
     protected $useTimestamps = false;
 
+    protected string $tablePrefix = '';
+
+    public function __construct(string $tablePrefix = '')
+    {
+        parent::__construct();
+        $this->tablePrefix = $tablePrefix;
+        $this->table = $tablePrefix . 'quality_indicator_variable';
+    }
+
+    private function varTable(): string
+    {
+        return $this->tablePrefix . 'quality_indicator_variable';
+    }
+
+    private function indTable(): string
+    {
+        return $this->tablePrefix . 'quality_indicator';
+    }
+
     public function getDatatable(array $post, int $indicatorId): array
     {
         $db = db_connect();
-        $builder = $db->table($this->table);
-        $builder->select('
-            quality_indicator_variable.*,
-            quality_indicator.indicator_element,
-            quality_indicator.indicator_units
-        ');
-        $builder->join('quality_indicator', 'quality_indicator_variable.variable_indicator_id = quality_indicator.indicator_id', 'left');
+        $vt = $this->varTable();
+        $it = $this->indTable();
 
-        $builder->where('quality_indicator_variable.variable_indicator_id', $indicatorId);
-        $builder->whereIn('quality_indicator_variable.variable_record_status', ['A', 'D']);
+        $builder = $db->table($vt);
+        $builder->select("{$vt}.*, {$it}.indicator_element, {$it}.indicator_units");
+        $builder->join($it, "{$vt}.variable_indicator_id = {$it}.indicator_id", 'left');
+
+        $builder->where("{$vt}.variable_indicator_id", $indicatorId);
+        $builder->whereIn("{$vt}.variable_record_status", ['A', 'D']);
 
         $searchValue = $post['search']['value'] ?? '';
         if (!empty($searchValue)) {
@@ -34,7 +52,7 @@ class IndicatorGroupModel extends Model
             $builder->like('variable_type', $searchValue);
             $builder->orLike('variable_name', $searchValue);
             $builder->orLike('variable_unit_name', $searchValue);
-            $builder->orLike('quality_indicator.indicator_element', $searchValue);
+            $builder->orLike("{$it}.indicator_element", $searchValue);
             $builder->groupEnd();
         }
 
@@ -52,7 +70,7 @@ class IndicatorGroupModel extends Model
 
         $data = $builder->get()->getResultArray();
 
-        $totalAll = $db->table($this->table)
+        $totalAll = $db->table($vt)
             ->where('variable_indicator_id', $indicatorId)
             ->whereIn('variable_record_status', ['A', 'D'])
             ->countAllResults();
@@ -68,14 +86,13 @@ class IndicatorGroupModel extends Model
     public function getDetail(int $id): ?array
     {
         $db = db_connect();
-        return $db->table($this->table)
-            ->select('
-                quality_indicator_variable.*,
-                quality_indicator.indicator_element,
-                quality_indicator.indicator_units
-            ')
-            ->join('quality_indicator', 'quality_indicator_variable.variable_indicator_id = quality_indicator.indicator_id', 'left')
-            ->where('quality_indicator_variable.variable_id', $id)
+        $vt = $this->varTable();
+        $it = $this->indTable();
+
+        return $db->table($vt)
+            ->select("{$vt}.*, {$it}.indicator_element, {$it}.indicator_units")
+            ->join($it, "{$vt}.variable_indicator_id = {$it}.indicator_id", 'left')
+            ->where("{$vt}.variable_id", $id)
             ->get()
             ->getRowArray();
     }

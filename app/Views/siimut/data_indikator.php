@@ -665,6 +665,7 @@
                     type: 'POST',
                     data: function (d) {
                         d.indicator_id = currentIndicatorId;
+                        d.module = currentModule;
                         return d;
                     },
                     beforeSend: function () { $('#loading_overlay').show(); },
@@ -742,7 +743,7 @@
         $.ajax({
             url: "<?= base_url('siimut/data-indikator/get-numdenum-detail') ?>",
             type: 'POST',
-            data: {id: id},
+            data: {id: id, module: currentModule},
             dataType: 'json',
             success: function (resp) {
                 if (resp.status && resp.data) {
@@ -775,7 +776,7 @@
         $.ajax({
             url: "<?= base_url('siimut/data-indikator/delete-numdenum') ?>",
             type: 'POST',
-            data: {id: id},
+            data: {id: id, module: currentModule},
             dataType: 'json',
             success: function (resp) {
                 if (resp.status) {
@@ -794,6 +795,7 @@
         var data = $('#form-numdenum').serializeArray();
         var obj = {};
         data.forEach(function (item) { obj[item.name] = item.value; });
+        obj.module = currentModule;
 
         $.ajax({
             url: "<?= base_url('siimut/data-indikator/save-numdenum') ?>",
