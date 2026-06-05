@@ -178,6 +178,17 @@ class DataIndikator extends AppController
         }
         $mod = $this->modules[$module];
 
+        $db = db_connect();
+        $varTable = $mod['prefix'] . 'quality_indicator_variable';
+        $numDenumCount = $db->table($varTable)
+            ->where('variable_indicator_id', $id)
+            ->whereIn('variable_record_status', ['A', 'D'])
+            ->countAllResults();
+
+        if ($numDenumCount > 0) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Tidak bisa hapus indikator karena masih ada data Numerator/Denominator (' . $numDenumCount . ' data). Hapus data Numerator/Denominator terlebih dahulu.']);
+        }
+
         $model = new IndicatorModel($mod['prefix'], $mod['categoryId']);
 
         try {
