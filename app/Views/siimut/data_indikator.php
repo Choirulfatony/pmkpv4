@@ -106,10 +106,7 @@
                                             <label class="form-check-label" for="dimensi_mutu7">Terintegrasi</label>
                 </div>
             </div>
-            <div class="modal-footer py-1 px-2 justify-content-between">
-                <small class="text-muted"><?= date('l, d-m-Y') ?></small>
-            </div>
-        </div>
+                                </div>
                             </div>
                             <div class="mb-1">
                                 <label class="small mb-0">Tujuan</label>
@@ -221,6 +218,9 @@
                         </div>
                     </div>
                 </form>
+            </div>
+            <div class="modal-footer py-1 px-2 justify-content-between">
+                <small class="text-muted"><?= date('l, d-m-Y') ?></small>
             </div>
         </div>
     </div>
