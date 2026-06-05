@@ -486,6 +486,10 @@
             font-size: 0.7rem;
             line-height: 1.2;
         }
+        .is-invalid {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.15rem rgba(220, 53, 69, 0.25) !important;
+        }
         .btn-group-xs > .btn {
             padding: 0.1rem 0.3rem;
             font-size: 0.7rem;
@@ -618,8 +622,38 @@
         $('#indicator_name_id').val('');
         $('#indicator_monitoring_area').val('');
         $('#indicator_valid_date').val('');
+        $('.field-error').remove();
+        $('.is-invalid').removeClass('is-invalid');
         $('#modal-indikator-label').text('Tambah Indikator Baru');
     }
+
+    function validateForm() {
+        $('.field-error').remove();
+        $('.is-invalid').removeClass('is-invalid');
+        var valid = true;
+        var fields = [
+            { id: 'indicator_element', label: 'Judul Indikator' },
+            { id: 'jenis_indikator', label: 'Jenis Indikator' },
+            { id: 'metode_pengumpulan_data', label: 'Periode Pengumpulan Data' },
+            { id: 'indicator_target', label: 'Standar Capaian' },
+            { id: 'indicator_target_unit', label: 'Satuan Standar' },
+            { id: 'sumber_data', label: 'Sumber Data' },
+        ];
+        fields.forEach(function(f) {
+            var val = $('#' + f.id).val();
+            if (!val || $.trim(val) === '') {
+                $('#' + f.id).addClass('is-invalid');
+                $('#' + f.id).after('<div class="field-error text-danger small mt-1">' + f.label + ' harus diisi</div>');
+                valid = false;
+            }
+        });
+        return valid;
+    }
+
+    $(document).on('input change', '#form-indikator input, #form-indikator select, #form-indikator textarea', function () {
+        $(this).removeClass('is-invalid');
+        $(this).next('.field-error').remove();
+    });
 
     function editIndikator(id) {
         $.ajax({
@@ -907,6 +941,8 @@
     }
 
     function saveIndikator() {
+        if (!validateForm()) return;
+
         $.ajax({
             url: "<?= base_url('siimut/data-indikator/save') ?>",
             type: 'POST',
