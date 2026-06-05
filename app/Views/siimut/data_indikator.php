@@ -863,7 +863,13 @@
                     $('#viewindicator_element').text(d.indicator_element || '-');
                     $('#viewindicator_name_id').text(d.indicator_name_id || '-');
                     $('#viewdasar_pemikiran').text(d.indicator_dasar_pemikiran || '-');
-                    $('#viewdimensi_mutu').text(d.indicator_dimensi_mutu || '-');
+                    var dimensiMap = {'1':'Keselamatan (Safety)','2':'Efektivitas (Effectiveness)','3':'Fokus pada Pasien (Patient Centeredness)','4':'Tepat waktu (Timely)','5':'Efisiensi (Efficiency)','6':'Keadilan (Equity)','7':'Terintegrasi'};
+                    if (d.indicator_dimensi_mutu) {
+                        var dimNames = d.indicator_dimensi_mutu.split(',').map(function(v){ return dimensiMap[v.trim()] || v; });
+                        $('#viewdimensi_mutu').text(dimNames.join(', '));
+                    } else {
+                        $('#viewdimensi_mutu').text('-');
+                    }
                     $('#viewtujuan').text(d.indicator_tujuan || '-');
                     $('#viewdefinisi_operasional').text(d.indicator_definition || '-');
                     $('#viewjenis_indikator').text(d.indicator_type || '-');
