@@ -501,6 +501,21 @@
     let table;
     let currentModule = '<?= esc($module) ?>';
 
+    function showToast(type, message) {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
+            }
+        });
+        Toast.fire({ icon: type, title: message });
+    }
+
     $(document).ready(function () {
         table = $('#table-indikator').DataTable({
             processing: false,
@@ -653,11 +668,11 @@
                     $('#modal-indikator-label').text('Edit Indikator: ' + (d.indicator_element || ''));
                     bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-indikator')).show();
                 } else {
-                    Swal.fire('Error', response.message || 'Gagal mengambil data indikator', 'error');
+                    showToast('error', response.message || 'Gagal mengambil data indikator');
                 }
             },
             error: function () {
-                Swal.fire('Error', 'Gagal terhubung ke server', 'error');
+                showToast('error', 'Gagal terhubung ke server');
             }
         });
     }
@@ -780,10 +795,10 @@
                     $('#btn-save-numdenum').show();
                     $('#toggleNumDenum').hide();
                 } else {
-                    Swal.fire('Error', resp.message || 'Gagal mengambil data', 'error');
+                    showToast('error', resp.message || 'Gagal mengambil data');
                 }
             },
-            error: function () { Swal.fire('Error', 'Gagal terhubung ke server', 'error'); }
+            error: function () { showToast('error', 'Gagal terhubung ke server'); }
         });
     }
 
@@ -801,14 +816,14 @@
             dataType: 'json',
             success: function (resp) {
                 if (resp.status) {
-                    Swal.fire('Berhasil', resp.message, 'success');
+                    showToast('success', resp.message);
                     bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-del-numdenum')).hide();
                     reloadNumDenum();
                 } else {
-                    Swal.fire('Error', resp.message, 'error');
+                    showToast('error', resp.message);
                 }
             },
-            error: function () { Swal.fire('Error', 'Gagal terhubung ke server', 'error'); }
+            error: function () { showToast('error', 'Gagal terhubung ke server'); }
         });
     }
 
@@ -825,14 +840,14 @@
             dataType: 'json',
             success: function (resp) {
                 if (resp.status) {
-                    Swal.fire('Berhasil', resp.message, 'success');
+                    showToast('success', resp.message);
                     closeNumDenumForm();
                     reloadNumDenum();
                 } else {
-                    Swal.fire('Error', resp.message, 'error');
+                    showToast('error', resp.message);
                 }
             },
-            error: function () { Swal.fire('Error', 'Gagal terhubung ke server', 'error'); }
+            error: function () { showToast('error', 'Gagal terhubung ke server'); }
         });
     });
 
@@ -877,11 +892,11 @@
 
                     bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-view')).show();
                 } else {
-                    Swal.fire('Error', response.message || 'Gagal mengambil data indikator', 'error');
+                    showToast('error', response.message || 'Gagal mengambil data indikator');
                 }
             },
             error: function () {
-                Swal.fire('Error', 'Gagal terhubung ke server', 'error');
+                showToast('error', 'Gagal terhubung ke server');
             }
         });
     }
@@ -900,15 +915,15 @@
             dataType: 'json',
             success: function (response) {
                 if (response.status) {
-                    Swal.fire('Berhasil', response.message, 'success');
+                    showToast('success', response.message);
                     bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-indikator')).hide();
                     table.ajax.reload(null, false);
                 } else {
-                    Swal.fire('Error', response.message, 'error');
+                    showToast('error', response.message);
                 }
             },
             error: function () {
-                Swal.fire('Error', 'Gagal terhubung ke server', 'error');
+                showToast('error', 'Gagal terhubung ke server');
             }
         });
     }
@@ -932,14 +947,14 @@
                     dataType: 'json',
                     success: function (response) {
                         if (response.status) {
-                            Swal.fire('Berhasil', response.message, 'success');
+                            showToast('success', response.message);
                             table.ajax.reload(null, false);
                         } else {
-                            Swal.fire('Error', response.message, 'error');
+                            showToast('error', response.message);
                         }
                     },
                     error: function () {
-                        Swal.fire('Error', 'Gagal terhubung ke server', 'error');
+                        showToast('error', 'Gagal terhubung ke server');
                     }
                 });
             }
@@ -965,14 +980,14 @@
                     dataType: 'json',
                     success: function (response) {
                         if (response.status) {
-                            Swal.fire('Berhasil', response.message, 'success');
+                            showToast('success', response.message);
                             table.ajax.reload(null, false);
                         } else {
-                            Swal.fire('Error', response.message, 'error');
+                            showToast('error', response.message);
                         }
                     },
                     error: function () {
-                        Swal.fire('Error', 'Gagal terhubung ke server', 'error');
+                        showToast('error', 'Gagal terhubung ke server');
                     }
                 });
             }
