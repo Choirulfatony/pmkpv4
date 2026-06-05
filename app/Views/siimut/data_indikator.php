@@ -328,48 +328,66 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="font-size:0.7rem;"></button>
             </div>
             <div class="modal-body p-4">
-                <div class="card mb-0">
-                    <div class="card-body p-2">
-                        <div class="text-center mb-2 small">
-                    <div style="font-weight: bold;">PEMERINTAH PROVINSI JAWA TIMUR</div>
-                    <div style="font-weight: bold;">RSUD dr. SOEDONO</div>
-                    <div>Jalan dr. Sutomo No.59 Madiun, Telp.(0351) 464325, 464326, Fax (0351) 458058</div>
-                    <div>Website: www.rssoedono.jatimprov.go.id. Email: rsu_soedonomdn@jatimprov.go.id</div>
-                    <hr style="border: 1px solid #000; margin: 6px 0;">
+                <div class="text-center mb-3">
+                    <div style="font-weight: bold; font-size: 0.95rem;">PEMERINTAH PROVINSI JAWA TIMUR</div>
+                    <div style="font-weight: bold; font-size: 1rem;">RSUD dr. SOEDONO</div>
+                    <div class="small text-muted">Jalan dr. Sutomo No.59 Madiun, Telp.(0351) 464325, 464326, Fax (0351) 458058</div>
+                    <div class="small text-muted">Website: www.rssoedono.jatimprov.go.id</div>
+                    <hr style="border: 2px solid #000; margin: 8px 0;">
+                    <div style="font-weight: bold; font-size: 0.9rem;">PROFIL INDIKATOR MUTU</div>
                 </div>
 
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered mb-0" style="font-size:0.8rem;">
-                            <tbody>
-                                <tr><td style="width: 30%;"><strong>Judul Indikator</strong></td><td id="viewindicator_element"></td></tr>
-                                <tr hidden><td><strong>Nama ID Indikator</strong></td><td id="viewindicator_name_id"></td></tr>
-                                <tr><td><strong>Dasar Pemikiran</strong></td><td id="viewdasar_pemikiran"></td></tr>
-                                <tr><td><strong>Dimensi Mutu</strong></td><td id="viewdimensi_mutu"></td></tr>
-                                <tr><td><strong>Tujuan</strong></td><td id="viewtujuan"></td></tr>
-                                <tr><td><strong>Definisi Operasional</strong></td><td id="viewdefinisi_operasional"></td></tr>
-                                <tr><td><strong>Jenis Indikator</strong></td><td id="viewjenis_indikator"></td></tr>
-                                <tr><td><strong>Simbol Operator Standar Capaian</strong></td><td id="viewindicator_target_calculation"></td></tr>
-                                <tr><td><strong>Standar Capaian</strong></td><td id="viewindicator_target"></td></tr>
-                                <tr><td><strong>Satuan Standar</strong></td><td id="viewindicator_target_unit"></td></tr>
-                                <tr><td><strong>Faktor Pengali</strong></td><td id="viewindicator_factors"></td></tr>
-                                <tr><td><strong>Satuan Pengali</strong></td><td id="viewindicator_units"></td></tr>
-                                <tr><td><strong>Kriteria Inklusi</strong></td><td id="viewindicator_inclusive"></td></tr>
-                                <tr><td><strong>Kriteria Eksklusi</strong></td><td id="viewindicator_exclusive"></td></tr>
-                                <tr><td><strong>Metode Pengumpulan Data</strong></td><td id="viewmetode_pengumpulan_data"></td></tr>
-                                <tr><td><strong>Sumber Data</strong></td><td id="viewsumber_data"></td></tr>
-                                <tr><td><strong>Instrumen Pengambilan Data</strong></td><td id="viewinstrumen_pengambilan_data"></td></tr>
-                                <tr><td><strong>Besar Sampel</strong></td><td id="viewbesar_sampel"></td></tr>
-                                <tr><td><strong>Cara Pengambilan Sampel</strong></td><td id="viewcara_pengambilan_sampel"></td></tr>
-                                <tr><td><strong>Periode Pengumpulan Data</strong></td><td id="viewperiode_pengumpulan_data"></td></tr>
-                                <tr><td><strong>Periode Analisis dan Pelaporan Data</strong></td><td id="viewperiode_analisis_dan_pelaporan_data"></td></tr>
-                                <tr><td><strong>Penyajian Data</strong></td><td id="viewpenyajian_data"></td></tr>
-                                <tr><td><strong>Penanggung Jawab</strong></td><td id="viewpenanggung_jawab"></td></tr>
-                                <tr><td><strong>Area Monitoring</strong></td><td id="viewindicator_monitoring_area"></td></tr>
-                                <tr><td><strong>Tanggal Berlaku</strong></td><td id="viewindicator_valid_date"></td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    </div>
+                        <tbody>
+                            <tr><td style="width:35%; background:#f8f9fa;"><strong>1. Judul Indikator</strong></td><td id="viewindicator_element"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>2. Dimensi Mutu</strong></td><td id="viewdimensi_mutu"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>3. Definisi Operasional</strong></td><td id="viewdefinisi_operasional"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>4. Jenis Indikator</strong></td><td id="viewjenis_indikator"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>5. Tujuan</strong></td><td id="viewtujuan"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>6. Dasar Pemikiran</strong></td><td id="viewdasar_pemikiran"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>7. Kriteria Inklusi</strong></td><td id="viewindicator_inclusive"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>8. Kriteria Eksklusi</strong></td><td id="viewindicator_exclusive"></td></tr>
+
+                            <tr><td colspan="2" style="background:#6f42c1; color:white; font-weight:bold; text-align:center;">RUMUS PERHITUNGAN</td></tr>
+                            <tr>
+                                <td style="background:#f8f9fa;"><strong>9. Rumus</strong></td>
+                                <td id="viewrumus">
+                                    <div id="viewrumus_content">-</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="background:#f8f9fa;"><strong>10. Numerator</strong></td>
+                                <td id="viewnumerator_list">-</td>
+                            </tr>
+                            <tr>
+                                <td style="background:#f8f9fa;"><strong>11. Denominator</strong></td>
+                                <td id="viewdenominator_list">-</td>
+                            </tr>
+
+                            <tr><td colspan="2" style="background:#6f42c1; color:white; font-weight:bold; text-align:center;">STANDAR DAN TARGET</td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>12. Simbol Operator</strong></td><td id="viewindicator_target_calculation"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>13. Standar Capaian</strong></td><td><span id="viewindicator_target"></span> <span id="viewindicator_target_unit"></span></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>14. Faktor Pengali</strong></td><td><span id="viewindicator_factors"></span> <span id="viewindicator_units"></span></td></tr>
+
+                            <tr><td colspan="2" style="background:#6f42c1; color:white; font-weight:bold; text-align:center;">PENGUMPULAN DATA</td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>15. Sumber Data</strong></td><td id="viewsumber_data"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>16. Metode Pengumpulan Data</strong></td><td id="viewmetode_pengumpulan_data"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>17. Instrumen Pengambilan Data</strong></td><td id="viewinstrumen_pengambilan_data"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>18. Besar Sampel</strong></td><td id="viewbesar_sampel"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>19. Cara Pengambilan Sampel</strong></td><td id="viewcara_pengambilan_sampel"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>20. Periode Pengumpulan Data</strong></td><td id="viewperiode_pengumpulan_data"></td></tr>
+
+                            <tr><td colspan="2" style="background:#6f42c1; color:white; font-weight:bold; text-align:center;">PELAPORAN</td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>21. Periode Analisis dan Pelaporan</strong></td><td id="viewperiode_analisis_dan_pelaporan_data"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>22. Penyajian Data</strong></td><td id="viewpenyajian_data"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>23. Penanggung Jawab</strong></td><td id="viewpenanggung_jawab"></td></tr>
+
+                            <tr><td colspan="2" style="background:#6f42c1; color:white; font-weight:bold; text-align:center;">LOKASI & STATUS</td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>24. Area Monitoring</strong></td><td id="viewindicator_monitoring_area"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>25. Tanggal Berlaku</strong></td><td id="viewindicator_valid_date"></td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
             <div class="modal-footer py-1 px-2 justify-content-end border-0">
@@ -903,7 +921,6 @@
                     const d = response.data;
                     $('#judulelementview').text(d.indicator_element || '');
                     $('#viewindicator_element').text(d.indicator_element || '-');
-                    $('#viewindicator_name_id').text(d.indicator_name_id || '-');
                     $('#viewdasar_pemikiran').text(d.indicator_dasar_pemikiran || '-');
                     var dimensiMap = {'1':'Keselamatan (Safety)','2':'Efektivitas (Effectiveness)','3':'Fokus pada Pasien (Patient Centeredness)','4':'Tepat waktu (Timely)','5':'Efisiensi (Efficiency)','6':'Keadilan (Equity)','7':'Terintegrasi'};
                     if (d.indicator_dimensi_mutu) {
@@ -937,6 +954,8 @@
                     $('#viewindicator_monitoring_area').text(d.indicator_monitoring_area || '-');
                     $('#viewindicator_valid_date').text(d.indicator_valid_date || '-');
 
+                    loadNumDenumView(id);
+
                     bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-view')).show();
                 } else {
                     showToast('error', response.message || 'Gagal mengambil data indikator');
@@ -944,6 +963,46 @@
             },
             error: function () {
                 showToast('error', 'Gagal terhubung ke server');
+            }
+        });
+    }
+
+    function loadNumDenumView(indicatorId) {
+        $.ajax({
+            url: "<?= base_url('siimut/data-indikator/ajax-get-numdenum') ?>",
+            type: 'POST',
+            data: { indicator_id: indicatorId, module: currentModule, draw: 1, start: 0, length: 100, search: { value: '' }, order: [{ column: 0, dir: 'ASC' }] },
+            dataType: 'json',
+            success: function (resp) {
+                var numList = [];
+                var denList = [];
+                if (resp.data && resp.data.length > 0) {
+                    resp.data.forEach(function (v) {
+                        if (v.variable_type === 'N') {
+                            numList.push(v.variable_name + (v.variable_unit_name ? ' (' + v.variable_unit_name + ')' : ''));
+                        } else if (v.variable_type === 'D') {
+                            denList.push(v.variable_name + (v.variable_unit_name ? ' (' + v.variable_unit_name + ')' : ''));
+                        }
+                    });
+                }
+
+                var numStr = numList.length > 0 ? '<ol class="mb-0 ps-3">' + numList.map(function(n){ return '<li>' + n + '</li>'; }).join('') + '</ol>' : '<em class="text-muted">Belum ada numerator</em>';
+                var denStr = denList.length > 0 ? '<ol class="mb-0 ps-3">' + denList.map(function(d){ return '<li>' + d + '</li>'; }).join('') + '</ol>' : '<em class="text-muted">Belum ada denominator</em>';
+                $('#viewnumerator_list').html(numStr);
+                $('#viewdenominator_list').html(denStr);
+
+                var numLabel = numList.length > 0 ? numList.join(' + ') : 'Numerator';
+                var denLabel = denList.length > 0 ? denList.join(' + ') : 'Denominator';
+                var simbol = $('#viewindicator_target_calculation').text() || '>=';
+                var target = $('#viewindicator_target').text() || '...';
+                var satuan = $('#viewindicator_target_unit').text() || '%';
+                var rumusHtml = '<div class="text-center p-2" style="background:#f8f9fa; border-radius:4px;">' +
+                    '<div style="font-size:1rem; font-style:italic;">Hasil Capaian = ' +
+                    '<span class="fw-bold">' + numLabel + '</span> / ' +
+                    '<span class="fw-bold">' + denLabel + '</span> × 100%</div>' +
+                    '<div class="mt-1 small">Standar: ' + simbol + ' ' + target + ' ' + satuan + '</div>' +
+                    '</div>';
+                $('#viewrumus_content').html(rumusHtml);
             }
         });
     }
