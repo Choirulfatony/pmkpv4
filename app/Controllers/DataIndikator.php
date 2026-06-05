@@ -110,6 +110,7 @@ class DataIndikator extends AppController
 
         $data = [
             'indicator_element'            => $this->request->getPost('indicator_element'),
+            'indicator_name_id'            => $this->request->getPost('indicator_name_id') ?? '',
             'indicator_target'             => $this->request->getPost('indicator_target') ?? '',
             'indicator_target_calculation' => $this->request->getPost('indicator_target_calculation') ?? '',
             'indicator_factors'            => $this->request->getPost('indicator_factors') ?? '',
@@ -121,6 +122,8 @@ class DataIndikator extends AppController
             'indicator_definition'         => $this->request->getPost('definisi_operasional') ?? '',
             'indicator_criteria_inclusive' => $this->request->getPost('indicator_inclusive') ?? '',
             'indicator_criteria_exclusive' => $this->request->getPost('indicator_exclusive') ?? '',
+            'indicator_monitoring_area'    => $this->request->getPost('indicator_monitoring_area') ?? '',
+            'indicator_valid_date'         => $this->request->getPost('indicator_valid_date') ?? null,
             'indicator_record_status'      => $recordStatus,
         ];
 

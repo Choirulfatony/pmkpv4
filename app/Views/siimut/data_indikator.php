@@ -68,6 +68,10 @@
                                 <textarea class="form-control form-control-sm" rows="1" placeholder="Judul Indikator ..." name="indicator_element" id="indicator_element"></textarea>
                             </div>
                             <div class="mb-1">
+                                <label class="small mb-0">Nama ID Indikator</label>
+                                <input type="text" class="form-control form-control-sm" placeholder="Nama ID Indikator ..." name="indicator_name_id" id="indicator_name_id">
+                            </div>
+                            <div class="mb-1">
                                 <label class="small mb-0">Dasar Pemikiran</label>
                                 <textarea class="form-control form-control-sm" rows="1" placeholder="Dasar Pemikiran ..." name="dasar_pemikiran" id="dasar_pemikiran"></textarea>
                             </div>
@@ -205,6 +209,14 @@
                                 <input type="text" class="form-control form-control-sm" placeholder="Penanggung Jawab ..." name="penanggung_jawab" id="penanggung_jawab">
                             </div>
                             <div class="mb-1">
+                                <label class="small mb-0">Area Monitoring</label>
+                                <input type="text" class="form-control form-control-sm" placeholder="Area Monitoring ..." name="indicator_monitoring_area" id="indicator_monitoring_area">
+                            </div>
+                            <div class="mb-1">
+                                <label class="small mb-0">Tanggal Berlaku</label>
+                                <input type="date" class="form-control form-control-sm" name="indicator_valid_date" id="indicator_valid_date">
+                            </div>
+                            <div class="mb-1">
                                 <label class="small mb-0">Status Aktif Indikator</label>
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="indicator_record_status" name="indicator_record_status" value="A">
@@ -331,6 +343,7 @@
                     <table class="table table-sm table-bordered mb-0" style="font-size:0.8rem;">
                             <tbody>
                                 <tr><td style="width: 30%;"><strong>Judul Indikator</strong></td><td id="viewindicator_element"></td></tr>
+                                <tr><td><strong>Nama ID Indikator</strong></td><td id="viewindicator_name_id"></td></tr>
                                 <tr><td><strong>Dasar Pemikiran</strong></td><td id="viewdasar_pemikiran"></td></tr>
                                 <tr><td><strong>Dimensi Mutu</strong></td><td id="viewdimensi_mutu"></td></tr>
                                 <tr><td><strong>Tujuan</strong></td><td id="viewtujuan"></td></tr>
@@ -352,6 +365,8 @@
                                 <tr><td><strong>Periode Analisis dan Pelaporan Data</strong></td><td id="viewperiode_analisis_dan_pelaporan_data"></td></tr>
                                 <tr><td><strong>Penyajian Data</strong></td><td id="viewpenyajian_data"></td></tr>
                                 <tr><td><strong>Penanggung Jawab</strong></td><td id="viewpenanggung_jawab"></td></tr>
+                                <tr><td><strong>Area Monitoring</strong></td><td id="viewindicator_monitoring_area"></td></tr>
+                                <tr><td><strong>Tanggal Berlaku</strong></td><td id="viewindicator_valid_date"></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -586,6 +601,9 @@
     function clearForm() {
         $('#form-indikator')[0].reset();
         $('#indicator_id').val('');
+        $('#indicator_name_id').val('');
+        $('#indicator_monitoring_area').val('');
+        $('#indicator_valid_date').val('');
         $('#modal-indikator-label').text('Tambah Indikator Baru');
     }
 
@@ -600,6 +618,7 @@
                     const d = response.data;
                     $('#indicator_id').val(d.indicator_id || '');
                     $('#indicator_element').val(d.indicator_element || '');
+                    $('#indicator_name_id').val(d.indicator_name_id || '');
                     $('#dasar_pemikiran').val(d.dasar_pemikiran || '');
                     $('#tujuan').val(d.tujuan || '');
                     $('#definisi_operasional').val(d.indicator_definition || '');
@@ -620,6 +639,8 @@
                     $('#periode_analisis_dan_pelaporan_data').val(d.periode_analisis_dan_pelaporan_data || '');
                     $('#penyajian_data').val(d.penyajian_data || '');
                     $('#penanggung_jawab').val(d.penanggung_jawab || '');
+                    $('#indicator_monitoring_area').val(d.indicator_monitoring_area || '');
+                    $('#indicator_valid_date').val(d.indicator_valid_date || '');
                     $('#indicator_record_status').prop('checked', d.indicator_record_status === 'A');
 
                     if (d.dimensi_mutu) {
@@ -826,6 +847,7 @@
                     const d = response.data;
                     $('#judulelementview').text(d.indicator_element || '');
                     $('#viewindicator_element').text(d.indicator_element || '-');
+                    $('#viewindicator_name_id').text(d.indicator_name_id || '-');
                     $('#viewdasar_pemikiran').text(d.dasar_pemikiran || '-');
                     $('#viewdimensi_mutu').text(d.dimensi_mutu || '-');
                     $('#viewtujuan').text(d.tujuan || '-');
@@ -850,6 +872,8 @@
                     $('#viewperiode_analisis_dan_pelaporan_data').text(d.periode_analisis_dan_pelaporan_data || '-');
                     $('#viewpenyajian_data').text(d.penyajian_data || '-');
                     $('#viewpenanggung_jawab').text(d.penanggung_jawab || '-');
+                    $('#viewindicator_monitoring_area').text(d.indicator_monitoring_area || '-');
+                    $('#viewindicator_valid_date').text(d.indicator_valid_date || '-');
 
                     bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-view')).show();
                 } else {
