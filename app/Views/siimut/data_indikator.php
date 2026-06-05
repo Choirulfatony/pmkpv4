@@ -633,11 +633,19 @@
         var valid = true;
         var fields = [
             { id: 'indicator_element', label: 'Judul Indikator' },
+            { id: 'definisi_operasional', label: 'Definisi Operasional' },
             { id: 'jenis_indikator', label: 'Jenis Indikator' },
-            { id: 'metode_pengumpulan_data', label: 'Periode Pengumpulan Data' },
+            { id: 'indicator_target_calculation', label: 'Simbol Operator Standar Capaian' },
             { id: 'indicator_target', label: 'Standar Capaian' },
             { id: 'indicator_target_unit', label: 'Satuan Standar' },
+            { id: 'indicator_factors', label: 'Faktor Pengali' },
+            { id: 'indicator_units', label: 'Satuan Pengali' },
+            { id: 'indicator_inclusive', label: 'Kriteria Inklusi' },
+            { id: 'indicator_exclusive', label: 'Kriteria Eksklusi' },
+            { id: 'metode_pengumpulan_data', label: 'Metode Pengumpulan Data' },
             { id: 'sumber_data', label: 'Sumber Data' },
+            { id: 'indicator_monitoring_area', label: 'Area Monitoring' },
+            { id: 'indicator_valid_date', label: 'Tanggal Berlaku' },
         ];
         fields.forEach(function(f) {
             var val = $('#' + f.id).val();
