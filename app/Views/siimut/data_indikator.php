@@ -901,16 +901,10 @@
     }
 
     function saveIndikator() {
-        const formData = $('#form-indikator').serializeArray();
-        const data = {};
-        formData.forEach(function (item) {
-            data[item.name] = item.value;
-        });
-
         $.ajax({
             url: "<?= base_url('siimut/data-indikator/save') ?>",
             type: 'POST',
-            data: data,
+            data: $('#form-indikator').serialize(),
             dataType: 'json',
             success: function (response) {
                 if (response.status) {
