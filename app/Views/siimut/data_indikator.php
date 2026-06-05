@@ -67,9 +67,8 @@
                                 <label class="small mb-0">Judul Indikator <span class="text-danger">*</span></label>
                                 <textarea class="form-control form-control-sm" rows="1" placeholder="Judul Indikator ..." name="indicator_element" id="indicator_element"></textarea>
                             </div>
-                            <div class="mb-1">
-                                <label class="small mb-0">Nama ID Indikator</label>
-                                <input type="text" class="form-control form-control-sm" placeholder="Nama ID Indikator ..." name="indicator_name_id" id="indicator_name_id">
+                            <div class="mb-1" hidden>
+                                <input type="text" class="form-control form-control-sm" name="indicator_name_id" id="indicator_name_id" value="">
                             </div>
                             <div class="mb-1">
                                 <label class="small mb-0">Dasar Pemikiran</label>
@@ -343,7 +342,7 @@
                     <table class="table table-sm table-bordered mb-0" style="font-size:0.8rem;">
                             <tbody>
                                 <tr><td style="width: 30%;"><strong>Judul Indikator</strong></td><td id="viewindicator_element"></td></tr>
-                                <tr><td><strong>Nama ID Indikator</strong></td><td id="viewindicator_name_id"></td></tr>
+                                <tr hidden><td><strong>Nama ID Indikator</strong></td><td id="viewindicator_name_id"></td></tr>
                                 <tr><td><strong>Dasar Pemikiran</strong></td><td id="viewdasar_pemikiran"></td></tr>
                                 <tr><td><strong>Dimensi Mutu</strong></td><td id="viewdimensi_mutu"></td></tr>
                                 <tr><td><strong>Tujuan</strong></td><td id="viewtujuan"></td></tr>
