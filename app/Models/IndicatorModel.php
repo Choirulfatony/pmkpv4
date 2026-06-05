@@ -17,7 +17,12 @@ class IndicatorModel extends Model
         'indicator_iscomplete', 'indicator_factors', 'indicator_target_calculation',
         'indicator_units', 'indicator_target_unit', 'indicator_lcl', 'indicator_ucl',
         'indicator_valid_date', 'indicator_last_updated', 'indicator_order_number',
-        'indicator_record_status'
+        'indicator_record_status',
+        'indicator_dasar_pemikiran', 'indicator_dimensi_mutu', 'indicator_tujuan',
+        'indicator_periode_pengumpulan_data', 'indicator_instrumen_pengambilan_data',
+        'indicator_besar_sampel', 'indicator_cara_pengambilan_sampel',
+        'indicator_periode_analisis_pelaporan', 'indicator_penyajian_data',
+        'indicator_penanggung_jawab',
     ];
     protected $useTimestamps = false;
 

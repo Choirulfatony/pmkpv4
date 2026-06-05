@@ -634,8 +634,8 @@
                     $('#indicator_id').val(d.indicator_id || '');
                     $('#indicator_element').val(d.indicator_element || '');
                     $('#indicator_name_id').val(d.indicator_name_id || '');
-                    $('#dasar_pemikiran').val(d.dasar_pemikiran || '');
-                    $('#tujuan').val(d.tujuan || '');
+                    $('#dasar_pemikiran').val(d.indicator_dasar_pemikiran || '');
+                    $('#tujuan').val(d.indicator_tujuan || '');
                     $('#definisi_operasional').val(d.indicator_definition || '');
                     $('#jenis_indikator').val(d.indicator_type || '');
                     $('#indicator_target_calculation').val(d.indicator_target_calculation || '');
@@ -645,21 +645,21 @@
                     $('#indicator_units').val(d.indicator_units || '');
                     $('#indicator_inclusive').val(d.indicator_criteria_inclusive || '');
                     $('#indicator_exclusive').val(d.indicator_criteria_exclusive || '');
-                    $('#periode_pengumpulan_data').val(d.periode_pengumpulan_data || '');
+                    $('#periode_pengumpulan_data').val(d.indicator_periode_pengumpulan_data || '');
                     $('#sumber_data').val(d.indicator_source_of_data || '');
-                    $('#instrumen_pengambilan_data').val(d.instrumen_pengambilan_data || '');
-                    $('#besar_sampel').val(d.besar_sampel || '');
-                    $('#cara_pengambilan_sampel').val(d.cara_pengambilan_sampel || '');
+                    $('#instrumen_pengambilan_data').val(d.indicator_instrumen_pengambilan_data || '');
+                    $('#besar_sampel').val(d.indicator_besar_sampel || '');
+                    $('#cara_pengambilan_sampel').val(d.indicator_cara_pengambilan_sampel || '');
                     $('#metode_pengumpulan_data').val(d.indicator_frequency || '');
-                    $('#periode_analisis_dan_pelaporan_data').val(d.periode_analisis_dan_pelaporan_data || '');
-                    $('#penyajian_data').val(d.penyajian_data || '');
-                    $('#penanggung_jawab').val(d.penanggung_jawab || '');
+                    $('#periode_analisis_dan_pelaporan_data').val(d.indicator_periode_analisis_pelaporan || '');
+                    $('#penyajian_data').val(d.indicator_penyajian_data || '');
+                    $('#penanggung_jawab').val(d.indicator_penanggung_jawab || '');
                     $('#indicator_monitoring_area').val(d.indicator_monitoring_area || '');
                     $('#indicator_valid_date').val(d.indicator_valid_date || '');
                     $('#indicator_record_status').prop('checked', d.indicator_record_status === 'A');
 
-                    if (d.dimensi_mutu) {
-                        var dims = d.dimensi_mutu.split(',');
+                    if (d.indicator_dimensi_mutu) {
+                        var dims = d.indicator_dimensi_mutu.split(',');
                         for (var i = 1; i <= 7; i++) {
                             $('#dimensi_mutu' + i).prop('checked', dims.includes(String(i)));
                         }
@@ -863,9 +863,9 @@
                     $('#judulelementview').text(d.indicator_element || '');
                     $('#viewindicator_element').text(d.indicator_element || '-');
                     $('#viewindicator_name_id').text(d.indicator_name_id || '-');
-                    $('#viewdasar_pemikiran').text(d.dasar_pemikiran || '-');
-                    $('#viewdimensi_mutu').text(d.dimensi_mutu || '-');
-                    $('#viewtujuan').text(d.tujuan || '-');
+                    $('#viewdasar_pemikiran').text(d.indicator_dasar_pemikiran || '-');
+                    $('#viewdimensi_mutu').text(d.indicator_dimensi_mutu || '-');
+                    $('#viewtujuan').text(d.indicator_tujuan || '-');
                     $('#viewdefinisi_operasional').text(d.indicator_definition || '-');
                     $('#viewjenis_indikator').text(d.indicator_type || '-');
                     $('#viewindicator_target_calculation').text(d.indicator_target_calculation || '-');
@@ -880,13 +880,13 @@
                     $('#viewmetode_pengumpulan_data').text(freqMap[d.indicator_frequency] || d.indicator_frequency || '-');
 
                     $('#viewsumber_data').text(d.indicator_source_of_data || '-');
-                    $('#viewinstrumen_pengambilan_data').text(d.instrumen_pengambilan_data || '-');
-                    $('#viewbesar_sampel').text(d.besar_sampel || '-');
-                    $('#viewcara_pengambilan_sampel').text(d.cara_pengambilan_sampel || '-');
-                    $('#viewperiode_pengumpulan_data').text(d.periode_pengumpulan_data || '-');
-                    $('#viewperiode_analisis_dan_pelaporan_data').text(d.periode_analisis_dan_pelaporan_data || '-');
-                    $('#viewpenyajian_data').text(d.penyajian_data || '-');
-                    $('#viewpenanggung_jawab').text(d.penanggung_jawab || '-');
+                    $('#viewinstrumen_pengambilan_data').text(d.indicator_instrumen_pengambilan_data || '-');
+                    $('#viewbesar_sampel').text(d.indicator_besar_sampel || '-');
+                    $('#viewcara_pengambilan_sampel').text(d.indicator_cara_pengambilan_sampel || '-');
+                    $('#viewperiode_pengumpulan_data').text(d.indicator_periode_pengumpulan_data || '-');
+                    $('#viewperiode_analisis_dan_pelaporan_data').text(d.indicator_periode_analisis_pelaporan || '-');
+                    $('#viewpenyajian_data').text(d.indicator_penyajian_data || '-');
+                    $('#viewpenanggung_jawab').text(d.indicator_penanggung_jawab || '-');
                     $('#viewindicator_monitoring_area').text(d.indicator_monitoring_area || '-');
                     $('#viewindicator_valid_date').text(d.indicator_valid_date || '-');
 
