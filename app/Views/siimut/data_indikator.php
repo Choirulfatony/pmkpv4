@@ -243,10 +243,10 @@
             <div class="modal-header" style="background-color: #6f42c1; color: white;">
                 <h6 class="modal-title" id="judunumdenum" style="color: #ffffff; font-size: 0.9rem;">Numerator / Denominator</h6>
                 <div class="d-flex gap-1">
-                    <button type="button" class="btn btn-xs btn-outline-light border-0" onclick="showNumDenumAdd()" id="toggleNumDenum" title="Tambah">
+                    <button type="button" class="btn btn-sm btn-outline-light border-0" onclick="showNumDenumAdd()" id="toggleNumDenum" title="Tambah">
                         <i class="fas fa-plus-circle"></i>
                     </button>
-                    <button type="button" class="btn btn-xs btn-outline-light border-0" onclick="reloadNumDenum()" id="reloadViewNumDenum" title="Refresh">
+                    <button type="button" class="btn btn-sm btn-outline-light border-0" onclick="reloadNumDenum()" id="reloadViewNumDenum" title="Refresh">
                         <i class="fas fa-sync-alt"></i>
                     </button>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="font-size: 0.7rem;"></button>
@@ -796,9 +796,9 @@
                     {
                         targets: 4,
                         render: function (data, type, row) {
-                            var btns = '<div class="btn-group btn-group-xs gap-1">';
-                            btns += '<button type="button" class="btn btn-xs btn-outline-info border-0" onclick="editNumDenum(' + row.variable_id + ')" title="Edit"><i class="fas fa-edit"></i></button>';
-                            btns += '<button type="button" class="btn btn-xs btn-outline-danger border-0" onclick="deleteNumDenum(' + row.variable_id + ')" title="Hapus"><i class="fas fa-trash"></i></button>';
+                            var btns = '<div class="btn-group gap-1">';
+                            btns += '<button type="button" class="btn btn-sm btn-outline-info border-0" onclick="editNumDenum(' + row.variable_id + ')" title="Edit"><i class="fas fa-edit"></i></button>';
+                            btns += '<button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="deleteNumDenum(' + row.variable_id + ')" title="Hapus"><i class="fas fa-trash"></i></button>';
                             btns += '</div>';
                             return btns;
                         }
