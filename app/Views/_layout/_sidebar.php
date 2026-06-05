@@ -13,10 +13,10 @@
                 <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="navigation" data-accordion="true">
                     <?php if ($login_source == 'APP'): ?>
                         <li class="nav-item">
-                            <div class="px-3 py-2 mb-2 bg-warning text-dark rounded">
+                            <!-- <div class="px-3 py-2 mb-2 bg-warning text-dark rounded">
                                 <small class="d-block"><strong>Hak Akses:</strong> <?= session('role_asli') ?? '-' ?></small>
                                 <small class="d-block"><strong>User Role:</strong> <?= session('user_role') ?? '-' ?></small>
-                            </div>
+                            </div> -->
                         </li>
                         <?php
                         function renderMenu($menus)

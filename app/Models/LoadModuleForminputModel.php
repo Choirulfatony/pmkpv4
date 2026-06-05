@@ -697,6 +697,131 @@ class LoadModuleForminputModel extends Model
         }, $rows);
     }
 
+    /**
+     * Rekap bulanan per indikator, di-filter ke indikator yang memiliki data draft (status D)
+     * pada bulan terpilih. Untuk setiap indikator yang lolos filter, hitung SUM(num)/SUM(denum)
+     * per bulan (Jan-Des) pada tahun terpilih, kemudian nilai = (sum_num / sum_denum) * factor * 100.
+     *
+     * @return array<int, array{
+     *     indicator_id:int,
+     *     indicator_element:string,
+     *     indicator_units:string,
+     *     indicator_target:?string,
+     *     indicator_factors:?string,
+     *     indicator_target_calculation:?string,
+     *     months:array<int, array{num:float, denum:float, nilai:?float, has_draft:bool, has_approved:bool}>
+     * }>
+     */
+    public function getRecapByIndicatorWithDraft(int $tahun, int $bulan, ?int $departmentId = null): array
+    {
+        $db = db_connect();
+
+        $draftSql = "
+            SELECT DISTINCT qir.result_indicator_id
+            FROM {$this->tablePrefix}quality_indicator_result qir
+            INNER JOIN {$this->tablePrefix}quality_indicator qi
+                ON qi.indicator_id = qir.result_indicator_id
+            WHERE qir.result_record_status = 'D'
+              AND qi.indicator_category_id = ?
+              AND YEAR(qir.result_period) = ?
+              AND MONTH(qir.result_period) = ?
+        ";
+        $draftParams = [$this->categoryId, $tahun, $bulan];
+        if ($departmentId !== null && $departmentId > 0) {
+            $draftSql .= " AND qir.result_department_id = ?";
+            $draftParams[] = $departmentId;
+        }
+        $draftRows = $db->query($draftSql, $draftParams)->getResultArray();
+        $indicatorIds = array_map(static fn($r) => (int) $r['result_indicator_id'], $draftRows);
+        if (empty($indicatorIds)) {
+            return [];
+        }
+
+        $idList = implode(',', array_map('intval', $indicatorIds));
+        $headerSql = "
+            SELECT
+                qi.indicator_id,
+                qi.indicator_element,
+                qi.indicator_units,
+                qi.indicator_target,
+                qi.indicator_factors,
+                qi.indicator_target_calculation
+            FROM {$this->tablePrefix}quality_indicator qi
+            WHERE qi.indicator_id IN ($idList)
+              AND qi.indicator_category_id = ?
+            ORDER BY qi.indicator_element ASC
+        ";
+        $indicators = $db->query($headerSql, [$this->categoryId])->getResultArray();
+        if (empty($indicators)) {
+            return [];
+        }
+
+        $recapSql = "
+            SELECT
+                qir.result_indicator_id,
+                MONTH(qir.result_period) AS bulan,
+                qir.result_record_status,
+                COALESCE(SUM(qir.result_numerator_value), 0)   AS sum_num,
+                COALESCE(SUM(qir.result_denumerator_value), 0) AS sum_denum
+            FROM {$this->tablePrefix}quality_indicator_result qir
+            WHERE qir.result_indicator_id IN ($idList)
+              AND YEAR(qir.result_period) = ?
+              AND qir.result_record_status IN ('A', 'D')
+        ";
+        $recapParams = [$tahun];
+        if ($departmentId !== null && $departmentId > 0) {
+            $recapSql .= " AND qir.result_department_id = ?";
+            $recapParams[] = $departmentId;
+        }
+        $recapSql .= "
+            GROUP BY qir.result_indicator_id, MONTH(qir.result_period), qir.result_record_status
+        ";
+        $recapRows = $db->query($recapSql, $recapParams)->getResultArray();
+
+        $bucket = [];
+        foreach ($recapRows as $r) {
+            $iid = (int) $r['result_indicator_id'];
+            $m   = (int) $r['bulan'];
+            $st  = $r['result_record_status'];
+            if (!isset($bucket[$iid][$m])) {
+                $bucket[$iid][$m] = ['num' => 0.0, 'denum' => 0.0, 'has_draft' => false, 'has_approved' => false];
+            }
+            $bucket[$iid][$m]['num']   += (float) $r['sum_num'];
+            $bucket[$iid][$m]['denum'] += (float) $r['sum_denum'];
+            if ($st === 'D') { $bucket[$iid][$m]['has_draft']    = true; }
+            if ($st === 'A') { $bucket[$iid][$m]['has_approved'] = true; }
+        }
+
+        $out = [];
+        foreach ($indicators as $ind) {
+            $iid = (int) $ind['indicator_id'];
+            $factor = (float) ($ind['indicator_factors'] ?? 1);
+            $months = [];
+            for ($m = 1; $m <= 12; $m++) {
+                $cell = $bucket[$iid][$m] ?? ['num' => 0.0, 'denum' => 0.0, 'has_draft' => false, 'has_approved' => false];
+                $nilai = ($cell['denum'] > 0) ? round(($cell['num'] / $cell['denum']) * $factor, 2) : null;
+                $months[$m] = [
+                    'num'          => $cell['num'],
+                    'denum'        => $cell['denum'],
+                    'nilai'        => $nilai,
+                    'has_draft'    => $cell['has_draft'],
+                    'has_approved' => $cell['has_approved'],
+                ];
+            }
+            $out[] = [
+                'indicator_id'                => $iid,
+                'indicator_element'           => $ind['indicator_element'] ?? '',
+                'indicator_units'             => $ind['indicator_units'] ?? '',
+                'indicator_target'            => $ind['indicator_target'],
+                'indicator_factors'           => $ind['indicator_factors'],
+                'indicator_target_calculation'=> $ind['indicator_target_calculation'],
+                'months'                      => $months,
+            ];
+        }
+
+        return $out;
+    }
+
     public function approveBatch(array $resultIds, int $userId): int
     {
         if (empty($resultIds)) {

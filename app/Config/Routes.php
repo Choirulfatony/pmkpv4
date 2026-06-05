@@ -87,6 +87,7 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->get('approval/(:any)', 'Approval::index/$1');
         $routes->post('approval/ajax-get-data', 'Approval::ajaxGetData');
         $routes->post('approval/ajax-get-departments', 'Approval::ajaxGetDepartments');
+        $routes->post('approval/ajax-get-recap', 'Approval::ajaxGetRecap');
         $routes->post('approval/ajax-approve', 'Approval::ajaxApprove');
 
         // Validation

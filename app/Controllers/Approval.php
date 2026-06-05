@@ -63,6 +63,9 @@ class Approval extends AppController
 
     public function ajaxGetData()
     {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Session expired, silakan login ulang']);
+        }
         if (!$this->request->isAJAX()) {
             return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
         }
@@ -98,6 +101,9 @@ class Approval extends AppController
      */
     public function ajaxGetDepartments()
     {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Session expired, silakan login ulang']);
+        }
         if (!$this->request->isAJAX()) {
             return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
         }
@@ -117,8 +123,40 @@ class Approval extends AppController
         return $this->response->setJSON(['status' => true, 'data' => $departments]);
     }
 
+    /**
+     * Rekap bulanan per indikator, di-filter ke indikator yang memiliki data draft (status D)
+     * pada bulan yang dipilih. Untuk modul approval (siimut/approval/{module}).
+     */
+    public function ajaxGetRecap()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Session expired, silakan login ulang']);
+        }
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
+        }
+
+        $module       = $this->request->getPost('module') ?? 'inm';
+        $tahun        = (int) ($this->request->getPost('tahun') ?? date('Y'));
+        $bulan        = (int) ($this->request->getPost('bulan') ?? date('m'));
+        $departmentId = (int) ($this->request->getPost('department') ?? 0);
+
+        if (!isset($this->modules[$module])) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Modul tidak valid']);
+        }
+
+        $cfg   = $this->modules[$module];
+        $model = new LoadModuleForminputModel($cfg['prefix'], $cfg['categoryId']);
+        $data  = $model->getRecapByIndicatorWithDraft($tahun, $bulan, $departmentId > 0 ? $departmentId : null);
+
+        return $this->response->setJSON(['status' => true, 'data' => $data]);
+    }
+
     public function ajaxApprove()
     {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Session expired, silakan login ulang']);
+        }
         if (!$this->request->isAJAX()) {
             return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
         }

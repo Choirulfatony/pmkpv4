@@ -345,6 +345,18 @@ input[type="month"].form-control-sm { min-height: 31px; }
 .table-approve td { font-size: 0.85rem; vertical-align: middle; }
 .badge-draft { background-color: #fff3cd; color: #856404; }
 .badge-approved { background-color: #d4edda; color: #155724; }
+.recap-header { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); color: white; padding: 14px 18px; border-radius: 10px; margin-top: 20px; margin-bottom: 14px; }
+.card-recap { border: none; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+.card-recap .card-header { background: var(--bs-tertiary-bg); border-bottom: 2px solid #0d6efd; font-weight: bold; }
+.table-recap th { background: #f8f9fa; white-space: nowrap; font-size: 0.78rem; text-align: center; padding: 6px 4px; position: sticky; top: 0; z-index: 5; }
+.table-recap th:first-child, .table-recap th:nth-child(2) { text-align: left; }
+.table-recap td { font-size: 0.8rem; vertical-align: middle; text-align: center; padding: 6px 4px; }
+.table-recap td:first-child, .table-recap td:nth-child(2) { text-align: left; white-space: nowrap; }
+.table-recap .month-cell { min-width: 62px; }
+.table-recap .cell-has-draft { background-color: #fff8e1; font-weight: 600; }
+.table-recap .cell-num-denum { font-size: 0.7rem; color: #6c757d; line-height: 1.1; margin-top: 2px; }
+.table-recap .nilai-text { font-weight: 600; }
+.table-recap .nilai-na { color: #adb5bd; }
 #loadingOverlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 9999; }
 #loadingOverlay.show { display: flex; }
 .approve-stats { font-size: 0.9rem; }
