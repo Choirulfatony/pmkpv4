@@ -34,6 +34,11 @@ class RekapLaporanImprs extends AppController
         $tahun = $this->request->getGet('tahun') ?? date('Y');
         $indicatorId = $this->request->getGet('indicator_id');
 
+        $departments = $this->rekapModel->getActiveDepartmentsForYear((int) $tahun);
+        $draftCounts = $this->rekapModel->getDraftCountByDepartment((int) $tahun);
+        $draftByMonth = $this->rekapModel->getDraftCountByMonth((int) $tahun);
+        $totalDraft = array_sum($draftByMonth);
+
         // Jika ada indicator_id, tampilkan detail
         if ($indicatorId) {
             $detail = $this->rekapModel->getDetailByIdImprs((int) $indicatorId);
@@ -54,7 +59,11 @@ class RekapLaporanImprs extends AppController
             'judul'    => 'Rekap Laporan Imprs',
             'icon'     => '<i class="bi bi-bar-chart"></i>',
             '_content' => view('siimut/rekap_laporan_imprs', [
-                'tahun' => $tahun,
+                'tahun'        => $tahun,
+                'departments'  => $departments,
+                'draftCounts'  => $draftCounts,
+                'draftByMonth' => $draftByMonth,
+                'totalDraft'   => $totalDraft,
             ]),
             'menus'    => $menus
         ]);
@@ -74,18 +83,19 @@ class RekapLaporanImprs extends AppController
             return $this->response->setJSON(['error' => 'Invalid request - no POST data', 'post_data' => $post]);
         }
 
-        $indicators = $this->rekapModel->getIndicatorImprs($post);
+        $indicators = $this->rekapModel->getIndicatorImprs($post, $departmentId ?? null);
         log_message('error', 'Indicators count: ' . count($indicators));
-        
+
         // Clear cache untuk memastikan data terbaru
         $this->rekapModel->clearCache();
-        
+
         $tahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
+        $departmentId = isset($post['vdepartment']) && $post['vdepartment'] !== '' ? (int) $post['vdepartment'] : null;
 
         // Ambil SEMUA data sekaligus (1 query saja)
         $indicatorIds = array_column($indicators, 'indicator_id');
 
-        $allData = $this->rekapModel->getAllMonthlyData($indicatorIds, $tahun);
+        $allData = $this->rekapModel->getAllMonthlyData($indicatorIds, $tahun, $departmentId);
 
         $data = [];
         $no = isset($post['start']) ? (int) $post['start'] : 0;

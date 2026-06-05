@@ -30,6 +30,7 @@ class Approval extends AppController
         $tahun = $this->request->getGet('tahun') ?? date('Y');
         $bulan = $this->request->getGet('bulan') ?? date('m');
         $tanggal = $this->request->getGet('tanggal') ?? '';
+        $departmentId = (int) ($this->request->getGet('department') ?? 0);
 
         $backUrls = [
             'inm'    => 'siimut/form-inm',
@@ -39,18 +40,23 @@ class Approval extends AppController
 
         $namaBulan = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
+        $model = new LoadModuleForminputModel($cfg['prefix'], $cfg['categoryId']);
+        $departments = $model->getActiveDepartmentsWithDraft((int) $tahun, (int) $bulan);
+
         return $this->render('siimut/approve', [
             'judul'     => 'Approval ' . $cfg['title'],
             'icon'      => '<i class="bi bi-check2-square"></i>',
             '_content'  => view('siimut/approve', [
-                'module'     => $module,
-                'moduleTitle'=> $cfg['title'],
-                'backUrl'    => $backUrls[$module],
-                'tahun'      => $tahun,
-                'bulan'      => $bulan,
-                'tanggal'    => $tanggal,
-                'namaBulan'  => $namaBulan,
-                'profileId'  => session('profile_id') ?? 0
+                'module'      => $module,
+                'moduleTitle' => $cfg['title'],
+                'backUrl'     => $backUrls[$module],
+                'tahun'       => $tahun,
+                'bulan'       => $bulan,
+                'tanggal'     => $tanggal,
+                'namaBulan'   => $namaBulan,
+                'departments' => $departments,
+                'departmentId'=> $departmentId,
+                'profileId'   => session('profile_id') ?? 0
             ])
         ]);
     }
@@ -65,6 +71,7 @@ class Approval extends AppController
         $tahun = (int) ($this->request->getPost('tahun') ?? date('Y'));
         $bulan = (int) ($this->request->getPost('bulan') ?? date('m'));
         $tanggal = $this->request->getPost('tanggal') ?? '';
+        $departmentId = (int) ($this->request->getPost('department') ?? 0);
 
         if (!isset($this->modules[$module])) {
             return $this->response->setJSON(['status' => false, 'message' => 'Modul tidak valid']);
@@ -72,7 +79,7 @@ class Approval extends AppController
 
         $cfg = $this->modules[$module];
         $model = new LoadModuleForminputModel($cfg['prefix'], $cfg['categoryId']);
-        $data = $model->getPendingApproval($tahun, $bulan);
+        $data = $model->getPendingApproval($tahun, $bulan, $departmentId > 0 ? $departmentId : null);
 
         if (!empty($tanggal)) {
             $data = array_filter($data, function ($row) use ($tanggal) {
@@ -83,6 +90,31 @@ class Approval extends AppController
         }
 
         return $this->response->setJSON(['status' => true, 'data' => $data]);
+    }
+
+    /**
+     * Ambil daftar departemen yang punya data draft untuk kombinasi bulan+tahun+module.
+     * Dipanggil via AJAX saat user mengganti bulan/tahun.
+     */
+    public function ajaxGetDepartments()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
+        }
+
+        $module = $this->request->getPost('module') ?? 'inm';
+        $tahun = (int) ($this->request->getPost('tahun') ?? date('Y'));
+        $bulan = (int) ($this->request->getPost('bulan') ?? date('m'));
+
+        if (!isset($this->modules[$module])) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Modul tidak valid']);
+        }
+
+        $cfg = $this->modules[$module];
+        $model = new LoadModuleForminputModel($cfg['prefix'], $cfg['categoryId']);
+        $departments = $model->getActiveDepartmentsWithDraft($tahun, $bulan);
+
+        return $this->response->setJSON(['status' => true, 'data' => $departments]);
     }
 
     public function ajaxApprove()

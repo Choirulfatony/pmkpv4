@@ -91,21 +91,32 @@
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Bulan</label>
-                    <select class="form-select form-select-sm" id="filter_bulan">
+                    <select class="form-select form-select-sm" id="filter_bulan" onchange="onPeriodeChange()">
                         <?php for ($m = 1; $m <= 12; $m++): ?>
                             <option value="<?= $m ?>" <?= ((int)$bulan === $m) ? 'selected' : '' ?>><?= $namaBulan[$m] ?></option>
                         <?php endfor; ?>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label fw-bold">Tahun</label>
-                    <select class="form-select form-select-sm" id="filter_tahun">
+                    <select class="form-select form-select-sm" id="filter_tahun" onchange="onPeriodeChange()">
                         <?php for ($y = (int)date('Y'); $y >= 2020; $y--): ?>
                             <option value="<?= $y ?>" <?= ((int)$tahun === $y) ? 'selected' : '' ?>><?= $y ?></option>
                         <?php endfor; ?>
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Departemen</label>
+                    <select class="form-select form-select-sm" id="filter_department">
+                        <option value="0">-- Semua Departemen --</option>
+                        <?php foreach (($departments ?? []) as $dept): ?>
+                            <option value="<?= (int) $dept['department_id'] ?>" <?= ((int)($departmentId ?? 0) === (int) $dept['department_id']) ? 'selected' : '' ?>>
+                                <?= esc($dept['department_name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <button type="button" class="btn btn-primary btn-sm w-100" onclick="loadData()">
                         <i class="bi bi-arrow-clockwise me-1"></i> Tampilkan / Reload
                     </button>
@@ -171,21 +182,68 @@
     var moduleRoutes = {
         inm: {
             getData: '<?= site_url('siimut/approval/ajax-get-data') ?>',
+            getDepartments: '<?= site_url('siimut/approval/ajax-get-departments') ?>',
             approve: '<?= site_url('siimut/approval/ajax-approve') ?>'
         },
         imprs: {
             getData: '<?= site_url('siimut/approval/ajax-get-data') ?>',
+            getDepartments: '<?= site_url('siimut/approval/ajax-get-departments') ?>',
             approve: '<?= site_url('siimut/approval/ajax-approve') ?>'
         },
         impunit: {
             getData: '<?= site_url('siimut/approval/ajax-get-data') ?>',
+            getDepartments: '<?= site_url('siimut/approval/ajax-get-departments') ?>',
             approve: '<?= site_url('siimut/approval/ajax-approve') ?>'
         }
     };
 
+    /**
+     * Dipanggil setiap kali user mengganti bulan atau tahun.
+     * 1. Ambil daftar departemen yang punya draft untuk periode baru (AJAX).
+     * 2. Reset dropdown departemen ke "Semua Departemen".
+     * 3. Auto-load data untuk periode baru.
+     */
+    function onPeriodeChange() {
+        var bulan = document.getElementById('filter_bulan').value;
+        var tahun = document.getElementById('filter_tahun').value;
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', moduleRoutes[module].getDepartments, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.onload = function() {
+            var dropdown = document.getElementById('filter_department');
+            dropdown.innerHTML = '<option value="0">-- Semua Departemen --</option>';
+            if (xhr.status === 200) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.status && response.data) {
+                        for (var i = 0; i < response.data.length; i++) {
+                            var d = response.data[i];
+                            var opt = document.createElement('option');
+                            opt.value = d.department_id;
+                            opt.textContent = d.department_name;
+                            dropdown.appendChild(opt);
+                        }
+                    }
+                } catch (e) {
+                    // silent — fallback to "Semua Departemen"
+                }
+            }
+            // Auto-reload data dengan filter baru
+            loadData();
+        };
+        xhr.onerror = function() {
+            // Tetap load data meski dropdown gagal
+            loadData();
+        };
+        xhr.send('module=' + module + '&bulan=' + bulan + '&tahun=' + tahun);
+    }
+
     function loadData() {
         var bulan = document.getElementById('filter_bulan').value;
         var tahun = document.getElementById('filter_tahun').value;
+        var department = document.getElementById('filter_department').value;
 
         document.getElementById('loadingIndicator').style.display = 'flex';
         document.getElementById('tableContainer').style.display = 'none';
@@ -229,7 +287,7 @@
                 '<i class="bi bi-exclamation-circle me-1"></i> Gagal memuat data' +
                 '</td></tr>';
         };
-        xhr.send('module=' + module + '&bulan=' + bulan + '&tahun=' + tahun);
+        xhr.send('module=' + module + '&bulan=' + bulan + '&tahun=' + tahun + '&department=' + department);
     }
 
     function renderTable(data) {

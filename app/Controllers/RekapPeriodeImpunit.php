@@ -28,21 +28,11 @@ class RekapPeriodeImpunit extends AppController
 
         $tahun = $this->request->getGet('tahun') ?? date('Y');
 
-        // Fetch departments for ADMINISTRATOR/KOMITE
-        $departments = [];
-        $showDepartmentFilter = false;
-        if (in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
-            $showDepartmentFilter = true;
-            $db = db_connect();
-            $departments = $db->query("
-                SELECT DISTINCT mid.department_id, mid.department_name
-                FROM local_quality_indicator_result qir
-                JOIN local_quality_indicator qi ON qi.indicator_id = qir.result_indicator_id
-                JOIN master_institution_department mid ON mid.department_id = qir.result_department_id
-                WHERE qi.indicator_category_id = '6'
-                ORDER BY mid.department_name ASC
-            ")->getResult();
-        }
+        // Tampilkan filter departemen untuk semua user (otomatis ter-filter by role)
+        $departments = $this->rekapModel->getActiveDepartmentsForYear((int) $tahun);
+        $draftCounts = $this->rekapModel->getDraftCountByDepartment((int) $tahun);
+        $draftByMonth = $this->rekapModel->getDraftCountByMonth((int) $tahun);
+        $totalDraft = array_sum($draftByMonth);
 
         return $this->render('siimut/rekap_periode_impunit', [
             'judul'    => 'Rekap IMPUnit per Periode',
@@ -50,7 +40,10 @@ class RekapPeriodeImpunit extends AppController
             '_content' => view('siimut/rekap_periode_impunit', [
                 'tahun'                => $tahun,
                 'departments'          => $departments,
-                'showDepartmentFilter' => $showDepartmentFilter,
+                'draftCounts'          => $draftCounts,
+                'draftByMonth'         => $draftByMonth,
+                'totalDraft'           => $totalDraft,
+                'showDepartmentFilter' => true,
             ]),
             'menus'    => $menus
         ]);

@@ -174,6 +174,7 @@ class RekapLaporanInmModel extends Model
         // [CHANGED] Biar indikator non-aktif tetap ikut diambil data bulanannya
         $builder->whereIn("qi.indicator_record_status", ['A', 'D']);
         $builder->whereIn('qi.indicator_id', $indicatorIds);
+        $builder->where('qir.result_record_status', 'A');
     
         if ($departmentId !== null && $departmentId > 0) {
             $builder->where('qir.result_department_id', $departmentId);
@@ -203,7 +204,7 @@ class RekapLaporanInmModel extends Model
     /**
      * Ambil indikator dengan pagination
      */
-    public function getIndicatorInm($post)
+    public function getIndicatorInm($post, ?int $departmentId = null)
     {
         $db = db_connect();
         $builder = $db->table('quality_indicator_group');
@@ -244,14 +245,15 @@ class RekapLaporanInmModel extends Model
             $builder->where('quality_indicator.indicator_record_status', 'A');
         }
 
-        // Filter by user role
+        // Filter by user role / department override
         $userRole = session('user_role') ?? '';
         $userDepartmentId = session('department_id') ?? 0;
+        $effectiveDeptId = $departmentId !== null && $departmentId > 0
+            ? $departmentId
+            : ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? $userDepartmentId : null);
 
-        // ADMINISTRATOR & KOMITE → Buka semua
-        // KENDALI_MUTU, APP → Filter by department_id
-        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
-            $builder->where('master_institution_department.department_id', $userDepartmentId);
+        if ($effectiveDeptId !== null) {
+            $builder->where('master_institution_department.department_id', $effectiveDeptId);
         }
 
         // GROUP BY indicator_id
@@ -1022,6 +1024,7 @@ class RekapLaporanInmModel extends Model
 
         $builder->join('quality_indicator qi', 'qir.result_indicator_id = qi.indicator_id', 'LEFT');
         $builder->where('qir.result_indicator_id', $indicatorId);
+        $builder->where('qir.result_record_status', 'A');
         $builder->where("YEAR(qir.result_period)", $tahun);
         if ($departmentId !== null) {
             $builder->where('qir.result_department_id', $departmentId);
@@ -1174,5 +1177,83 @@ class RekapLaporanInmModel extends Model
         }
 
         return $perTahun;
+    }
+
+    /**
+     * Ambil daftar departemen yang punya data approved di tahun tertentu
+     */
+    public function getActiveDepartmentsForYear(int $tahun)
+    {
+        $db = db_connect();
+        return $db->table('master_institution_department mid')
+            ->distinct()
+            ->select('mid.department_id, mid.department_name')
+            ->join('quality_indicator_result qir', 'qir.result_department_id = mid.department_id', 'inner')
+            ->join('quality_indicator qi', 'qi.indicator_id = qir.result_indicator_id', 'inner')
+            ->where('qi.indicator_category_id', '4')
+            ->where('qir.result_record_status', 'A')
+            ->where('YEAR(qir.result_period)', $tahun)
+            ->orderBy('mid.department_name', 'ASC')
+            ->get()
+            ->getResult();
+    }
+
+    /**
+     * Hitung jumlah draft (belum disetujui) per departemen untuk INM
+     * Menghitung kombinasi unik (indikator + bulan + departemen) — setiap baris draft dihitung 1x
+     */
+    public function getDraftCountByDepartment(int $tahun): array
+    {
+        $db = db_connect();
+        $rows = $db->table('quality_indicator_result qir')
+            ->select("
+                qir.result_department_id AS department_id,
+                mid.department_name,
+                COUNT(*) AS total_draft
+            ")
+            ->join('quality_indicator qi', 'qir.result_indicator_id = qi.indicator_id', 'inner')
+            ->join('master_institution_department mid', 'mid.department_id = qir.result_department_id', 'left')
+            ->where('qi.indicator_category_id', '4')
+            ->where('qir.result_record_status', 'D')
+            ->where('YEAR(qir.result_period)', $tahun)
+            ->groupBy('qir.result_department_id, mid.department_name')
+            ->orderBy('mid.department_name', 'ASC')
+            ->get()
+            ->getResult();
+
+        return array_map(function ($r) {
+            return [
+                'department_id'   => (int) $r->department_id,
+                'department_name' => $r->department_name ?? '(Tanpa Departemen)',
+                'total_draft'     => (int) $r->total_draft,
+            ];
+        }, $rows);
+    }
+
+    /**
+     * Hitung jumlah draft (belum disetujui) per bulan untuk INM
+     */
+    public function getDraftCountByMonth(int $tahun): array
+    {
+        $db = db_connect();
+        $rows = $db->table('quality_indicator_result qir')
+            ->select("
+                MONTH(qir.result_period) AS bulan,
+                COUNT(*) AS total_draft
+            ")
+            ->join('quality_indicator qi', 'qir.result_indicator_id = qi.indicator_id', 'inner')
+            ->where('qi.indicator_category_id', '4')
+            ->where('qir.result_record_status', 'D')
+            ->where('YEAR(qir.result_period)', $tahun)
+            ->groupBy('MONTH(qir.result_period)')
+            ->orderBy('MONTH(qir.result_period)', 'ASC')
+            ->get()
+            ->getResult();
+
+        $result = array_fill(1, 12, 0);
+        foreach ($rows as $r) {
+            $result[(int) $r->bulan] = (int) $r->total_draft;
+        }
+        return $result;
     }
 }

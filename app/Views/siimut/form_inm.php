@@ -704,7 +704,8 @@
         var today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        function isInputable(day) {
+        function isInputable(day, freq) {
+            if (freq === 'W' || freq === 'M' || freq === 'Y') return true;
             var tglDate = new Date(tahun, bulan - 1, day);
             tglDate.setHours(0, 0, 0, 0);
             var diff = Math.round((today - tglDate) / (1000 * 60 * 60 * 24));
@@ -736,14 +737,42 @@
                     cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
                 }
 
-                if (isInputable(item.hari)) {
+                if (isInputable(item.hari, freq)) {
                     cellClass += ' cell-inputable';
                 }
 
                 html += '<td class="' + cellClass + '" colspan="' + days + '" ' +
-                    'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\')">' +
+                    'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')">' +
                     '<div class="fw-bold">' + nilaiDisplay + '</div>' +
                     '<div class="num-denum">' + (item.num || 0) + ' / ' + (item.denum || 0) + '</div></td>';
+            } else if (freq === 'W') {
+                for (var w = 0; w < daily.length; w++) {
+                    var item = daily[w];
+                    var cellClass = 'day-cell text-center';
+                    var nilaiDisplay = '-';
+                    var colspan = item.colspan || 7;
+
+                    if (item.nilai !== null) {
+                        nilaiDisplay = Number(item.nilai).toFixed(2) + ' ' + escHtml(row.indicator_units);
+                        cellClass += ' cell-has-data';
+                        if (item.status === 'A') cellClass += ' cell-approved';
+                        else if (item.status === 'D') cellClass += ' cell-draft';
+                        if (item.tercapai === true) cellClass += ' cell-target';
+                        else if (item.tercapai === false) cellClass += ' cell-fail';
+                    } else {
+                        cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
+                    }
+
+                    if (isInputable(item.hari, freq)) {
+                        cellClass += ' cell-inputable';
+                    }
+
+                    var weekLabel = 'Mg ' + (item.week || (w + 1));
+                    html += '<td class="' + cellClass + '" colspan="' + colspan + '" ' +
+                        'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')">' +
+                        '<div class="fw-bold">' + weekLabel + ': ' + nilaiDisplay + '</div>' +
+                        '<div class="num-denum">' + (item.num || 0) + ' / ' + (item.denum || 0) + '</div></td>';
+                }
             } else {
                 for (var d = 0; d < daily.length; d++) {
                     var item = daily[d];
@@ -761,12 +790,12 @@
                         cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
                     }
 
-                    if (isInputable(item.hari)) {
+                    if (isInputable(item.hari, freq)) {
                         cellClass += ' cell-inputable';
                     }
 
                     html += '<td class="' + cellClass + '" ' +
-                        'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\')">' +
+                        'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')">' +
                         '<div class="fw-bold">' + nilaiDisplay + '</div>' +
                         '<div class="num-denum">' + (item.num || 0) + ' / ' + (item.denum || 0) + '</div></td>';
                 }
@@ -837,7 +866,7 @@
         applyPagination();
     }
 
-    function openModal(indicatorId, departmentId, departmentName, hari, indicatorName, target, units, targetUnit) {
+    function openModal(indicatorId, departmentId, departmentName, hari, indicatorName, target, units, targetUnit, freq) {
         var periode = document.getElementById('filter_periode').value;
         var tahun = periode.substring(0, 4);
         var bulan = periode.substring(5, 7);
@@ -853,6 +882,26 @@
         // Masa depan
         if (diffDays < 0) {
             toastError('Tidak bisa input untuk tanggal yang akan datang');
+            return;
+        }
+
+        // W/M/Y: selalu via AJAX check (skip 30 hari shortcut)
+        if (freq === 'W' || freq === 'M' || freq === 'Y') {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '<?= site_url('siimut/load-module-forminput/check-input-allowed') ?>', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var resp = JSON.parse(xhr.responseText);
+                    if (resp.allowed) {
+                        _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, resp.restricted, resp.approved_action || null);
+                    } else {
+                        toastError(resp.message || 'Tidak bisa input untuk tanggal ini');
+                    }
+                }
+            };
+            xhr.send('indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + tanggal);
             return;
         }
 

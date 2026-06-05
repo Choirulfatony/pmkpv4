@@ -125,9 +125,12 @@ class LoadModuleForminputImpunit extends AppController
 
             $daily = [];
             if ($frequency === 'M' || $frequency === 'Y') {
-                $d = 1;
-                if (isset($dailyMap[$key][$d])) {
-                    $r      = $dailyMap[$key][$d];
+                $foundDay = null;
+                if (!empty($dailyMap[$key])) {
+                    $foundDay = array_key_first($dailyMap[$key]);
+                }
+                if ($foundDay !== null) {
+                    $r      = $dailyMap[$key][$foundDay];
                     $num    = (float) $r->num;
                     $denum  = (float) $r->denum;
                     $nilai  = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
@@ -146,6 +149,42 @@ class LoadModuleForminputImpunit extends AppController
                     'tercapai' => $nilai !== null ? $this->model->hitungTercapai($nilai, $target, $operator) : null,
                     'status'   => $status,
                 ];
+            } elseif ($frequency === 'W') {
+                $numWeeks = (int) ceil($daysInMonth / 7);
+                $weeks = [];
+                for ($w = 1; $w <= $numWeeks; $w++) {
+                    $weeks[$w] = ['num' => 0, 'den' => 0, 'status' => '', 'has_data' => false];
+                }
+                for ($d = 1; $d <= $daysInMonth; $d++) {
+                    $weekNum = (int) ceil($d / 7);
+                    if (isset($dailyMap[$key][$d])) {
+                        $r = $dailyMap[$key][$d];
+                        $weeks[$weekNum]['num'] += (float) $r->num;
+                        $weeks[$weekNum]['den'] += (float) $r->denum ?? (float) $r->den ?? 0;
+                        $weeks[$weekNum]['status'] = $r->result_record_status ?? '';
+                        $weeks[$weekNum]['has_data'] = true;
+                    }
+                }
+                for ($w = 1; $w <= $numWeeks; $w++) {
+                    $weekData = $weeks[$w];
+                    $num = $weekData['num'];
+                    $den = $weekData['den'];
+                    $nilai = $den > 0 ? round(($num / $den) * $factors, 2) : null;
+                    $startDay = ($w - 1) * 7 + 1;
+                    $endDay = min($w * 7, $daysInMonth);
+                    $daily[] = [
+                        'hari'     => $startDay,
+                        'num'      => $num,
+                        'denum'    => $den,
+                        'nilai'    => $nilai,
+                        'tercapai' => $nilai !== null ? $this->model->hitungTercapai($nilai, $target, $operator) : null,
+                        'status'   => $weekData['status'],
+                        'week'     => $w,
+                        'start_day'=> $startDay,
+                        'end_day'  => $endDay,
+                        'colspan'  => $endDay - $startDay + 1,
+                    ];
+                }
             } else {
                 for ($d = 1; $d <= $daysInMonth; $d++) {
                     if (isset($dailyMap[$key][$d])) {

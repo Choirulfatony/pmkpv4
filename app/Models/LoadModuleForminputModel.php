@@ -182,17 +182,22 @@ class LoadModuleForminputModel extends Model
         $bulan = date('m', strtotime($tanggal));
         $hari = date('d', strtotime($tanggal));
 
-        $existingData = $db->table($this->tablePrefix . 'quality_indicator_result qir')
+        $frequency = $indicator->indicator_frequency ?? 'D';
+
+        $builder = $db->table($this->tablePrefix . 'quality_indicator_result qir')
             ->select('qir.*, up.profile_fullname')
             ->join('user_profile up', 'up.profile_id = qir.result_insert_by', 'left')
             ->where('qir.result_indicator_id', $indicatorId)
             ->where('qir.result_department_id', $departmentId)
             ->whereIn('qir.result_record_status', ['D', 'A'])
             ->where('YEAR(qir.result_period)', $tahun)
-            ->where('MONTH(qir.result_period)', $bulan)
-            ->where('DAY(qir.result_period)', $hari)
-            ->get()
-            ->getResult();
+            ->where('MONTH(qir.result_period)', $bulan);
+
+        if ($frequency !== 'M' && $frequency !== 'Y') {
+            $builder->where('DAY(qir.result_period)', $hari);
+        }
+
+        $existingData = $builder->get()->getResult();
 
         $monthlyTotal = $db->table($this->tablePrefix . 'quality_indicator_result')
             ->select('
@@ -615,12 +620,12 @@ class LoadModuleForminputModel extends Model
         };
     }
 
-    public function getPendingApproval(int $tahun, int $bulan)
+    public function getPendingApproval(int $tahun, int $bulan, ?int $departmentId = null)
     {
         $db = db_connect();
         $bulanStr = str_pad((string) $bulan, 2, '0', STR_PAD_LEFT);
 
-        return $db->query("
+        $sql = "
             SELECT
                 qir.result_id,
                 qir.result_indicator_id,
@@ -642,10 +647,54 @@ class LoadModuleForminputModel extends Model
             JOIN master_institution_department mid ON mid.department_id = qir.result_department_id
             LEFT JOIN user_profile up ON up.profile_id = qir.result_insert_by
             WHERE qir.result_record_status = 'D'
+              AND qi.indicator_category_id = ?
               AND YEAR(qir.result_period) = ?
               AND MONTH(qir.result_period) = ?
-            ORDER BY qir.result_indicator_id, qir.result_department_id, qir.result_period ASC
-        ", [$tahun, $bulanStr])->getResult();
+        ";
+
+        $params = [$this->categoryId, $tahun, $bulanStr];
+
+        if (!empty($departmentId)) {
+            $sql .= " AND qir.result_department_id = ?";
+            $params[] = $departmentId;
+        }
+
+        $sql .= " ORDER BY qir.result_indicator_id, qir.result_department_id, qir.result_period ASC";
+
+        return $db->query($sql, $params)->getResult();
+    }
+
+    /**
+     * Ambil daftar departemen yang memiliki data draft (result_record_status='D')
+     * untuk kombinasi tahun+bulan+category tertentu, diurutkan alfabetis.
+     *
+     * @return array<int, array{department_id:int, department_name:string}>
+     */
+    public function getActiveDepartmentsWithDraft(int $tahun, int $bulan): array
+    {
+        $db = db_connect();
+        $bulanStr = str_pad((string) $bulan, 2, '0', STR_PAD_LEFT);
+
+        $rows = $db->query("
+            SELECT DISTINCT
+                qir.result_department_id AS department_id,
+                mid.department_name
+            FROM {$this->tablePrefix}quality_indicator_result qir
+            INNER JOIN {$this->tablePrefix}quality_indicator qi ON qi.indicator_id = qir.result_indicator_id
+            JOIN master_institution_department mid ON mid.department_id = qir.result_department_id
+            WHERE qir.result_record_status = 'D'
+              AND qi.indicator_category_id = ?
+              AND YEAR(qir.result_period) = ?
+              AND MONTH(qir.result_period) = ?
+            ORDER BY mid.department_name ASC
+        ", [$this->categoryId, $tahun, $bulanStr])->getResult();
+
+        return array_map(function ($r) {
+            return [
+                'department_id'   => (int) $r->department_id,
+                'department_name' => $r->department_name ?? '(Tanpa Nama)',
+            ];
+        }, $rows);
     }
 
     public function approveBatch(array $resultIds, int $userId): int
@@ -716,12 +765,48 @@ class LoadModuleForminputModel extends Model
             return ['allowed' => false, 'restricted' => false, 'message' => 'Tidak bisa input untuk tanggal yang akan datang', 'max_days' => 0];
         }
 
-        // Dalam 30 hari → allowed (full access)
+        // Get indicator frequency
+        $freqRow = $db->table($this->tablePrefix . 'quality_indicator')
+            ->select('indicator_frequency')
+            ->where('indicator_id', $indicatorId)
+            ->where('indicator_category_id', $this->categoryId)
+            ->get()
+            ->getRow();
+        $frequency = $freqRow ? $freqRow->indicator_frequency : 'D';
+
+        // For W/M/Y: no 30-day hard limit, use group_days from database
+        if ($frequency === 'W' || $frequency === 'M' || $frequency === 'Y') {
+            $maxDays = 9999;
+            if ($this->tablePrefix !== 'local_') {
+                $row = $db->table($this->tablePrefix . 'quality_indicator_group')
+                    ->select('group_days')
+                    ->where('group_indicator_id', $indicatorId)
+                    ->where('group_department_id', $departmentId)
+                    ->where('group_period', $tahun)
+                    ->where('group_record_status', 'A')
+                    ->get()
+                    ->getRow();
+                $maxDays = $row ? (int) $row->group_days : 9999;
+            }
+
+            if ($diffDays <= $maxDays) {
+                return ['allowed' => true, 'restricted' => false, 'message' => '', 'max_days' => $maxDays];
+            }
+
+            return [
+                'allowed' => false,
+                'restricted' => false,
+                'message' => "Input maksimal $maxDays hari ke belakang untuk indikator ini",
+                'max_days' => $maxDays
+            ];
+        }
+
+        // For D (daily): 30-day hard limit
         if ($diffDays <= 30) {
             return ['allowed' => true, 'restricted' => false, 'message' => '', 'max_days' => 30];
         }
 
-        // Cek group_days (only for non-local modules)
+        // Lebih dari 30 hari → cek group_days (only for non-local modules)
         $maxDays = 30;
         if ($this->tablePrefix !== 'local_') {
             $row = $db->table($this->tablePrefix . 'quality_indicator_group')

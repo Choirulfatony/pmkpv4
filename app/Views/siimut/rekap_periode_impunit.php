@@ -163,12 +163,46 @@
             <label class="form-label fw-semibold mb-1">Pilih Ruangan</label>
             <select class="form-select form-select-sm" id="filter_department" onchange="gantiDepartemen()" style="max-width: 280px;">
                 <option value="">-- Semua Ruangan --</option>
-                <?php foreach ($departments as $dept): ?>
-                    <option value="<?= $dept->department_id ?>"><?= esc($dept->department_name) ?></option>
-                <?php endforeach; ?>
+                <?php if (!empty($departments)): ?>
+                    <?php foreach ($departments as $dept): ?>
+                        <?php
+                        $draftInfo = '';
+                        if (!empty($draftCounts)) {
+                            foreach ($draftCounts as $dc) {
+                                if ((int)$dc['department_id'] === (int)$dept->department_id) {
+                                    $draftInfo = ' (Draft: ' . $dc['total_draft'] . ')';
+                                    break;
+                                }
+                            }
+                        }
+                        ?>
+                        <option value="<?= esc($dept->department_id) ?>"><?= esc($dept->department_name) ?><?= $draftInfo ?></option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </select>
         </div>
         <?php endif; ?>
+
+        <div class="col-md-<?= !empty($showDepartmentFilter) ? '3' : '9' ?> d-flex align-items-end">
+            <?php if (!empty($totalDraft) && $totalDraft > 0): ?>
+                <?php
+                $namaBulan = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
+                $breakdownLines = [];
+                foreach (($draftByMonth ?? []) as $bln => $cnt) {
+                    if ($cnt > 0) {
+                        $breakdownLines[] = $namaBulan[$bln] . ': ' . $cnt;
+                    }
+                }
+                $tooltipText = 'Tahun ' . $tahun . " | " . implode(' | ', $breakdownLines);
+                ?>
+                <a href="<?= site_url('siimut/approval/impunit') ?>" class="badge bg-warning text-dark text-decoration-none"
+                   title="<?= esc($tooltipText) ?>"
+                   data-bs-toggle="tooltip" data-bs-placement="bottom"
+                   style="font-size: 12px; padding: 8px 12px; cursor: pointer;">
+                    <i class="bi bi-clock me-1"></i> Draft Menunggu Approval: <?= $totalDraft ?>
+                </a>
+            <?php endif; ?>
+        </div>
 
         <div class="col-md-<?= !empty($showDepartmentFilter) ? '6' : '9' ?>">
             <label class="form-label fw-semibold mb-1">Filter Periode</label>
@@ -253,6 +287,9 @@
         vtahun = <?= date('Y') ?>;
         $('#tahun').val(vtahun);
         initTable();
+
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (el) { return new bootstrap.Tooltip(el); });
     });
 
     $(document).on('keydown', function(e) {

@@ -197,6 +197,7 @@ protected $column_order = [
         // [CHANGED] Biar indikator non-aktif tetap ikut diambil data bulanannya
         $builder->whereIn("lqi.indicator_record_status", ['A', 'D']);
         $builder->whereIn('lqi.indicator_id', $indicatorIds);
+        $builder->where('lqir.result_record_status', 'A');
 
         if ($departmentId !== null && $departmentId > 0) {
             $builder->where('lqir.result_department_id', $departmentId);
@@ -226,7 +227,7 @@ protected $column_order = [
     /**
      * Ambil indikator dengan pagination
      */
- public function getIndicatorImprs($post)
+ public function getIndicatorImprs($post, ?int $departmentId = null)
     {
         $db = db_connect();
 
@@ -250,19 +251,24 @@ protected $column_order = [
                 SELECT 1 FROM local_quality_indicator_result lqir
                 WHERE lqir.result_indicator_id = lqi.indicator_id
                 AND YEAR(lqir.result_period) = {$vtahun}
+                AND lqir.result_record_status = 'A'
             )
         ";
 
-        // Filter by user role
+        // Filter by user role / department override
         $userRole = session('user_role') ?? '';
         $userDepartmentId = session('department_id') ?? 0;
+        $effectiveDeptId = $departmentId !== null && $departmentId > 0
+            ? $departmentId
+            : ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? $userDepartmentId : null);
 
-        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
+        if ($effectiveDeptId !== null) {
             $sql .= " AND EXISTS (
                 SELECT 1 FROM local_quality_indicator_result lqir
                 WHERE lqir.result_indicator_id = lqi.indicator_id
                 AND YEAR(lqir.result_period) = {$vtahun}
-                AND lqir.result_department_id = " . (int)$userDepartmentId . "
+                AND lqir.result_department_id = " . (int)$effectiveDeptId . "
+                AND lqir.result_record_status = 'A'
             )";
         }
 
@@ -449,6 +455,7 @@ protected $column_order = [
             AND local_quality_indicator.indicator_record_status IN ('A', 'D') 
             AND local_quality_indicator_result.result_indicator_id = ?
             AND YEAR(local_quality_indicator_result.result_period) = ?
+            AND local_quality_indicator_result.result_record_status = 'A'
             {$searchCondition}
             {$deptCondition}
             GROUP BY master_institution_department.department_id
@@ -700,6 +707,7 @@ protected $column_order = [
                 WHERE lqir_sub.result_indicator_id = lqi.indicator_id
                 AND YEAR(lqir_sub.result_period) = {$tahun}
                 AND lqir_sub.result_department_id = {$departmentId}
+                AND lqir_sub.result_record_status = 'A'
             )", null, false);
             $filterDepartmentId = $departmentId;
         } elseif (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
@@ -708,6 +716,7 @@ protected $column_order = [
                 WHERE lqir_sub.result_indicator_id = lqi.indicator_id
                 AND YEAR(lqir_sub.result_period) = {$tahun}
                 AND lqir_sub.result_department_id = {$userDepartmentId}
+                AND lqir_sub.result_record_status = 'A'
             )", null, false);
             $filterDepartmentId = $userDepartmentId;
         }
@@ -716,6 +725,7 @@ protected $column_order = [
             SELECT 1 FROM local_quality_indicator_result lqir_sub
             WHERE lqir_sub.result_indicator_id = lqi.indicator_id
             AND YEAR(lqir_sub.result_period) = {$tahun}
+            AND lqir_sub.result_record_status = 'A'
         )", null, false);
 
         // For current year: only active indicators
@@ -991,6 +1001,7 @@ protected $column_order = [
 
         $builder->join('local_quality_indicator lqi', 'lqir.result_indicator_id = lqi.indicator_id', 'LEFT');
         $builder->where('lqir.result_indicator_id', $indicatorId);
+        $builder->where('lqir.result_record_status', 'A');
         $builder->where("lqir.result_period >=", $tahun . '-01-01');
         $builder->where("lqir.result_period <=", $tahun . '-12-31');
 
@@ -1222,5 +1233,83 @@ protected $column_order = [
             ];
         }
         return $map;
+    }
+
+    /**
+     * Ambil daftar departemen yang punya data approved di tahun tertentu
+     */
+    public function getActiveDepartmentsForYear(int $tahun)
+    {
+        $db = db_connect();
+        return $db->table('master_institution_department mid')
+            ->distinct()
+            ->select('mid.department_id, mid.department_name')
+            ->join('local_quality_indicator_result lqir', 'lqir.result_department_id = mid.department_id', 'inner')
+            ->join('local_quality_indicator lqi', 'lqi.indicator_id = lqir.result_indicator_id', 'inner')
+            ->where('lqi.indicator_category_id', '5')
+            ->where('lqir.result_record_status', 'A')
+            ->where('YEAR(lqir.result_period)', $tahun)
+            ->orderBy('mid.department_name', 'ASC')
+            ->get()
+            ->getResult();
+    }
+
+    /**
+     * Hitung jumlah draft (belum disetujui) per departemen untuk IMPRS
+     * Menghitung kombinasi unik (indikator + bulan + departemen) — setiap baris draft dihitung 1x
+     */
+    public function getDraftCountByDepartment(int $tahun): array
+    {
+        $db = db_connect();
+        $rows = $db->table('local_quality_indicator_result lqir')
+            ->select("
+                lqir.result_department_id AS department_id,
+                mid.department_name,
+                COUNT(*) AS total_draft
+            ")
+            ->join('local_quality_indicator lqi', 'lqir.result_indicator_id = lqi.indicator_id', 'inner')
+            ->join('master_institution_department mid', 'mid.department_id = lqir.result_department_id', 'left')
+            ->where('lqi.indicator_category_id', '5')
+            ->where('lqir.result_record_status', 'D')
+            ->where('YEAR(lqir.result_period)', $tahun)
+            ->groupBy('lqir.result_department_id, mid.department_name')
+            ->orderBy('mid.department_name', 'ASC')
+            ->get()
+            ->getResult();
+
+        return array_map(function ($r) {
+            return [
+                'department_id'   => (int) $r->department_id,
+                'department_name' => $r->department_name ?? '(Tanpa Departemen)',
+                'total_draft'     => (int) $r->total_draft,
+            ];
+        }, $rows);
+    }
+
+    /**
+     * Hitung jumlah draft (belum disetujui) per bulan untuk IMPRS
+     */
+    public function getDraftCountByMonth(int $tahun): array
+    {
+        $db = db_connect();
+        $rows = $db->table('local_quality_indicator_result lqir')
+            ->select("
+                MONTH(lqir.result_period) AS bulan,
+                COUNT(*) AS total_draft
+            ")
+            ->join('local_quality_indicator lqi', 'lqir.result_indicator_id = lqi.indicator_id', 'inner')
+            ->where('lqi.indicator_category_id', '5')
+            ->where('lqir.result_record_status', 'D')
+            ->where('YEAR(lqir.result_period)', $tahun)
+            ->groupBy('MONTH(lqir.result_period)')
+            ->orderBy('MONTH(lqir.result_period)', 'ASC')
+            ->get()
+            ->getResult();
+
+        $result = array_fill(1, 12, 0);
+        foreach ($rows as $r) {
+            $result[(int) $r->bulan] = (int) $r->total_draft;
+        }
+        return $result;
     }
 }

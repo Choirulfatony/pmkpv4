@@ -34,6 +34,18 @@ class RekapLaporanImpunit extends AppController
         $tahun = $this->request->getGet('tahun') ?? date('Y');
         $indicatorId = $this->request->getGet('indicator_id');
 
+        // Ambil daftar departemen yang punya data approved di tahun terpilih
+        $departments = $this->rekapModel->getActiveDepartmentsForYear((int) $tahun);
+
+        // Hitung jumlah draft (menunggu approval) per departemen
+        $draftCounts = $this->rekapModel->getDraftCountByDepartment((int) $tahun);
+
+        // Hitung jumlah draft per bulan
+        $draftByMonth = $this->rekapModel->getDraftCountByMonth((int) $tahun);
+
+        // Total draft keseluruhan (jumlah baris draft, tanpa double-count)
+        $totalDraft = array_sum($draftByMonth);
+
         // Jika ada indicator_id, tampilkan detail
         if ($indicatorId) {
             $detail = $this->rekapModel->getDetailByIdImpunit((int) $indicatorId);
@@ -54,7 +66,11 @@ class RekapLaporanImpunit extends AppController
             'judul'    => 'Rekap Laporan IMPUnit',
             'icon'     => '<i class="bi bi-bar-chart"></i>',
             '_content' => view('siimut/rekap_laporan_impunit', [
-                'tahun' => $tahun,
+                'tahun'        => $tahun,
+                'departments'  => $departments,
+                'draftCounts'  => $draftCounts,
+                'draftByMonth' => $draftByMonth,
+                'totalDraft'   => $totalDraft,
             ]),
             'menus'    => $menus
         ]);
@@ -75,8 +91,9 @@ class RekapLaporanImpunit extends AppController
         }
 
         $tahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
+        $departmentId = isset($post['vdepartment']) && $post['vdepartment'] !== '' ? (int) $post['vdepartment'] : null;
 
-        $indicators = $this->rekapModel->getIndicatorImpunit($post);
+        $indicators = $this->rekapModel->getIndicatorImpunit($post, $departmentId);
         log_message('error', 'IMPUnit - Indicators count: ' . count($indicators) . ', tahun: ' . $tahun);
 
         // Clear cache untuk memastikan data terbaru
@@ -85,7 +102,7 @@ class RekapLaporanImpunit extends AppController
         // Ambil SEMUA data sekaligus (1 query saja)
         $indicatorIds = array_column($indicators, 'indicator_id');
 
-        $allData = $this->rekapModel->getAllMonthlyData($indicatorIds, $tahun);
+        $allData = $this->rekapModel->getAllMonthlyData($indicatorIds, $tahun, $departmentId);
 
         $data = [];
         $no = isset($post['start']) ? (int) $post['start'] : 0;
@@ -289,6 +306,8 @@ class RekapLaporanImpunit extends AppController
     public function exportExcel()
     {
         $tahun = $this->request->getGet('tahun') ?? date('Y');
+        $departmentId = $this->request->getGet('department');
+        $departmentId = ($departmentId !== null && $departmentId !== '') ? (int) $departmentId : null;
 
         // Clean any previous output
         if (ob_get_level()) {
@@ -391,9 +410,9 @@ class RekapLaporanImpunit extends AppController
             }
 
             // ==================== DATA ====================
-            $indicators = $this->rekapModel->getIndicatorImpunit(['vtahun' => $tahun]);
+            $indicators = $this->rekapModel->getIndicatorImpunit(['vtahun' => $tahun], $departmentId);
             $indicatorIds = array_column($indicators, 'indicator_id');
-            $allData = $this->rekapModel->getAllMonthlyData($indicatorIds, $tahun);
+            $allData = $this->rekapModel->getAllMonthlyData($indicatorIds, $tahun, $departmentId);
 
             $no = 1;
             $row = 7;

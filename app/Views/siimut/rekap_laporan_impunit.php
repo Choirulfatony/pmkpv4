@@ -242,7 +242,7 @@
                     <i class="fas fa-chart-bar me-2"></i>
                     Rekap IMPUnit per Bulan
                 </h3>
-                <div class="card-tools d-flex align-items-center gap-2">
+                <div class="card-tools d-flex align-items-center gap-2 flex-wrap">
                     <div class="input-group input-group-sm" style="width: 130px;">
                         <span class="input-group-text"><i class="fas fa-calendar"></i></span>
                         <select class="form-select form-select-sm" id="tahun" onchange="gantiTahun()">
@@ -251,6 +251,46 @@
                             <?php endfor; ?>
                         </select>
                     </div>
+                    <div class="input-group input-group-sm" style="width: 220px;">
+                        <span class="input-group-text"><i class="fas fa-building"></i></span>
+                        <select class="form-select form-select-sm" id="department" onchange="gantiDepartemen()">
+                            <option value="">-- Semua Departemen --</option>
+                            <?php if (!empty($departments)): ?>
+                                <?php foreach ($departments as $dept): ?>
+                                    <?php
+                                    $draftInfo = '';
+                                    foreach ($draftCounts as $dc) {
+                                        if ((int)$dc['department_id'] === (int)$dept->department_id) {
+                                            $draftInfo = ' (Draft: ' . $dc['total_draft'] . ')';
+                                            break;
+                                        }
+                                    }
+                                    ?>
+                                    <option value="<?= esc($dept->department_id) ?>">
+                                        <?= esc($dept->department_name) ?><?= $draftInfo ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+                    <?php if (!empty($totalDraft) && $totalDraft > 0): ?>
+                        <?php
+                        $namaBulan = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
+                        $breakdownLines = [];
+                        foreach ($draftByMonth as $bln => $cnt) {
+                            if ($cnt > 0) {
+                                $breakdownLines[] = $namaBulan[$bln] . ': ' . $cnt;
+                            }
+                        }
+                        $tooltipText = 'Tahun ' . $tahun . " | " . implode(' | ', $breakdownLines);
+                        ?>
+                        <a href="<?= site_url('siimut/approval/impunit') ?>" class="badge bg-warning text-dark text-decoration-none"
+                           title="<?= esc($tooltipText) ?>"
+                           data-bs-toggle="tooltip" data-bs-placement="bottom"
+                           style="font-size: 12px; padding: 6px 10px; cursor: pointer;">
+                            <i class="fas fa-clock me-1"></i> Draft Menunggu Approval: <?= $totalDraft ?>
+                        </a>
+                    <?php endif; ?>
                     <div class="btn-group btn-group-sm">
                         <button type="button" class="btn btn-outline-secondary" onclick="reload_table_impunit()" title="Refresh">
                             <i class="fas fa-sync-alt"></i>
@@ -321,11 +361,16 @@
 <script>
     var table_loquin;
     var vtahun = <?= isset($tahun) ? $tahun : "new Date().getFullYear()" ?>;
+    var vdepartment = '';
     var target, factor, operator;
 
     $(document).ready(function() {
         $('#tahun').val(vtahun);
         $('#btn-export').attr('href', '<?= site_url('siimut/rekap-laporan-impunit/export') ?>?tahun=' + vtahun);
+
+        // Inisialisasi tooltip untuk badge draft
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (el) { return new bootstrap.Tooltip(el); });
 
         table_loquin = $('#ajax_data_rekap').DataTable({
             processing: false,
@@ -341,6 +386,7 @@
                 type: 'POST',
                 data: function(d) {
                     d.vtahun = vtahun;
+                    d.vdepartment = vdepartment;
                     return d;
                 },
                 beforeSend: function(xhr) {
@@ -429,6 +475,13 @@
     function gantiTahun() {
         vtahun = $('#tahun').val();
         $('#btn-export').attr('href', '<?= site_url('siimut/rekap-laporan-impunit/export') ?>?tahun=' + vtahun);
+        if (table_loquin) {
+            table_loquin.ajax.url('<?= site_url('siimut/rekap-laporan-impunit/ajax_rekap_impunit') ?>').load();
+        }
+    }
+
+    function gantiDepartemen() {
+        vdepartment = $('#department').val();
         if (table_loquin) {
             table_loquin.ajax.url('<?= site_url('siimut/rekap-laporan-impunit/ajax_rekap_impunit') ?>').load();
         }
