@@ -996,11 +996,16 @@
                 var simbol = $('#viewindicator_target_calculation').text() || '>=';
                 var target = $('#viewindicator_target').text() || '...';
                 var satuan = $('#viewindicator_target_unit').text() || '%';
-                var rumusHtml = '<div class="text-center p-2" style="background:#f8f9fa; border-radius:4px;">' +
-                    '<div style="font-size:1rem; font-style:italic;">Hasil Capaian = ' +
-                    '<span class="fw-bold">' + numLabel + '</span> / ' +
-                    '<span class="fw-bold">' + denLabel + '</span> × 100%</div>' +
-                    '<div class="mt-1 small">Standar: ' + simbol + ' ' + target + ' ' + satuan + '</div>' +
+                var rumusHtml = '<div class="text-center p-3" style="background:#f8f9fa; border-radius:4px; font-family:\'Times New Roman\',serif;">' +
+                    '<div style="display:inline-flex; align-items:center; gap:8px; font-size:1.1rem;">' +
+                    '<span>Hasil Capaian =</span>' +
+                    '<span style="display:inline-flex; flex-direction:column; align-items:center;">' +
+                    '<span style="border-bottom:2px solid #000; padding:2px 12px; font-style:italic;">' + numLabel + '</span>' +
+                    '<span style="padding:2px 12px; font-style:italic;">' + denLabel + '</span>' +
+                    '</span>' +
+                    '<span>× 100%</span>' +
+                    '</div>' +
+                    '<div class="mt-2 small text-muted">Standar: ' + simbol + ' ' + target + ' ' + satuan + '</div>' +
                     '</div>';
                 $('#viewrumus_content').html(rumusHtml);
             }
