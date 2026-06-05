@@ -242,14 +242,14 @@
         <div class="modal-content">
             <div class="modal-header" style="background-color: #6f42c1; color: white;">
                 <h6 class="modal-title" id="judunumdenum" style="color: #ffffff; font-size: 0.9rem;">Numerator / Denominator</h6>
-                <div class="d-flex gap-1">
-                    <button type="button" class="btn btn-sm btn-outline-light border-0" onclick="showNumDenumAdd()" id="toggleNumDenum" title="Tambah">
+                <div class="d-flex gap-1 align-items-center">
+                    <button type="button" class="btn btn-sm btn-outline-light border-0" onclick="showNumDenumAdd()" id="toggleNumDenum" title="Tambah" style="width:32px; height:32px; font-size:0.9rem; display:flex; align-items:center; justify-content:center;">
                         <i class="fas fa-plus-circle"></i>
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-light border-0" onclick="reloadNumDenum()" id="reloadViewNumDenum" title="Refresh">
+                    <button type="button" class="btn btn-sm btn-outline-light border-0" onclick="reloadNumDenum()" id="reloadViewNumDenum" title="Refresh" style="width:32px; height:32px; font-size:0.9rem; display:flex; align-items:center; justify-content:center;">
                         <i class="fas fa-sync-alt"></i>
                     </button>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="font-size: 0.7rem;"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="width:32px; height:32px; font-size:0.7rem; display:flex; align-items:center; justify-content:center;"></button>
                 </div>
             </div>
             <div class="modal-body p-3" id="numdenum-list">
