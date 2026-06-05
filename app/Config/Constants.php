@@ -77,3 +77,21 @@ defined('EXIT_USER_INPUT')     || define('EXIT_USER_INPUT', 7);     // invalid u
 defined('EXIT_DATABASE')       || define('EXIT_DATABASE', 8);       // database error
 defined('EXIT__AUTO_MIN')      || define('EXIT__AUTO_MIN', 9);      // lowest automatically-assigned error code
 defined('EXIT__AUTO_MAX')      || define('EXIT__AUTO_MAX', 125);    // highest automatically-assigned error code
+
+/*
+ | --------------------------------------------------------------------------
+ | Asset Mode (SIIMUT)
+ | --------------------------------------------------------------------------
+ |
+ | Toggle between CDN (online) and local (offline) assets.
+ | - true  = use local files in public/assets/adminlte/* (no internet required)
+ | - false = use CDN URLs (requires internet)
+ |
+ | Override via .env: SIIMUT_OFFLINE_MODE = true|false
+ |
+ */
+$_siiimutOffline = getenv('SIIMUT_OFFLINE_MODE');
+if ($_siiimutOffline === false || $_siiimutOffline === '') {
+    $_siiimutOffline = 'true';
+}
+defined('SIIMUT_OFFLINE_MODE') || define('SIIMUT_OFFLINE_MODE', filter_var($_siiimutOffline, FILTER_VALIDATE_BOOLEAN));
