@@ -541,7 +541,7 @@
                 {
                     targets: 4,
                     render: function (data, type, row) {
-                        const freqMap = {'D': 'Harian', 'M': 'Bulanan', 'Y': 'Tahunan'};
+                        const freqMap = {'D': 'Harian', 'M': 'Bulanan', 'W': 'Mingguan', 'Y': 'Tahunan'};
                         return freqMap[data] || data;
                     }
                 },
