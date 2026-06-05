@@ -1,312 +1,6 @@
-<style>
-    .form-inm-header {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
-
-    .card-form-inm {
-        border: none;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .card-form-inm .card-header {
-        background: var(--bs-tertiary-bg);
-        border-bottom: 2px solid #007bff;
-        font-weight: bold;
-    }
-
-    .btn-inm-primary {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-        border: none;
-        color: white;
-    }
-
-    .btn-inm-primary:hover {
-        background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
-        color: white;
-    }
-
-    .form-control:focus, .form-select:focus {
-        border-color: #007bff;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-    }
-
-    .modal-header.modal-inm {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-        color: white;
-    }
-
-    .modal-inm .btn-close {
-        filter: brightness(0) invert(1);
-    }
-
-    .table-wrap {
-        overflow-x: auto;
-        max-width: 100%;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-    }
-
-    .table-inm {
-        margin-bottom: 0;
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-    .table-inm > thead {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-        color: white;
-    }
-
-    .table-inm > thead th {
-        position: sticky;
-        top: 0;
-        z-index: 2;
-        background: inherit;
-        border-color: rgba(255,255,255,0.2);
-        font-size: 13px;
-        padding: 8px 6px;
-        text-align: center;
-        white-space: nowrap;
-    }
-
-    .table-inm > thead th.fixed-col {
-        position: sticky;
-        left: 0;
-        z-index: 3;
-        background: #0056b3;
-    }
-
-    .table-inm > thead th.fixed-col2 {
-        position: sticky;
-        z-index: 3;
-        background: #0056b3;
-    }
-
-    .table-inm tbody td {
-        padding: 8px 6px;
-        border: 1px solid #dee2e6;
-        text-align: center;
-        vertical-align: middle;
-        font-size: 13px;
-    }
-
-    .table-inm tbody td.fixed-col {
-        position: sticky;
-        left: 0;
-        z-index: 1;
-        background: white;
-    }
-
-    .table-inm tbody td.fixed-col2 {
-        position: sticky;
-        z-index: 1;
-        background: white;
-    }
-
-    .day-cell {
-        cursor: pointer;
-        min-width: 70px;
-        transition: all 0.15s ease;
-    }
-
-    .day-cell:hover {
-        transform: scale(1.05);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        z-index: 1;
-        position: relative;
-    }
-
-    .legend-box {
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        border-radius: 3px;
-        border: 1px solid #dee2e6;
-        vertical-align: middle;
-        margin-right: 4px;
-    }
-
-    .cell-target {
-        background-color: #c3e6cb !important;
-    }
-
-    .cell-fail {
-        background-color: #f8d7da !important;
-    }
-
-    .cell-fail .fw-bold,
-    .cell-fail .num-denum {
-        color: #dc3545 !important;
-    }
-
-    .cell-empty {
-        background-color: #e2e3e5 !important;
-    }
-
-    td.day-cell.cell-inputable {
-        cursor: pointer;
-    }
-    td.day-cell.cell-inputable .fw-bold {
-        color: #0d6efd !important;
-    }
-    td.day-cell.cell-inputable .num-denum {
-        color: #0d6efd !important;
-    }
-
-    .cell-has-data {
-        font-weight: 600;
-    }
-
-    .cell-draft {
-        background-color: #fff3cd !important;
-    }
-
-    .cell-approved {
-        background-color: #d4edda !important;
-    }
-
-    .day-cell .num-denum {
-        font-size: 11px;
-        color: #6c757d;
-        margin-top: 2px;
-    }
-
-    .day-header {
-        font-weight: 600;
-        font-size: 13px;
-    }
-
-    .table-inm tbody tr.indicator-row:hover td {
-        background-color: #e8f4fd;
-    }
-
-    .table-inm tbody tr.indicator-row:hover td.fixed-col,
-    .table-inm tbody tr.indicator-row:hover td.fixed-col2 {
-        background-color: #e8f4fd;
-    }
-
-    .dataTables_length label,
-    .dataTables_filter label {
-        font-weight: normal;
-        font-size: 13px;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .dataTables_length select {
-        width: auto;
-        display: inline-block;
-    }
-
-    .dataTables_filter input {
-        width: auto;
-        display: inline-block;
-        margin-left: 4px;
-    }
-
-    .dataTables_info {
-        font-size: 13px;
-        padding-top: 4px;
-    }
-
-    input[type="month"].form-control-sm {
-        min-height: 31px;
-    }
-
-    .loader {
-        width: 3em;
-        height: 3em;
-        transform: rotate(165deg);
-    }
-
-    .loader:before,
-    .loader:after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        display: block;
-        width: 1em;
-        height: 1em;
-        border-radius: 0.5em;
-        transform: translate(-50%, -50%);
-    }
-
-    .loader:before {
-        animation: before8 2s infinite;
-    }
-
-    .loader:after {
-        animation: after6 2s infinite;
-    }
-
-    @keyframes before8 {
-        0% {
-            width: 1em;
-            box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
-        }
-        35% {
-            width: 4em;
-            box-shadow: 0em -1em rgba(225, 20, 98, 0.75), 0em 1em rgba(111, 202, 220, 0.75);
-        }
-        70% {
-            width: 1em;
-            box-shadow: -2em -1em rgba(225, 20, 98, 0.75), 2em 1em rgba(111, 202, 220, 0.75);
-        }
-        100% {
-            box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
-        }
-    }
-
-    @keyframes after6 {
-        0% {
-            height: 1em;
-            box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
-        }
-        35% {
-            height: 4em;
-            box-shadow: 1em 0em rgba(61, 184, 143, 0.75), -1em 0em rgba(233, 169, 32, 0.75);
-        }
-        70% {
-            height: 1em;
-            box-shadow: 1em -2em rgba(61, 184, 143, 0.75), -1em 2em rgba(233, 169, 32, 0.75);
-        }
-        100% {
-            box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
-        }
-    }
-
-    .overlay-wrapper {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: transparent;
-    }
-
-    .overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: transparent;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-</style>
 
 <div class="container-fluid py-4">
-    <div class="form-inm-header">
+    <div class="form-imprs-header">
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h4 class="mb-1"><i class="bi bi-pencil-square me-2"></i>Form Input Indikator Mutu Prioritas RS (IMPRS)</h4>
@@ -364,7 +58,7 @@
                     </div>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
-                    <button type="button" class="btn btn-inm-primary w-100" onclick="loadData()">
+                    <button type="button" class="btn btn-imprs-primary w-100" onclick="loadData()">
                         <i class="bi bi-search me-1"></i> Tampilkan
                     </button>
                 </div>
@@ -406,7 +100,7 @@
                     </div>
                 </div>
                 <div class="table-wrap">
-                    <table class="table table-bordered table-inm" id="mainTable">
+                    <table class="table table-bordered table-inm-imprs" id="mainTable">
                         <thead>
                             <tr id="headerRow"></tr>
                         </thead>
@@ -436,7 +130,7 @@
 <div class="modal fade" id="modalInput" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header modal-inm">
+            <div class="modal-header modal-imprs">
                 <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Input Data Harian IMPRS</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -596,7 +290,7 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-1"></i> Batal
                     </button>
-                    <button type="button" class="btn btn-inm-primary" id="btnSave" onclick="saveData()">
+                    <button type="button" class="btn btn-imprs-primary" id="btnSave" onclick="saveData()">
                         <i class="bi bi-save me-1"></i> Simpan
                     </button>
                 </span>

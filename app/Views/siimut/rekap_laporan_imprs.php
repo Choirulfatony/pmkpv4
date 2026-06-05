@@ -1,201 +1,3 @@
-<style>
-    .cell-target {
-        background-color: rgba(41, 185, 92) !important;
-        font-weight: bold;
-    }
-
-    .cell-empty {
-        background-color: rgba(255, 222, 60) !important;
-        font-weight: bold;
-    }
-
-    .cell-fail {
-        background-color: rgba(220, 57, 57) !important;
-        color: #fff !important;
-        font-weight: bold;
-    }
-
-    .cell-target *,
-    .cell-fail * {
-        color: #fff !important;
-    }
-
-    .cell-empty * {
-        color: #000 !important;
-    }
-
-    .legend-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 3px;
-        display: inline-block;
-    }
-
-    #ajax_data_rekap td,
-    #ajax_data_rekap th {
-        font-size: 13px;
-        vertical-align: middle;
-        white-space: nowrap;
-        padding: 10px 8px !important;
-    }
-
-    #ajax_data_rekap th {
-        background-color: #6C757D !important;
-        color: #fff;
-        text-align: center;
-        font-weight: 600;
-    }
-
-    #ajax_data_rekap td a {
-        color: #000;
-        text-decoration: none;
-        font-weight: 600;
-    }
-
-    #ajax_data_rekap td a:hover {
-        color: #6C757D;
-        text-decoration: underline;
-    }
-
-    [data-bs-theme="dark"] #ajax_data_rekap td,
-    [data-bs-theme="dark"] #ajax_data_rekap th {
-        color: #fff !important;
-    }
-
-    [data-bs-theme="dark"] #ajax_data_rekap td a {
-        color: #fff !important;
-    }
-
-    [data-bs-theme="dark"] #ajax_data_rekap td a:hover {
-        color: #80bdff !important;
-    }
-
-    [data-bs-theme="dark"] #ajax_data_rekap td .text-muted {
-        color: #adb5bd !important;
-    }
-
-    [data-bs-theme="dark"] #ajax_data_rekap td .small {
-        color: #ced4da !important;
-    }
-
-    [data-bs-theme="dark"] #ajax_data_rekap td span#total {
-        color: #fff !important;
-    }
-
-    [data-bs-theme="dark"] #ajax_data_rekap td span#num,
-    [data-bs-theme="dark"] #ajax_data_rekap td span#denum {
-        color: #ced4da !important;
-    }
-
-    .dataTables_wrapper .dataTables_processing {
-        display: none !important;
-    }
-
-    table.dataTable {
-        opacity: 1;
-        transition: opacity 0.1s ease;
-    }
-    
-    table.dataTable.loading {
-        opacity: 0.2;
-    }
-
-    .table-responsive {
-        position: relative;
-    }
-
-    .overlay-wrapper {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: transparent;
-        z-index: 9999;
-    }
-
-    .overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: transparent;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-
-    .loader {
-        width: 3em;
-        height: 3em;
-        transform: rotate(165deg);
-    }
-
-    .loader:before,
-    .loader:after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        display: block;
-        width: 1em;
-        height: 1em;
-        border-radius: 0.5em;
-        transform: translate(-50%, -50%);
-    }
-
-    .loader:before {
-        animation: before8 2s infinite;
-    }
-
-    .loader:after {
-        animation: after6 2s infinite;
-    }
-
-    @keyframes before8 {
-        0% {
-            width: 1em;
-            box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
-        }
-
-        35% {
-            width: 4em;
-            box-shadow: 0 -1em rgba(225, 20, 98, 0.75), 0 1em rgba(111, 202, 220, 0.75);
-        }
-
-        70% {
-            width: 1em;
-            box-shadow: -2em -1em rgba(225, 20, 98, 0.75), 2em 1em rgba(111, 202, 220, 0.75);
-        }
-
-        100% {
-            box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
-        }
-    }
-
-    @keyframes after6 {
-        0% {
-            height: 1em;
-            box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
-        }
-
-        35% {
-            height: 4em;
-            box-shadow: 1em 0 rgba(61, 184, 143, 0.75), -1em 0 rgba(233, 169, 32, 0.75);
-        }
-
-        70% {
-            height: 1em;
-            box-shadow: 1em -2em rgba(61, 184, 143, 0.75), -1em 2em rgba(233, 169, 32, 0.75);
-        }
-
-        100% {
-            box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
-        }
-    }
-</style>
 
 <div class="row mb-3">
     <div class="col-12">
@@ -306,7 +108,7 @@
                             <i class="loader"></i>
                         </div>
                     </div>
-                    <table id="ajax_data_rekap" class="table table-bordered table-hover table-striped mb-0" style="width: 100%;">
+                    <table id="ajax_data_rekap_imprs" class="table table-bordered table-hover table-striped mb-0" style="width: 100%;">
                         <thead>
                             <tr class="align-middle">
                                 <th style="width: 50px;" class="text-center">#</th>
@@ -351,7 +153,7 @@
     </div>
 </div>
 
-<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.39.0/css/tempusdominus-bootstrap-4.min.css" /> -->
+
 
 <script>
     var table_loquin;
@@ -367,7 +169,7 @@
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(function (el) { return new bootstrap.Tooltip(el); });
 
-        table_loquin = $('#ajax_data_rekap').DataTable({
+        table_loquin = $('#ajax_data_rekap_imprs').DataTable({
             processing: false,
             serverSide: true,
             autoWidth: false,

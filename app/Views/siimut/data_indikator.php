@@ -61,6 +61,9 @@
                                 <input type="text" class="form-control form-control-sm" name="indicator_id" id="indicator_id">
                             </div>
                             <div class="mb-1" hidden>
+                                <input type="text" class="form-control form-control-sm" name="indicator_institution_code" id="indicator_institution_code" value="3577015">
+                            </div>
+                            <div class="mb-1" hidden>
                                 <input type="text" class="form-control form-control-sm" name="module" id="module" value="<?= esc($module) ?>">
                             </div>
                             <div class="mb-1">
@@ -272,6 +275,7 @@
                 <form id="form-numdenum">
                     <input type="hidden" name="variable_id" id="variable_id" value="0">
                     <input type="hidden" name="variable_indicator_id" id="variable_indicator_id">
+                    <input type="hidden" name="variable_institution_code" id="variable_institution_code" value="3577015">
                     <div class="mb-1 row g-1">
                         <label class="col-sm-3 col-form-label col-form-label-sm text-sm-end">Tipe</label>
                         <div class="col-sm-9">
@@ -340,52 +344,52 @@
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered mb-0" style="font-size:0.8rem;">
                         <tbody>
-                            <tr><td style="width:35%; background:#f8f9fa;"><strong>1. Judul Indikator</strong></td><td id="viewindicator_element"></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>2. Dimensi Mutu</strong></td><td id="viewdimensi_mutu"></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>3. Definisi Operasional</strong></td><td id="viewdefinisi_operasional"></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>4. Jenis Indikator</strong></td><td id="viewjenis_indikator"></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>5. Tujuan</strong></td><td id="viewtujuan"></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>6. Dasar Pemikiran</strong></td><td id="viewdasar_pemikiran"></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>7. Kriteria Inklusi</strong></td><td id="viewindicator_inclusive"></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>8. Kriteria Eksklusi</strong></td><td id="viewindicator_exclusive"></td></tr>
+                            <tr><td style="width:35%; background:#f8f9fa;"><strong>Judul Indikator</strong></td><td id="viewindicator_element"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Dimensi Mutu</strong></td><td id="viewdimensi_mutu"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Definisi Operasional</strong></td><td id="viewdefinisi_operasional"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Jenis Indikator</strong></td><td id="viewjenis_indikator"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Tujuan</strong></td><td id="viewtujuan"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Dasar Pemikiran</strong></td><td id="viewdasar_pemikiran"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Kriteria Inklusi</strong></td><td id="viewindicator_inclusive"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Kriteria Eksklusi</strong></td><td id="viewindicator_exclusive"></td></tr>
 
                             <tr><td colspan="2" style="background:#6f42c1; color:white; font-weight:bold; text-align:center;">RUMUS PERHITUNGAN</td></tr>
                             <tr>
-                                <td style="background:#f8f9fa;"><strong>9. Rumus</strong></td>
+                                <td style="background:#f8f9fa;"><strong>Rumus</strong></td>
                                 <td id="viewrumus">
                                     <div id="viewrumus_content">-</div>
                                 </td>
                             </tr>
                             <tr>
-                                <td style="background:#f8f9fa;"><strong>10. Numerator</strong></td>
+                                <td style="background:#f8f9fa;"><strong>Numerator</strong></td>
                                 <td id="viewnumerator_list">-</td>
                             </tr>
                             <tr>
-                                <td style="background:#f8f9fa;"><strong>11. Denominator</strong></td>
+                                <td style="background:#f8f9fa;"><strong>Denominator</strong></td>
                                 <td id="viewdenominator_list">-</td>
                             </tr>
 
                             <tr><td colspan="2" style="background:#6f42c1; color:white; font-weight:bold; text-align:center;">STANDAR DAN TARGET</td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>12. Simbol Operator</strong></td><td id="viewindicator_target_calculation"></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>13. Standar Capaian</strong></td><td><span id="viewindicator_target"></span> <span id="viewindicator_target_unit"></span></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>14. Faktor Pengali</strong></td><td><span id="viewindicator_factors"></span> <span id="viewindicator_units"></span></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Simbol Operator</strong></td><td id="viewindicator_target_calculation"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Standar Capaian</strong></td><td><span id="viewindicator_target"></span> <span id="viewindicator_target_unit"></span></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Faktor Pengali</strong></td><td><span id="viewindicator_factors"></span> <span id="viewindicator_units"></span></td></tr>
 
                             <tr><td colspan="2" style="background:#6f42c1; color:white; font-weight:bold; text-align:center;">PENGUMPULAN DATA</td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>15. Sumber Data</strong></td><td id="viewsumber_data"></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>16. Metode Pengumpulan Data</strong></td><td id="viewmetode_pengumpulan_data"></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>17. Instrumen Pengambilan Data</strong></td><td id="viewinstrumen_pengambilan_data"></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>18. Besar Sampel</strong></td><td id="viewbesar_sampel"></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>19. Cara Pengambilan Sampel</strong></td><td id="viewcara_pengambilan_sampel"></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>20. Periode Pengumpulan Data</strong></td><td id="viewperiode_pengumpulan_data"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Sumber Data</strong></td><td id="viewsumber_data"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Metode Pengumpulan Data</strong></td><td id="viewmetode_pengumpulan_data"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Instrumen Pengambilan Data</strong></td><td id="viewinstrumen_pengambilan_data"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Besar Sampel</strong></td><td id="viewbesar_sampel"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Cara Pengambilan Sampel</strong></td><td id="viewcara_pengambilan_sampel"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Periode Pengumpulan Data</strong></td><td id="viewperiode_pengumpulan_data"></td></tr>
 
                             <tr><td colspan="2" style="background:#6f42c1; color:white; font-weight:bold; text-align:center;">PELAPORAN</td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>21. Periode Analisis dan Pelaporan</strong></td><td id="viewperiode_analisis_dan_pelaporan_data"></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>22. Penyajian Data</strong></td><td id="viewpenyajian_data"></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>23. Penanggung Jawab</strong></td><td id="viewpenanggung_jawab"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Periode Analisis dan Pelaporan</strong></td><td id="viewperiode_analisis_dan_pelaporan_data"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Penyajian Data</strong></td><td id="viewpenyajian_data"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Penanggung Jawab</strong></td><td id="viewpenanggung_jawab"></td></tr>
 
                             <tr><td colspan="2" style="background:#6f42c1; color:white; font-weight:bold; text-align:center;">LOKASI & STATUS</td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>24. Area Monitoring</strong></td><td id="viewindicator_monitoring_area"></td></tr>
-                            <tr><td style="background:#f8f9fa;"><strong>25. Tanggal Berlaku</strong></td><td id="viewindicator_valid_date"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Area Monitoring</strong></td><td id="viewindicator_monitoring_area"></td></tr>
+                            <tr><td style="background:#f8f9fa;"><strong>Tanggal Berlaku</strong></td><td id="viewindicator_valid_date"></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -397,126 +401,6 @@
     </div>
 </div>
 
-<style>
-    .header-row {
-        background: linear-gradient(50deg, red, orange, yellow, green, blue, indigo, violet);
-        background-size: 400% 400%;
-        animation: rgbAnimation 500s ease infinite;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 1px;
-        text-decoration: none;
-    }
-
-    @keyframes rgbAnimation {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-
-    .dataTables_wrapper .dataTables_processing {
-        display: none !important;
-    }
-
-    .overlay-wrapper {
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: transparent;
-        z-index: 9999;
-    }
-
-    .overlay {
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: transparent;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-
-    .loader {
-        width: 3em;
-        height: 3em;
-        transform: rotate(165deg);
-    }
-
-    .loader:before, .loader:after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        display: block;
-        width: 1em;
-        height: 1em;
-        border-radius: 0.5em;
-        transform: translate(-50%, -50%);
-    }
-
-    .loader:before { animation: before8 2s infinite; }
-    .loader:after  { animation: after6  2s infinite; }
-
-    @keyframes before8 {
-        0%   { width: 1em; box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75); }
-        35%  { width: 4em; box-shadow: 0 -1em rgba(225, 20, 98, 0.75), 0 1em rgba(111, 202, 220, 0.75); }
-        70%  { width: 1em; box-shadow: -2em -1em rgba(225, 20, 98, 0.75), 2em 1em rgba(111, 202, 220, 0.75); }
-        100% { box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75); }
-    }
-
-    @keyframes after6 {
-        0%   { height: 1em; box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75); }
-        35%  { height: 4em; box-shadow: 1em 0 rgba(61, 184, 143, 0.75), -1em 0 rgba(233, 169, 32, 0.75); }
-        70%  { height: 1em; box-shadow: 1em -2em rgba(61, 184, 143, 0.75), -1em 2em rgba(233, 169, 32, 0.75); }
-        100% { box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75); }
-    }
-
-    #table-indikator_wrapper .btn-group {
-        gap: 2px;
-    }
-
-    #table-indikator_wrapper .btn-group .btn {
-        padding: 0.2rem 0.4rem;
-        font-size: 0.75rem;
-        line-height: 1.2;
-    }
-
-    #table-indikator_wrapper td {
-        vertical-align: middle;
-    }
-
-    #table-indikator_wrapper th {
-        white-space: nowrap;
-    }
-
-    @media (max-width: 768px) {
-        #table-indikator_wrapper .btn-group .btn {
-            padding: 0.15rem 0.3rem;
-            font-size: 0.7rem;
-        }
-        #table-indikator_wrapper td,
-        #table-indikator_wrapper th {
-            font-size: 0.8rem;
-            padding: 0.3rem 0.4rem;
-        }
-    }
-        .btn-xs {
-            padding: 0.1rem 0.3rem;
-            font-size: 0.7rem;
-            line-height: 1.2;
-        }
-        .is-invalid {
-            border-color: #dc3545 !important;
-            box-shadow: 0 0 0 0.15rem rgba(220, 53, 69, 0.25) !important;
-        }
-        .btn-group-xs > .btn {
-            padding: 0.1rem 0.3rem;
-            font-size: 0.7rem;
-            line-height: 1.2;
-        }
-        .table-sm > :not(caption) > * > * {
-            padding: 0.2rem 0.3rem;
-        }
-    </style>
 
 <script>
     let table;
@@ -604,6 +488,8 @@
                     }
                 }
             ],
+            order: [[5, 'asc']],
+            orderFixed: { pre: [[5, 'asc']] },
             language: {
                 url: "https://cdn.datatables.net/plug-ins/1.13.7/i18n/id.json"
             }

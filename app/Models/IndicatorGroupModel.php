@@ -101,7 +101,15 @@ class IndicatorGroupModel extends Model
     {
         $db = db_connect();
         $data['variable_record_status'] = 'A';
-        $data['variable_uuid'] = uniqid('var_', true);
+
+        if ($this->tablePrefix === '' && empty($data['variable_uuid'])) {
+            $data['variable_uuid'] = uniqid('var_', true);
+        }
+
+        if ($this->tablePrefix === '') {
+            unset($data['variable_institution_code']);
+        }
+
         $db->table($this->table)->insert($data);
         return $db->insertID();
     }
@@ -110,6 +118,11 @@ class IndicatorGroupModel extends Model
     {
         $db = db_connect();
         $data['variable_last_updated'] = date('Y-m-d H:i:s');
+
+        if ($this->tablePrefix === '') {
+            unset($data['variable_institution_code']);
+        }
+
         $db->table($this->table)->where('variable_id', $id)->update($data);
         return $db->affectedRows() > 0;
     }

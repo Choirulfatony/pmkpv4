@@ -1,63 +1,3 @@
-<style>
-    .approve-header {
-        background: linear-gradient(135deg, #6f42c1 0%, #5533a3 100%);
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
-
-    .card-approve {
-        border: none;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .card-approve .card-header {
-        background: var(--bs-tertiary-bg);
-        border-bottom: 2px solid #6f42c1;
-        font-weight: bold;
-    }
-
-    .table-approve th {
-        background: #f8f9fa;
-        white-space: nowrap;
-        font-size: 0.85rem;
-    }
-
-    .table-approve td {
-        font-size: 0.85rem;
-        vertical-align: middle;
-    }
-
-    .badge-draft {
-        background-color: #fff3cd;
-        color: #856404;
-    }
-
-    .badge-approved {
-        background-color: #d4edda;
-        color: #155724;
-    }
-
-    #loadingOverlay {
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(255,255,255,0.8);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-
-    #loadingOverlay.show {
-        display: flex;
-    }
-
-    .approve-stats {
-        font-size: 0.9rem;
-    }
-</style>
 
 <div id="loadingOverlay">
     <div class="text-center">
@@ -74,11 +14,6 @@
             <div class="col-md-8">
                 <h4 class="mb-1"><i class="bi bi-check2-square me-2"></i>Approval <?= esc($moduleTitle) ?></h4>
                 <p class="mb-0 opacity-75">Validasi data harian — centang data yang akan di-approve</p>
-            </div>
-            <div class="col-md-4 text-end">
-                <a href="<?= site_url($backUrl) ?>" class="btn btn-light btn-sm">
-                    <i class="bi bi-arrow-left me-1"></i> Kembali ke Form Input
-                </a>
             </div>
         </div>
     </div>

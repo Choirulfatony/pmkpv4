@@ -100,11 +100,17 @@ class IndicatorModel extends Model
 
         $totalFiltered = $builder->countAllResults(false);
 
+        $builder->orderBy('qi.indicator_record_status', 'ASC');
+
         $orderColumn = $post['order'][0]['column'] ?? 0;
         $orderDir = $post['order'][0]['dir'] ?? 'ASC';
-        $columns = ['indicator_id', 'indicator_element', 'indicator_target', 'indicator_frequency', 'indicator_record_status', 'indicator_order_number'];
+        $columns = ['indicator_id', 'indicator_element', 'indicator_target', 'indicator_units', 'indicator_frequency', 'indicator_record_status'];
         $orderBy = $columns[$orderColumn] ?? 'indicator_id';
-        $builder->orderBy($orderBy, $orderDir);
+        if ($orderBy !== 'indicator_record_status') {
+            $builder->orderBy('qi.' . $orderBy, $orderDir);
+        }
+        $builder->orderBy('qi.indicator_order_number', 'ASC');
+        $builder->orderBy('qi.indicator_id', 'ASC');
 
         $start = (int) ($post['start'] ?? 0);
         $length = (int) ($post['length'] ?? 10);
@@ -141,11 +147,18 @@ class IndicatorModel extends Model
         $db = db_connect();
 
         $data['indicator_category_id'] = $this->categoryId;
-        $data['indicator_record_status'] = 'A';
         $data['indicator_last_updated'] = date('Y-m-d H:i:s');
 
-        if (empty($data['indicator_uuid'])) {
+        if (!isset($data['indicator_record_status']) || !in_array($data['indicator_record_status'], ['A', 'D'], true)) {
+            $data['indicator_record_status'] = 'A';
+        }
+
+        if ($this->tablePrefix === '' && empty($data['indicator_uuid'])) {
             $data['indicator_uuid'] = uniqid('ind_', true);
+        }
+
+        if ($this->tablePrefix === '') {
+            unset($data['indicator_institution_code'], $data['indicator_active_from'], $data['indicator_active_to']);
         }
 
         $db->table($this->table)->insert($data);
@@ -157,6 +170,10 @@ class IndicatorModel extends Model
         $db = db_connect();
 
         $data['indicator_last_updated'] = date('Y-m-d H:i:s');
+
+        if ($this->tablePrefix === '') {
+            unset($data['indicator_institution_code'], $data['indicator_active_from'], $data['indicator_active_to']);
+        }
 
         $db->table($this->table)
             ->where('indicator_id', $id)

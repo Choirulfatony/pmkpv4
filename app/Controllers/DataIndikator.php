@@ -111,6 +111,7 @@ class DataIndikator extends AppController
         $data = [
             'indicator_element'                    => $this->request->getPost('indicator_element'),
             'indicator_name_id'                    => $this->request->getPost('indicator_name_id') ?? '',
+            'indicator_institution_code'           => $this->request->getPost('indicator_institution_code') ?? '',
             'indicator_target'                     => $this->request->getPost('indicator_target') ?? '',
             'indicator_target_calculation'         => $this->request->getPost('indicator_target_calculation') ?? '',
             'indicator_factors'                    => $this->request->getPost('indicator_factors') ?? '',
@@ -292,10 +293,11 @@ class DataIndikator extends AppController
         $id = (int) $this->request->getPost('variable_id');
 
         $data = [
-            'variable_indicator_id' => $this->request->getPost('variable_indicator_id'),
-            'variable_name'         => $this->request->getPost('variable_name') ?? '',
-            'variable_type'         => $this->request->getPost('variable_type') ?? '',
-            'variable_unit_name'    => $this->request->getPost('variable_unit_name') ?? '',
+            'variable_indicator_id'   => $this->request->getPost('variable_indicator_id'),
+            'variable_institution_code' => $this->request->getPost('variable_institution_code') ?? '',
+            'variable_name'           => $this->request->getPost('variable_name') ?? '',
+            'variable_type'           => $this->request->getPost('variable_type') ?? '',
+            'variable_unit_name'      => $this->request->getPost('variable_unit_name') ?? '',
         ];
 
         if (empty($data['variable_type'])) {
