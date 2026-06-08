@@ -1,2 +1,0 @@
-put C:\xampp\htdocs\siimut\app\Config\Events.php /var/www/html/siimut/app/Config/Events.php  
-put C:\xampp\htdocs\siimut\app\Config\App.php /var/www/html/siimut/app/Config/App.php 

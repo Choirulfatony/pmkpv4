@@ -297,7 +297,7 @@ input[type="month"].form-control-sm { min-height: 31px; }
 #ajax_detail td, #ajax_detail th,
 #ajax_detail_imprs td, #ajax_detail_imprs th,
 #ajax_detail_impunit td, #ajax_detail_impunit th { font-size: 12px; white-space: nowrap; padding: 6px 4px !important; }
-#ajax_data_rekap td, #ajax_data_rekap th { font-size: 13px; padding: 10px 8px !important; }
+#ajax_data_rekap td, #ajax_data_rekap th { font-size: 12px; padding: 6px 4px !important; }
 #ajax_data_periode td, #ajax_data_periode th,
 #ajax_data_periode_inm td, #ajax_data_periode_inm th,
 #ajax_data_periode_imprs td, #ajax_data_periode_imprs th,
@@ -321,12 +321,15 @@ input[type="month"].form-control-sm { min-height: 31px; }
 [data-bs-theme="dark"] #ajax_data_rekap td span#total { color: #fff !important; }
 [data-bs-theme="dark"] #ajax_data_rekap td span#num,
 [data-bs-theme="dark"] #ajax_data_rekap td span#denum { color: #ced4da !important; }
+#ajax_data_rekap_inm td, #ajax_data_rekap_inm th { font-size: 12px; white-space: nowrap; padding: 6px 4px !important; }
 #ajax_data_rekap_inm th { background-color: #28a745 !important; color: #fff; text-align: center; font-weight: 600; }
 #ajax_data_rekap_inm td a { color: #000; text-decoration: none; font-weight: 600; }
 #ajax_data_rekap_inm td a:hover { color: #007bff; text-decoration: underline; }
+#ajax_data_rekap_imprs td, #ajax_data_rekap_imprs th { font-size: 12px; white-space: nowrap; padding: 6px 4px !important; }
 #ajax_data_rekap_imprs th { background-color: #6C757D !important; color: #fff; text-align: center; font-weight: 600; }
 #ajax_data_rekap_imprs td a { color: #000; text-decoration: none; font-weight: 600; }
 #ajax_data_rekap_imprs td a:hover { color: #6C757D; text-decoration: underline; }
+#ajax_data_rekap_impunit td, #ajax_data_rekap_impunit th { font-size: 12px; white-space: nowrap; padding: 6px 4px !important; }
 #ajax_data_rekap_impunit th { background-color: #363636 !important; color: #fff; text-align: center; font-weight: 600; }
 #ajax_data_rekap_impunit td a { color: #000; text-decoration: none; font-weight: 600; }
 #ajax_data_rekap_impunit td a:hover { color: #363636; text-decoration: underline; }
@@ -334,7 +337,7 @@ input[type="month"].form-control-sm { min-height: 31px; }
 #ajax_data_periode_inm td:first-child,
 #ajax_data_periode_imprs td:first-child,
 #ajax_data_periode_impunit td:first-child { text-align: left; white-space: nowrap; }
-#daily-table td, #daily-table th { font-size: 13px; vertical-align: middle; text-align: center; padding: 8px 6px !important; }
+#daily-table td, #daily-table th { font-size: 12px; vertical-align: middle; text-align: center; padding: 6px 4px !important; }
 .daily-tercapai { background-color: rgba(41, 185, 92) !important; font-weight: bold; }
 .daily-tidak-tercapai { background-color: rgba(220, 57, 57) !important; color: #fff !important; font-weight: bold; }
 .daily-tanpa-data { background-color: rgba(255, 222, 60) !important; font-weight: bold; }
