@@ -25,6 +25,10 @@
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
     Header set X-XSS-Protection "1; mode=block"
+
+    # Hapus CSP dari server agar tidak blocking script
+    Header unset Content-Security-Policy
+    Header unset Content-Security-Policy-Report-Only
 </IfModule>
 
 # Disable directory browsing

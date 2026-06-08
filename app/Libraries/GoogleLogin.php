@@ -15,7 +15,7 @@ class GoogleLogin
         $this->client->setClientSecret(env('google.client_secret'));
 
         helper('url');
-        $redirectUri = base_url('auth/google-callback');
+        $redirectUri = site_url('auth/google-callback');
         $this->client->setRedirectUri($redirectUri);
 
         $this->client->addScope('email');
