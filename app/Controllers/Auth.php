@@ -713,22 +713,22 @@ class Auth extends BaseController
         $email = \Config\Services::email();
 
         // Configure email (you may need to adjust these settings)
-        $email->setFrom('noreply@pmkpv4.example.com', 'PMKP v4');
+        $email->setFrom('noreply@siimut.example.com', 'SIIMUT');
         $email->setTo($emailTo);
-        $email->setSubject('Verifikasi Akun PMKP v4');
+        $email->setSubject('Verifikasi Akun SIIMUT');
 
         $verificationUrl = site_url('auth/verify_email?token=' . $token . '&email=' . urlencode($emailTo));
 
         // $message = "
         // <html>
         // <head>
-        //     <title>Verifikasi Akun PMKP v4</title>
+        //     <title>Verifikasi Akun SIIMUT</title>
         // </head>
         // <body>
         //     <h2>Halo " . $fullname . ",</h2>
-        //     <p>Terima kasih telah mendaftar di PMKP v4. Untuk melengkapi pendaftaran Anda, silakan verifikasi alamat email Anda dengan mengikuti link di bawah ini:</p>
+        //     <p>Terima kasih telah mendaftar di SIIMUT. Untuk melengkapi pendaftaran Anda, silakan verifikasi alamat email Anda dengan mengikuti link di bawah ini:</p>
         //     <p><a href='" . $verificationUrl . "'>Verifikasi Email Saya</a></p>
-        //     <p>Jika Anda tidak mendaftar di PMKP v4, silakan abaikan email ini.</p>
+        //     <p>Jika Anda tidak mendaftar di SIIMUT, silakan abaikan email ini.</p>
         //     <p>Link verifikasi akan kadaluarsa dalam 24 jam.</p>
         //     <hr>
         //     <p>Email ini dikirim secara otomatis, jangan balas ke email ini.</p>
@@ -740,14 +740,14 @@ class Auth extends BaseController
             <div style="max-width:600px; margin:auto; background:#ffffff; padding:25px; border-radius:8px;">
 
                 <h2 style="text-align:center; color:#0d6efd;">
-                    Aktivasi Akun PMKP v4
+                    Aktivasi Akun SIIMUT
                 </h2>
 
                 <p>Halo <b>' . $fullname . '</b>,</p>
 
                 <p>
                     Terima kasih telah melakukan pendaftaran akun di 
-                    <b>Sistem PMKP v4</b>.
+                    <b>Sistem SIIMUT</b>.
                 </p>
 
                 <p>

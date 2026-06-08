@@ -2,7 +2,7 @@
 
 /**
  * Test WhatsApp Business API dengan Template
- * Access: http://localhost/pmkpv4/test_wa_template.php
+ * Access: http://localhost/siimut/test_wa_template.php
  */
 
 declare(strict_types=1);
@@ -145,7 +145,7 @@ curl_close($ch);
         </div>
 
         <div class="mt-3">
-            <a href="/pmkpv4/" class="btn btn-secondary">Kembali</a>
+            <a href="/siimut/" class="btn btn-secondary">Kembali</a>
         </div>
     </div>
 </body>

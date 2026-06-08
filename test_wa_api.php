@@ -1,7 +1,7 @@
 <?php
 /**
  * Test WhatsApp Business API
- * Access: http://localhost/pmkpv4/test_wa_api.php
+ * Access: http://localhost/siimut/test_wa_api.php
  */
 
 // Set timezone to WIB (Asia/Jakarta)

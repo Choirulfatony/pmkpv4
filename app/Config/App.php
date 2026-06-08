@@ -12,11 +12,11 @@ class App extends BaseConfig
 
         if (php_sapi_name() === 'cli') {
             // Jika dijalankan lewat terminal (php spark)
-            $this->baseURL = 'http://localhost/pmkpv4/';
+            $this->baseURL = 'http://localhost/siimut/';
         } else {
             // Jika lewat browser (web server)
             $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
-            $this->baseURL = $scheme . '://' . $_SERVER['HTTP_HOST'] . '/pmkpv4/';
+            $this->baseURL = $scheme . '://' . $_SERVER['HTTP_HOST'] . '/siimut/';
         }
 
         date_default_timezone_set("Asia/Jakarta");

@@ -10,8 +10,8 @@
                                      <i class="fas fa-hospital fa-3x text-primary"></i>
                                  </div>
                                  <div>
-                                     <h4 class="mb-1 fw-bold">Selamat Datang di PMKPV4</h4>
-                                     <p class="text-muted mb-0">Sistem Pengelolaan Indikator Mutu Nasional (INM) - Versi 4</p>
+                                      <h4 class="mb-1 fw-bold">Selamat Datang di SIIMUT</h4>
+                                      <p class="text-muted mb-0">Sistem Informasi Indikator Mutu Nasional (INM)</p>
                                  </div>
                              </div>
                          </div>
@@ -87,7 +87,7 @@
                                   <h6 class="mb-0 fw-bold">Tentang Aplikasi</h6>
                               </div>
                              <p class="text-muted mb-0 small">
-                                 PMKPV4 adalah sistem pengelolaan Indikator Mutu Nasional (INM) 
+                                  SIIMUT adalah sistem informasi Indikator Mutu Nasional (INM) 
                                  untuk rumah sakit. Aplikasi ini membantu dalam pemantauan dan 
                                  evaluasi indikator mutu pelayanan kesehatan.
                              </p>
@@ -141,7 +141,7 @@
                              <div class="d-flex flex-wrap justify-content-between align-items-center">
                                  <div>
                                      <small class="text-muted">
-                                         <i class="fas fa-code-branch me-1"></i> PMKPV4 v4.0 | 
+                                          <i class="fas fa-code-branch me-1"></i> SIIMUT v1.0 | 
                                          <i class="fas fa-calendar me-1"></i> <?= date('Y') ?>
                                      </small>
                                  </div>

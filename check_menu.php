@@ -1,5 +1,5 @@
 <?php
-$mysqli = new mysqli('localhost', 'root', '', 'pmkpv4');
+$mysqli = new mysqli('localhost', 'root', '', 'siimut');
 if ($mysqli->connect_error) {
     die('Connection failed: ' . $mysqli->connect_error);
 }
