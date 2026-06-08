@@ -41,9 +41,10 @@ class LoadModuleForminputModel extends Model
         $db = db_connect();
 
         if ($this->tablePrefix === 'local_') {
-            // Local modules (IMPRS/IMPUNIT) - no quality_indicator_group table
-            $builder = $db->table($this->tablePrefix . 'quality_indicator qi');
+            $builder = $db->table($this->tablePrefix . 'quality_indicator_group qig');
             $builder->select('
+                qig.group_indicator_id,
+                qig.group_department_id AS department_id,
                 qi.indicator_id,
                 qi.indicator_element,
                 qi.indicator_target,
@@ -52,42 +53,30 @@ class LoadModuleForminputModel extends Model
                 qi.indicator_target_calculation,
                 qi.indicator_factors,
                 qi.indicator_frequency,
-                qir.result_department_id AS department_id,
                 mid.department_name
             ');
-            $builder->join($this->tablePrefix . 'quality_indicator_result qir', 'qir.result_indicator_id = qi.indicator_id', 'left');
-            $builder->join('master_institution_department mid', 'mid.department_id = qir.result_department_id', 'left');
+            $builder->join($this->tablePrefix . 'quality_indicator qi', 'qi.indicator_id = qig.group_indicator_id', 'left');
+            $builder->join('master_institution_department mid', 'mid.department_id = qig.group_department_id', 'left');
             $builder->where('qi.indicator_category_id', $this->categoryId);
-
-            if ($bulan !== null) {
-                $tableResult = $this->tablePrefix . 'quality_indicator_result';
-                $existsSql = "EXISTS (
-                    SELECT 1 FROM {$tableResult} qir2
-                    WHERE qir2.result_indicator_id = qi.indicator_id
-                    AND qir2.result_record_status IN ('D', 'A')
-                    AND YEAR(qir2.result_period) = {$tahun}
-                    AND MONTH(qir2.result_period) = {$bulan}
-                )";
-                $selectedPeriod = $tahun . '-' . str_pad($bulan, 2, '0', STR_PAD_LEFT);
-                if ($selectedPeriod == date('Y-m')) {
-                    $builder->where('qi.indicator_record_status', 'A');
-                    $builder->where($existsSql, null, false);
-                } else {
-                    $builder->where($existsSql, null, false);
-                }
-            }
+            $builder->where('qi.indicator_record_status', 'A');
+            $builder->where('qig.group_record_status', 'A');
+            $builder->groupStart();
+            $builder->where('qig.group_period', $tahun);
+            $builder->orWhere('qig.group_period', $tahun - 1);
+            $builder->orWhere('qig.group_period', $tahun - 2);
+            $builder->groupEnd();
 
             if ($departmentId !== null && $departmentId > 0) {
-                $builder->where('qir.result_department_id', $departmentId);
+                $builder->where('qig.group_department_id', $departmentId);
             }
 
             $userRole = session()->get('user_role') ?? '';
             $userDepartmentId = session()->get('department_id') ?? 0;
             if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
-                $builder->where('qir.result_department_id', $userDepartmentId);
+                $builder->where('qig.group_department_id', $userDepartmentId);
             }
 
-            $builder->groupBy('qi.indicator_id, qir.result_department_id');
+            $builder->groupBy('qig.group_indicator_id, qig.group_department_id');
             $builder->orderBy('qi.indicator_id ASC');
         } else {
             // Regular modules (INM) - uses quality_indicator_group
@@ -131,7 +120,6 @@ class LoadModuleForminputModel extends Model
 
                 if ($selectedPeriod == $currentPeriod) {
                     $builder->where('qi.indicator_record_status', 'A');
-                    $builder->where($existsSql, null, false);
                 } else {
                     $builder->where($existsSql, null, false);
                 }
@@ -317,7 +305,7 @@ class LoadModuleForminputModel extends Model
         $user_id = session('profile_id') ?? 0;
         $now = date('Y-m-d H:i:s');
 
-        $db->table($this->tablePrefix . 'quality_indicator_result')
+        $updated = $db->table($this->tablePrefix . 'quality_indicator_result')
             ->where('result_indicator_id', $indicatorId)
             ->where('result_department_id', $departmentId)
             ->where('result_period', $tanggal)
@@ -335,7 +323,7 @@ class LoadModuleForminputModel extends Model
             ->where('indicator_category_id', $this->categoryId)
             ->delete();
 
-        return $db->affectedRows() > 0;
+        return $updated;
     }
 
     public function validateResult(int $indicatorId, int $departmentId, string $tanggal): bool
@@ -516,19 +504,20 @@ class LoadModuleForminputModel extends Model
         if ($this->tablePrefix === 'local_') {
             $deptCondition = '';
             if ($departmentId !== null) {
-                $deptCondition = "AND qir.result_department_id = " . (int) $departmentId;
+                $deptCondition = "AND qig.group_department_id = " . (int) $departmentId;
             }
             $query = $db->query("
                 SELECT DISTINCT
-                    qir.result_indicator_id AS indicator_id,
-                    qir.result_department_id AS department_id,
+                    qig.group_indicator_id AS indicator_id,
+                    qig.group_department_id AS department_id,
                     mid.department_name
-                FROM {$this->tablePrefix}quality_indicator_result qir
-                JOIN {$this->tablePrefix}quality_indicator qi ON qi.indicator_id = qir.result_indicator_id
-                JOIN master_institution_department mid ON mid.department_id = qir.result_department_id
+                FROM {$this->tablePrefix}quality_indicator_group qig
+                JOIN {$this->tablePrefix}quality_indicator qi ON qi.indicator_id = qig.group_indicator_id
+                JOIN master_institution_department mid ON mid.department_id = qig.group_department_id
                 WHERE qi.indicator_category_id = ?
                 AND qi.indicator_record_status IN ('A', 'D')
-                AND qir.result_indicator_id = ?
+                AND qig.group_record_status = 'A'
+                AND qig.group_indicator_id = ?
                 {$deptCondition}
                 GROUP BY mid.department_id
                 ORDER BY mid.department_name ASC
@@ -566,13 +555,14 @@ class LoadModuleForminputModel extends Model
         if ($this->tablePrefix === 'local_') {
             $query = $db->query("
                 SELECT DISTINCT
-                    qir.result_department_id AS department_id,
+                    qig.group_department_id AS department_id,
                     mid.department_name
-                FROM {$this->tablePrefix}quality_indicator_result qir
-                JOIN {$this->tablePrefix}quality_indicator qi ON qi.indicator_id = qir.result_indicator_id
-                JOIN master_institution_department mid ON mid.department_id = qir.result_department_id
+                FROM {$this->tablePrefix}quality_indicator_group qig
+                JOIN {$this->tablePrefix}quality_indicator qi ON qi.indicator_id = qig.group_indicator_id
+                JOIN master_institution_department mid ON mid.department_id = qig.group_department_id
                 WHERE qi.indicator_category_id = ?
                 AND qi.indicator_record_status = 'A'
+                AND qig.group_record_status = 'A'
                 ORDER BY mid.department_name ASC
             ", [$this->categoryId]);
         } else {
@@ -931,7 +921,7 @@ class LoadModuleForminputModel extends Model
             return ['allowed' => true, 'restricted' => false, 'message' => '', 'max_days' => 30];
         }
 
-        // Lebih dari 30 hari → cek group_days (only for non-local modules)
+        // Lebih dari 30 hari ??? cek group_days (only for non-local modules)
         $maxDays = 30;
         if ($this->tablePrefix !== 'local_') {
             $row = $db->table($this->tablePrefix . 'quality_indicator_group')

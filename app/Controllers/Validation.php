@@ -12,6 +12,7 @@ class Validation extends AppController
         'inm'    => ['prefix' => '',       'categoryId' => '4', 'title' => 'INM'],
         'imprs'  => ['prefix' => 'local_', 'categoryId' => '5', 'title' => 'IMPRS'],
         'impunit' => ['prefix' => 'local_', 'categoryId' => '6', 'title' => 'IMPUNIT'],
+        'ikp'     => ['prefix' => 'local_', 'categoryId' => '7', 'title' => 'IKP'],
     ];
 
     public function index(string $module = 'inm')

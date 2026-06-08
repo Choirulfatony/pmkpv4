@@ -10,6 +10,7 @@ class Trash extends AppController
         'inm'    => ['prefix' => '',       'categoryId' => '4', 'title' => 'INM'],
         'imprs'  => ['prefix' => 'local_', 'categoryId' => '5', 'title' => 'IMPRS'],
         'impunit' => ['prefix' => 'local_', 'categoryId' => '6', 'title' => 'IMPUNIT'],
+        'ikp'     => ['prefix' => 'local_', 'categoryId' => '7', 'title' => 'IKP'],
     ];
 
     public function index(string $module = 'inm')
@@ -37,6 +38,7 @@ class Trash extends AppController
             'inm'    => 'siimut/form-inm',
             'imprs'  => 'siimut/imprs',
             'impunit' => 'siimut/impunit',
+            'ikp'     => 'siimut/ikp',
         ];
 
         $namaBulan = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];

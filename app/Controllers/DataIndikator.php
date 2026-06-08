@@ -10,6 +10,7 @@ class DataIndikator extends AppController
         'inm'    => ['prefix' => '',       'categoryId' => '4', 'title' => 'INM', 'icon' => '<i class="bi bi-bar-chart"></i>'],
         'imprs'  => ['prefix' => 'local_', 'categoryId' => '5', 'title' => 'IMPRS', 'icon' => '<i class="bi bi-hospital"></i>'],
         'impunit' => ['prefix' => 'local_', 'categoryId' => '6', 'title' => 'IMPUnit', 'icon' => '<i class="bi bi-building"></i>'],
+        'ikp'     => ['prefix' => 'local_', 'categoryId' => '7', 'title' => 'IKP', 'icon' => '<i class="bi bi-exclamation-triangle"></i>'],
     ];
 
     public function index(string $module = 'inm')

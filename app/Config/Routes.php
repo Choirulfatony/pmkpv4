@@ -78,6 +78,19 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('impunit/request-approval', 'LoadModuleForminputImpunit::request_approval');
         $routes->post('impunit/check-request-status', 'LoadModuleForminputImpunit::check_request_status');
 
+        // Form Input IKP
+        $routes->get('ikp', 'LoadModuleForminputIkp::index');
+        $routes->post('ikp/get-indicators', 'LoadModuleForminputIkp::get_indicators');
+        $routes->post('ikp/get-indicator-detail', 'LoadModuleForminputIkp::get_indicator_detail');
+        $routes->post('ikp/save', 'LoadModuleForminputIkp::save');
+        $routes->post('ikp/delete', 'LoadModuleForminputIkp::delete');
+        $routes->post('ikp/validasi', 'LoadModuleForminputIkp::validasi');
+        $routes->post('ikp/get-riwayat', 'LoadModuleForminputIkp::get_riwayat');
+        $routes->post('ikp/get-daily-detail', 'LoadModuleForminputIkp::get_daily_detail');
+        $routes->post('ikp/check-input-allowed', 'LoadModuleForminputIkp::check_input_allowed');
+        $routes->post('ikp/request-approval', 'LoadModuleForminputIkp::request_approval');
+        $routes->post('ikp/check-request-status', 'LoadModuleForminputIkp::check_request_status');
+
         // Approval
         $routes->get('approval/requests-list', 'Approval::requests_list');
         $routes->post('approval/ajax-get-requests-data', 'Approval::ajaxGetRequestsData');
