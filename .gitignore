@@ -129,3 +129,4 @@ _modules/*
 # Windows special files
 #-------------------------
 nul
+.env.bak

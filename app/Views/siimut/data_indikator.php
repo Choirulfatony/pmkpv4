@@ -1,3 +1,6 @@
+<?php $isAdmin = (session()->get('user_role') === 'ADMINISTRATOR'); ?>
+<?php $isKendaliMutu = (session()->get('user_role') === 'KENDALI_MUTU'); ?>
+<?php $canEdit = ($isAdmin || $isKendaliMutu); ?>
 <div class="container-fluid">
     <div class="card card-outline">
         <div class="card-header">
@@ -10,6 +13,7 @@
                         </button>
                     </div>
                 </form>
+                <?php if ($canEdit): ?>
                 <div class="d-flex gap-1">
                     <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearForm(); bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-indikator')).show();" title="Tambah Indikator">
                         <i class="fas fa-plus-circle"></i> Tambah
@@ -18,6 +22,7 @@
                         <i class="fas fa-sync-alt"></i>
                     </button>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -477,12 +482,14 @@
                     render: function (data, type, row) {
                         let buttons = '<div class="btn-group btn-group-sm" style="white-space:nowrap">';
                         buttons += '<button type="button" class="btn btn-success" onclick="viewIndikator(' + row.indicator_id + ')" title="Lihat"><i class="fas fa-eye"></i></button>';
+                        <?php if ($canEdit): ?>
                         buttons += '<button type="button" class="btn btn-info" onclick="editIndikator(' + row.indicator_id + ')" title="Edit"><i class="fas fa-edit"></i></button>';
                         buttons += '<button type="button" class="btn btn-primary" onclick="openNumDenum(' + row.indicator_id + ')" title="Num/Denum"><i class="fas fa-calculator"></i></button>';
                         buttons += '<button type="button" class="btn btn-danger" onclick="deleteIndikator(' + row.indicator_id + ')" title="Hapus"><i class="fas fa-trash"></i></button>';
                         if (row.indicator_record_status === 'X') {
                             buttons += '<button type="button" class="btn btn-warning" onclick="restoreIndikator(' + row.indicator_id + ')" title="Pulihkan"><i class="fas fa-undo"></i></button>';
                         }
+                        <?php endif; ?>
                         buttons += '</div>';
                         return buttons;
                     }
@@ -683,8 +690,10 @@
                         targets: 4,
                         render: function (data, type, row) {
                             var btns = '<div class="btn-group gap-1">';
+                            <?php if ($canEdit): ?>
                             btns += '<button type="button" class="btn btn-sm btn-outline-info border-0" onclick="editNumDenum(' + row.variable_id + ')" title="Edit"><i class="fas fa-edit"></i></button>';
                             btns += '<button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="deleteNumDenum(' + row.variable_id + ')" title="Hapus"><i class="fas fa-trash"></i></button>';
+                            <?php endif; ?>
                             btns += '</div>';
                             return btns;
                         }

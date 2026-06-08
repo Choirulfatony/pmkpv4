@@ -3,8 +3,8 @@
     <div class="form-impunit-header">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <h4 class="mb-1"><i class="bi bi-pencil-square me-2"></i>Form Input IKP ??? Insiden Keselamatan Pasien</h4>
-                <p class="mb-0 opacity-75">Input data harian ??? klik sel pada tanggal untuk mengisi</p>
+                <h4 class="mb-1"><i class="bi bi-pencil-square me-2"></i>Form Input IKP - Insiden Keselamatan Pasien</h4>
+                <p class="mb-0 opacity-75">Input data harian - klik sel pada tanggal untuk mengisi</p>
             </div>
             <div class="col-md-4 text-end">
                 <!-- <a href="<?= site_url('siimut/grafik-ikp') ?>" class="btn btn-light btn-sm">
@@ -114,13 +114,7 @@
                     <div class="col-sm-12 col-md-6 text-md-end" id="paginationControls">
                     </div>
                 </div>
-                <div class="d-flex align-items-center gap-4 mt-2 mb-2 flex-wrap">
-                    <span><span class="legend-box" style="background:#fff3cd"></span> Draft (D)</span>
-                    <span><span class="legend-box" style="background:#d4edda"></span> Approved (A)</span>
-                    <span><span class="legend-box" style="background:#c3e6cb"></span> Target Tercapai</span>
-                    <span><span class="legend-box" style="background:#f8d7da"></span> Target Tidak Tercapai</span>
-                    <span><span class="legend-box" style="background:#e2e3e5"></span> Belum Ada Data</span>
-                </div>
+
             </div>
         </div>
     </div>
@@ -137,10 +131,6 @@
             <div class="modal-body">
                 <div class="alert alert-success mb-3">
                     <strong id="modalIndikatorNama">-</strong>
-                    <div class="mt-2">
-                        <span class="badge bg-success me-1">Target: <span id="modalTarget">-</span></span>
-                        <span class="badge bg-secondary">Satuan: <span id="modalSatuan">-</span></span>
-                    </div>
                 </div>
 
                 <!-- ===== DETAIL VIEW (read-only) ===== -->
@@ -156,7 +146,7 @@
                         </tr>
                         <tr>
                             <th class="bg-light">Jumlah Kejadian</th>
-                            <td id="detailJumlahKejadian">-</td>
+                            <td id="detailNumerator">-</td>
                         </tr>
                         <tr>
                             <th class="bg-light">Disimpan oleh</th>
@@ -216,18 +206,14 @@
                             <div class="col-12">
                                 <label class="form-label fw-bold">Jumlah Kejadian <span class="text-danger">*</span></label>
                                 <div class="input-group has-validation">
-                                    <input type="number" class="form-control" id="input_jumlah_kejadian" name="jumlah_kejadian" step="1" min="0" placeholder="Jumlah kejadian" required>
+                                    <input type="number" class="form-control" id="input_numerator" name="numerator" step="any" min="0" placeholder="Jumlah kejadian" required>
                                     <div class="invalid-feedback">Jumlah kejadian wajib diisi</div>
                                 </div>
                             </div>
                         </div>
 
-
-
-
-
-                    </form>
-                </div>
+            </form>
+        </div>
             </div>
             <div class="modal-footer" id="modalFooter">
                 <!-- Mode Detail (ada data) -->
@@ -264,7 +250,8 @@
     document.addEventListener('DOMContentLoaded', function() {
         modalInput = new bootstrap.Modal(document.getElementById('modalInput'));
 
-        document.getElementById('input_jumlah_kejadian').addEventListener('keydown', angkaOnly);
+
+                document.getElementById('input_numerator').addEventListener('keydown', angkaOnly);
 
         document.getElementById('filter_department').addEventListener('change', loadData);
         document.getElementById('filter_bulan').addEventListener('change', updatePeriode);
@@ -369,15 +356,17 @@
             if (freq === 'M' || freq === 'Y') {
                 var item = daily[0] || { nilai: null, num: 0, denum: 0, status: '', hari: 1 };
                 var cellClass = 'day-cell text-center';
-                var count = '0';
+                var nilaiDisplay = '0';
 
                 if (item.nilai !== null) {
-                    count = (item.num || 0);
+                    nilaiDisplay = item.num || 0;
                     cellClass += ' cell-has-data';
                     if (item.status === 'A') cellClass += ' cell-approved';
                     else if (item.status === 'D') cellClass += ' cell-draft';
+                    if (item.tercapai === true) cellClass += ' cell-target';
+                    else if (item.tercapai === false) cellClass += ' cell-fail';
                 } else {
-                    cellClass += ' cell-empty';
+                    cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
                 }
 
                 if (isInputable(item.hari, freq)) {
@@ -386,21 +375,24 @@
 
                 html += '<td class="' + cellClass + '" colspan="' + days + '" ' +
                         'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')">' +
-                        '<div class="fw-bold">' + count + '</div></td>';
+                        '<div class="fw-bold">' + nilaiDisplay + '</div>' +
+                        '</td>';
             } else if (freq === 'W') {
                 for (var w = 0; w < daily.length; w++) {
                     var item = daily[w];
                     var cellClass = 'day-cell text-center';
-                    var count = '0';
+                    var nilaiDisplay = '0';
                     var colspan = item.colspan || 7;
 
                     if (item.nilai !== null) {
-                        count = (item.num || 0);
+                        nilaiDisplay = item.num || 0;
                         cellClass += ' cell-has-data';
                         if (item.status === 'A') cellClass += ' cell-approved';
                         else if (item.status === 'D') cellClass += ' cell-draft';
+                        if (item.tercapai === true) cellClass += ' cell-target';
+                        else if (item.tercapai === false) cellClass += ' cell-fail';
                     } else {
-                        cellClass += ' cell-empty';
+                        cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
                     }
 
                     if (isInputable(item.hari, freq)) {
@@ -409,22 +401,25 @@
 
                     var weekLabel = 'Mg ' + (item.week || (w + 1));
                     html += '<td class="' + cellClass + '" colspan="' + colspan + '" ' +
-                        'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')">' +
-                        '<div class="fw-bold">' + weekLabel + ': ' + count + '</div></td>';
+                            'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')">' +
+                            '<div class="fw-bold">' + weekLabel + ': ' + nilaiDisplay + '</div>' +
+                            '</td>';
                 }
             } else {
                 for (var d = 0; d < daily.length; d++) {
                     var item = daily[d];
                     var cellClass = 'day-cell text-center';
-                    var count = '0';
+                    var nilaiDisplay = '0';
 
                     if (item.nilai !== null) {
-                        count = (item.num || 0);
+                        nilaiDisplay = item.num || 0;
                         cellClass += ' cell-has-data';
                         if (item.status === 'A') cellClass += ' cell-approved';
                         else if (item.status === 'D') cellClass += ' cell-draft';
+                        if (item.tercapai === true) cellClass += ' cell-target';
+                        else if (item.tercapai === false) cellClass += ' cell-fail';
                     } else {
-                        cellClass += ' cell-empty';
+                        cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
                     }
 
                     if (isInputable(item.hari, freq)) {
@@ -432,8 +427,9 @@
                     }
 
                     html += '<td class="' + cellClass + '" ' +
-                        'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')">' +
-                        '<div class="fw-bold">' + count + '</div></td>';
+                            'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')">' +
+                            '<div class="fw-bold">' + nilaiDisplay + '</div>' +
+                            '</td>';
                 }
             }
             html += '</tr>';
@@ -547,7 +543,7 @@
             return;
         }
 
-        // Lebih dari 30 hari ??? cek group_days
+        // Lebih dari 30 hari, cek group_days
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '<?= site_url('siimut/ikp/check-input-allowed') ?>', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -572,10 +568,6 @@
         document.getElementById('input_tanggal').value = tanggal;
 
         document.getElementById('modalIndikatorNama').textContent = indicatorName || '-';
-        document.getElementById('modalTarget').textContent = target || '-';
-        document.getElementById('modalSatuan').textContent = units || '-';
-
-
         showFormMode();
 
         var xhr = new XMLHttpRequest();
@@ -596,19 +588,14 @@
                 if (hasData) {
                     var last = response.existing_data[response.existing_data.length - 1];
                     var num = last.result_numerator_value || '0';
-                    var den = last.result_denumerator_value || '0';
-                    var kendala = (response.rencana_perbaikan && response.rencana_perbaikan.kendala) || '-';
-                    var perbaikan = (response.rencana_perbaikan && response.rencana_perbaikan.perbaikan) || '-';
-                    var hasil = parseFloat(den) > 0 ? (parseFloat(num) / parseFloat(den) * 100).toFixed(2) + '%' : '-';
 
                     document.getElementById('detailTanggal').textContent = tanggal;
                     document.getElementById('detailRuangan').textContent = departmentName;
-                    document.getElementById('detailJumlahKejadian').textContent = num;
+                    document.getElementById('detailNumerator').textContent = num;
                     document.getElementById('detailSavedBy').textContent = last.profile_fullname || last.result_insert_by || '-';
                     document.getElementById('detailSavedAt').textContent = last.result_insert_date || '-';
 
-                    document.getElementById('input_jumlah_kejadian').value = num;
-
+                    document.getElementById('input_numerator').value = num;
                     if (restricted) {
                         document.getElementById('btnEdit').style.display = 'none';
                         document.getElementById('btnDelete').style.display = 'none';
@@ -622,10 +609,9 @@
 
                     showDetailMode();
                 } else {
-                    document.getElementById('input_jumlah_kejadian').value = '';
+                    document.getElementById('input_numerator').value = '';
                     showFormMode();
                 }
-
                 modalInput.show();
             }
         };
@@ -657,9 +643,6 @@
         if (!/^[0-9]$/.test(e.key)) e.preventDefault();
     }
 
-    function hitungHasil() {
-        // Not needed for IKP (single count field)
-    }
 
     function saveData() {
         var form = document.getElementById('formInputData');

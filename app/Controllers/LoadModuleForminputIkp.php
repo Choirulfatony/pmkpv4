@@ -350,8 +350,8 @@ class LoadModuleForminputIkp extends AppController
         $indicator_id = $this->request->getPost('indicator_id');
         $department_id = $this->request->getPost('department_id');
         $tanggal = $this->request->getPost('tanggal');
-        $numerator = (float) ($this->request->getPost('jumlah_kejadian') ?? 0);
-        $denumerator = (float) 1;
+        $numerator = (float) ($this->request->getPost('numerator') ?? 0);
+        $denumerator = 1;
 
         if (!$indicator_id || !$department_id || !$tanggal) {
             return $this->response->setJSON(['status' => false, 'message' => 'Data tidak lengkap']);

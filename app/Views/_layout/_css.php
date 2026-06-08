@@ -186,7 +186,7 @@ $ADMINLTE_CSS     = $asset('https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-beta3/d
     top: 0;
     z-index: 2;
     background: inherit;
-    border-color: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.2);
     font-size: 13px;
     padding: 8px 6px;
     text-align: center;
@@ -216,7 +216,7 @@ $ADMINLTE_CSS     = $asset('https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-beta3/d
 .legend-box { display: inline-block; width: 16px; height: 16px; border-radius: 3px; border: 1px solid #dee2e6; vertical-align: middle; margin-right: 4px; }
 .cell-target { background-color: #c3e6cb !important; }
 .cell-fail { background-color: #f8d7da !important; }
-.cell-fail .fw-bold, .cell-fail .num-denum { color: #dc3545 !important; }
+.cell-fail .fw-bold, .cell-fail .num-denum { color: #fff !important; }
 .cell-empty { background-color: #e2e3e5 !important; }
 td.day-cell.cell-inputable { cursor: pointer; }
 td.day-cell.cell-inputable .fw-bold { color: #0d6efd !important; }
