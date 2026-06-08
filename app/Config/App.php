@@ -11,12 +11,14 @@ class App extends BaseConfig
         parent::__construct();
 
         if (php_sapi_name() === 'cli') {
-            // Jika dijalankan lewat terminal (php spark)
             $this->baseURL = 'http://192.168.1.67/siimut/';
         } else {
-            // Jika lewat browser (web server)
             $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
-            $this->baseURL = $scheme . '://' . $_SERVER['HTTP_HOST'] . '/siimut/';
+            if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+                $scheme = 'https';
+            }
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $this->baseURL = $scheme . '://' . $host . '/siimut/';
         }
 
         date_default_timezone_set("Asia/Jakarta");
