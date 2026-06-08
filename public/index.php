@@ -25,6 +25,19 @@ if (version_compare(PHP_VERSION, $minPhpVersion, '<')) {
 
 /*
  *---------------------------------------------------------------
+ * PAKSA ENVIRONMENT PRODUCTION UNTUK DOMAIN TERTENTU
+ *---------------------------------------------------------------
+ * Jika diakses via domain production, paksa environment = production
+ * agar debug toolbar tidak tampil.
+ */
+$host = $_SERVER['HTTP_HOST'] ?? '';
+if (str_contains($host, 'apprssm.rssoedono.jatimprov.go.id')) {
+    putenv('CI_ENVIRONMENT=production');
+    $_ENV['CI_ENVIRONMENT'] = 'production';
+}
+
+/*
+ *---------------------------------------------------------------
  * SET THE CURRENT DIRECTORY
  *---------------------------------------------------------------
  */

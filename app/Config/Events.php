@@ -43,19 +43,13 @@ Events::on('pre_system', static function (): void {
      * If you delete, they will no longer be collected.
      */
     if (CI_DEBUG && ! is_cli()) {
-        // Cek apakah domain production
-        $host = $_SERVER['HTTP_HOST'] ?? '';
-        if (str_contains($host, 'apprssm.rssoedono.jatimprov.go.id')) {
-            // Jangan load toolbar di production
-        } else {
-            Events::on('DBQuery', 'CodeIgniter\Debug\Toolbar\Collectors\Database::collect');
-            service('toolbar')->respond();
-            // Hot Reload route - for framework use on the hot reloader.
-            if (ENVIRONMENT === 'development') {
-                service('routes')->get('__hot-reload', static function (): void {
-                    (new HotReloader())->run();
-                });
-            }
+        Events::on('DBQuery', 'CodeIgniter\Debug\Toolbar\Collectors\Database::collect');
+        service('toolbar')->respond();
+        // Hot Reload route - for framework use on the hot reloader.
+        if (ENVIRONMENT === 'development') {
+            service('routes')->get('__hot-reload', static function (): void {
+                (new HotReloader())->run();
+            });
         }
     }
 });
