@@ -10,6 +10,7 @@ class DataIndikator extends AppController
         'inm'    => ['prefix' => '',       'categoryId' => '4', 'title' => 'INM', 'icon' => '<i class="bi bi-bar-chart"></i>'],
         'imprs'  => ['prefix' => 'local_', 'categoryId' => '5', 'title' => 'IMPRS', 'icon' => '<i class="bi bi-hospital"></i>'],
         'impunit' => ['prefix' => 'local_', 'categoryId' => '6', 'title' => 'IMPUnit', 'icon' => '<i class="bi bi-building"></i>'],
+        'ikp'     => ['prefix' => 'local_', 'categoryId' => '7', 'title' => 'IKP', 'icon' => '<i class="bi bi-exclamation-triangle"></i>'],
     ];
 
     public function index(string $module = 'inm')
@@ -21,8 +22,8 @@ class DataIndikator extends AppController
         $this->disableCache();
 
         $role = session()->get('user_role');
-        if ($role !== 'ADMINISTRATOR') {
-            return redirect()->to('/siimut/dashboard')->with('error', 'Hanya untuk Administrator');
+        if (!in_array($role, ['ADMINISTRATOR', 'KENDALI_MUTU'])) {
+            return redirect()->to('/siimut/dashboard')->with('error', 'Hanya untuk Administrator dan Kendali Mutu');
         }
 
         if (!isset($this->modules[$module])) {
@@ -91,6 +92,12 @@ class DataIndikator extends AppController
             return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
         }
 
+        $role = session()->get('user_role');
+        $userId = (string)(session()->get('profile_id') ?? '');
+        if (!in_array($role, ['ADMINISTRATOR', 'KENDALI_MUTU'])) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Tidak memiliki akses']);
+        }
+
         if (!$this->request->isAJAX()) {
             return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
         }
@@ -104,6 +111,20 @@ class DataIndikator extends AppController
         $model = new IndicatorModel($mod['prefix'], $mod['categoryId']);
 
         $id = (int) $this->request->getPost('indicator_id');
+
+        if ($id > 0 && $role !== 'ADMINISTRATOR') {
+            $existing = $model->getDetail($id);
+            if (!$existing) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Data tidak ditemukan']);
+            }
+            $insertBy = $existing->indicator_insert_by ?? '';
+            if (empty($insertBy)) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Hanya Administrator yang dapat mengubah data ini']);
+            }
+            if ($insertBy !== $userId) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Hanya bisa mengedit data yang Anda input sendiri']);
+            }
+        }
 
         $recordStatus = $this->request->getPost('indicator_record_status');
         $recordStatus = ($recordStatus === 'A') ? 'A' : 'D';
@@ -147,6 +168,7 @@ class DataIndikator extends AppController
                 $model->updateIndicator($id, $data);
                 $message = 'Indikator berhasil diupdate';
             } else {
+                $data['indicator_insert_by'] = $userId;
                 $id = $model->insertIndicator($data);
                 $message = 'Indikator berhasil ditambahkan';
             }
@@ -161,6 +183,12 @@ class DataIndikator extends AppController
     {
         if (!session()->get('logged_in')) {
             return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $role = session()->get('user_role');
+        $userId = (string)(session()->get('profile_id') ?? '');
+        if (!in_array($role, ['ADMINISTRATOR', 'KENDALI_MUTU'])) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Tidak memiliki akses']);
         }
 
         if (!$this->request->isAJAX()) {
@@ -178,6 +206,21 @@ class DataIndikator extends AppController
             $module = 'inm';
         }
         $mod = $this->modules[$module];
+
+        if ($role !== 'ADMINISTRATOR') {
+            $model = new IndicatorModel($mod['prefix'], $mod['categoryId']);
+            $existing = $model->getDetail($id);
+            if (!$existing) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Data tidak ditemukan']);
+            }
+            $insertBy = $existing->indicator_insert_by ?? '';
+            if (empty($insertBy)) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Hanya Administrator yang dapat menghapus data ini']);
+            }
+            if ($insertBy !== $userId) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Hanya bisa menghapus data yang Anda input sendiri']);
+            }
+        }
 
         $db = db_connect();
         $varTable = $mod['prefix'] . 'quality_indicator_variable';
@@ -206,6 +249,11 @@ class DataIndikator extends AppController
             return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
         }
 
+        $role = session()->get('user_role');
+        if (!in_array($role, ['ADMINISTRATOR', 'KENDALI_MUTU'])) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Tidak memiliki akses']);
+        }
+
         if (!$this->request->isAJAX()) {
             return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
         }
@@ -221,6 +269,21 @@ class DataIndikator extends AppController
             $module = 'inm';
         }
         $mod = $this->modules[$module];
+
+        if ($role !== 'ADMINISTRATOR') {
+            $model = new IndicatorModel($mod['prefix'], $mod['categoryId']);
+            $existing = $model->getDetail($id);
+            if (!$existing) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Data tidak ditemukan']);
+            }
+            $insertBy = $existing->indicator_insert_by ?? '';
+            if (empty($insertBy)) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Hanya Administrator yang dapat memulihkan data ini']);
+            }
+            if ($insertBy !== $userId) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Hanya bisa memulihkan data yang Anda input sendiri']);
+            }
+        }
 
         $model = new IndicatorModel($mod['prefix'], $mod['categoryId']);
 
@@ -282,6 +345,11 @@ class DataIndikator extends AppController
             return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
         }
 
+        $role = session()->get('user_role');
+        if (!in_array($role, ['ADMINISTRATOR', 'KENDALI_MUTU'])) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Tidak memiliki akses']);
+        }
+
         if (!$this->request->isAJAX()) {
             return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
         }
@@ -323,6 +391,11 @@ class DataIndikator extends AppController
     {
         if (!session()->get('logged_in')) {
             return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $role = session()->get('user_role');
+        if (!in_array($role, ['ADMINISTRATOR', 'KENDALI_MUTU'])) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Tidak memiliki akses']);
         }
 
         if (!$this->request->isAJAX()) {

@@ -91,7 +91,7 @@
 
         <div class="login-card position-relative">
 
-            <button type="button" class="btn-close position-absolute top-0 end-0 mt-3 me-3" style="z-index:5;" aria-label="Close" onclick="window.location.href='<?= site_url() ?>'"></button>
+            <!-- <button type="button" class="btn-close position-absolute top-0 end-0 mt-3 me-3" style="z-index:5;" aria-label="Close" onclick="window.location.href='<?= site_url() ?>'"></button> -->
 
             <h4 class="text-center mb-4 fw-bold">Login Sistem</h4>
 

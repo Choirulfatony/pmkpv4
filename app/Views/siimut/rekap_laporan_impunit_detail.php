@@ -154,16 +154,9 @@
                         <i class="fas fa-info-circle fa-2x text-muted mb-2"></i>
                         <p class="text-muted">Belum ada data untuk bulan ini</p>
                     </div>
-                    <table id="daily-table" class="table table-bordered table-hover table-sm mb-0" style="display:none;">
+                    <table id="daily-table" class="table table-inm-inm table-sm mb-0" style="display:none;">
                         <thead>
-                            <tr id="daily-headers">
-                                <th style="width: 50px;" class="text-center">#</th>
-                                <th style="width: 200px; text-align: left !important; padding-left: 15px !important;">Ruangan</th>
-                                <th class="text-center" style="width:90px;">Nilai</th>
-                                <th class="text-center" style="width:90px;">Num/Denum</th>
-                                <th>Kendala</th>
-                                <th>Perbaikan</th>
-                            </tr>
+                            <tr id="daily-headers"></tr>
                         </thead>
                         <tbody id="daily-body"></tbody>
                     </table>
@@ -388,8 +381,8 @@
                     var operatorText = resp.operator || '>=';
                     var unitsText = resp.units || '%';
                     var operatorDisplay = operatorText;
-                    if (operatorDisplay === '>=') operatorDisplay = '≥';
-                    if (operatorDisplay === '<=') operatorDisplay = '≤';
+                    if (operatorDisplay === '>=') operatorDisplay = '???';
+                    if (operatorDisplay === '<=') operatorDisplay = '???';
 
                     $('#daily-info').text(resp.indicator || '');
                     var deptLabel = resp.dept_data.length === 1
@@ -402,36 +395,30 @@
 
                     var days = resp.days || 31;
 
-                    // Bangun header: #, Ruangan, 1, 2, 3, ... , days
-                    var headerHtml = '<th style="width:50px;" class="text-center">#</th><th style="width:200px;text-align:left!important;padding-left:15px!important;">Ruangan</th>';
+                    // Bangun header: No, Ruangan, 1, 2, 3, ... , days
+                    var headerHtml = '<th class="text-center" style="width:40px;">No</th><th style="min-width:250px;">Ruangan</th>';
                     for (var d = 1; d <= days; d++) {
-                        headerHtml += '<th class="text-center" style="width:60px;">' + d + '</th>';
+                        headerHtml += '<th class="text-center" style="width:70px;">' + d + '</th>';
                     }
 
-                    // Bangun baris per departemen + row detail kendala/perbaikan
+                    // Bangun baris per departemen
                     var bodyHtml = '';
                     $.each(resp.dept_data, function(idx, dept) {
-                        bodyHtml += '<tr class="daily-dept-row" data-dept-idx="' + idx + '">';
-                        bodyHtml += '<td class="text-center fw-bold" style="width:50px;">' + (idx + 1) + '</td>';
-                        bodyHtml += '<td class="text-center"><div class="py-1 text-start ps-2 text-nowrap" style="overflow:hidden;text-overflow:ellipsis;">' + dept.department_name + '</div></td>';
+                        bodyHtml += '<tr class="indicator-row">';
+                        bodyHtml += '<td class="text-center fw-bold">' + (idx + 1) + '</td>';
+                        bodyHtml += '<td class="text-start">' + dept.department_name + '</td>';
 
                         $.each(dept.daily, function(i, item) {
-                            var cellClass = 'text-center text-nowrap';
+                            var cellClass = 'day-cell text-center';
                             var nilaiDisplay = '-';
 
                             if (item.nilai !== null) {
                                 nilaiDisplay = item.nilai + ' ' + unitsText;
-                                if (item.tercapai === true) {
-                                    cellClass += ' cell-target';
-                                } else if (item.tercapai === false) {
-                                    cellClass += ' cell-fail';
-                                }
+                                cellClass += ' cell-has-data';
+                                if (item.tercapai === true) cellClass += ' cell-target';
+                                else if (item.tercapai === false) cellClass += ' cell-fail';
                             } else {
-                                if (item.num > 0 || item.denum > 0) {
-                                    cellClass += ' cell-fail';
-                                } else {
-                                    cellClass += ' cell-empty';
-                                }
+                                cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
                             }
 
                             var kpIcon = '';
@@ -439,11 +426,9 @@
                                 kpIcon = '<i class="fas fa-exclamation-circle text-warning ms-1 kp-icon" style="font-size:10px;cursor:pointer;" data-dept-idx="' + idx + '" data-hari="' + item.hari + '"></i>';
                             }
 
-                            bodyHtml += '<td class="' + cellClass + '" style="width:60px;" data-hari="' + item.hari + '">' +
-                                '<div class="py-1"><span class="fw-bold" style="font-size:13px;">' + nilaiDisplay + kpIcon + '</span>' +
-                                '<div class="small text-muted mt-1">' +
-                                '<span>' + (item.num || 0) + '</span> | <span>' + (item.denum || 0) + '</span>' +
-                                '</div></div>' +
+                            bodyHtml += '<td class="' + cellClass + '" data-hari="' + item.hari + '">' +
+                                '<div class="fw-bold">' + nilaiDisplay + kpIcon + '</div>' +
+                                '<div class="num-denum">' + (item.num || 0) + ' / ' + (item.denum || 0) + '</div>' +
                                 '</td>';
                         });
 
@@ -451,12 +436,7 @@
 
                     });
 
-                    // Hancurkan DataTable lama SEBELUM update konten
-                    if ($.fn.DataTable.isDataTable('#daily-table')) {
-                        $('#daily-table').DataTable().destroy();
-                    }
-
-                    // Update konten setelah destroy
+                    // Update konten
                     $('#daily-body').html(bodyHtml);
                     $('#daily-headers').html(headerHtml);
 
@@ -465,34 +445,6 @@
                         $('#daily-table').wrap('<div class="daily-table-scroll" style="overflow-x:auto;max-width:100%;"></div>');
                     }
 
-                    // Inisialisasi DataTable untuk daily table
-                    var dailyTable = $('#daily-table').DataTable({
-                        scrollX: true,
-                        scrollCollapse: true,
-                        autoWidth: false,
-                        pageLength: 25,
-                        lengthMenu: [
-                            [10, 25, 50, -1],
-                            [10, 25, 50, 'Semua']
-                        ],
-                        language: {
-                            emptyTable: 'Tidak ada data',
-                            info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
-                            lengthMenu: 'Tampilkan _MENU_ data',
-                            search: 'Cari:',
-                            paginate: {
-                                first: 'Pertama',
-                                last: 'Terakhir',
-                                next: 'Berikutnya',
-                                previous: 'Sebelumnya'
-                            }
-                        },
-                        columnDefs: [{
-                            orderable: false,
-                            targets: '_all'
-                        }]
-                    });
-
                     // Click handler: icon warning -> toggle child row kendala/perbaikan
                     $('#daily-body').off('click', '.kp-icon').on('click', '.kp-icon', function() {
                         var deptIdx = $(this).data('dept-idx');
@@ -500,48 +452,41 @@
                         var deptData = resp.dept_data[deptIdx];
                         if (!deptData) return;
 
-                        // Cari data hari itu
                         var dayData = null;
                         $.each(deptData.daily, function(i, d) {
                             if (d.hari === hari) dayData = d;
                         });
                         if (!dayData) return;
 
-                        // Cari baris DataTable berdasarkan dept-idx
                         var tr = $(this).closest('tr');
-                        var row = dailyTable.row(tr);
                         var activeKey = deptIdx + '-' + hari;
+                        var nextTr = tr.next('.kp-detail-row');
 
-                        // Jika child row sudah terbuka untuk data yg sama -> tutup
-                        if (row.child.isShown() && tr.data('active-key') === activeKey) {
-                            row.child.hide();
-                            tr.removeData('active-key');
-                            tr.toggleClass('kp-row-open');
+                        if (nextTr.length && nextTr.data('active-key') === activeKey) {
+                            nextTr.remove();
+                            tr.removeClass('kp-row-open');
                             return;
                         }
 
-                        // Tutup semua child row lain
-                        dailyTable.rows().every(function() {
-                            if (this.child.isShown()) {
-                                this.child.hide();
-                                $(this.node()).removeData('active-key');
-                                $(this.node()).removeClass('kp-row-open');
-                            }
-                        });
+                        $('#daily-body').find('.kp-detail-row').remove();
+                        $('#daily-body').find('.kp-row-open').removeClass('kp-row-open');
 
-                        var html = '<div class="kp-accordion-body p-3 bg-light" style="border-top:2px solid #ffc107;">';
-                        html += '<div class="d-flex align-items-start gap-3 flex-wrap">';
-                        html += '<div><strong>Ruangan:</strong> ' + $('<span>').text(deptData.department_name).html() + '</div>';
-                        html += '<div class="badge bg-warning text-dark fs-6">Hari ke-' + hari + '</div>';
-                        html += '</div>';
-                        html += '<hr class="my-2">';
-                        html += '<div class="d-flex align-items-start gap-3 flex-wrap">';
-                        html += '<div><strong>Kendala:</strong> ' + $('<span>').text(dayData.kendala || '-').html() + '</div>';
-                        html += '<div><strong>Perbaikan:</strong> ' + $('<span>').text(dayData.perbaikan || '-').html() + '</div>';
-                        html += '</div></div>';
+                        var colSpan = tr.find('td').length;
+                        var detailHtml = '<tr class="kp-detail-row" data-active-key="' + activeKey + '">' +
+                            '<td colspan="' + colSpan + '" class="p-0">' +
+                            '<div class="p-3 bg-light" style="border-top:2px solid #ffc107;">' +
+                            '<div class="d-flex align-items-start gap-3 flex-wrap">' +
+                            '<div><strong>Ruangan:</strong> ' + $('<span>').text(deptData.department_name).html() + '</div>' +
+                            '<div class="badge bg-warning text-dark fs-6">Hari ke-' + hari + '</div>' +
+                            '</div>' +
+                            '<hr class="my-2">' +
+                            '<div class="d-flex align-items-start gap-3 flex-wrap">' +
+                            '<div><strong>Kendala:</strong> ' + $('<span>').text(dayData.kendala || '-').html() + '</div>' +
+                            '<div><strong>Perbaikan:</strong> ' + $('<span>').text(dayData.perbaikan || '-').html() + '</div>' +
+                            '</div></div></td></tr>';
 
-                        row.child(html).show();
-                        tr.data('active-key', activeKey).addClass('kp-row-open');
+                        tr.after(detailHtml);
+                        tr.addClass('kp-row-open');
                     });
                 },
                 error: function() {

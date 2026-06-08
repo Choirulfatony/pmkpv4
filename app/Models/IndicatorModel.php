@@ -76,7 +76,8 @@ class IndicatorModel extends Model
             qi.indicator_ucl,
             qi.indicator_category_id,
             qi.indicator_valid_date,
-            qi.indicator_last_updated
+            qi.indicator_last_updated,
+            qi.indicator_insert_by
         ');
 
         $builder->where('qi.indicator_category_id', $this->categoryId);
