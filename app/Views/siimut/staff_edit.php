@@ -104,23 +104,19 @@
 
                                 <div class="row mb-2">
                                     <div class="col-6">
-                                        <label class="form-label small">Status Akun</label>
-                                        <div>
-                                            <?php if ($staff->profile_disable): ?>
-                                                <span class="badge bg-danger">Nonaktif</span>
-                                            <?php else: ?>
-                                                <span class="badge bg-success">Aktif</span>
-                                            <?php endif; ?>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="toggle_disable"
+                                                <?= $staff->profile_disable ? 'checked' : '' ?>
+                                                onchange="toggleAccountStatus(this, 'disable')">
+                                            <label class="form-check-label small" for="toggle_disable">Nonaktif Akun</label>
                                         </div>
                                     </div>
                                     <div class="col-6">
-                                        <label class="form-label small">Status Online</label>
-                                        <div>
-                                            <?php if ($staff->profile_online_status): ?>
-                                                <span class="badge bg-success"><i class="bi bi-circle-fill"></i> Online</span>
-                                            <?php else: ?>
-                                                <span class="badge bg-secondary">Offline</span>
-                                            <?php endif; ?>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="toggle_online"
+                                                <?= $staff->profile_online_status ? 'checked' : '' ?>
+                                                onchange="toggleAccountStatus(this, 'online')">
+                                            <label class="form-check-label small" for="toggle_online">Status Online</label>
                                         </div>
                                     </div>
                                 </div>
@@ -158,6 +154,32 @@
 </div>
 
 <script>
+var profileId = <?= $staff->profile_id ?>;
+
+function toggleAccountStatus(el, type) {
+    var url = type === 'disable'
+        ? '<?= site_url('siimut/staf/toggle-disable/') ?>' + profileId
+        : '<?= site_url('siimut/staf/toggle-online/') ?>' + profileId;
+
+    $.ajax({
+        url: url,
+        type: 'POST',
+        dataType: 'json',
+        success: function(res) {
+            if (res.status) {
+                toastSuccess(res.message);
+            } else {
+                toastError(res.message);
+                el.checked = !el.checked;
+            }
+        },
+        error: function() {
+            toastError('Gagal mengubah status');
+            el.checked = !el.checked;
+        }
+    });
+}
+
 $(document).ready(function() {
     $('.select2').select2({
         theme: 'bootstrap-5',

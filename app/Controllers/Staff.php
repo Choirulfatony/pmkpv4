@@ -292,4 +292,38 @@ class Staff extends AppController
 
         return $this->response->setJSON(['status' => false, 'message' => 'Gagal mengubah status akun']);
     }
+
+    public function toggleOnline(int $id)
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $role = session()->get('user_role');
+        if (!in_array($role, ['ADMINISTRATOR'])) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => false, 'message' => 'Akses ditolak']);
+        }
+
+        $staff = $this->staffModel->getStaffById($id);
+        if (!$staff) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Staf tidak ditemukan']);
+        }
+
+        $newStatus = $staff->profile_online_status ? 0 : 1;
+        $db = db_connect();
+        $result = $db->table('user_profile')
+            ->where('profile_id', $id)
+            ->update([
+                'profile_online_status' => $newStatus,
+                'profile_update_by'     => session('profile_id'),
+                'profile_update_date'   => date('Y-m-d H:i:s'),
+            ]);
+
+        if ($result) {
+            $label = $newStatus ? 'Online' : 'Offline';
+            return $this->response->setJSON(['status' => true, 'message' => 'Status akun: ' . $label, 'new_status' => $newStatus]);
+        }
+
+        return $this->response->setJSON(['status' => false, 'message' => 'Gagal mengubah status online']);
+    }
 }
