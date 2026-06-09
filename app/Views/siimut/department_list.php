@@ -182,86 +182,308 @@ $(document).ready(function() {
 </script>
 
 <!-- Modal Indikator -->
-<div class="modal fade" id="modal-indikator" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+<div class="modal fade" id="modal-indikator" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title"><i class="bi bi-bar-chart"></i> <span id="modal-indicator-title">Indikator</span></h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div id="indicator-list"></div>
+            <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <small class="text-muted"><span id="indicator-count">0</span> indikator</small>
+                    <button type="button" class="btn btn-sm btn-primary" id="btn-add-indicator" title="Tambah Indikator">
+                        <i class="bi bi-plus-circle"></i> Tambah
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped table-bordered mb-0" id="table-indicator-modal" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="width:40px;">#</th>
+                                <th>Periode</th>
+                                <th>Judul Indikator</th>
+                                <th class="text-center">Group Days</th>
+                                <th class="text-center" style="width:130px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="indicator-modal-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <small class="text-muted">Klik <i class="bi bi-pencil"></i> untuk edit, <i class="bi bi-trash"></i> untuk hapus</small>
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Modal Form Add/Edit -->
+<div class="modal fade" id="modal-form-indicator" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" id="modal-form-title"><i class="bi bi-plus-circle"></i> Tambah Indikator</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="form-indicator-group" novalidate>
+                <div class="modal-body">
+                    <input type="hidden" name="action_type" id="form-action-type" value="add">
+                    <input type="hidden" name="edit_group_id" id="form-edit-group-id" value="0">
+                    <input type="hidden" name="department_id" id="form-department-id" value="0">
+                    <input type="hidden" name="group_type" id="form-group-type" value="0">
+
+                    <div class="mb-2" id="indicator-select-wrapper">
+                        <label class="form-label small">Pilih Indikator <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm" name="indicator_id" id="form-indicator-id">
+                            <option value="">-- Pilih --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small">Periode / Tahun <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" name="group_period" id="form-period" placeholder="Contoh: 2026" maxlength="4">
+                        <div class="text-danger small d-none" id="form-period-error"></div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small">Group Days</label>
+                        <input type="number" class="form-control form-control-sm" name="group_days" id="form-days" value="0">
+                        <div class="text-danger small d-none" id="form-days-error"></div>
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label small">Kode Institusi</label>
+                        <input type="text" class="form-control form-control-sm" name="institution_code" id="form-institution-code" value="RSSM" maxlength="11">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-check-lg"></i> Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
+var currentDeptId = 0;
+var currentGroupType = 0;
+var currentLabel = '';
+
+// Open modal when indicator button clicked
 $(document).on('click', '.btn-show-indicators', function() {
     var btn = $(this);
-    var deptId = btn.data('dept-id');
-    var deptName = btn.data('dept-name');
-    var type = btn.data('type');
-    var label = btn.data('label');
+    currentDeptId = btn.data('dept-id');
+    currentGroupType = btn.data('type');
+    currentLabel = btn.data('label');
 
-    $('#modal-indicator-title').text(label + ' — ' + deptName);
-    var container = $('#indicator-list');
-    container.html('<div class="text-center text-muted py-4"><i class="bi bi-hourglass-split"></i> Memuat data...</div>');
-    var modal = new bootstrap.Modal(document.getElementById('modal-indikator'));
-    modal.show();
+    $('#modal-indicator-title').text(currentLabel + ' — ' + btn.data('dept-name'));
+    $('#indicator-modal-body').html('<tr><td colspan="5" class="text-center text-muted py-3">Memuat data...</td></tr>');
+    new bootstrap.Modal(document.getElementById('modal-indikator')).show();
 
+    loadIndicatorList();
+});
+
+function loadIndicatorList() {
     $.ajax({
         url: '<?= site_url('siimut/unit/ajax-get-indicators') ?>',
         type: 'POST',
-        data: { department_id: deptId, group_type: type },
+        data: { department_id: currentDeptId, group_type: currentGroupType },
         dataType: 'json',
         success: function(res) {
-            container.empty();
+            var tbody = $('#indicator-modal-body');
+            tbody.empty();
             if (res.data && res.data.length > 0) {
+                $('#indicator-count').text(res.data.length);
                 $.each(res.data, function(i, row) {
-                    var targetDisplay = row.indicator_target + ' ' + row.indicator_units;
-                    if (row.indicator_target_unit) {
-                        targetDisplay += ' / ' + row.indicator_target_unit;
-                    }
-                    var html = '<div class="card card-outline card-outline-brand mb-3">'
-                        + '<div class="card-header p-2">'
-                        + '<div class="d-flex justify-content-between align-items-center">'
-                        + '<h6 class="mb-0"><span class="badge bg-secondary me-1">' + (i+1) + '</span> ' + row.indicator_element + '</h6>'
-                        + '<span class="badge bg-info">' + row.indicator_frequency + '</span>'
-                        + '</div>'
-                        + '</div>'
-                        + '<div class="card-body p-2">'
-                        + '<div class="row text-sm">'
-                        + '<div class="col-md-6">'
-                        + '<table class="table table-sm table-borderless mb-0">'
-                        + '<tr><td class="text-muted" style="width:160px;">Target</td><td><strong>' + targetDisplay + '</strong></td></tr>'
-                        + '<tr><td class="text-muted">Kriteria Tercapai</td><td>' + row.indicator_calc_label + ' Target</td></tr>'
-                        + '<tr><td class="text-muted">Pembagi (Factors)</td><td>' + row.indicator_factors + '</td></tr>'
-                        + '<tr><td class="text-muted">Satuan</td><td>' + row.indicator_units + '</td></tr>'
-                        + '<tr><td class="text-muted">Area Monitoring</td><td>' + row.indicator_monitoring_area + '</td></tr>'
-                        + '</table>'
-                        + '</div>'
-                        + '<div class="col-md-6">'
-                        + '<table class="table table-sm table-borderless mb-0">'
-                        + '<tr><td class="text-muted" style="width:160px;">Definisi</td><td>' + row.indicator_definition + '</td></tr>'
-                        + '<tr><td class="text-muted">Kriteria Inklusif</td><td>' + row.indicator_criteria_inclusive + '</td></tr>'
-                        + '<tr><td class="text-muted">Kriteria Eksklusif</td><td>' + row.indicator_criteria_exclusive + '</td></tr>'
-                        + '<tr><td class="text-muted">Sumber Data</td><td>' + row.indicator_source_of_data + '</td></tr>'
-                        + '<tr><td class="text-muted">Nilai Standar</td><td>' + row.indicator_value_standard + '</td></tr>'
-                        + '<tr><td class="text-muted">LCL / UCL</td><td>' + row.indicator_lcl + ' / ' + row.indicator_ucl + '</td></tr>'
-                        + '</table>'
-                        + '</div>'
-                        + '</div>'
-                        + '</div>'
-                        + '</div>';
-                    container.append(html);
+                    tbody.append(
+                        '<tr>'
+                        + '<td class="text-center">' + (i+1) + '</td>'
+                        + '<td><strong>' + row.group_period + '</strong></td>'
+                        + '<td>' + row.indicator_element + '</td>'
+                        + '<td class="text-center">' + row.group_days + '</td>'
+                        + '<td class="text-center">'
+                        + '<button type="button" class="btn btn-sm btn-outline-primary btn-edit-indicator me-1" title="Edit" data-group-id="' + row.group_id + '" data-period="' + row.group_period + '" data-days="' + row.group_days + '"><i class="bi bi-pencil"></i></button>'
+                        + '<button type="button" class="btn btn-sm btn-outline-danger btn-delete-indicator" title="Hapus" data-group-id="' + row.group_id + '" data-name="' + row.indicator_element + '"><i class="bi bi-trash"></i></button>'
+                        + '</td>'
+                        + '</tr>'
+                    );
                 });
             } else {
-                container.html('<div class="text-center text-muted py-4"><i class="bi bi-inbox"></i> Tidak ada data indikator</div>');
+                $('#indicator-count').text('0');
+                tbody.html('<tr><td colspan="5" class="text-center text-muted py-3">Belum ada indikator untuk unit ini</td></tr>');
             }
         },
         error: function() {
-            container.html('<div class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle"></i> Gagal memuat data</div>');
+            $('#indicator-modal-body').html('<tr><td colspan="5" class="text-center text-danger py-3">Gagal memuat data</td></tr>');
+        }
+    });
+}
+
+// Open ADD form
+$('#btn-add-indicator').on('click', function() {
+    $('#form-action-type').val('add');
+    $('#form-edit-group-id').val('0');
+    $('#form-department-id').val(currentDeptId);
+    $('#form-group-type').val(currentGroupType);
+    $('#modal-form-title').html('<i class="bi bi-plus-circle"></i> Tambah Indikator ' + currentLabel);
+    $('#indicator-select-wrapper').show();
+    $('#form-indicator-id').val('').trigger('change');
+    $('#form-period').val(new Date().getFullYear().toString());
+    $('#form-days').val(0);
+    $('#form-institution-code').val('RSSM');
+    $('.text-danger.small').addClass('d-none');
+    $('#form-indicator-id').html('<option value="">-- Pilih --</option>');
+
+    // Load available indicators
+    $.ajax({
+        url: '<?= site_url('siimut/unit/ajax-get-available-indicators') ?>',
+        type: 'POST',
+        data: { group_type: currentGroupType },
+        dataType: 'json',
+        success: function(res) {
+            var sel = $('#form-indicator-id');
+            sel.find('option:not(:first)').remove();
+            if (res.data) {
+                $.each(res.data, function(i, row) {
+                    sel.append('<option value="' + row.indicator_id + '">' + row.indicator_element + '</option>');
+                });
+            }
+        }
+    });
+
+    new bootstrap.Modal(document.getElementById('modal-form-indicator')).show();
+});
+
+// Open EDIT form
+$(document).on('click', '.btn-edit-indicator', function() {
+    var btn = $(this);
+    $('#form-action-type').val('edit');
+    $('#form-edit-group-id').val(btn.data('group-id'));
+    $('#form-department-id').val(currentDeptId);
+    $('#form-group-type').val(currentGroupType);
+    $('#modal-form-title').html('<i class="bi bi-pencil"></i> Edit Indikator');
+    $('#indicator-select-wrapper').hide();
+    $('#form-period').val(btn.data('period'));
+    $('#form-days').val(btn.data('days'));
+    $('#form-institution-code').val('RSSM');
+    $('.text-danger.small').addClass('d-none');
+
+    new bootstrap.Modal(document.getElementById('modal-form-indicator')).show();
+});
+
+// Delete indicator
+$(document).on('click', '.btn-delete-indicator', function() {
+    var btn = $(this);
+    var name = btn.data('name');
+
+    Swal.fire({
+        title: 'Hapus Indikator?',
+        text: 'Yakin ingin menghapus "' + name + '" dari daftar ini?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '<?= site_url('siimut/unit/ajax-delete-group') ?>',
+                type: 'POST',
+                data: { group_id: btn.data('group-id'), group_type: currentGroupType },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.status) {
+                        toastSuccess(res.message);
+                        loadIndicatorList();
+                    } else {
+                        toastError(res.message);
+                    }
+                },
+                error: function() {
+                    toastError('Gagal menghapus');
+                }
+            });
+        }
+    });
+});
+
+// Submit form add/edit
+$('#form-indicator-group').on('submit', function(e) {
+    e.preventDefault();
+    $('.text-danger.small').addClass('d-none');
+
+    var actionType = $('#form-action-type').val();
+    var period = $('#form-period').val().trim();
+    var days = parseInt($('#form-days').val()) || 0;
+    var valid = true;
+
+    if (!period) {
+        $('#form-period').addClass('is-invalid');
+        $('#form-period-error').removeClass('d-none').text('Periode wajib diisi');
+        valid = false;
+    } else if (!/^\d{4}$/.test(period)) {
+        $('#form-period').addClass('is-invalid');
+        $('#form-period-error').removeClass('d-none').text('Format periode harus 4 digit angka');
+        valid = false;
+    }
+
+    if (days < 0) {
+        $('#form-days').addClass('is-invalid');
+        $('#form-days-error').removeClass('d-none').text('Group days tidak boleh minus');
+        valid = false;
+    }
+
+    if (actionType === 'add') {
+        var indicatorId = $('#form-indicator-id').val();
+        if (!indicatorId) {
+            $('#form-indicator-id').addClass('is-invalid');
+            valid = false;
+        }
+    }
+
+    if (!valid) return;
+
+    var url = actionType === 'add'
+        ? '<?= site_url('siimut/unit/ajax-add-group') ?>'
+        : '<?= site_url('siimut/unit/ajax-update-group') ?>';
+
+    var postData = $(this).serialize();
+    if (actionType === 'edit') {
+        postData += '&group_type=' + currentGroupType;
+    }
+
+    Swal.fire({
+        title: 'Simpan?',
+        text: 'Data akan disimpan.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, Simpan!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: postData,
+                dataType: 'json',
+                success: function(res) {
+                    if (res.status) {
+                        bootstrap.Modal.getInstance(document.getElementById('modal-form-indicator')).hide();
+                        toastSuccess(res.message);
+                        loadIndicatorList();
+                    } else {
+                        toastError(res.message);
+                    }
+                },
+                error: function() {
+                    toastError('Gagal menyimpan');
+                }
+            });
         }
     });
 });

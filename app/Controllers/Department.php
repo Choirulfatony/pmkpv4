@@ -259,73 +259,183 @@ class Department extends AppController
         $groupTable = $tableMap[$type] ?? 'quality_indicator_group';
         $prefix = $prefixMap[$type] ?? '';
         $indTable = $prefix . 'quality_indicator';
+        $categoryMap = [1 => '4', 5 => '5', 6 => '6', 7 => '7'];
 
         $sql = "SELECT 
+                    qig.group_id,
+                    qig.group_period,
+                    qig.group_days,
+                    qig.group_indicator_id,
                     qi.indicator_id,
                     qi.indicator_element,
                     qi.indicator_target,
-                    qi.indicator_target_calculation,
-                    qi.indicator_factors,
                     qi.indicator_units,
-                    qi.indicator_target_unit,
-                    qi.indicator_frequency,
-                    qi.indicator_definition,
-                    qi.indicator_criteria_inclusive,
-                    qi.indicator_criteria_exclusive,
-                    qi.indicator_source_of_data,
-                    qi.indicator_value_standard,
-                    qi.indicator_lcl,
-                    qi.indicator_ucl,
-                    qi.indicator_monitoring_area,
-                    qi.indicator_type,
-                    qi.indicator_order_number,
-                    qi.indicator_record_status
+                    qi.indicator_frequency
                 FROM {$groupTable} qig
                 JOIN {$indTable} qi ON qi.indicator_id = qig.group_indicator_id
                 WHERE qig.group_department_id = ?
                   AND qig.group_type = ?
                   AND qig.group_record_status = 'A'
                   AND qi.indicator_record_status = 'A'
-                ORDER BY qi.indicator_order_number ASC, qi.indicator_id ASC";
+                ORDER BY qig.group_period DESC, qi.indicator_order_number ASC, qi.indicator_id ASC";
 
         $data = $db->query($sql, [(string) $deptId, $type])->getResult();
 
         $freqMap = ['D' => 'Harian', 'M' => 'Bulanan', 'W' => 'Mingguan', 'Y' => 'Tahunan'];
-        $calcMap = ['>' => 'Lebih besar dari', '>=' => 'Lebih besar atau sama dengan', '<' => 'Lebih kecil dari', '<=' => 'Lebih kecil atau sama dengan', '=' => 'Sama dengan'];
-
         $rows = [];
         foreach ($data as $row) {
-            $target = (float) ($row->indicator_target ?? 0);
-            $factors = (float) ($row->indicator_factors ?? 1);
-            $calc = $row->indicator_target_calculation ?? '>=';
-            $units = $row->indicator_units ?? '%';
-            $targetUnit = $row->indicator_target_unit ?? '';
-
-            $nilai = ($target > 0 && $factors > 0) ? round($target * $factors, 2) : 0;
-            $tercapai = false;
-
             $rows[] = [
-                'indicator_id'          => $row->indicator_id,
-                'indicator_element'     => $row->indicator_element,
-                'indicator_target'      => $target,
-                'indicator_factors'     => $factors,
-                'indicator_calc'        => $calc,
-                'indicator_calc_label'  => $calcMap[$calc] ?? $calc,
-                'indicator_units'       => $units,
-                'indicator_target_unit' => $targetUnit,
-                'indicator_frequency'   => $freqMap[$row->indicator_frequency] ?? $row->indicator_frequency,
-                'indicator_definition'  => $row->indicator_definition ?? '-',
-                'indicator_criteria_inclusive'  => $row->indicator_criteria_inclusive ?? '-',
-                'indicator_criteria_exclusive'  => $row->indicator_criteria_exclusive ?? '-',
-                'indicator_source_of_data'      => $row->indicator_source_of_data ?? '-',
-                'indicator_value_standard'      => $row->indicator_value_standard ?? '-',
-                'indicator_lcl'                 => $row->indicator_lcl ?? '-',
-                'indicator_ucl'                 => $row->indicator_ucl ?? '-',
-                'indicator_monitoring_area'     => $row->indicator_monitoring_area ?? '-',
+                'group_id'            => (int) $row->group_id,
+                'group_period'        => $row->group_period,
+                'group_days'          => (int) ($row->group_days ?? 0),
+                'indicator_id'        => (int) $row->indicator_id,
+                'indicator_element'   => $row->indicator_element,
+                'indicator_target'    => $row->indicator_target,
+                'indicator_units'     => $row->indicator_units,
+                'indicator_frequency' => $freqMap[$row->indicator_frequency] ?? $row->indicator_frequency,
             ];
         }
 
         return $this->response->setJSON(['data' => $rows]);
+    }
+
+    public function ajaxGetAvailableIndicators()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthorized']);
+        }
+
+        $type = (int) $this->request->getPost('group_type');
+        $this->indicatorTables = [1 => 'quality_indicator_group', 5 => 'local_quality_indicator_group', 6 => 'local_quality_indicator_group', 7 => 'local_quality_indicator_group'];
+        $this->indicatorPrefixes = [1 => '', 5 => 'local_', 6 => 'local_', 7 => 'local_'];
+        $this->categoryIds = [1 => '4', 5 => '5', 6 => '6', 7 => '7'];
+
+        $prefix = $this->indicatorPrefixes[$type] ?? '';
+        $catId = $this->categoryIds[$type] ?? '4';
+        $table = $prefix . 'quality_indicator';
+
+        $db = db_connect();
+        $data = $db->table($table . ' qi')
+            ->select('qi.indicator_id, qi.indicator_element, qi.indicator_type, qi.indicator_monitoring_area')
+            ->where('qi.indicator_category_id', $catId)
+            ->where('qi.indicator_record_status', 'A')
+            ->orderBy('qi.indicator_order_number ASC, qi.indicator_id ASC')
+            ->get()
+            ->getResult();
+
+        return $this->response->setJSON(['data' => $data]);
+    }
+
+    public function ajaxAddGroup()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+        $role = session()->get('user_role');
+        if (!in_array($role, ['ADMINISTRATOR'])) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => false, 'message' => 'Akses ditolak']);
+        }
+
+        $deptId         = (int) $this->request->getPost('department_id');
+        $type           = (int) $this->request->getPost('group_type');
+        $indicatorId    = (string) $this->request->getPost('indicator_id');
+        $period         = trim($this->request->getPost('group_period'));
+        $days           = (int) $this->request->getPost('group_days');
+        $institutionCode = trim($this->request->getPost('institution_code') ?? 'RSSM');
+
+        if (!$deptId || !$type || !$indicatorId || !$period) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Data tidak lengkap']);
+        }
+
+        $tableMap = [1 => 'quality_indicator_group', 5 => 'local_quality_indicator_group', 6 => 'local_quality_indicator_group', 7 => 'local_quality_indicator_group'];
+        $groupTable = $tableMap[$type] ?? 'quality_indicator_group';
+
+        $db = db_connect();
+
+        $exists = $db->table($groupTable)
+            ->where('group_department_id', (string) $deptId)
+            ->where('group_indicator_id', $indicatorId)
+            ->where('group_type', $type)
+            ->where('group_period', $period)
+            ->where('group_record_status', 'A')
+            ->countAllResults();
+
+        if ($exists > 0) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Indikator sudah terdaftar untuk periode ini']);
+        }
+
+        $db->table($groupTable)->insert([
+            'group_indicator_id'     => $indicatorId,
+            'group_department_id'    => (string) $deptId,
+            'group_institution_code' => $institutionCode,
+            'group_period'           => $period,
+            'group_type'             => (string) $type,
+            'group_days'             => $days,
+            'group_record_status'    => 'A',
+        ]);
+
+        return $this->response->setJSON(['status' => true, 'message' => 'Indikator berhasil ditambahkan']);
+    }
+
+    public function ajaxUpdateGroup()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+        $role = session()->get('user_role');
+        if (!in_array($role, ['ADMINISTRATOR'])) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => false, 'message' => 'Akses ditolak']);
+        }
+
+        $groupId  = (int) $this->request->getPost('group_id');
+        $type     = (int) $this->request->getPost('group_type');
+        $period   = trim($this->request->getPost('group_period'));
+        $days     = (int) $this->request->getPost('group_days');
+
+        if (!$groupId || !$period) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Data tidak lengkap']);
+        }
+
+        $tableMap = [1 => 'quality_indicator_group', 5 => 'local_quality_indicator_group', 6 => 'local_quality_indicator_group', 7 => 'local_quality_indicator_group'];
+        $groupTable = $tableMap[$type] ?? 'quality_indicator_group';
+
+        $db = db_connect();
+        $db->table($groupTable)
+            ->where('group_id', $groupId)
+            ->update([
+                'group_period' => $period,
+                'group_days'   => $days,
+            ]);
+
+        return $this->response->setJSON(['status' => true, 'message' => 'Data berhasil diperbarui']);
+    }
+
+    public function ajaxDeleteGroup()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+        $role = session()->get('user_role');
+        if (!in_array($role, ['ADMINISTRATOR'])) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => false, 'message' => 'Akses ditolak']);
+        }
+
+        $groupId = (int) $this->request->getPost('group_id');
+        $type    = (int) $this->request->getPost('group_type');
+
+        if (!$groupId) {
+            return $this->response->setJSON(['status' => false, 'message' => 'ID tidak valid']);
+        }
+
+        $tableMap = [1 => 'quality_indicator_group', 5 => 'local_quality_indicator_group', 6 => 'local_quality_indicator_group', 7 => 'local_quality_indicator_group'];
+        $groupTable = $tableMap[$type] ?? 'quality_indicator_group';
+
+        $db = db_connect();
+        $db->table($groupTable)
+            ->where('group_id', $groupId)
+            ->update(['group_record_status' => 'D']);
+
+        return $this->response->setJSON(['status' => true, 'message' => 'Indikator berhasil dihapus']);
     }
 
     public function toggleDisable(int $id)
