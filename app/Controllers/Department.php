@@ -434,7 +434,7 @@ class Department extends AppController
         $db = db_connect();
         $db->table($groupTable)
             ->where('group_id', $groupId)
-            ->update(['group_record_status' => 'D']);
+            ->update(['group_record_status' => 'X']);
 
         return $this->response->setJSON(['status' => true, 'message' => 'Indikator berhasil dihapus']);
     }
