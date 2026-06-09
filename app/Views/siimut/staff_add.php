@@ -29,15 +29,13 @@
 
                                 <div class="mb-2">
                                     <label class="form-label small">Password <span class="text-danger">*</span> <small class="text-muted">(min. 6 karakter)</small></label>
-                                    <div class="position-relative">
-                                        <div class="input-group input-group-sm">
-                                            <input type="password" class="form-control form-control-sm" name="profile_password" id="profile_password" required minlength="6">
-                                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()" title="Tampilkan/Sembunyikan">
-                                                <i class="bi bi-eye" id="toggle-pw-icon"></i>
-                                            </button>
-                                        </div>
-                                        <div class="invalid-feedback d-none" id="profile_password-error"></div>
+                                    <div class="input-group input-group-sm">
+                                        <input type="password" class="form-control form-control-sm" name="profile_password" id="profile_password" required minlength="6">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()" title="Tampilkan/Sembunyikan">
+                                            <i class="bi bi-eye" id="toggle-pw-icon"></i>
+                                        </button>
                                     </div>
+                                    <div class="text-danger small d-none" id="profile_password-error"></div>
                                 </div>
 
                                 <div class="mb-2">
@@ -105,16 +103,6 @@
         </div>
     </div>
 </div>
-
-<style>
-    .position-relative .invalid-feedback {
-        position: absolute;
-        left: 0;
-        right: 0;
-        margin-top: 0;
-        font-size: 0.75rem;
-    }
-</style>
 
 <script>
 function togglePassword() {
