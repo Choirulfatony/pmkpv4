@@ -9,6 +9,9 @@
                     <a href="<?= site_url('siimut/unit') ?>" class="btn btn-sm btn-outline-secondary" title="Kembali ke Daftar Unit">
                         <i class="bi bi-arrow-left"></i> Kembali
                     </a>
+                    <?php if (!empty($departmentName)): ?>
+                    <span class="badge bg-primary fs-6"><i class="bi bi-building"></i> <?= esc($departmentName) ?></span>
+                    <?php endif; ?>
                     <form onsubmit="event.preventDefault(); get_pencariandata();" class="mb-0">
                         <div class="input-group input-group-sm" style="max-width: 260px;">
                             <input type="text" id="cari_input" class="form-control" placeholder="Cari...">
@@ -415,6 +418,8 @@
 <script>
     let table;
     let currentModule = '<?= esc($module) ?>';
+    let currentDepartmentId = '<?= esc($departmentId) ?>';
+    let currentDepartmentName = '<?= esc($departmentName) ?>';
 
     function showToast(type, message) {
         const Toast = Swal.mixin({
@@ -442,6 +447,7 @@
                 type: 'POST',
                 data: function (d) {
                     d.module = currentModule;
+                    d.department_id = currentDepartmentId;
                     d.cari_input = $('#cari_input').val();
                     return d;
                 },

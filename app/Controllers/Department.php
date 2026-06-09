@@ -57,7 +57,7 @@ class Department extends AppController
                 $count = $this->departmentModel->getIndicatorCount($row->department_id, $type);
                 $active = $count > 0;
                 $cls = $active ? 'btn-success' : 'btn-outline-secondary';
-                $url = site_url('siimut/data-indikator/' . $cfg['module']);
+                $url = site_url('siimut/data-indikator/' . $cfg['module'] . '?department_id=' . $row->department_id);
                 $title = $cfg['label'] . ($active ? " ({$count} indikator)" : ' (belum ada data)');
                 $badges .= '<a href="' . $url . '" class="btn btn-sm btn-indicator ' . $cls . '" '
                     . 'title="' . $title . '">'

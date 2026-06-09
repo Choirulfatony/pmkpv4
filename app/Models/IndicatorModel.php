@@ -28,12 +28,16 @@ class IndicatorModel extends Model
 
     protected string $tablePrefix = '';
     protected string $categoryId = '4';
+    protected string $departmentId = '';
+    protected int $groupType = 0;
 
-    public function __construct(string $tablePrefix = '', string $categoryId = '4')
+    public function __construct(string $tablePrefix = '', string $categoryId = '4', string $departmentId = '', int $groupType = 0)
     {
         parent::__construct();
         $this->tablePrefix = $tablePrefix;
         $this->categoryId = $categoryId;
+        $this->departmentId = $departmentId;
+        $this->groupType = $groupType;
         $this->table = $tablePrefix . 'quality_indicator';
     }
 
@@ -50,6 +54,7 @@ class IndicatorModel extends Model
     public function getDatatable(array $post): array
     {
         $db = db_connect();
+        $groupTable = $this->tablePrefix . 'quality_indicator_group';
 
         $builder = $db->table($this->table . ' qi');
 
@@ -81,6 +86,16 @@ class IndicatorModel extends Model
         ');
 
         $builder->where('qi.indicator_category_id', $this->categoryId);
+
+        if (!empty($this->departmentId) && $this->groupType > 0) {
+            $builder->join(
+                $groupTable . ' qig',
+                "qig.group_indicator_id = qi.indicator_id AND qig.group_type = {$this->groupType}",
+                'inner'
+            );
+            $builder->where('qig.group_department_id', (string) $this->departmentId);
+            $builder->where('qig.group_record_status', 'A');
+        }
 
         if (isset($post['status']) && $post['status'] !== '') {
             $builder->where('qi.indicator_record_status', $post['status']);
@@ -119,10 +134,21 @@ class IndicatorModel extends Model
 
         $data = $builder->get()->getResultArray();
 
-        $totalAll = $db->table($this->table)
-            ->where('indicator_category_id', $this->categoryId)
-            ->whereIn('indicator_record_status', ['A', 'D'])
-            ->countAllResults();
+        $totalAll = $db->table($this->table . ' qi')
+            ->where('qi.indicator_category_id', $this->categoryId)
+            ->whereIn('qi.indicator_record_status', ['A', 'D']);
+
+        if (!empty($this->departmentId) && $this->groupType > 0) {
+            $totalAll->join(
+                $groupTable . ' qig',
+                "qig.group_indicator_id = qi.indicator_id AND qig.group_type = {$this->groupType}",
+                'inner'
+            );
+            $totalAll->where('qig.group_department_id', (string) $this->departmentId);
+            $totalAll->where('qig.group_record_status', 'A');
+        }
+
+        $totalAll = $totalAll->countAllResults();
 
         return [
             'draw' => (int) ($post['draw'] ?? 1),

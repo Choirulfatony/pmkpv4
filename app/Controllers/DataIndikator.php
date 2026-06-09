@@ -6,6 +6,13 @@ use App\Models\IndicatorModel;
 
 class DataIndikator extends AppController
 {
+    protected array $groupTypes = [
+        'inm'    => 1,
+        'imprs'  => 5,
+        'impunit' => 6,
+        'ikp'     => 7,
+    ];
+
     protected $modules = [
         'inm'    => ['prefix' => '',       'categoryId' => '4', 'title' => 'INM', 'icon' => '<i class="bi bi-bar-chart"></i>'],
         'imprs'  => ['prefix' => 'local_', 'categoryId' => '5', 'title' => 'IMPRS', 'icon' => '<i class="bi bi-hospital"></i>'],
@@ -31,12 +38,25 @@ class DataIndikator extends AppController
         }
 
         $mod = $this->modules[$module];
+        $departmentId = $this->request->getGet('department_id') ?? '';
+
+        $departmentName = '';
+        if (!empty($departmentId)) {
+            $db = db_connect();
+            $dept = $db->table('master_institution_department')
+                ->where('department_id', (int) $departmentId)
+                ->get()
+                ->getRow();
+            $departmentName = $dept ? $dept->department_name : '';
+        }
 
         return $this->render('siimut/data_indikator', [
             'judul' => 'Data Indikator ' . $mod['title'],
             'icon'  => $mod['icon'],
             'module' => $module,
             'modTitle' => $mod['title'],
+            'departmentId' => $departmentId,
+            'departmentName' => $departmentName,
         ]);
     }
 
@@ -51,8 +71,10 @@ class DataIndikator extends AppController
             $module = 'inm';
         }
         $mod = $this->modules[$module];
+        $departmentId = $this->request->getPost('department_id') ?? '';
+        $groupType = $this->groupTypes[$module] ?? 0;
 
-        $model = new IndicatorModel($mod['prefix'], $mod['categoryId']);
+        $model = new IndicatorModel($mod['prefix'], $mod['categoryId'], $departmentId, $groupType);
         $result = $model->getDatatable($this->request->getPost());
 
         return $this->response->setJSON($result);
