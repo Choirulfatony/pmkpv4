@@ -12,7 +12,7 @@
                     </a>
                 </div>
                 <div class="card-body">
-                    <form id="form-add-staf">
+                    <form id="form-add-staf" novalidate>
                         <div class="row">
                             <div class="col-md-6">
                                 <h6 class="text-muted mb-2"><i class="bi bi-person"></i> Data Diri</h6>
@@ -30,7 +30,7 @@
                                 <div class="mb-2">
                                     <label class="form-label small">Password <span class="text-danger">*</span> <small class="text-muted">(min. 6 karakter)</small></label>
                                     <div class="input-group input-group-sm">
-                                        <input type="password" class="form-control form-control-sm" name="profile_password" id="profile_password" required minlength="6">
+                                        <input type="password" class="form-control form-control-sm" name="profile_password" id="profile_password">
                                         <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()" title="Tampilkan/Sembunyikan">
                                             <i class="bi bi-eye" id="toggle-pw-icon"></i>
                                         </button>
@@ -129,12 +129,25 @@ $(document).ready(function() {
     $('#form-add-staf').on('submit', function(e) {
         e.preventDefault();
 
+        var name = $('[name="profile_fullname"]').val().trim();
+        var email = $('[name="profile_email"]').val().trim();
         var pw = $('#profile_password').val();
         var pwErr = $('#profile_password-error');
+        var valid = true;
 
         pwErr.addClass('d-none').text('');
         $('#profile_password').removeClass('is-invalid');
 
+        if (!name) {
+            toastError('Nama lengkap wajib diisi');
+            $('[name="profile_fullname"]').focus();
+            return;
+        }
+        if (!email) {
+            toastError('Email wajib diisi');
+            $('[name="profile_email"]').focus();
+            return;
+        }
         if (!pw || pw.length < 6) {
             $('#profile_password').addClass('is-invalid');
             pwErr.removeClass('d-none').text('Password minimal 6 karakter');
