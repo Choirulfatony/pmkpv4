@@ -273,11 +273,10 @@ class Department extends AppController
                     qi.indicator_units,
                     qi.indicator_frequency
                 FROM {$groupTable} qig
-                JOIN {$indTable} qi ON qi.indicator_id = qig.group_indicator_id
+                LEFT JOIN {$indTable} qi ON qi.indicator_id = qig.group_indicator_id
                 WHERE qig.group_department_id = ?
                   AND qig.group_type = ?
                   AND qig.group_record_status IN ('A', 'D')
-                  AND qi.indicator_record_status = 'A'
                 ORDER BY qig.group_period DESC, qi.indicator_order_number ASC, qi.indicator_id ASC";
 
         $data = $db->query($sql, [(string) $deptId, $type])->getResult();
@@ -291,10 +290,10 @@ class Department extends AppController
                 'group_days'          => (int) ($row->group_days ?? 0),
                 'group_record_status' => $row->group_record_status,
                 'indicator_id'        => (int) $row->indicator_id,
-                'indicator_element'   => $row->indicator_element,
+                'indicator_element'   => $row->indicator_element ?? '(indikator tidak ditemukan)',
                 'indicator_target'    => $row->indicator_target,
                 'indicator_units'     => $row->indicator_units,
-                'indicator_frequency' => $freqMap[$row->indicator_frequency] ?? $row->indicator_frequency,
+                'indicator_frequency' => ($row->indicator_frequency && isset($freqMap[$row->indicator_frequency])) ? $freqMap[$row->indicator_frequency] : ($row->indicator_frequency ?? '-'),
             ];
         }
 
