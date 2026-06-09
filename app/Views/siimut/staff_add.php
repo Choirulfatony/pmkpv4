@@ -41,27 +41,31 @@
                                 </div>
 
                                 <div class="mb-2">
-                                    <label class="form-label small">NIP / Employee ID</label>
-                                    <input type="text" class="form-control form-control-sm" name="profile_employee_id">
+                                    <label class="form-label small">NIP / Employee ID <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-sm" name="profile_employee_id" id="profile_employee_id">
+                                    <div class="text-danger small d-none" id="profile_employee_id-error"></div>
                                 </div>
 
                                 <div class="mb-2">
-                                    <label class="form-label small">Jenis Kelamin</label>
-                                    <select class="form-select form-select-sm" name="profile_gender">
+                                    <label class="form-label small">Jenis Kelamin <span class="text-danger">*</span></label>
+                                    <select class="form-select form-select-sm" name="profile_gender" id="profile_gender">
                                         <option value="">-- Pilih --</option>
                                         <option value="1">Laki-laki</option>
                                         <option value="2">Perempuan</option>
                                     </select>
+                                    <div class="text-danger small d-none" id="profile_gender-error"></div>
                                 </div>
 
                                 <div class="mb-2">
-                                    <label class="form-label small">Tanggal Lahir</label>
-                                    <input type="date" class="form-control form-control-sm" name="profile_dob">
+                                    <label class="form-label small">Tanggal Lahir <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control form-control-sm" name="profile_dob" id="profile_dob">
+                                    <div class="text-danger small d-none" id="profile_dob-error"></div>
                                 </div>
 
                                 <div class="mb-2">
-                                    <label class="form-label small">Handphone</label>
-                                    <input type="text" class="form-control form-control-sm" name="profile_handphone1">
+                                    <label class="form-label small">Handphone <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-sm" name="profile_handphone1" id="profile_handphone1">
+                                    <div class="text-danger small d-none" id="profile_handphone1-error"></div>
                                 </div>
                             </div>
 
@@ -129,8 +133,8 @@ $(document).ready(function() {
     });
 
     function clearErrors() {
-        $('#profile_fullname, #profile_email, #profile_password').removeClass('is-invalid');
-        $('#profile_fullname-error, #profile_email-error, #profile_password-error').addClass('d-none').text('');
+        $('.is-invalid').removeClass('is-invalid');
+        $('.text-danger.small').addClass('d-none').text('');
     }
 
     function showError(inputId, errorId, msg) {
@@ -145,23 +149,20 @@ $(document).ready(function() {
         var name = $('#profile_fullname').val().trim();
         var email = $('#profile_email').val().trim();
         var pw = $('#profile_password').val();
+        var nip = $('#profile_employee_id').val().trim();
+        var gender = $('#profile_gender').val();
+        var dob = $('#profile_dob').val();
+        var hp = $('#profile_handphone1').val().trim();
         var valid = true;
 
-        if (!name) {
-            showError('#profile_fullname', '#profile_fullname-error', 'Nama lengkap wajib diisi');
-            valid = false;
-        }
-        if (!email) {
-            showError('#profile_email', '#profile_email-error', 'Email wajib diisi');
-            valid = false;
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            showError('#profile_email', '#profile_email-error', 'Format email tidak valid');
-            valid = false;
-        }
-        if (!pw || pw.length < 6) {
-            showError('#profile_password', '#profile_password-error', 'Password minimal 6 karakter');
-            valid = false;
-        }
+        if (!name) { showError('#profile_fullname', '#profile_fullname-error', 'Nama lengkap wajib diisi'); valid = false; }
+        if (!email) { showError('#profile_email', '#profile_email-error', 'Email wajib diisi'); valid = false; }
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('#profile_email', '#profile_email-error', 'Format email tidak valid'); valid = false; }
+        if (!pw || pw.length < 6) { showError('#profile_password', '#profile_password-error', 'Password minimal 6 karakter'); valid = false; }
+        if (!nip) { showError('#profile_employee_id', '#profile_employee_id-error', 'NIP wajib diisi'); valid = false; }
+        if (!gender) { showError('#profile_gender', '#profile_gender-error', 'Jenis kelamin wajib dipilih'); valid = false; }
+        if (!dob) { showError('#profile_dob', '#profile_dob-error', 'Tanggal lahir wajib diisi'); valid = false; }
+        if (!hp) { showError('#profile_handphone1', '#profile_handphone1-error', 'Nomor handphone wajib diisi'); valid = false; }
 
         if (!valid) return;
 
