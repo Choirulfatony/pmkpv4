@@ -121,7 +121,7 @@ class StaffModel extends Model
             ->join('user_group ug', 'ug.group_id = up.profile_group_id', 'left')
             ->join('master_institution_department mid', 'mid.department_id = up.profile_department_id', 'left')
             ->where('up.profile_id', $id)
-            ->where('up.profile_record_status IN', ['A', 'D'])
+            ->whereIn('up.profile_record_status', ['A', 'D'])
             ->get()
             ->getRow();
     }
