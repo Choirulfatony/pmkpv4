@@ -96,7 +96,7 @@ class StaffModel extends Model
 
         $totalResult = $db->query($countSql)->getRow()->total;
 
-        $sql .= " ORDER BY up.profile_record_status ASC, {$orderColumn} {$orderDir}";
+        $sql .= " ORDER BY up.profile_record_status ASC, up.profile_online_status DESC, {$orderColumn} {$orderDir}";
         $sql .= " LIMIT {$length} OFFSET {$start}";
 
         $data = $db->query($sql)->getResult();
