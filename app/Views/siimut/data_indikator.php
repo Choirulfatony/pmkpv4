@@ -5,22 +5,14 @@
     <div class="card card-outline">
         <div class="card-header">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <div class="d-flex align-items-center gap-2">
-                    <a href="<?= site_url('siimut/unit') ?>" class="btn btn-sm btn-outline-secondary" title="Kembali ke Daftar Unit">
-                        <i class="bi bi-arrow-left"></i> Kembali
-                    </a>
-                    <?php if (!empty($departmentName)): ?>
-                    <span class="badge bg-primary fs-6"><i class="bi bi-building"></i> <?= esc($departmentName) ?></span>
-                    <?php endif; ?>
-                    <form onsubmit="event.preventDefault(); get_pencariandata();" class="mb-0">
-                        <div class="input-group input-group-sm" style="max-width: 260px;">
-                            <input type="text" id="cari_input" class="form-control" placeholder="Cari...">
-                            <button class="btn btn-outline-secondary" type="submit" title="Cari">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                <form onsubmit="event.preventDefault(); get_pencariandata();" class="mb-0">
+                    <div class="input-group input-group-sm" style="max-width: 260px;">
+                        <input type="text" id="cari_input" class="form-control" placeholder="Cari...">
+                        <button class="btn btn-outline-secondary" type="submit" title="Cari">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
                 <?php if ($canEdit): ?>
                 <div class="d-flex gap-1">
                     <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearForm(); bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-indikator')).show();" title="Tambah Indikator">
