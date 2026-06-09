@@ -276,7 +276,7 @@ class Department extends AppController
                 LEFT JOIN {$indTable} qi ON qi.indicator_id = qig.group_indicator_id
                 WHERE qig.group_department_id = ?
                   AND qig.group_type = ?
-                  AND qig.group_record_status IN ('A', 'D')
+                  AND qig.group_record_status = 'A'
                 ORDER BY qig.group_period DESC, qi.indicator_order_number ASC, qi.indicator_id ASC";
 
         $data = $db->query($sql, [(string) $deptId, $type])->getResult();
