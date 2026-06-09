@@ -112,11 +112,13 @@
                                         </div>
                                     </div>
                                     <div class="col-6">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="toggle_online"
-                                                <?= $staff->profile_online_status ? 'checked' : '' ?>
-                                                onchange="toggleAccountStatus(this, 'online')">
-                                            <label class="form-check-label small" for="toggle_online">Status Online</label>
+                                        <label class="form-label small">Status Online</label>
+                                        <div>
+                                            <?php if ($staff->profile_online_status): ?>
+                                                <span class="badge bg-success"><i class="bi bi-circle-fill"></i> Online</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-secondary">Offline</span>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </div>
