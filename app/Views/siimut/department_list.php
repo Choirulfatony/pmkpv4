@@ -53,132 +53,159 @@
             <strong>Keterangan Akses Indikator:</strong>
             <span class="badge bg-success ms-1">Hijau</span> = Unit/bagian memiliki data indikator |
             <span class="badge bg-secondary ms-1">Abu-abu</span> = Belum ada data indikator |
-            INM (group_type=1) | IMPRS (group_type=5) | IMPUNIT (group_type=6) | IKP (group_type=7)
+            INM | IMPRS | IMPUNIT | IKP
         </div>
     </div>
 </div>
 
 <script>
-var table;
+    var table;
 
-$(document).ready(function() {
-    table = $('#table-unit').DataTable({
-        processing: true,
-        serverSide: true,
-        ajax: {
-            url: '<?= site_url('siimut/unit/ajax-get-data') ?>',
-            type: 'POST',
-            data: function(d) {
-                d.search = { value: $('#cari_unit').val() };
-            }
-        },
-        columns: [
-            { data: 'no', className: 'text-center', orderable: false },
-            { data: 'nama' },
-            { data: 'keterangan' },
-            { data: 'akses', className: 'text-center', orderable: false },
-            { data: 'status', className: 'text-center', orderable: false },
-            { data: 'actions', className: 'text-center', orderable: false }
-        ],
-        order: [[1, 'asc']],
-        language: {
-            processing:  "Memuat...",
-            emptyTable:  "Tidak ada data unit/bagian",
-            zeroRecords: "Data tidak ditemukan",
-            lengthMenu:  "Tampilkan _MENU_ data",
-            info:        "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-            infoEmpty:   "Menampilkan 0 - 0 dari 0 data",
-            paginate: {
-                first:    "Awal",
-                last:     "Akhir",
-                next:     "Selanjutnya",
-                previous: "Sebelumnya"
-            }
-        },
-        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
-    });
+    $(document).ready(function() {
+        table = $('#table-unit').DataTable({
+            processing: true,
+            serverSide: true,
+            searching: false,
+            ajax: {
+                url: '<?= site_url('siimut/unit/ajax-get-data') ?>',
+                type: 'POST',
+                data: function(d) {
+                    d.search = {
+                        value: $('#cari_unit').val()
+                    };
+                }
+            },
+            columns: [{
+                    data: 'no',
+                    className: 'text-center',
+                    orderable: false
+                },
+                {
+                    data: 'nama'
+                },
+                {
+                    data: 'keterangan'
+                },
+                {
+                    data: 'akses',
+                    className: 'text-center',
+                    orderable: false
+                },
+                {
+                    data: 'status',
+                    className: 'text-center',
+                    orderable: false
+                },
+                {
+                    data: 'actions',
+                    className: 'text-center',
+                    orderable: false
+                }
+            ],
+            order: [
+                [1, 'asc']
+            ],
+            language: {
+                processing: "Memuat...",
+                emptyTable: "Tidak ada data unit/bagian",
+                zeroRecords: "Data tidak ditemukan",
+                lengthMenu: "Tampilkan _MENU_ data",
+                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+                infoEmpty: "Menampilkan 0 - 0 dari 0 data",
+                paginate: {
+                    first: "Awal",
+                    last: "Akhir",
+                    next: "Selanjutnya",
+                    previous: "Sebelumnya"
+                }
+            },
+            lengthMenu: [
+                [10, 25, 50, 100],
+                [10, 25, 50, 100]
+            ]
+        });
 
-    $('#cari_unit').on('keyup', function() {
-        table.draw();
-    });
+        $('#cari_unit').on('keyup', function() {
+            table.draw();
+        });
 
-    // Toggle Disable
-    $(document).on('change', '.btn-toggle-disable', function() {
-        var el = $(this);
-        var id = el.data('id');
-        var action = el.is(':checked') ? 'mengaktifkan' : 'menonaktifkan';
+        // Toggle Disable
+        $(document).on('change', '.btn-toggle-disable', function() {
+            var el = $(this);
+            var id = el.data('id');
+            var action = el.is(':checked') ? 'mengaktifkan' : 'menonaktifkan';
 
-        Swal.fire({
-            title: 'Ubah Status?',
-            text: 'Anda yakin ingin ' + action + ' unit/bagian ini?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Ya, Ubah!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: '<?= site_url('siimut/unit/toggle-disable/') ?>' + id,
-                    type: 'POST',
-                    dataType: 'json',
-                    success: function(res) {
-                        if (res.status) {
-                            toastSuccess(res.message);
-                            table.draw();
-                        } else {
-                            toastError(res.message);
+            Swal.fire({
+                title: 'Ubah Status?',
+                text: 'Anda yakin ingin ' + action + ' unit/bagian ini?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Ubah!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '<?= site_url('siimut/unit/toggle-disable/') ?>' + id,
+                        type: 'POST',
+                        dataType: 'json',
+                        success: function(res) {
+                            if (res.status) {
+                                toastSuccess(res.message);
+                                table.draw();
+                            } else {
+                                toastError(res.message);
+                                el.prop('checked', !el.is(':checked'));
+                            }
+                        },
+                        error: function() {
+                            toastError('Gagal mengubah status');
                             el.prop('checked', !el.is(':checked'));
                         }
-                    },
-                    error: function() {
-                        toastError('Gagal mengubah status');
-                        el.prop('checked', !el.is(':checked'));
-                    }
-                });
-            } else {
-                el.prop('checked', !el.is(':checked'));
-            }
+                    });
+                } else {
+                    el.prop('checked', !el.is(':checked'));
+                }
+            });
         });
-    });
 
-    // Delete
-    $(document).on('click', '.btn-delete', function() {
-        var id = $(this).data('id');
-        var name = $(this).data('name');
+        // Delete
+        $(document).on('click', '.btn-delete', function() {
+            var id = $(this).data('id');
+            var name = $(this).data('name');
 
-        Swal.fire({
-            title: 'Hapus Unit?',
-            text: 'Anda yakin ingin menghapus "' + name + '"?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Ya, Hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: '<?= site_url('siimut/unit/delete/') ?>' + id,
-                    type: 'POST',
-                    dataType: 'json',
-                    success: function(res) {
-                        if (res.status) {
-                            toastSuccess(res.message);
-                            table.draw();
-                        } else {
-                            toastError(res.message);
+            Swal.fire({
+                title: 'Hapus Unit?',
+                text: 'Anda yakin ingin menghapus "' + name + '"?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '<?= site_url('siimut/unit/delete/') ?>' + id,
+                        type: 'POST',
+                        dataType: 'json',
+                        success: function(res) {
+                            if (res.status) {
+                                toastSuccess(res.message);
+                                table.draw();
+                            } else {
+                                toastError(res.message);
+                            }
+                        },
+                        error: function() {
+                            toastError('Gagal menghapus unit');
                         }
-                    },
-                    error: function() {
-                        toastError('Gagal menghapus unit');
-                    }
-                });
-            }
+                    });
+                }
+            });
         });
     });
-});
 </script>
 
 <!-- Modal Indikator -->
@@ -270,252 +297,268 @@ $(document).ready(function() {
 </div>
 
 <script>
-var currentDeptId = 0;
-var currentGroupType = 0;
-var currentLabel = '';
-var dtIndicator = null;
+    var currentDeptId = 0;
+    var currentGroupType = 0;
+    var currentLabel = '';
+    var dtIndicator = null;
 
-// Open modal when indicator button clicked
-$(document).on('click', '.btn-show-indicators', function() {
-    var btn = $(this);
-    currentDeptId = btn.data('dept-id');
-    currentGroupType = btn.data('type');
-    currentLabel = btn.data('label');
+    // Open modal when indicator button clicked
+    $(document).on('click', '.btn-show-indicators', function() {
+        var btn = $(this);
+        currentDeptId = btn.data('dept-id');
+        currentGroupType = btn.data('type');
+        currentLabel = btn.data('label');
 
-    // Destroy previous DataTable
-    if (dtIndicator) {
-        dtIndicator.destroy();
-        dtIndicator = null;
-    }
-
-    $('#modal-indicator-title').text(currentLabel + ' — ' + btn.data('dept-name'));
-    $('#indicator-modal-body').html('<tr><td colspan="6" class="text-center text-muted py-3">Memuat data...</td></tr>');
-    new bootstrap.Modal(document.getElementById('modal-indikator')).show();
-
-    loadIndicatorList();
-});
-
-function loadIndicatorList() {
-    $.ajax({
-        url: '<?= site_url('siimut/unit/ajax-get-indicators') ?>',
-        type: 'POST',
-        data: { department_id: currentDeptId, group_type: currentGroupType },
-        dataType: 'json',
-        success: function(res) {
-            var tbody = $('#indicator-modal-body');
-            tbody.empty();
-            if (res.data && res.data.length > 0) {
-                $.each(res.data, function(i, row) {
-                    tbody.append(
-                        '<tr>'
-                        + '<td class="text-center">' + (i+1) + '</td>'
-                        + '<td><strong>' + row.group_period + '</strong></td>'
-                        + '<td>' + row.indicator_element + '</td>'
-                        + '<td class="text-center">' + row.group_days + '</td>'
-                        + '<td class="text-center">' + (row.group_record_status === 'A' ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Nonaktif</span>') + '</td>'
-                        + '<td class="text-center">'
-                        + '<button type="button" class="btn btn-sm btn-outline-primary btn-edit-indicator me-1" title="Edit" data-group-id="' + row.group_id + '" data-period="' + row.group_period + '" data-days="' + row.group_days + '"><i class="bi bi-pencil"></i></button>'
-                        + '<button type="button" class="btn btn-sm btn-outline-danger btn-delete-indicator" title="Hapus" data-group-id="' + row.group_id + '" data-name="' + row.indicator_element + '"><i class="bi bi-trash"></i></button>'
-                        + '</td>'
-                        + '</tr>'
-                    );
-                });
-
-                // Init DataTable
-                dtIndicator = $('#table-indicator-modal').DataTable({
-                    paging: true,
-                    searching: true,
-                    info: true,
-                    lengthChange: true,
-                    pageLength: 10,
-                    lengthMenu: [[5, 10, 25, 50], [5, 10, 25, 50]],
-                    order: [],
-                    language: {
-                        search: 'Cari:',
-                        searchPlaceholder: 'Ketik kata kunci...',
-                        lengthMenu: 'Tampilkan _MENU_',
-                        info: '_START_ - _END_ dari _TOTAL_',
-                        infoEmpty: '0 - 0 dari 0',
-                        infoFiltered: '(difilter dari _MAX_ total)',
-                        zeroRecords: 'Data tidak ditemukan',
-                        paginate: { first: 'Awal', last: 'Akhir', next: '<i class="bi bi-chevron-right"></i>', previous: '<i class="bi bi-chevron-left"></i>' }
-                    },
-                    dom: '<"d-flex justify-content-between align-items-center gap-2 px-1 mb-2"<"d-flex align-items-center gap-2"l><"d-flex align-items-center"f>>rt<"d-flex justify-content-between align-items-center gap-2 px-1 mt-2"<i><p>>'
-                });
-
-            } else {
-                tbody.html('<tr><td colspan="6" class="text-center text-muted py-3">Belum ada indikator untuk unit ini</td></tr>');
-            }
-        },
-        error: function() {
-            $('#indicator-modal-body').html('<tr><td colspan="6" class="text-center text-danger py-3">Gagal memuat data</td></tr>');
+        // Destroy previous DataTable
+        if (dtIndicator) {
+            dtIndicator.destroy();
+            dtIndicator = null;
         }
-    });
-}
 
-// Open ADD form
-$('#btn-add-indicator').on('click', function() {
-    $('#form-action-type').val('add');
-    $('#form-edit-group-id').val('0');
-    $('#form-department-id').val(currentDeptId);
-    $('#form-group-type').val(currentGroupType);
-    $('#modal-form-title').html('<i class="bi bi-plus-circle"></i> Tambah Indikator ' + currentLabel);
-    $('#indicator-select-wrapper').show();
-    $('#form-indicator-id').val('').trigger('change');
-    $('#form-period').val(new Date().getFullYear().toString());
-    $('#form-days').val(0);
-    $('#form-institution-code').val('RSSM');
-    $('.text-danger.small').addClass('d-none');
-    $('#form-indicator-id').html('<option value="">-- Pilih --</option>');
+        $('#modal-indicator-title').text(currentLabel + ' — ' + btn.data('dept-name'));
+        $('#indicator-modal-body').html('<tr><td colspan="6" class="text-center text-muted py-3">Memuat data...</td></tr>');
+        new bootstrap.Modal(document.getElementById('modal-indikator')).show();
 
-    // Load available indicators
-    $.ajax({
-        url: '<?= site_url('siimut/unit/ajax-get-available-indicators') ?>',
-        type: 'POST',
-        data: { group_type: currentGroupType },
-        dataType: 'json',
-        success: function(res) {
-            var sel = $('#form-indicator-id');
-            sel.find('option:not(:first)').remove();
-            if (res.data) {
-                $.each(res.data, function(i, row) {
-                    sel.append('<option value="' + row.indicator_id + '">' + row.indicator_element + '</option>');
-                });
-            }
-        }
+        loadIndicatorList();
     });
 
-    new bootstrap.Modal(document.getElementById('modal-form-indicator')).show();
-});
+    function loadIndicatorList() {
+        $.ajax({
+            url: '<?= site_url('siimut/unit/ajax-get-indicators') ?>',
+            type: 'POST',
+            data: {
+                department_id: currentDeptId,
+                group_type: currentGroupType
+            },
+            dataType: 'json',
+            success: function(res) {
+                var tbody = $('#indicator-modal-body');
+                tbody.empty();
+                if (res.data && res.data.length > 0) {
+                    $.each(res.data, function(i, row) {
+                        tbody.append(
+                            '<tr>' +
+                            '<td class="text-center">' + (i + 1) + '</td>' +
+                            '<td><strong>' + row.group_period + '</strong></td>' +
+                            '<td>' + row.indicator_element + '</td>' +
+                            '<td class="text-center">' + row.group_days + '</td>' +
+                            '<td class="text-center">' + (row.group_record_status === 'A' ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Nonaktif</span>') + '</td>' +
+                            '<td class="text-center">' +
+                            '<button type="button" class="btn btn-sm btn-outline-primary btn-edit-indicator me-1" title="Edit" data-group-id="' + row.group_id + '" data-period="' + row.group_period + '" data-days="' + row.group_days + '"><i class="bi bi-pencil"></i></button>' +
+                            '<button type="button" class="btn btn-sm btn-outline-danger btn-delete-indicator" title="Hapus" data-group-id="' + row.group_id + '" data-name="' + row.indicator_element + '"><i class="bi bi-trash"></i></button>' +
+                            '</td>' +
+                            '</tr>'
+                        );
+                    });
 
-// Open EDIT form
-$(document).on('click', '.btn-edit-indicator', function() {
-    var btn = $(this);
-    $('#form-action-type').val('edit');
-    $('#form-edit-group-id').val(btn.data('group-id'));
-    $('#form-department-id').val(currentDeptId);
-    $('#form-group-type').val(currentGroupType);
-    $('#modal-form-title').html('<i class="bi bi-pencil"></i> Edit Indikator');
-    $('#indicator-select-wrapper').hide();
-    $('#form-period').val(btn.data('period'));
-    $('#form-days').val(btn.data('days'));
-    $('#form-institution-code').val('RSSM');
-    $('.text-danger.small').addClass('d-none');
+                    // Init DataTable
+                    dtIndicator = $('#table-indicator-modal').DataTable({
+                        paging: true,
+                        searching: true,
+                        info: true,
+                        lengthChange: true,
+                        pageLength: 10,
+                        lengthMenu: [
+                            [5, 10, 25, 50],
+                            [5, 10, 25, 50]
+                        ],
+                        order: [],
+                        language: {
+                            search: 'Cari:',
+                            searchPlaceholder: 'Ketik kata kunci...',
+                            lengthMenu: 'Tampilkan _MENU_',
+                            info: '_START_ - _END_ dari _TOTAL_',
+                            infoEmpty: '0 - 0 dari 0',
+                            infoFiltered: '(difilter dari _MAX_ total)',
+                            zeroRecords: 'Data tidak ditemukan',
+                            paginate: {
+                                first: 'Awal',
+                                last: 'Akhir',
+                                next: '<i class="bi bi-chevron-right"></i>',
+                                previous: '<i class="bi bi-chevron-left"></i>'
+                            }
+                        },
+                        dom: '<"d-flex justify-content-between align-items-center gap-2 px-1 mb-2"<"d-flex align-items-center gap-2"l><"d-flex align-items-center"f>>rt<"d-flex justify-content-between align-items-center gap-2 px-1 mt-2"<i><p>>'
+                    });
 
-    new bootstrap.Modal(document.getElementById('modal-form-indicator')).show();
-});
-
-// Delete indicator
-$(document).on('click', '.btn-delete-indicator', function() {
-    var btn = $(this);
-    var name = btn.data('name');
-
-    Swal.fire({
-        title: 'Hapus Indikator?',
-        text: 'Yakin ingin menghapus "' + name + '" dari daftar ini?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Ya, Hapus!',
-        cancelButtonText: 'Batal'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            $.ajax({
-                url: '<?= site_url('siimut/unit/ajax-delete-group') ?>',
-                type: 'POST',
-                data: { group_id: btn.data('group-id'), group_type: currentGroupType },
-                dataType: 'json',
-                success: function(res) {
-                    if (res.status) {
-                        toastSuccess(res.message);
-                        loadIndicatorList();
-                    } else {
-                        toastError(res.message);
-                    }
-                },
-                error: function() {
-                    toastError('Gagal menghapus');
+                } else {
+                    tbody.html('<tr><td colspan="6" class="text-center text-muted py-3">Belum ada indikator untuk unit ini</td></tr>');
                 }
-            });
-        }
+            },
+            error: function() {
+                $('#indicator-modal-body').html('<tr><td colspan="6" class="text-center text-danger py-3">Gagal memuat data</td></tr>');
+            }
+        });
+    }
+
+    // Open ADD form
+    $('#btn-add-indicator').on('click', function() {
+        $('#form-action-type').val('add');
+        $('#form-edit-group-id').val('0');
+        $('#form-department-id').val(currentDeptId);
+        $('#form-group-type').val(currentGroupType);
+        $('#modal-form-title').html('<i class="bi bi-plus-circle"></i> Tambah Indikator ' + currentLabel);
+        $('#indicator-select-wrapper').show();
+        $('#form-indicator-id').val('').trigger('change');
+        $('#form-period').val(new Date().getFullYear().toString());
+        $('#form-days').val(0);
+        $('#form-institution-code').val('RSSM');
+        $('.text-danger.small').addClass('d-none');
+        $('#form-indicator-id').html('<option value="">-- Pilih --</option>');
+
+        // Load available indicators
+        $.ajax({
+            url: '<?= site_url('siimut/unit/ajax-get-available-indicators') ?>',
+            type: 'POST',
+            data: {
+                group_type: currentGroupType
+            },
+            dataType: 'json',
+            success: function(res) {
+                var sel = $('#form-indicator-id');
+                sel.find('option:not(:first)').remove();
+                if (res.data) {
+                    $.each(res.data, function(i, row) {
+                        sel.append('<option value="' + row.indicator_id + '">' + row.indicator_element + '</option>');
+                    });
+                }
+            }
+        });
+
+        new bootstrap.Modal(document.getElementById('modal-form-indicator')).show();
     });
-});
 
-// Submit form add/edit
-$('#form-indicator-group').on('submit', function(e) {
-    e.preventDefault();
-    $('.text-danger.small').addClass('d-none');
+    // Open EDIT form
+    $(document).on('click', '.btn-edit-indicator', function() {
+        var btn = $(this);
+        $('#form-action-type').val('edit');
+        $('#form-edit-group-id').val(btn.data('group-id'));
+        $('#form-department-id').val(currentDeptId);
+        $('#form-group-type').val(currentGroupType);
+        $('#modal-form-title').html('<i class="bi bi-pencil"></i> Edit Indikator');
+        $('#indicator-select-wrapper').hide();
+        $('#form-period').val(btn.data('period'));
+        $('#form-days').val(btn.data('days'));
+        $('#form-institution-code').val('RSSM');
+        $('.text-danger.small').addClass('d-none');
 
-    var actionType = $('#form-action-type').val();
-    var period = $('#form-period').val().trim();
-    var days = parseInt($('#form-days').val()) || 0;
-    var valid = true;
+        new bootstrap.Modal(document.getElementById('modal-form-indicator')).show();
+    });
 
-    if (!period) {
-        $('#form-period').addClass('is-invalid');
-        $('#form-period-error').removeClass('d-none').text('Periode wajib diisi');
-        valid = false;
-    } else if (!/^\d{4}$/.test(period)) {
-        $('#form-period').addClass('is-invalid');
-        $('#form-period-error').removeClass('d-none').text('Format periode harus 4 digit angka');
-        valid = false;
-    }
+    // Delete indicator
+    $(document).on('click', '.btn-delete-indicator', function() {
+        var btn = $(this);
+        var name = btn.data('name');
 
-    if (days < 0) {
-        $('#form-days').addClass('is-invalid');
-        $('#form-days-error').removeClass('d-none').text('Group days tidak boleh minus');
-        valid = false;
-    }
+        Swal.fire({
+            title: 'Hapus Indikator?',
+            text: 'Yakin ingin menghapus "' + name + '" dari daftar ini?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '<?= site_url('siimut/unit/ajax-delete-group') ?>',
+                    type: 'POST',
+                    data: {
+                        group_id: btn.data('group-id'),
+                        group_type: currentGroupType
+                    },
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res.status) {
+                            toastSuccess(res.message);
+                            loadIndicatorList();
+                        } else {
+                            toastError(res.message);
+                        }
+                    },
+                    error: function() {
+                        toastError('Gagal menghapus');
+                    }
+                });
+            }
+        });
+    });
 
-    if (actionType === 'add') {
-        var indicatorId = $('#form-indicator-id').val();
-        if (!indicatorId) {
-            $('#form-indicator-id').addClass('is-invalid');
+    // Submit form add/edit
+    $('#form-indicator-group').on('submit', function(e) {
+        e.preventDefault();
+        $('.text-danger.small').addClass('d-none');
+
+        var actionType = $('#form-action-type').val();
+        var period = $('#form-period').val().trim();
+        var days = parseInt($('#form-days').val()) || 0;
+        var valid = true;
+
+        if (!period) {
+            $('#form-period').addClass('is-invalid');
+            $('#form-period-error').removeClass('d-none').text('Periode wajib diisi');
+            valid = false;
+        } else if (!/^\d{4}$/.test(period)) {
+            $('#form-period').addClass('is-invalid');
+            $('#form-period-error').removeClass('d-none').text('Format periode harus 4 digit angka');
             valid = false;
         }
-    }
 
-    if (!valid) return;
-
-    var url = actionType === 'add'
-        ? '<?= site_url('siimut/unit/ajax-add-group') ?>'
-        : '<?= site_url('siimut/unit/ajax-update-group') ?>';
-
-    var postData = $(this).serialize();
-    if (actionType === 'edit') {
-        postData += '&group_type=' + currentGroupType;
-    }
-
-    Swal.fire({
-        title: 'Simpan?',
-        text: 'Data akan disimpan.',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        confirmButtonText: 'Ya, Simpan!',
-        cancelButtonText: 'Batal'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: postData,
-                dataType: 'json',
-                success: function(res) {
-                    if (res.status) {
-                        bootstrap.Modal.getInstance(document.getElementById('modal-form-indicator')).hide();
-                        toastSuccess(res.message);
-                        loadIndicatorList();
-                    } else {
-                        toastError(res.message);
-                    }
-                },
-                error: function() {
-                    toastError('Gagal menyimpan');
-                }
-            });
+        if (days < 0) {
+            $('#form-days').addClass('is-invalid');
+            $('#form-days-error').removeClass('d-none').text('Group days tidak boleh minus');
+            valid = false;
         }
+
+        if (actionType === 'add') {
+            var indicatorId = $('#form-indicator-id').val();
+            if (!indicatorId) {
+                $('#form-indicator-id').addClass('is-invalid');
+                valid = false;
+            }
+        }
+
+        if (!valid) return;
+
+        var url = actionType === 'add' ?
+            '<?= site_url('siimut/unit/ajax-add-group') ?>' :
+            '<?= site_url('siimut/unit/ajax-update-group') ?>';
+
+        var postData = $(this).serialize();
+        if (actionType === 'edit') {
+            postData += '&group_type=' + currentGroupType;
+        }
+
+        Swal.fire({
+            title: 'Simpan?',
+            text: 'Data akan disimpan.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Simpan!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: postData,
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res.status) {
+                            bootstrap.Modal.getInstance(document.getElementById('modal-form-indicator')).hide();
+                            toastSuccess(res.message);
+                            loadIndicatorList();
+                        } else {
+                            toastError(res.message);
+                        }
+                    },
+                    error: function() {
+                        toastError('Gagal menyimpan');
+                    }
+                });
+            }
+        });
     });
-});
 </script>
