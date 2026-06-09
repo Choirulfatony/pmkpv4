@@ -18,7 +18,7 @@ class DepartmentModel extends Model
     ];
 
     private array $indicatorTypes = [
-        4 => 'INM',
+        1 => 'INM',
         5 => 'IMPRS',
         6 => 'IMPUNIT',
         7 => 'IKP',
@@ -98,11 +98,12 @@ class DepartmentModel extends Model
     {
         $db = db_connect();
         $result = [];
+        $deptStr = (string) $departmentId;
 
         foreach ($this->indicatorTypes as $type => $label) {
             $table = $this->indicatorTables[$type];
             $count = $db->table($table)
-                ->where('group_department_id', $departmentId)
+                ->where('group_department_id', $deptStr)
                 ->where('group_type', $type)
                 ->where('group_record_status', 'A')
                 ->countAllResults();
@@ -115,9 +116,10 @@ class DepartmentModel extends Model
     public function getIndicatorCount(int $departmentId, int $type): int
     {
         $db = db_connect();
+        $deptStr = (string) $departmentId;
         $table = $this->indicatorTables[$type] ?? 'quality_indicator_group';
         return (int) $db->table($table)
-            ->where('group_department_id', $departmentId)
+            ->where('group_department_id', $deptStr)
             ->where('group_type', $type)
             ->where('group_record_status', 'A')
             ->countAllResults();

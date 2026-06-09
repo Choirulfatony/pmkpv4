@@ -53,7 +53,7 @@
             <strong>Keterangan Akses Indikator:</strong>
             <span class="badge bg-success ms-1">Hijau</span> = Unit/bagian memiliki data indikator |
             <span class="badge bg-secondary ms-1">Abu-abu</span> = Belum ada data indikator |
-            INM (group_type=4) | IMPRS (group_type=5) | IMPUNIT (group_type=6) | IKP (group_type=7)
+            INM (group_type=1) | IMPRS (group_type=5) | IMPUNIT (group_type=6) | IKP (group_type=7)
         </div>
     </div>
 </div>

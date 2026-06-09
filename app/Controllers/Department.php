@@ -46,7 +46,7 @@ class Department extends AppController
 
         foreach ($result['data'] as $row) {
             $indicatorTypes = [
-                4 => ['label' => 'INM',     'color' => 'primary'],
+                1 => ['label' => 'INM',     'color' => 'primary'],
                 5 => ['label' => 'IMPRS',   'color' => 'success'],
                 6 => ['label' => 'IMPUNIT', 'color' => 'warning'],
                 7 => ['label' => 'IKP',     'color' => 'info'],

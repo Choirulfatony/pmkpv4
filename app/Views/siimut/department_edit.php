@@ -44,7 +44,7 @@
                         <div class="row g-3 mb-3">
                             <?php
                             $indicatorTypes = [
-                                4 => ['label' => 'INM',     'color' => 'primary', 'icon' => 'graph-up'],
+                                1 => ['label' => 'INM',     'color' => 'primary', 'icon' => 'graph-up'],
                                 5 => ['label' => 'IMPRS',   'color' => 'success', 'icon' => 'bar-chart-line'],
                                 6 => ['label' => 'IMPUNIT', 'color' => 'warning', 'icon' => 'clipboard-data'],
                                 7 => ['label' => 'IKP',     'color' => 'info',    'icon' => 'bug'],
