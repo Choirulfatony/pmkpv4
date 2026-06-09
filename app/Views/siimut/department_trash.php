@@ -15,9 +15,9 @@
                 <table class="table table-sm table-bordered table-striped" id="table-trash" style="width:100%;">
                     <thead>
                         <tr>
-                            <th class="text-center" style="width:40px;">#</th>
+                            <th class="text-center">#</th>
                             <th>Unit / Bagian</th>
-                            <th class="text-center" style="width:70px;">Tipe</th>
+                            <th class="text-center">Tipe</th>
                             <th>Indikator</th>
                             <th class="text-center">Periode</th>
                             <th class="text-center">Group Days</th>
@@ -42,14 +42,15 @@
                 type: 'POST'
             },
             columns: [
-                { data: 'no', className: 'text-center', orderable: false },
+                { data: 'no', className: 'text-center', orderable: false, width: '40px' },
                 { data: 'unit' },
-                { data: 'tipe', className: 'text-center' },
+                { data: 'tipe', className: 'text-center', width: '70px' },
                 { data: 'indikator' },
                 { data: 'periode', className: 'text-center' },
                 { data: 'days', className: 'text-center' },
-                { data: 'aksi', className: 'text-center', orderable: false }
+                { data: 'aksi', className: 'text-center text-nowrap', orderable: false }
             ],
+            autoWidth: false,
             order: [[4, 'desc']],
             language: {
                 processing: "Memuat...",
