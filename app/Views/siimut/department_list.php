@@ -188,12 +188,13 @@ $(document).ready(function() {
             <div class="modal-header">
                 <h6 class="modal-title">
                     <i class="bi bi-bar-chart"></i> <span id="modal-indicator-title">Indikator</span>
-                    <small class="text-muted ms-2"><span id="indicator-count">0</span> indikator</small>
                 </h6>
-                <button type="button" class="btn btn-sm btn-primary" id="btn-add-indicator" title="Tambah Indikator">
-                    <i class="bi bi-plus-circle"></i> Tambah
-                </button>
-                <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-primary" id="btn-add-indicator" title="Tambah Indikator">
+                        <i class="bi bi-plus-circle"></i> Tambah
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
             </div>
             <div class="modal-body p-2">
                 <div class="table-responsive">
@@ -289,7 +290,6 @@ $(document).on('click', '.btn-show-indicators', function() {
 
     $('#modal-indicator-title').text(currentLabel + ' — ' + btn.data('dept-name'));
     $('#indicator-modal-body').html('<tr><td colspan="6" class="text-center text-muted py-3">Memuat data...</td></tr>');
-    $('#indicator-count').text('0');
     new bootstrap.Modal(document.getElementById('modal-indikator')).show();
 
     loadIndicatorList();
@@ -305,7 +305,6 @@ function loadIndicatorList() {
             var tbody = $('#indicator-modal-body');
             tbody.empty();
             if (res.data && res.data.length > 0) {
-                $('#indicator-count').text(res.data.length);
                 $.each(res.data, function(i, row) {
                     tbody.append(
                         '<tr>'
@@ -345,7 +344,6 @@ function loadIndicatorList() {
                 });
 
             } else {
-                $('#indicator-count').text('0');
                 tbody.html('<tr><td colspan="6" class="text-center text-muted py-3">Belum ada indikator untuk unit ini</td></tr>');
             }
         },
