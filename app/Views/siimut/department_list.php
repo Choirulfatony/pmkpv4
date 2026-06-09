@@ -190,11 +190,25 @@ $(document).ready(function() {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <small class="text-muted"><span id="indicator-count">0</span> indikator</small>
-                    <button type="button" class="btn btn-sm btn-primary" id="btn-add-indicator" title="Tambah Indikator">
-                        <i class="bi bi-plus-circle"></i> Tambah
-                    </button>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <small class="text-muted"><span id="indicator-count">0</span> indikator</small>
+                        <div class="input-group input-group-sm" style="max-width:200px;">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" id="cari-indikator-modal" class="form-control" placeholder="Cari...">
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <select id="length-indikator-modal" class="form-select form-select-sm" style="width:auto;">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <button type="button" class="btn btn-sm btn-primary" id="btn-add-indicator" title="Tambah Indikator">
+                            <i class="bi bi-plus-circle"></i> Tambah
+                        </button>
+                    </div>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-sm table-striped table-bordered mb-0" id="table-indicator-modal" style="width:100%;">
@@ -272,6 +286,7 @@ $(document).ready(function() {
 var currentDeptId = 0;
 var currentGroupType = 0;
 var currentLabel = '';
+var dtIndicator = null;
 
 // Open modal when indicator button clicked
 $(document).on('click', '.btn-show-indicators', function() {
@@ -280,8 +295,15 @@ $(document).on('click', '.btn-show-indicators', function() {
     currentGroupType = btn.data('type');
     currentLabel = btn.data('label');
 
+    // Destroy previous DataTable
+    if (dtIndicator) {
+        dtIndicator.destroy();
+        dtIndicator = null;
+    }
+
     $('#modal-indicator-title').text(currentLabel + ' — ' + btn.data('dept-name'));
     $('#indicator-modal-body').html('<tr><td colspan="6" class="text-center text-muted py-3">Memuat data...</td></tr>');
+    $('#indicator-count').text('0');
     new bootstrap.Modal(document.getElementById('modal-indikator')).show();
 
     loadIndicatorList();
@@ -299,20 +321,52 @@ function loadIndicatorList() {
             if (res.data && res.data.length > 0) {
                 $('#indicator-count').text(res.data.length);
                 $.each(res.data, function(i, row) {
-                tbody.append(
-                    '<tr>'
-                    + '<td class="text-center">' + (i+1) + '</td>'
-                    + '<td><strong>' + row.group_period + '</strong></td>'
-                    + '<td>' + row.indicator_element + '</td>'
-                    + '<td class="text-center">' + row.group_days + '</td>'
-                    + '<td class="text-center">' + (row.group_record_status === 'A' ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Nonaktif</span>') + '</td>'
-                    + '<td class="text-center">'
-                    + '<button type="button" class="btn btn-sm btn-outline-primary btn-edit-indicator me-1" title="Edit" data-group-id="' + row.group_id + '" data-period="' + row.group_period + '" data-days="' + row.group_days + '"><i class="bi bi-pencil"></i></button>'
-                    + '<button type="button" class="btn btn-sm btn-outline-danger btn-delete-indicator" title="Hapus" data-group-id="' + row.group_id + '" data-name="' + row.indicator_element + '"><i class="bi bi-trash"></i></button>'
-                    + '</td>'
-                    + '</tr>'
-                );
+                    tbody.append(
+                        '<tr>'
+                        + '<td class="text-center">' + (i+1) + '</td>'
+                        + '<td><strong>' + row.group_period + '</strong></td>'
+                        + '<td>' + row.indicator_element + '</td>'
+                        + '<td class="text-center">' + row.group_days + '</td>'
+                        + '<td class="text-center">' + (row.group_record_status === 'A' ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Nonaktif</span>') + '</td>'
+                        + '<td class="text-center">'
+                        + '<button type="button" class="btn btn-sm btn-outline-primary btn-edit-indicator me-1" title="Edit" data-group-id="' + row.group_id + '" data-period="' + row.group_period + '" data-days="' + row.group_days + '"><i class="bi bi-pencil"></i></button>'
+                        + '<button type="button" class="btn btn-sm btn-outline-danger btn-delete-indicator" title="Hapus" data-group-id="' + row.group_id + '" data-name="' + row.indicator_element + '"><i class="bi bi-trash"></i></button>'
+                        + '</td>'
+                        + '</tr>'
+                    );
                 });
+
+                // Init DataTable
+                dtIndicator = $('#table-indicator-modal').DataTable({
+                    paging: true,
+                    searching: true,
+                    info: true,
+                    lengthChange: true,
+                    pageLength: parseInt($('#length-indikator-modal').val()),
+                    lengthMenu: [[5, 10, 25, 50], [5, 10, 25, 50]],
+                    order: [],
+                    language: {
+                        search: '',
+                        searchPlaceholder: 'Cari...',
+                        lengthMenu: 'Tampilkan _MENU_',
+                        info: '_START_ - _END_ dari _TOTAL_',
+                        infoEmpty: '0 - 0 dari 0',
+                        zeroRecords: 'Data tidak ditemukan',
+                        paginate: { first: 'Awal', last: 'Akhir', next: '<i class="bi bi-chevron-right"></i>', previous: '<i class="bi bi-chevron-left"></i>' }
+                    },
+                    dom: '<"d-none">rt<"d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2"<"d-flex align-items-center gap-1"l><"d-flex align-items-center"i><"d-flex align-items-center"p>>'
+                });
+
+                // Wire search
+                $('#cari-indikator-modal').off('keyup').on('keyup', function() {
+                    dtIndicator.search($(this).val()).draw();
+                });
+
+                // Wire length
+                $('#length-indikator-modal').off('change').on('change', function() {
+                    dtIndicator.page.len(parseInt($(this).val())).draw();
+                });
+
             } else {
                 $('#indicator-count').text('0');
                 tbody.html('<tr><td colspan="6" class="text-center text-muted py-3">Belum ada indikator untuk unit ini</td></tr>');
