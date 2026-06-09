@@ -50,8 +50,8 @@ class Staff extends AppController
                 ? '<span class="badge bg-success"><i class="bi bi-circle-fill"></i> Online</span>'
                 : '<span class="badge bg-secondary">Offline</span>';
 
-            $disableChecked = $row->profile_disable ? 'checked' : '';
-            $toggleLabel = $row->profile_disable ? 'Nonaktif' : 'Aktif';
+            $disableChecked = $row->profile_disable == 0 ? 'checked' : '';
+            $toggleLabel = $row->profile_disable == 0 ? 'Aktif' : 'Nonaktif';
             $disableToggle = '<div class="form-check form-switch d-inline-block">'
                 . '<input class="form-check-input btn-toggle-disable" type="checkbox" data-id="' . $row->profile_id . '" data-status="' . $row->profile_disable . '" ' . $disableChecked . '>'
                 . '<label class="form-check-label small">' . $toggleLabel . '</label>'
