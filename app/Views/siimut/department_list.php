@@ -323,6 +323,11 @@
     });
 
     function loadIndicatorList() {
+        // Destroy previous DataTable instance
+        if (dtIndicator) {
+            dtIndicator.destroy();
+            dtIndicator = null;
+        }
         $.ajax({
             url: '<?= site_url('siimut/unit/ajax-get-indicators') ?>',
             type: 'POST',
