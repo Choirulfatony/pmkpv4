@@ -84,8 +84,8 @@ if (!function_exists('get_profile_picture')) {
                 log_message('error', 'Failed to cache Google profile picture: ' . $e->getMessage());
             }
             
-            // If we couldn't download/cache, fall back to default
-            return base_url('assets/adminlte/img/logorssmnew.png');
+            // If we couldn't download/cache, use Google URL directly (browser can access it)
+            return $profilePic;
         }
         
         // If it's not a Google URL, treat it as a local path
