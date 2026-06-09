@@ -25,7 +25,7 @@ class DepartmentModel extends Model
     ];
 
     private array $indicatorTables = [
-        4 => 'quality_indicator_group',
+        1 => 'quality_indicator_group',
         5 => 'local_quality_indicator_group',
         6 => 'local_quality_indicator_group',
         7 => 'local_quality_indicator_group',
