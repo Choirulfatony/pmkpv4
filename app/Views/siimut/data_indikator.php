@@ -4,6 +4,9 @@
 <div class="container-fluid">
     <div class="card card-outline">
         <div class="card-header">
+            <a href="<?= site_url('siimut/unit') ?>" class="btn btn-sm btn-outline-secondary me-2" title="Kembali ke Daftar Unit">
+                <i class="bi bi-arrow-left"></i> Kembali
+            </a>
             <div class="card-tools d-flex flex-wrap justify-content-between w-100 align-items-center gap-2">
                 <form onsubmit="event.preventDefault(); get_pencariandata();" class="mb-0">
                     <div class="input-group input-group-sm" style="max-width: 260px;">
