@@ -56,14 +56,14 @@ class Department extends AppController
             foreach ($indicatorTypes as $type => $cfg) {
                 $count = $this->departmentModel->getIndicatorCount($row->department_id, $type);
                 $active = $count > 0;
-                $cls = $active ? "btn-outline-{$cfg['color']}" : 'btn-outline-secondary';
+                $cls = $active ? 'btn-success' : 'btn-outline-secondary';
                 $title = $cfg['label'] . ($active ? " ({$count} indikator)" : ' (aktifkan)');
                 $badges .= '<button type="button" class="btn btn-sm btn-indicator ' . $cls . '" '
                     . 'data-dept="' . $row->department_id . '" '
                     . 'data-type="' . $type . '" '
                     . 'data-label="' . $cfg['label'] . '" '
                     . 'title="' . $title . '">'
-                    . '<i class="bi bi-check-circle-fill d-none"></i> ' . $cfg['label']
+                    . $cfg['label']
                     . '</button> ';
             }
 
