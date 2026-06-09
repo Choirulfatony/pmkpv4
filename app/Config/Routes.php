@@ -190,6 +190,14 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('data-indikator/get-numdenum-detail', 'DataIndikator::getNumDenumDetail');
         $routes->post('data-indikator/save-numdenum', 'DataIndikator::saveNumDenum');
         $routes->post('data-indikator/delete-numdenum', 'DataIndikator::deleteNumDenum');
+
+        // Manajemen Staf
+        $routes->get('staf', 'Staff::index');
+        $routes->post('staf/ajax-get-data', 'Staff::ajaxGetData');
+        $routes->get('staf/edit/(:num)', 'Staff::edit/$1');
+        $routes->post('staf/update/(:num)', 'Staff::update/$1');
+        $routes->post('staf/delete/(:num)', 'Staff::delete/$1');
+        $routes->post('staf/toggle-disable/(:num)', 'Staff::toggleDisable/$1');
     });
 
     // ========== IKPRS ==========
