@@ -19,12 +19,14 @@
 
                                 <div class="mb-2">
                                     <label class="form-label small">Nama Lengkap <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control form-control-sm" name="profile_fullname" required>
+                                    <input type="text" class="form-control form-control-sm" name="profile_fullname" id="profile_fullname">
+                                    <div class="text-danger small d-none" id="profile_fullname-error"></div>
                                 </div>
 
                                 <div class="mb-2">
                                     <label class="form-label small">Email <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control form-control-sm" name="profile_email" required>
+                                    <input type="email" class="form-control form-control-sm" name="profile_email" id="profile_email">
+                                    <div class="text-danger small d-none" id="profile_email-error"></div>
                                 </div>
 
                                 <div class="mb-2">
@@ -126,33 +128,42 @@ $(document).ready(function() {
         dropdownParent: $('#form-add-staf')
     });
 
+    function clearErrors() {
+        $('#profile_fullname, #profile_email, #profile_password').removeClass('is-invalid');
+        $('#profile_fullname-error, #profile_email-error, #profile_password-error').addClass('d-none').text('');
+    }
+
+    function showError(inputId, errorId, msg) {
+        $(inputId).addClass('is-invalid');
+        $(errorId).removeClass('d-none').text(msg);
+    }
+
     $('#form-add-staf').on('submit', function(e) {
         e.preventDefault();
+        clearErrors();
 
-        var name = $('[name="profile_fullname"]').val().trim();
-        var email = $('[name="profile_email"]').val().trim();
+        var name = $('#profile_fullname').val().trim();
+        var email = $('#profile_email').val().trim();
         var pw = $('#profile_password').val();
-        var pwErr = $('#profile_password-error');
         var valid = true;
 
-        pwErr.addClass('d-none').text('');
-        $('#profile_password').removeClass('is-invalid');
-
         if (!name) {
-            toastError('Nama lengkap wajib diisi');
-            $('[name="profile_fullname"]').focus();
-            return;
+            showError('#profile_fullname', '#profile_fullname-error', 'Nama lengkap wajib diisi');
+            valid = false;
         }
         if (!email) {
-            toastError('Email wajib diisi');
-            $('[name="profile_email"]').focus();
-            return;
+            showError('#profile_email', '#profile_email-error', 'Email wajib diisi');
+            valid = false;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            showError('#profile_email', '#profile_email-error', 'Format email tidak valid');
+            valid = false;
         }
         if (!pw || pw.length < 6) {
-            $('#profile_password').addClass('is-invalid');
-            pwErr.removeClass('d-none').text('Password minimal 6 karakter');
-            return;
+            showError('#profile_password', '#profile_password-error', 'Password minimal 6 karakter');
+            valid = false;
         }
+
+        if (!valid) return;
 
         Swal.fire({
             title: 'Simpan Staf Baru?',
