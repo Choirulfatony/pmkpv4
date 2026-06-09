@@ -369,7 +369,7 @@
             <?php 
             $profilePic = session('profile_picture');
             $namaLengkap = session('nama_lengkap');
-            $userId = session('user_id') ?: 0;
+            $userId = session('profile_id') ?: 0;
             
             // Debug info - remove after testing
             // echo "<!-- DEBUG: profile_picture = " . print_r($profilePic, true) . " -->";
