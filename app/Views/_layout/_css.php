@@ -218,10 +218,10 @@ $ADMINLTE_CSS     = $asset('https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-beta3/d
 .cell-fail { background-color: #f8d7da !important; }
 .cell-fail .fw-bold, .cell-fail .num-denum { color: #fff !important; }
 .cell-empty { background-color: #e2e3e5 !important; }
-td.day-cell.cell-inputable { cursor: pointer; border-left: 3px solid #0d6efd !important; }
+td.day-cell.cell-inputable { cursor: pointer; }
 td.day-cell.cell-inputable .fw-bold { color: #0d6efd !important; }
 td.day-cell.cell-inputable .num-denum { color: #0d6efd !important; }
-.cell-has-data { font-weight: 600; border-left: 3px solid #adb5bd !important; }
+.cell-has-data { font-weight: 600; }
 .cell-draft { background-color: #fff3cd !important; }
 .cell-approved { background-color: #d4edda !important; }
 .day-cell .num-denum { font-size: 11px; color: #6c757d; margin-top: 2px; }

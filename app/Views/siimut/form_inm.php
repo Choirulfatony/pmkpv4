@@ -120,7 +120,7 @@
                     <span><span class="legend-box" style="background:#c3e6cb"></span> Target Tercapai</span>
                     <span><span class="legend-box" style="background:#f8d7da"></span> Target Tidak Tercapai</span>
                     <span><span class="legend-box" style="background:#e2e3e5"></span> Belum Ada Data</span>
-                    <span><span class="legend-box" style="background:#fff;border-left:3px solid #adb5bd"></span> Sudah Diisi</span>
+                    <span style="color:#0d6efd;font-weight:600;"><i class="bi bi-pencil-square"></i> Dapat Diinput</span>
                 </div>
             </div>
         </div>
@@ -980,3 +980,5 @@
         return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, "\\\"");
     }
 </script>
+
+
