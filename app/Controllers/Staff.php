@@ -110,6 +110,89 @@ class Staff extends AppController
         ]);
     }
 
+    public function create()
+    {
+        if (!session()->get('logged_in')) {
+            return redirect()->to('/auth');
+        }
+
+        $role = session()->get('user_role');
+        if (!in_array($role, ['ADMINISTRATOR'])) {
+            return redirect()->to('/siimut/dashboard')->with('error', 'Hanya untuk Administrator');
+        }
+
+        return $this->render('siimut/staff_add', [
+            'judul'      => 'Tambah Staf Baru',
+            'icon'       => '<i class="bi bi-person-plus"></i>',
+            'groups'     => $this->staffModel->getAllGroups(),
+            'departments' => $this->staffModel->getAllDepartments(),
+        ]);
+    }
+
+    public function store()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $role = session()->get('user_role');
+        if (!in_array($role, ['ADMINISTRATOR'])) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => false, 'message' => 'Akses ditolak']);
+        }
+
+        $fullname     = trim($this->request->getPost('profile_fullname'));
+        $email        = trim($this->request->getPost('profile_email'));
+        $password     = $this->request->getPost('profile_password');
+        $groupId      = $this->request->getPost('profile_group_id');
+        $departmentId = $this->request->getPost('profile_department_id');
+        $employeeId   = $this->request->getPost('profile_employee_id');
+        $gender       = $this->request->getPost('profile_gender');
+        $handphone1   = $this->request->getPost('profile_handphone1');
+        $dob          = $this->request->getPost('profile_dob');
+
+        if (!$fullname || !$email || !$password) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Nama, email, dan password wajib diisi']);
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Format email tidak valid']);
+        }
+
+        if (strlen($password) < 6) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Password minimal 6 karakter']);
+        }
+
+        if ($this->staffModel->emailExists($email)) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Email sudah terdaftar']);
+        }
+
+        $insertData = [
+            'profile_fullname'      => $fullname,
+            'profile_email'         => $email,
+            'profile_password'      => md5($password),
+            'profile_group_id'      => $groupId ?: null,
+            'profile_department_id' => $departmentId ?: null,
+            'profile_employee_id'   => $employeeId ?: null,
+            'profile_gender'        => $gender ?: null,
+            'profile_handphone1'    => $handphone1 ?: null,
+            'profile_dob'           => $dob ?: null,
+            'profile_record_status' => 'A',
+            'profile_insert_by'     => session('profile_id'),
+            'profile_insert_date'   => date('Y-m-d H:i:s'),
+            'profile_online_status' => 0,
+            'profile_disable'       => 0,
+            'profile_is_verified'   => 1,
+        ];
+
+        $newId = $this->staffModel->createStaff($insertData);
+
+        if ($newId) {
+            return $this->response->setJSON(['status' => true, 'message' => 'Staf baru berhasil ditambahkan']);
+        }
+
+        return $this->response->setJSON(['status' => false, 'message' => 'Gagal menambahkan staf baru']);
+    }
+
     public function update(int $id)
     {
         if (!session()->get('logged_in')) {

@@ -145,6 +145,24 @@ class StaffModel extends Model
             ->getResult();
     }
 
+    public function createStaff(array $data): int
+    {
+        $db = db_connect();
+        if ($db->table('user_profile')->insert($data)) {
+            return $db->insertID();
+        }
+        return 0;
+    }
+
+    public function emailExists(string $email): bool
+    {
+        $db = db_connect();
+        return $db->table('user_profile')
+            ->where('profile_email', $email)
+            ->where('profile_record_status', 'A')
+            ->countAllResults() > 0;
+    }
+
     public function updateStaff(int $id, array $data): bool
     {
         $db = db_connect();

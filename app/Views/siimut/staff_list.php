@@ -32,6 +32,9 @@
                     </div>
                 </form>
                 <div class="d-flex gap-1">
+                    <a href="<?= site_url('siimut/staf/create') ?>" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-plus-circle"></i> Tambah Staf
+                    </a>
                     <button type="button" class="btn btn-sm btn-outline-secondary" onclick="table.draw()" title="Refresh">
                         <i class="fas fa-sync-alt"></i>
                     </button>

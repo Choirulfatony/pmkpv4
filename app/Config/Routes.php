@@ -194,6 +194,8 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         // Manajemen Staf
         $routes->get('staf', 'Staff::index');
         $routes->post('staf/ajax-get-data', 'Staff::ajaxGetData');
+        $routes->get('staf/create', 'Staff::create');
+        $routes->post('staf/store', 'Staff::store');
         $routes->get('staf/edit/(:num)', 'Staff::edit/$1');
         $routes->post('staf/update/(:num)', 'Staff::update/$1');
         $routes->post('staf/delete/(:num)', 'Staff::delete/$1');
