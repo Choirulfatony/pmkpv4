@@ -189,26 +189,12 @@ $(document).ready(function() {
                 <h6 class="modal-title"><i class="bi bi-bar-chart"></i> <span id="modal-indicator-title">Indikator</span></h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <small class="text-muted"><span id="indicator-count">0</span> indikator</small>
-                        <div class="input-group input-group-sm" style="max-width:200px;">
-                            <span class="input-group-text"><i class="bi bi-search"></i></span>
-                            <input type="text" id="cari-indikator-modal" class="form-control" placeholder="Cari...">
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <select id="length-indikator-modal" class="form-select form-select-sm" style="width:auto;">
-                            <option value="5">5</option>
-                            <option value="10" selected>10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                        </select>
-                        <button type="button" class="btn btn-sm btn-primary" id="btn-add-indicator" title="Tambah Indikator">
-                            <i class="bi bi-plus-circle"></i> Tambah
-                        </button>
-                    </div>
+            <div class="modal-body p-2">
+                <div class="d-flex justify-content-between align-items-center px-2 py-1">
+                    <small class="text-muted"><span id="indicator-count">0</span> indikator</small>
+                    <button type="button" class="btn btn-sm btn-primary" id="btn-add-indicator" title="Tambah Indikator">
+                        <i class="bi bi-plus-circle"></i> Tambah
+                    </button>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-sm table-striped table-bordered mb-0" id="table-indicator-modal" style="width:100%;">
@@ -342,29 +328,20 @@ function loadIndicatorList() {
                     searching: true,
                     info: true,
                     lengthChange: true,
-                    pageLength: parseInt($('#length-indikator-modal').val()),
+                    pageLength: 10,
                     lengthMenu: [[5, 10, 25, 50], [5, 10, 25, 50]],
                     order: [],
                     language: {
-                        search: '',
-                        searchPlaceholder: 'Cari...',
+                        search: 'Cari:',
+                        searchPlaceholder: 'Ketik kata kunci...',
                         lengthMenu: 'Tampilkan _MENU_',
                         info: '_START_ - _END_ dari _TOTAL_',
                         infoEmpty: '0 - 0 dari 0',
+                        infoFiltered: '(difilter dari _MAX_ total)',
                         zeroRecords: 'Data tidak ditemukan',
                         paginate: { first: 'Awal', last: 'Akhir', next: '<i class="bi bi-chevron-right"></i>', previous: '<i class="bi bi-chevron-left"></i>' }
                     },
-                    dom: '<"d-none">rt<"d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2"<"d-flex align-items-center gap-1"l><"d-flex align-items-center"i><"d-flex align-items-center"p>>'
-                });
-
-                // Wire search
-                $('#cari-indikator-modal').off('keyup').on('keyup', function() {
-                    dtIndicator.search($(this).val()).draw();
-                });
-
-                // Wire length
-                $('#length-indikator-modal').off('change').on('change', function() {
-                    dtIndicator.page.len(parseInt($(this).val())).draw();
+                    dom: '<"d-flex justify-content-between align-items-center gap-2 px-1 mb-2"<"d-flex align-items-center gap-2"l><"d-flex align-items-center"f>>rt<"d-flex justify-content-between align-items-center gap-2 px-1 mt-2"<i><p>>'
                 });
 
             } else {
