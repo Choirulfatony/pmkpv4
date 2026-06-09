@@ -19,7 +19,7 @@
                     </a>
                 </div>
                 <div class="card-body">
-                    <form id="form-edit-staf">
+                    <form id="form-edit-staf" novalidate>
                         <input type="hidden" name="profile_id" value="<?= $staff->profile_id ?>">
 
                         <div class="row">
@@ -28,12 +28,14 @@
 
                                 <div class="mb-2">
                                     <label class="form-label small">Nama Lengkap <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control form-control-sm" name="profile_fullname" value="<?= esc($staff->profile_fullname) ?>" required>
+                                    <input type="text" class="form-control form-control-sm" name="profile_fullname" id="profile_fullname" value="<?= esc($staff->profile_fullname) ?>">
+                                    <div class="text-danger small d-none" id="profile_fullname-error"></div>
                                 </div>
 
                                 <div class="mb-2">
                                     <label class="form-label small">Email <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control form-control-sm" name="profile_email" value="<?= esc($staff->profile_email) ?>" required>
+                                    <input type="email" class="form-control form-control-sm" name="profile_email" id="profile_email" value="<?= esc($staff->profile_email) ?>">
+                                    <div class="text-danger small d-none" id="profile_email-error"></div>
                                 </div>
 
                                 <div class="mb-2">
@@ -159,8 +161,37 @@ $(document).ready(function() {
         dropdownParent: $('#form-edit-staf')
     });
 
+    function clearErrors() {
+        $('#profile_fullname, #profile_email').removeClass('is-invalid');
+        $('#profile_fullname-error, #profile_email-error').addClass('d-none').text('');
+    }
+
+    function showError(inputId, errorId, msg) {
+        $(inputId).addClass('is-invalid');
+        $(errorId).removeClass('d-none').text(msg);
+    }
+
     $('#form-edit-staf').on('submit', function(e) {
         e.preventDefault();
+        clearErrors();
+
+        var name = $('#profile_fullname').val().trim();
+        var email = $('#profile_email').val().trim();
+        var valid = true;
+
+        if (!name) {
+            showError('#profile_fullname', '#profile_fullname-error', 'Nama lengkap wajib diisi');
+            valid = false;
+        }
+        if (!email) {
+            showError('#profile_email', '#profile_email-error', 'Email wajib diisi');
+            valid = false;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            showError('#profile_email', '#profile_email-error', 'Format email tidak valid');
+            valid = false;
+        }
+
+        if (!valid) return;
 
         var id = $('input[name="profile_id"]').val();
 
