@@ -221,7 +221,7 @@ $ADMINLTE_CSS     = $asset('https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-beta3/d
 td.day-cell.cell-inputable { cursor: pointer; }
 td.day-cell.cell-inputable .fw-bold { color: #0d6efd !important; }
 td.day-cell.cell-inputable .num-denum { color: #0d6efd !important; }
-.cell-has-data { font-weight: 600; }
+.cell-has-data { font-weight: 600; border-left: 3px solid #0d6efd !important; }
 .cell-draft { background-color: #fff3cd !important; }
 .cell-approved { background-color: #d4edda !important; }
 .day-cell .num-denum { font-size: 11px; color: #6c757d; margin-top: 2px; }

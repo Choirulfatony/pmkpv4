@@ -114,6 +114,14 @@
                     <div class="col-sm-12 col-md-6 text-md-end" id="paginationControls">
                     </div>
                 </div>
+                <div class="d-flex align-items-center gap-4 mt-2 mb-2 flex-wrap">
+                    <span><span class="legend-box" style="background:#fff3cd"></span> Draft (D)</span>
+                    <span><span class="legend-box" style="background:#d4edda"></span> Approved (A)</span>
+                    <span><span class="legend-box" style="background:#c3e6cb"></span> Target Tercapai</span>
+                    <span><span class="legend-box" style="background:#f8d7da"></span> Target Tidak Tercapai</span>
+                    <span><span class="legend-box" style="background:#e2e3e5"></span> Belum Ada Data</span>
+                    <span><span class="legend-box" style="background:#fff;border-left:3px solid #0d6efd"></span> Sudah Diisi</span>
+                </div>
 
             </div>
         </div>
@@ -337,12 +345,13 @@
         var today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        function isInputable(day, freq) {
+        function isInputable(day, freq, maxDays) {
             if (freq === 'W' || freq === 'M' || freq === 'Y') return true;
             var tglDate = new Date(tahun, bulan - 1, day);
             tglDate.setHours(0, 0, 0, 0);
             var diff = Math.round((today - tglDate) / (1000 * 60 * 60 * 24));
-            return diff >= 0 && diff <= 30;
+            var limit = (maxDays && maxDays > 0) ? maxDays : 30;
+            return diff >= 0 && diff <= limit;
         }
 
         for (var i = 0; i < data.length; i++) {
@@ -369,7 +378,7 @@
                     cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
                 }
 
-                if (isInputable(item.hari, freq)) {
+                if (isInputable(item.hari, freq, row.group_days)) {
                     cellClass += ' cell-inputable';
                 }
 
@@ -395,7 +404,7 @@
                         cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
                     }
 
-                    if (isInputable(item.hari, freq)) {
+                    if (isInputable(item.hari, freq, row.group_days)) {
                         cellClass += ' cell-inputable';
                     }
 
@@ -422,7 +431,7 @@
                         cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
                     }
 
-                    if (isInputable(item.hari, freq)) {
+                    if (isInputable(item.hari, freq, row.group_days)) {
                         cellClass += ' cell-inputable';
                     }
 
