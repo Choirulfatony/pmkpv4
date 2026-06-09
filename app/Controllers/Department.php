@@ -439,6 +439,177 @@ class Department extends AppController
         return $this->response->setJSON(['status' => true, 'message' => 'Indikator berhasil dihapus']);
     }
 
+    public function trash()
+    {
+        if (!session()->get('logged_in')) {
+            return redirect()->to('/auth');
+        }
+
+        $role = session()->get('user_role');
+        if (!in_array($role, ['ADMINISTRATOR'])) {
+            return redirect()->to('/siimut/dashboard')->with('error', 'Hanya untuk Administrator');
+        }
+
+        return $this->render('siimut/department_trash', [
+            'judul' => 'Tempat Sampah Indikator Unit',
+            'icon'  => '<i class="bi bi-trash"></i>',
+        ]);
+    }
+
+    public function ajaxGetTrash()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthorized']);
+        }
+
+        $tableMap = [
+            1 => ['table' => 'quality_indicator_group', 'indicator' => 'quality_indicator', 'label' => 'INM'],
+            5 => ['table' => 'local_quality_indicator_group', 'indicator' => 'local_quality_indicator', 'label' => 'IMPRS'],
+            6 => ['table' => 'local_quality_indicator_group', 'indicator' => 'local_quality_indicator', 'label' => 'IMPUNIT'],
+            7 => ['table' => 'local_quality_indicator_group', 'indicator' => 'local_quality_indicator', 'label' => 'IKP'],
+        ];
+
+        $db = db_connect();
+        $rows = [];
+        $no = 1;
+
+        $post = $this->request->getPost();
+        $draw  = (int) ($post['draw'] ?? 1);
+        $start = (int) ($post['start'] ?? 0);
+        $length = (int) ($post['length'] ?? 10);
+        $searchValue = $post['search']['value'] ?? '';
+
+        // Collect all X records across all types
+        $allData = [];
+        $allFiltered = [];
+        foreach ($tableMap as $type => $cfg) {
+            $builder = $db->table($cfg['table'] . ' qig');
+            $builder->select("
+                qig.group_id,
+                qig.group_type,
+                qig.group_period,
+                qig.group_days,
+                qig.group_department_id,
+                qig.group_institution_code,
+                qig.group_indicator_id,
+                qig.group_record_status,
+                {$type} as group_type_num,
+                '" . $cfg['label'] . "' as type_label
+            ");
+            $builder->where('qig.group_record_status', 'X');
+            $builder->where('qig.group_type', $type);
+
+            if ($searchValue) {
+                $builder->groupStart();
+                $builder->like('qig.group_period', $searchValue);
+                $builder->orLike('qig.group_institution_code', $searchValue);
+                $builder->groupEnd();
+            }
+
+            $data = $builder->get()->getResult();
+            $allData = array_merge($allData, $data);
+        }
+
+        // Enrich with department & indicator names
+        foreach ($allData as &$row) {
+            $dept = $db->table('master_institution_department')
+                ->select('department_name')
+                ->where('department_id', $row->group_department_id)
+                ->get()->getRow();
+            $row->department_name = $dept ? $dept->department_name : '(dihapus)';
+
+            $cfg = $tableMap[$row->group_type_num] ?? $tableMap[1];
+            $ind = $db->table($cfg['indicator'])
+                ->select('indicator_element')
+                ->where('indicator_id', $row->group_indicator_id)
+                ->get()->getRow();
+            $row->indicator_element = $ind ? $ind->indicator_element : '(dihapus)';
+        }
+        unset($row);
+
+        $recordsTotal = count($allData);
+        $recordsFiltered = count($allData);
+
+        // Manual slice for pagination
+        $pageData = array_slice($allData, $start, $length);
+
+        foreach ($pageData as $row) {
+            $rows[] = [
+                'no'        => $no++,
+                'unit'      => esc($row->department_name),
+                'tipe'      => $row->type_label,
+                'indikator' => esc($row->indicator_element),
+                'periode'   => $row->group_period,
+                'days'      => $row->group_days,
+                'aksi'      => '<button type="button" class="btn btn-sm btn-success btn-restore-trash me-1" title="Pulihkan" data-id="' . $row->group_id . '" data-type="' . $row->group_type_num . '"><i class="bi bi-arrow-counterclockwise"></i></button>'
+                           . '<button type="button" class="btn btn-sm btn-danger btn-delete-trash" title="Hapus Permanen" data-id="' . $row->group_id . '" data-type="' . $row->group_type_num . '" data-name="' . esc($row->indicator_element) . '"><i class="bi bi-trash3"></i></button>',
+            ];
+        }
+
+        return $this->response->setJSON([
+            'draw'            => $draw,
+            'recordsTotal'    => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data'            => $rows,
+        ]);
+    }
+
+    public function ajaxPermanentDelete()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+        $role = session()->get('user_role');
+        if (!in_array($role, ['ADMINISTRATOR'])) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => false, 'message' => 'Akses ditolak']);
+        }
+
+        $groupId = (int) $this->request->getPost('group_id');
+        $type    = (int) $this->request->getPost('group_type');
+
+        if (!$groupId) {
+            return $this->response->setJSON(['status' => false, 'message' => 'ID tidak valid']);
+        }
+
+        $tableMap = [1 => 'quality_indicator_group', 5 => 'local_quality_indicator_group', 6 => 'local_quality_indicator_group', 7 => 'local_quality_indicator_group'];
+        $groupTable = $tableMap[$type] ?? 'quality_indicator_group';
+
+        $db = db_connect();
+        $db->table($groupTable)
+            ->where('group_id', $groupId)
+            ->delete();
+
+        return $this->response->setJSON(['status' => true, 'message' => 'Data berhasil dihapus permanen']);
+    }
+
+    public function ajaxRestoreGroup()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+        $role = session()->get('user_role');
+        if (!in_array($role, ['ADMINISTRATOR'])) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => false, 'message' => 'Akses ditolak']);
+        }
+
+        $groupId = (int) $this->request->getPost('group_id');
+        $type    = (int) $this->request->getPost('group_type');
+
+        if (!$groupId) {
+            return $this->response->setJSON(['status' => false, 'message' => 'ID tidak valid']);
+        }
+
+        $tableMap = [1 => 'quality_indicator_group', 5 => 'local_quality_indicator_group', 6 => 'local_quality_indicator_group', 7 => 'local_quality_indicator_group'];
+        $groupTable = $tableMap[$type] ?? 'quality_indicator_group';
+
+        $db = db_connect();
+        $db->table($groupTable)
+            ->where('group_id', $groupId)
+            ->update(['group_record_status' => 'A']);
+
+        return $this->response->setJSON(['status' => true, 'message' => 'Indikator berhasil dipulihkan']);
+    }
+
     public function toggleDisable(int $id)
     {
         if (!session()->get('logged_in')) {

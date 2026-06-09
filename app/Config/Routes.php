@@ -216,6 +216,10 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('unit/ajax-add-group', 'Department::ajaxAddGroup');
         $routes->post('unit/ajax-update-group', 'Department::ajaxUpdateGroup');
         $routes->post('unit/ajax-delete-group', 'Department::ajaxDeleteGroup');
+        $routes->get('unit/trash', 'Department::trash');
+        $routes->post('unit/ajax-get-trash', 'Department::ajaxGetTrash');
+        $routes->post('unit/ajax-permanent-delete', 'Department::ajaxPermanentDelete');
+        $routes->post('unit/ajax-restore-group', 'Department::ajaxRestoreGroup');
     });
 
     // ========== IKPRS ==========
