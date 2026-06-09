@@ -186,16 +186,16 @@ $(document).ready(function() {
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title"><i class="bi bi-bar-chart"></i> <span id="modal-indicator-title">Indikator</span></h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h6 class="modal-title">
+                    <i class="bi bi-bar-chart"></i> <span id="modal-indicator-title">Indikator</span>
+                    <small class="text-muted ms-2"><span id="indicator-count">0</span> indikator</small>
+                </h6>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-add-indicator" title="Tambah Indikator">
+                    <i class="bi bi-plus-circle"></i> Tambah
+                </button>
+                <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-2">
-                <div class="d-flex justify-content-between align-items-center px-2 py-1">
-                    <small class="text-muted"><span id="indicator-count">0</span> indikator</small>
-                    <button type="button" class="btn btn-sm btn-primary" id="btn-add-indicator" title="Tambah Indikator">
-                        <i class="bi bi-plus-circle"></i> Tambah
-                    </button>
-                </div>
                 <div class="table-responsive">
                     <table class="table table-sm table-striped table-bordered mb-0" id="table-indicator-modal" style="width:100%;">
                         <thead>
