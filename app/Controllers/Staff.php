@@ -50,10 +50,11 @@ class Staff extends AppController
                 ? '<span class="badge bg-success"><i class="bi bi-circle-fill"></i> Online</span>'
                 : '<span class="badge bg-secondary">Offline</span>';
 
-            $disableChecked = $row->profile_disable == 0 ? 'checked' : '';
-            $toggleLabel = $row->profile_disable == 0 ? 'Aktif' : 'Nonaktif';
+            $isAktif = $row->profile_record_status === 'A';
+            $disableChecked = $isAktif ? 'checked' : '';
+            $toggleLabel = $isAktif ? 'Aktif' : 'Nonaktif';
             $disableToggle = '<div class="form-check form-switch d-inline-block">'
-                . '<input class="form-check-input btn-toggle-disable" type="checkbox" data-id="' . $row->profile_id . '" data-status="' . $row->profile_disable . '" ' . $disableChecked . '>'
+                . '<input class="form-check-input btn-toggle-disable" type="checkbox" data-id="' . $row->profile_id . '" data-status="' . $row->profile_record_status . '" ' . $disableChecked . '>'
                 . '<label class="form-check-label small">' . $toggleLabel . '</label>'
                 . '</div>';
 
@@ -284,11 +285,11 @@ class Staff extends AppController
             return $this->response->setJSON(['status' => false, 'message' => 'Staf tidak ditemukan']);
         }
 
-        $newStatus = $staff->profile_disable ? 0 : 1;
-        $result = $this->staffModel->toggleDisable($id, $newStatus);
+        $newStatus = $staff->profile_record_status === 'A' ? 'D' : 'A';
+        $result = $this->staffModel->toggleRecordStatus($id, $newStatus);
 
         if ($result) {
-            $label = $newStatus ? 'dinonaktifkan' : 'diaktifkan';
+            $label = $newStatus === 'D' ? 'dinonaktifkan' : 'diaktifkan';
             return $this->response->setJSON(['status' => true, 'message' => 'Akun berhasil ' . $label, 'new_status' => $newStatus]);
         }
 

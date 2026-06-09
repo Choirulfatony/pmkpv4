@@ -74,13 +74,13 @@ class StaffModel extends Model
                 FROM user_profile up
                 LEFT JOIN user_group ug ON ug.group_id = up.profile_group_id
                 LEFT JOIN master_institution_department mid ON mid.department_id = up.profile_department_id
-                WHERE up.profile_record_status = 'A'";
+                WHERE up.profile_record_status IN ('A', 'D')";
 
         $countSql = "SELECT COUNT(*) as total
                      FROM user_profile up
                      LEFT JOIN user_group ug ON ug.group_id = up.profile_group_id
                      LEFT JOIN master_institution_department mid ON mid.department_id = up.profile_department_id
-                     WHERE up.profile_record_status = 'A'";
+                     WHERE up.profile_record_status IN ('A', 'D')";
 
         if ($searchValue) {
             $searchCond = " AND (
@@ -96,7 +96,7 @@ class StaffModel extends Model
 
         $totalResult = $db->query($countSql)->getRow()->total;
 
-        $sql .= " ORDER BY up.profile_disable ASC, {$orderColumn} {$orderDir}";
+        $sql .= " ORDER BY up.profile_record_status ASC, {$orderColumn} {$orderDir}";
         $sql .= " LIMIT {$length} OFFSET {$start}";
 
         $data = $db->query($sql)->getResult();
@@ -121,7 +121,7 @@ class StaffModel extends Model
             ->join('user_group ug', 'ug.group_id = up.profile_group_id', 'left')
             ->join('master_institution_department mid', 'mid.department_id = up.profile_department_id', 'left')
             ->where('up.profile_id', $id)
-            ->where('up.profile_record_status', 'A')
+            ->where('up.profile_record_status IN', ['A', 'D'])
             ->get()
             ->getRow();
     }
@@ -193,6 +193,26 @@ class StaffModel extends Model
                 'profile_update_by' => session('profile_id'),
                 'profile_update_date' => date('Y-m-d H:i:s'),
             ]);
+    }
+
+    public function toggleRecordStatus(int $id, string $status): bool
+    {
+        $db = db_connect();
+        $data = [
+            'profile_record_status' => $status,
+            'profile_update_by'     => session('profile_id'),
+            'profile_update_date'   => date('Y-m-d H:i:s'),
+        ];
+        if ($status === 'D') {
+            $data['profile_delete_date'] = date('Y-m-d H:i:s');
+            $data['profile_delete_by'] = session('profile_id');
+        } else {
+            $data['profile_delete_date'] = null;
+            $data['profile_delete_by'] = null;
+        }
+        return $db->table('user_profile')
+            ->where('profile_id', $id)
+            ->update($data);
     }
 
     public function getTotalStaff(): int
