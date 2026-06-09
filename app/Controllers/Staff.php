@@ -50,9 +50,12 @@ class Staff extends AppController
                 ? '<span class="badge bg-success"><i class="bi bi-circle-fill"></i> Online</span>'
                 : '<span class="badge bg-secondary">Offline</span>';
 
-            $disableBadge = $row->profile_disable == 1
-                ? '<span class="badge bg-danger">Disable</span>'
-                : '<span class="badge bg-success">Active</span>';
+            $disableChecked = $row->profile_disable ? 'checked' : '';
+            $toggleLabel = $row->profile_disable ? 'Nonaktif' : 'Aktif';
+            $disableToggle = '<div class="form-check form-switch d-inline-block">'
+                . '<input class="form-check-input btn-toggle-disable" type="checkbox" data-id="' . $row->profile_id . '" data-status="' . $row->profile_disable . '" ' . $disableChecked . '>'
+                . '<label class="form-check-label small">' . $toggleLabel . '</label>'
+                . '</div>';
 
             $lastLogin = $row->profile_last_login
                 ? date('d M Y H:i', strtotime($row->profile_last_login))
@@ -60,7 +63,6 @@ class Staff extends AppController
 
             $actions = '<div class="btn-group btn-group-sm">';
             $actions .= '<a href="' . site_url('siimut/staf/edit/' . $row->profile_id) . '" class="btn btn-outline-primary" title="Edit"><i class="bi bi-pencil-square"></i></a>';
-            $actions .= '<button type="button" class="btn btn-outline-warning btn-toggle-disable" data-id="' . $row->profile_id . '" data-status="' . $row->profile_disable . '" title="' . ($row->profile_disable ? 'Aktifkan' : 'Nonaktifkan') . '"><i class="bi bi-' . ($row->profile_disable ? 'check-circle' : 'x-circle') . '"></i></button>';
             $actions .= '<button type="button" class="btn btn-outline-danger btn-delete" data-id="' . $row->profile_id . '" data-name="' . esc($row->profile_fullname) . '" title="Hapus"><i class="bi bi-trash"></i></button>';
             $actions .= '</div>';
 
@@ -70,7 +72,7 @@ class Staff extends AppController
                 'grup'       => esc($row->group_name ?? '-'),
                 'email'      => esc($row->profile_email ?? '-'),
                 'unit_kerja' => esc($row->department_name ?? '-'),
-                'akun'       => $disableBadge,
+                'akun'       => $disableToggle,
                 'online'     => $onlineBadge,
                 'last_login' => $lastLogin,
                 'actions'    => $actions,

@@ -110,11 +110,11 @@ $(document).ready(function() {
         table.draw();
     });
 
-    // Toggle Disable
-    $(document).on('click', '.btn-toggle-disable', function() {
-        var id = $(this).data('id');
-        var currentStatus = $(this).data('status');
-        var action = currentStatus == 1 ? 'mengaktifkan' : 'menonaktifkan';
+    // Toggle Disable via switch
+    $(document).on('change', '.btn-toggle-disable', function() {
+        var el = $(this);
+        var id = el.data('id');
+        var action = el.is(':checked') ? 'menonaktifkan' : 'mengaktifkan';
 
         Swal.fire({
             title: 'Ubah Status Akun?',
@@ -137,12 +137,16 @@ $(document).ready(function() {
                             table.draw();
                         } else {
                             toastError(res.message);
+                            el.prop('checked', !el.is(':checked'));
                         }
                     },
                     error: function() {
                         toastError('Gagal mengubah status akun');
+                        el.prop('checked', !el.is(':checked'));
                     }
                 });
+            } else {
+                el.prop('checked', !el.is(':checked'));
             }
         });
     });

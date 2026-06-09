@@ -104,11 +104,13 @@
 
                                 <div class="row mb-2">
                                     <div class="col-6">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="toggle_disable"
-                                                <?= $staff->profile_disable ? 'checked' : '' ?>
-                                                onchange="toggleAccountStatus(this, 'disable')">
-                                            <label class="form-check-label small" for="toggle_disable">Nonaktif Akun</label>
+                                        <label class="form-label small">Status Akun</label>
+                                        <div>
+                                            <?php if ($staff->profile_disable): ?>
+                                                <span class="badge bg-danger">Nonaktif</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-success">Aktif</span>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                     <div class="col-6">
