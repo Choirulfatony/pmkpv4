@@ -201,6 +201,16 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('staf/delete/(:num)', 'Staff::delete/$1');
         $routes->post('staf/toggle-disable/(:num)', 'Staff::toggleDisable/$1');
         $routes->post('staf/toggle-online/(:num)', 'Staff::toggleOnline/$1');
+
+        // Manajemen Unit / Bagian
+        $routes->get('unit', 'Department::index');
+        $routes->post('unit/ajax-get-data', 'Department::ajaxGetData');
+        $routes->get('unit/create', 'Department::create');
+        $routes->post('unit/store', 'Department::store');
+        $routes->get('unit/edit/(:num)', 'Department::edit/$1');
+        $routes->post('unit/update/(:num)', 'Department::update/$1');
+        $routes->post('unit/delete/(:num)', 'Department::delete/$1');
+        $routes->post('unit/toggle-disable/(:num)', 'Department::toggleDisable/$1');
     });
 
     // ========== IKPRS ==========
