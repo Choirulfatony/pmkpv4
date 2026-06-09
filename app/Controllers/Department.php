@@ -46,10 +46,10 @@ class Department extends AppController
 
         foreach ($result['data'] as $row) {
             $indicatorTypes = [
-                1 => ['label' => 'INM',     'color' => 'primary'],
-                5 => ['label' => 'IMPRS',   'color' => 'success'],
-                6 => ['label' => 'IMPUNIT', 'color' => 'warning'],
-                7 => ['label' => 'IKP',     'color' => 'info'],
+                1 => ['label' => 'INM',     'color' => 'primary', 'module' => 'inm'],
+                5 => ['label' => 'IMPRS',   'color' => 'success', 'module' => 'imprs'],
+                6 => ['label' => 'IMPUNIT', 'color' => 'warning', 'module' => 'impunit'],
+                7 => ['label' => 'IKP',     'color' => 'info',    'module' => 'ikp'],
             ];
 
             $badges = '';
@@ -57,14 +57,12 @@ class Department extends AppController
                 $count = $this->departmentModel->getIndicatorCount($row->department_id, $type);
                 $active = $count > 0;
                 $cls = $active ? 'btn-success' : 'btn-outline-secondary';
-                $title = $cfg['label'] . ($active ? " ({$count} indikator)" : ' (aktifkan)');
-                $badges .= '<button type="button" class="btn btn-sm btn-indicator ' . $cls . '" '
-                    . 'data-dept="' . $row->department_id . '" '
-                    . 'data-type="' . $type . '" '
-                    . 'data-label="' . $cfg['label'] . '" '
+                $url = site_url('siimut/data-indikator/' . $cfg['module']);
+                $title = $cfg['label'] . ($active ? " ({$count} indikator)" : ' (belum ada data)');
+                $badges .= '<a href="' . $url . '" class="btn btn-sm btn-indicator ' . $cls . '" '
                     . 'title="' . $title . '">'
                     . $cfg['label']
-                    . '</button> ';
+                    . '</a> ';
             }
 
             $isAktif = $row->department_record_status === 'A';
