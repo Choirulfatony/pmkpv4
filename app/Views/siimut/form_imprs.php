@@ -120,7 +120,7 @@
                     <span><span class="legend-box" style="background:#c3e6cb"></span> Target Tercapai</span>
                     <span><span class="legend-box" style="background:#f8d7da"></span> Target Tidak Tercapai</span>
                     <span><span class="legend-box" style="background:#e2e3e5"></span> Belum Ada Data</span>
-                    <span><span class="legend-box" style="background:#fff;border-left:3px solid #0d6efd"></span> Sudah Diisi</span>
+                    <span><span class="legend-box" style="background:#fff;border-left:3px solid #adb5bd"></span> Sudah Diisi</span>
                 </div>
             </div>
         </div>
