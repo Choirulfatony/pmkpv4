@@ -180,3 +180,75 @@ $(document).ready(function() {
     });
 });
 </script>
+
+<!-- Modal Indikator -->
+<div class="modal fade" id="modal-indikator" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title"><i class="bi bi-bar-chart"></i> <span id="modal-indicator-title">Indikator</span></h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-sm" id="table-modal-indicator" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="width:40px;">#</th>
+                                <th>Nama Indikator</th>
+                                <th class="text-center">Target</th>
+                                <th class="text-center">Satuan</th>
+                                <th class="text-center">Frekuensi</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).on('click', '.btn-show-indicators', function() {
+    var btn = $(this);
+    var deptId = btn.data('dept-id');
+    var deptName = btn.data('dept-name');
+    var type = btn.data('type');
+    var label = btn.data('label');
+
+    $('#modal-indicator-title').text(label + ' — ' + deptName);
+    var tbody = $('#table-modal-indicator tbody');
+    tbody.html('<tr><td colspan="5" class="text-center text-muted">Memuat data...</td></tr>');
+    var modal = new bootstrap.Modal(document.getElementById('modal-indikator'));
+    modal.show();
+
+    $.ajax({
+        url: '<?= site_url('siimut/unit/ajax-get-indicators') ?>',
+        type: 'POST',
+        data: { department_id: deptId, group_type: type },
+        dataType: 'json',
+        success: function(res) {
+            tbody.empty();
+            if (res.data && res.data.length > 0) {
+                $.each(res.data, function(i, row) {
+                    tbody.append(
+                        '<tr>'
+                        + '<td class="text-center">' + row.no + '</td>'
+                        + '<td>' + row.nama + '</td>'
+                        + '<td class="text-center">' + (row.target || '-') + '</td>'
+                        + '<td class="text-center">' + (row.satuan || '-') + '</td>'
+                        + '<td class="text-center">' + (row.frekuensi || '-') + '</td>'
+                        + '</tr>'
+                    );
+                });
+            } else {
+                tbody.html('<tr><td colspan="5" class="text-center text-muted">Tidak ada data indikator</td></tr>');
+            }
+        },
+        error: function() {
+            tbody.html('<tr><td colspan="5" class="text-center text-danger">Gagal memuat data</td></tr>');
+        }
+    });
+});
+</script>

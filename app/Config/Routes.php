@@ -211,6 +211,7 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('unit/update/(:num)', 'Department::update/$1');
         $routes->post('unit/delete/(:num)', 'Department::delete/$1');
         $routes->post('unit/toggle-disable/(:num)', 'Department::toggleDisable/$1');
+        $routes->post('unit/ajax-get-indicators', 'Department::ajaxGetIndicators');
     });
 
     // ========== IKPRS ==========

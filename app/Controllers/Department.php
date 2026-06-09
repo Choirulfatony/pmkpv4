@@ -57,12 +57,15 @@ class Department extends AppController
                 $count = $this->departmentModel->getIndicatorCount($row->department_id, $type);
                 $active = $count > 0;
                 $cls = $active ? 'btn-success' : 'btn-outline-secondary';
-                $url = site_url('siimut/data-indikator/' . $cfg['module'] . '?department_id=' . $row->department_id);
                 $title = $cfg['label'] . ($active ? " ({$count} indikator)" : ' (belum ada data)');
-                $badges .= '<a href="' . $url . '" class="btn btn-sm btn-indicator ' . $cls . '" '
+                $badges .= '<button type="button" class="btn btn-sm btn-indicator ' . $cls . ' btn-show-indicators" '
+                    . 'data-dept-id="' . $row->department_id . '" '
+                    . 'data-dept-name="' . esc($row->department_name) . '" '
+                    . 'data-type="' . $type . '" '
+                    . 'data-label="' . $cfg['label'] . '" '
                     . 'title="' . $title . '">'
                     . $cfg['label']
-                    . '</a> ';
+                    . '</button> ';
             }
 
             $isAktif = $row->department_record_status === 'A';
@@ -235,6 +238,52 @@ class Department extends AppController
         }
 
         return $this->response->setJSON(['status' => false, 'message' => 'Gagal menghapus unit/bagian']);
+    }
+
+    public function ajaxGetIndicators()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthorized']);
+        }
+
+        $deptId = (int) $this->request->getPost('department_id');
+        $type   = (int) $this->request->getPost('group_type');
+
+        if (!$deptId || !$type) {
+            return $this->response->setJSON(['data' => []]);
+        }
+
+        $db = db_connect();
+        $tableMap = [1 => 'quality_indicator_group', 5 => 'local_quality_indicator_group', 6 => 'local_quality_indicator_group', 7 => 'local_quality_indicator_group'];
+        $prefixMap = [1 => '', 5 => 'local_', 6 => 'local_', 7 => 'local_'];
+        $groupTable = $tableMap[$type] ?? 'quality_indicator_group';
+        $indTable = ($prefixMap[$type] ?? '') . 'quality_indicator';
+
+        $sql = "SELECT qi.indicator_id, qi.indicator_element, qi.indicator_target, qi.indicator_units, qi.indicator_frequency, qi.indicator_record_status
+                FROM {$groupTable} qig
+                JOIN {$indTable} qi ON qi.indicator_id = qig.group_indicator_id
+                WHERE qig.group_department_id = ?
+                  AND qig.group_type = ?
+                  AND qig.group_record_status = 'A'
+                  AND qi.indicator_record_status = 'A'
+                ORDER BY qi.indicator_order_number ASC, qi.indicator_id ASC";
+
+        $data = $db->query($sql, [(string) $deptId, $type])->getResult();
+
+        $rows = [];
+        $no = 1;
+        foreach ($data as $row) {
+            $freqMap = ['D' => 'Harian', 'M' => 'Bulanan', 'W' => 'Mingguan', 'Y' => 'Tahunan'];
+            $rows[] = [
+                'no'       => $no++,
+                'nama'     => esc($row->indicator_element),
+                'target'   => esc($row->indicator_target),
+                'satuan'   => esc($row->indicator_units),
+                'frekuensi'=> $freqMap[$row->indicator_frequency] ?? $row->indicator_frequency,
+            ];
+        }
+
+        return $this->response->setJSON(['data' => $rows]);
     }
 
     public function toggleDisable(int $id)
