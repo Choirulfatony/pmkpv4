@@ -259,7 +259,7 @@
             <form id="form-indicator-group" novalidate>
                 <div class="modal-body">
                     <input type="hidden" name="action_type" id="form-action-type" value="add">
-                    <input type="hidden" name="edit_group_id" id="form-edit-group-id" value="0">
+                    <input type="hidden" name="group_id" id="form-edit-group-id" value="0">
                     <input type="hidden" name="department_id" id="form-department-id" value="0">
                     <input type="hidden" name="group_type" id="form-group-type" value="0">
 
