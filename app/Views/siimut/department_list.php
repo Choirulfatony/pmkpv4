@@ -204,6 +204,7 @@ $(document).ready(function() {
                                 <th>Periode</th>
                                 <th>Judul Indikator</th>
                                 <th class="text-center">Group Days</th>
+                                <th class="text-center">Status</th>
                                 <th class="text-center" style="width:130px;">Aksi</th>
                             </tr>
                         </thead>
@@ -280,7 +281,7 @@ $(document).on('click', '.btn-show-indicators', function() {
     currentLabel = btn.data('label');
 
     $('#modal-indicator-title').text(currentLabel + ' — ' + btn.data('dept-name'));
-    $('#indicator-modal-body').html('<tr><td colspan="5" class="text-center text-muted py-3">Memuat data...</td></tr>');
+    $('#indicator-modal-body').html('<tr><td colspan="6" class="text-center text-muted py-3">Memuat data...</td></tr>');
     new bootstrap.Modal(document.getElementById('modal-indikator')).show();
 
     loadIndicatorList();
@@ -298,26 +299,27 @@ function loadIndicatorList() {
             if (res.data && res.data.length > 0) {
                 $('#indicator-count').text(res.data.length);
                 $.each(res.data, function(i, row) {
-                    tbody.append(
-                        '<tr>'
-                        + '<td class="text-center">' + (i+1) + '</td>'
-                        + '<td><strong>' + row.group_period + '</strong></td>'
-                        + '<td>' + row.indicator_element + '</td>'
-                        + '<td class="text-center">' + row.group_days + '</td>'
-                        + '<td class="text-center">'
-                        + '<button type="button" class="btn btn-sm btn-outline-primary btn-edit-indicator me-1" title="Edit" data-group-id="' + row.group_id + '" data-period="' + row.group_period + '" data-days="' + row.group_days + '"><i class="bi bi-pencil"></i></button>'
-                        + '<button type="button" class="btn btn-sm btn-outline-danger btn-delete-indicator" title="Hapus" data-group-id="' + row.group_id + '" data-name="' + row.indicator_element + '"><i class="bi bi-trash"></i></button>'
-                        + '</td>'
-                        + '</tr>'
-                    );
+                tbody.append(
+                    '<tr>'
+                    + '<td class="text-center">' + (i+1) + '</td>'
+                    + '<td><strong>' + row.group_period + '</strong></td>'
+                    + '<td>' + row.indicator_element + '</td>'
+                    + '<td class="text-center">' + row.group_days + '</td>'
+                    + '<td class="text-center">' + (row.group_record_status === 'A' ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Nonaktif</span>') + '</td>'
+                    + '<td class="text-center">'
+                    + '<button type="button" class="btn btn-sm btn-outline-primary btn-edit-indicator me-1" title="Edit" data-group-id="' + row.group_id + '" data-period="' + row.group_period + '" data-days="' + row.group_days + '"><i class="bi bi-pencil"></i></button>'
+                    + '<button type="button" class="btn btn-sm btn-outline-danger btn-delete-indicator" title="Hapus" data-group-id="' + row.group_id + '" data-name="' + row.indicator_element + '"><i class="bi bi-trash"></i></button>'
+                    + '</td>'
+                    + '</tr>'
+                );
                 });
             } else {
                 $('#indicator-count').text('0');
-                tbody.html('<tr><td colspan="5" class="text-center text-muted py-3">Belum ada indikator untuk unit ini</td></tr>');
+                tbody.html('<tr><td colspan="6" class="text-center text-muted py-3">Belum ada indikator untuk unit ini</td></tr>');
             }
         },
         error: function() {
-            $('#indicator-modal-body').html('<tr><td colspan="5" class="text-center text-danger py-3">Gagal memuat data</td></tr>');
+            $('#indicator-modal-body').html('<tr><td colspan="6" class="text-center text-danger py-3">Gagal memuat data</td></tr>');
         }
     });
 }

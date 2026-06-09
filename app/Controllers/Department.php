@@ -266,6 +266,7 @@ class Department extends AppController
                     qig.group_period,
                     qig.group_days,
                     qig.group_indicator_id,
+                    qig.group_record_status,
                     qi.indicator_id,
                     qi.indicator_element,
                     qi.indicator_target,
@@ -275,7 +276,7 @@ class Department extends AppController
                 JOIN {$indTable} qi ON qi.indicator_id = qig.group_indicator_id
                 WHERE qig.group_department_id = ?
                   AND qig.group_type = ?
-                  AND qig.group_record_status = 'A'
+                  AND qig.group_record_status IN ('A', 'D')
                   AND qi.indicator_record_status = 'A'
                 ORDER BY qig.group_period DESC, qi.indicator_order_number ASC, qi.indicator_id ASC";
 
@@ -288,6 +289,7 @@ class Department extends AppController
                 'group_id'            => (int) $row->group_id,
                 'group_period'        => $row->group_period,
                 'group_days'          => (int) ($row->group_days ?? 0),
+                'group_record_status' => $row->group_record_status,
                 'indicator_id'        => (int) $row->indicator_id,
                 'indicator_element'   => $row->indicator_element,
                 'indicator_target'    => $row->indicator_target,
