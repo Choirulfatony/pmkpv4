@@ -45,6 +45,7 @@ class LoadModuleForminputModel extends Model
             $builder->select('
                 qig.group_indicator_id,
                 qig.group_department_id AS department_id,
+                qig.group_days,
                 qi.indicator_id,
                 qi.indicator_element,
                 qi.indicator_target,
