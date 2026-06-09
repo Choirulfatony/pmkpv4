@@ -893,17 +893,15 @@ class LoadModuleForminputModel extends Model
         // For W/M/Y: no 30-day hard limit, use group_days from database
         if ($frequency === 'W' || $frequency === 'M' || $frequency === 'Y') {
             $maxDays = 9999;
-            if ($this->tablePrefix !== 'local_') {
-                $row = $db->table($this->tablePrefix . 'quality_indicator_group')
-                    ->select('group_days')
-                    ->where('group_indicator_id', $indicatorId)
-                    ->where('group_department_id', $departmentId)
-                    ->where('group_period', $tahun)
-                    ->where('group_record_status', 'A')
-                    ->get()
-                    ->getRow();
-                $maxDays = $row ? (int) $row->group_days : 9999;
-            }
+            $row = $db->table($this->tablePrefix . 'quality_indicator_group')
+                ->select('group_days')
+                ->where('group_indicator_id', $indicatorId)
+                ->where('group_department_id', $departmentId)
+                ->where('group_period', $tahun)
+                ->where('group_record_status', 'A')
+                ->get()
+                ->getRow();
+            $maxDays = $row ? (int) $row->group_days : 9999;
 
             if ($diffDays <= $maxDays) {
                 return ['allowed' => true, 'restricted' => false, 'message' => '', 'max_days' => $maxDays];
@@ -924,17 +922,15 @@ class LoadModuleForminputModel extends Model
 
         // Lebih dari 30 hari → cek group_days (only for non-local modules)
         $maxDays = 30;
-        if ($this->tablePrefix !== 'local_') {
-            $row = $db->table($this->tablePrefix . 'quality_indicator_group')
-                ->select('group_days')
-                ->where('group_indicator_id', $indicatorId)
-                ->where('group_department_id', $departmentId)
-                ->where('group_period', $tahun)
-                ->where('group_record_status', 'A')
-                ->get()
-                ->getRow();
-            $maxDays = $row ? (int) $row->group_days : 30;
-        }
+        $row = $db->table($this->tablePrefix . 'quality_indicator_group')
+            ->select('group_days')
+            ->where('group_indicator_id', $indicatorId)
+            ->where('group_department_id', $departmentId)
+            ->where('group_period', $tahun)
+            ->where('group_record_status', 'A')
+            ->get()
+            ->getRow();
+        $maxDays = $row ? (int) $row->group_days : 30;
 
         if ($diffDays <= $maxDays) {
             $restricted = $diffDays > 30;
