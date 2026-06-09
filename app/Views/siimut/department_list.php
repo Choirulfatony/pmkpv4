@@ -183,27 +183,14 @@ $(document).ready(function() {
 
 <!-- Modal Indikator -->
 <div class="modal fade" id="modal-indikator" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title"><i class="bi bi-bar-chart"></i> <span id="modal-indicator-title">Indikator</span></h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-sm" id="table-modal-indicator" style="width:100%;">
-                        <thead>
-                            <tr>
-                                <th class="text-center" style="width:40px;">#</th>
-                                <th>Nama Indikator</th>
-                                <th class="text-center">Target</th>
-                                <th class="text-center">Satuan</th>
-                                <th class="text-center">Frekuensi</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
+                <div id="indicator-list"></div>
             </div>
         </div>
     </div>
@@ -218,8 +205,8 @@ $(document).on('click', '.btn-show-indicators', function() {
     var label = btn.data('label');
 
     $('#modal-indicator-title').text(label + ' — ' + deptName);
-    var tbody = $('#table-modal-indicator tbody');
-    tbody.html('<tr><td colspan="5" class="text-center text-muted">Memuat data...</td></tr>');
+    var container = $('#indicator-list');
+    container.html('<div class="text-center text-muted py-4"><i class="bi bi-hourglass-split"></i> Memuat data...</div>');
     var modal = new bootstrap.Modal(document.getElementById('modal-indikator'));
     modal.show();
 
@@ -229,25 +216,52 @@ $(document).on('click', '.btn-show-indicators', function() {
         data: { department_id: deptId, group_type: type },
         dataType: 'json',
         success: function(res) {
-            tbody.empty();
+            container.empty();
             if (res.data && res.data.length > 0) {
                 $.each(res.data, function(i, row) {
-                    tbody.append(
-                        '<tr>'
-                        + '<td class="text-center">' + row.no + '</td>'
-                        + '<td>' + row.nama + '</td>'
-                        + '<td class="text-center">' + (row.target || '-') + '</td>'
-                        + '<td class="text-center">' + (row.satuan || '-') + '</td>'
-                        + '<td class="text-center">' + (row.frekuensi || '-') + '</td>'
-                        + '</tr>'
-                    );
+                    var targetDisplay = row.indicator_target + ' ' + row.indicator_units;
+                    if (row.indicator_target_unit) {
+                        targetDisplay += ' / ' + row.indicator_target_unit;
+                    }
+                    var html = '<div class="card card-outline card-outline-brand mb-3">'
+                        + '<div class="card-header p-2">'
+                        + '<div class="d-flex justify-content-between align-items-center">'
+                        + '<h6 class="mb-0"><span class="badge bg-secondary me-1">' + (i+1) + '</span> ' + row.indicator_element + '</h6>'
+                        + '<span class="badge bg-info">' + row.indicator_frequency + '</span>'
+                        + '</div>'
+                        + '</div>'
+                        + '<div class="card-body p-2">'
+                        + '<div class="row text-sm">'
+                        + '<div class="col-md-6">'
+                        + '<table class="table table-sm table-borderless mb-0">'
+                        + '<tr><td class="text-muted" style="width:160px;">Target</td><td><strong>' + targetDisplay + '</strong></td></tr>'
+                        + '<tr><td class="text-muted">Kriteria Tercapai</td><td>' + row.indicator_calc_label + ' Target</td></tr>'
+                        + '<tr><td class="text-muted">Pembagi (Factors)</td><td>' + row.indicator_factors + '</td></tr>'
+                        + '<tr><td class="text-muted">Satuan</td><td>' + row.indicator_units + '</td></tr>'
+                        + '<tr><td class="text-muted">Area Monitoring</td><td>' + row.indicator_monitoring_area + '</td></tr>'
+                        + '</table>'
+                        + '</div>'
+                        + '<div class="col-md-6">'
+                        + '<table class="table table-sm table-borderless mb-0">'
+                        + '<tr><td class="text-muted" style="width:160px;">Definisi</td><td>' + row.indicator_definition + '</td></tr>'
+                        + '<tr><td class="text-muted">Kriteria Inklusif</td><td>' + row.indicator_criteria_inclusive + '</td></tr>'
+                        + '<tr><td class="text-muted">Kriteria Eksklusif</td><td>' + row.indicator_criteria_exclusive + '</td></tr>'
+                        + '<tr><td class="text-muted">Sumber Data</td><td>' + row.indicator_source_of_data + '</td></tr>'
+                        + '<tr><td class="text-muted">Nilai Standar</td><td>' + row.indicator_value_standard + '</td></tr>'
+                        + '<tr><td class="text-muted">LCL / UCL</td><td>' + row.indicator_lcl + ' / ' + row.indicator_ucl + '</td></tr>'
+                        + '</table>'
+                        + '</div>'
+                        + '</div>'
+                        + '</div>'
+                        + '</div>';
+                    container.append(html);
                 });
             } else {
-                tbody.html('<tr><td colspan="5" class="text-center text-muted">Tidak ada data indikator</td></tr>');
+                container.html('<div class="text-center text-muted py-4"><i class="bi bi-inbox"></i> Tidak ada data indikator</div>');
             }
         },
         error: function() {
-            tbody.html('<tr><td colspan="5" class="text-center text-danger">Gagal memuat data</td></tr>');
+            container.html('<div class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle"></i> Gagal memuat data</div>');
         }
     });
 });
