@@ -26,6 +26,9 @@
                     <a href="<?= site_url('siimut/unit/create') ?>" class="btn btn-sm btn-outline-primary">
                         <i class="fas fa-plus-circle"></i> Tambah Unit
                     </a>
+                    <a href="<?= site_url('siimut/unit/trash') ?>" class="btn btn-sm btn-outline-danger">
+                        <i class="fas fa-trash"></i> Tempat Sampah
+                    </a>
                     <button type="button" class="btn btn-sm btn-outline-secondary" onclick="table.draw()" title="Refresh">
                         <i class="fas fa-sync-alt"></i>
                     </button>
