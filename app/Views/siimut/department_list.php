@@ -210,7 +210,7 @@
 
 <!-- Modal Indikator -->
 <div class="modal fade" id="modal-indikator" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-fullscreen-lg-down">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title">
@@ -233,15 +233,15 @@
                                 <th>Judul Indikator</th>
                                 <th class="text-center">Group Days</th>
                                 <th class="text-center">Status</th>
-                                <th class="text-center" style="width:130px;">Aksi</th>
+                                <th class="text-center text-nowrap">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="indicator-modal-body"></tbody>
                     </table>
                 </div>
             </div>
-            <div class="modal-footer justify-content-between">
-                <small class="text-muted">Klik <i class="bi bi-pencil"></i> untuk edit, <i class="bi bi-trash"></i> untuk hapus</small>
+            <div class="modal-footer justify-content-between flex-wrap gap-1">
+                <small class="text-muted"><i class="bi bi-pencil"></i> edit · <i class="bi bi-trash"></i> hapus</small>
                 <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
@@ -250,7 +250,7 @@
 
 <!-- Modal Form Add/Edit -->
 <div class="modal fade" id="modal-form-indicator" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-lg-down">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title" id="modal-form-title"><i class="bi bi-plus-circle"></i> Tambah Indikator</h6>
@@ -348,7 +348,7 @@
                             '<td>' + row.indicator_element + '</td>' +
                             '<td class="text-center">' + row.group_days + '</td>' +
                             '<td class="text-center">' + (row.group_record_status === 'A' ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Nonaktif</span>') + '</td>' +
-                            '<td class="text-center">' +
+                            '<td class="text-center text-nowrap">' +
                             '<button type="button" class="btn btn-sm btn-outline-primary btn-edit-indicator me-1" title="Edit" data-group-id="' + row.group_id + '" data-period="' + row.group_period + '" data-days="' + row.group_days + '"><i class="bi bi-pencil"></i></button>' +
                             '<button type="button" class="btn btn-sm btn-outline-danger btn-delete-indicator" title="Hapus" data-group-id="' + row.group_id + '" data-name="' + row.indicator_element + '"><i class="bi bi-trash"></i></button>' +
                             '</td>' +
@@ -367,7 +367,13 @@
                             [5, 10, 25, 50],
                             [5, 10, 25, 50]
                         ],
+                        autoWidth: false,
                         order: [],
+                        columnDefs: [
+                            { targets: [0], width: '40px' },
+                            { targets: [3, 4], className: 'text-center' },
+                            { targets: [5], className: 'text-center text-nowrap' }
+                        ],
                         language: {
                             search: 'Cari:',
                             searchPlaceholder: 'Ketik kata kunci...',
