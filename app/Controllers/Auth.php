@@ -498,6 +498,16 @@ class Auth extends BaseController
             $timeout = 1800; // 30 menit
 
             if ($lastActivity && $timeDiff > $timeout) {
+                $profileId = session('profile_id');
+                if ($profileId) {
+                    $db = db_connect();
+                    $db->table('user_profile')
+                        ->where('profile_id', $profileId)
+                        ->update([
+                            'profile_online_status' => 0,
+                            'profile_remember_token' => null,
+                        ]);
+                }
                 session()->destroy();
                 http_response_code(401);
                 echo json_encode([

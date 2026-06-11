@@ -66,7 +66,8 @@ class LoadModuleForminputIkp extends AppController
                 'departments'      => $departments,
                 'showAllOption'    => $showAllOption,
                 'userDepartmentId' => $userDepartmentId,
-                'profileId'        => session('profile_id') ?? 0
+                'profileId'        => session('profile_id') ?? 0,
+                'categoryId'       => '7'
             ]),
             'menus'        => $menus
         ]);
@@ -357,6 +358,11 @@ class LoadModuleForminputIkp extends AppController
             return $this->response->setJSON(['status' => false, 'message' => 'Data tidak lengkap']);
         }
 
+        $indicator = $this->model->getIndicatorInfo((int)$indicator_id);
+        if ($indicator && $indicator->indicator_record_status === 'D') {
+            return $this->response->setJSON(['status' => false, 'message' => 'Indikator tidak aktif']);
+        }
+
         $result = $this->model->canInputDate((int)$indicator_id, (int)$department_id, $tanggal);
         if (!$result['allowed']) {
             $existing = $this->model->hasExistingData((int)$indicator_id, (int)$department_id, $tanggal);
@@ -493,6 +499,11 @@ class LoadModuleForminputIkp extends AppController
         $indicator_id = (int) $this->request->getPost('indicator_id');
         $department_id = (int) $this->request->getPost('department_id');
         $tanggal = $this->request->getPost('tanggal') ?? date('Y-m-d');
+
+        $indicator = $this->model->getIndicatorInfo($indicator_id);
+        if ($indicator && $indicator->indicator_record_status === 'D') {
+            return $this->response->setJSON(['allowed' => false, 'message' => 'Indikator tidak aktif']);
+        }
 
         $result = $this->model->canInputDate($indicator_id, $department_id, $tanggal);
 

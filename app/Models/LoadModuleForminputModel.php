@@ -47,6 +47,7 @@ class LoadModuleForminputModel extends Model
                 qig.group_department_id AS department_id,
                 qig.group_days,
                 qi.indicator_id,
+                qi.indicator_category_id,
                 qi.indicator_element,
                 qi.indicator_target,
                 qi.indicator_units,
@@ -54,12 +55,12 @@ class LoadModuleForminputModel extends Model
                 qi.indicator_target_calculation,
                 qi.indicator_factors,
                 qi.indicator_frequency,
+                qi.indicator_record_status,
                 mid.department_name
             ');
             $builder->join($this->tablePrefix . 'quality_indicator qi', 'qi.indicator_id = qig.group_indicator_id', 'left');
             $builder->join('master_institution_department mid', 'mid.department_id = qig.group_department_id', 'left');
             $builder->where('qi.indicator_category_id', $this->categoryId);
-            $builder->where('qi.indicator_record_status', 'A');
             $builder->where('qig.group_record_status', 'A');
             $builder->groupStart();
             $builder->where('qig.group_period', $tahun);
@@ -80,13 +81,14 @@ class LoadModuleForminputModel extends Model
             $builder->groupBy('qig.group_indicator_id, qig.group_department_id');
             $builder->orderBy('qi.indicator_id ASC');
         } else {
-            // Regular modules (INM) - uses quality_indicator_group
+            // Regular modules (INM) - uses quality_indicator_group (same pattern as IMPRS)
             $builder = $db->table($this->tablePrefix . 'quality_indicator_group qig');
             $builder->select('
                 qig.group_indicator_id,
-                qig.group_department_id,
+                qig.group_department_id AS department_id,
                 qig.group_days,
                 qi.indicator_id,
+                qi.indicator_category_id,
                 qi.indicator_element,
                 qi.indicator_target,
                 qi.indicator_units,
@@ -94,46 +96,13 @@ class LoadModuleForminputModel extends Model
                 qi.indicator_target_calculation,
                 qi.indicator_factors,
                 qi.indicator_frequency,
-                mid.department_id,
+                qi.indicator_record_status,
                 mid.department_name
             ');
             $builder->join($this->tablePrefix . 'quality_indicator qi', 'qi.indicator_id = qig.group_indicator_id', 'left');
             $builder->join('master_institution_department mid', 'mid.department_id = qig.group_department_id', 'left');
             $builder->where('qi.indicator_category_id', $this->categoryId);
-
-            if ($bulan !== null) {
-                $selectedPeriod = $tahun . '-' . str_pad($bulan, 2, '0', STR_PAD_LEFT);
-                $currentPeriod = date('Y-m');
-                $tableResult = $this->tablePrefix . 'quality_indicator_result';
-
-                $deptCondition = ($departmentId !== null && $departmentId > 0)
-                    ? "qir.result_department_id = {$departmentId}"
-                    : "qir.result_department_id = qig.group_department_id";
-
-                $existsSql = "EXISTS (
-                    SELECT 1 FROM {$tableResult} qir
-                    WHERE qir.result_indicator_id = qi.indicator_id
-                    AND {$deptCondition}
-                    AND qir.result_record_status IN ('D', 'A')
-                    AND YEAR(qir.result_period) = {$tahun}
-                    AND MONTH(qir.result_period) = {$bulan}
-                )";
-
-                if ($selectedPeriod == $currentPeriod) {
-                    $builder->where('qi.indicator_record_status', 'A');
-                    $builder->where($existsSql, null, false);
-                } else {
-                    $builder->where($existsSql, null, false);
-                }
-            } else {
-                $tableResult = $this->tablePrefix . 'quality_indicator_result';
-                $builder->where("EXISTS (
-                    SELECT 1 FROM {$tableResult} qir
-                    WHERE qir.result_indicator_id = qi.indicator_id
-                    AND qir.result_record_status IN ('D', 'A')
-                )", null, false);
-            }
-
+            $builder->where('qig.group_record_status', 'A');
             $builder->groupStart();
             $builder->where('qig.group_period', $tahun);
             $builder->orWhere('qig.group_period', $tahun - 1);
@@ -151,6 +120,7 @@ class LoadModuleForminputModel extends Model
             }
 
             $builder->groupBy('qig.group_indicator_id, qig.group_department_id');
+            $builder->orderBy('qi.indicator_id ASC');
         }
 
         return $builder->get()->getResult();
@@ -612,7 +582,7 @@ class LoadModuleForminputModel extends Model
         };
     }
 
-    public function getPendingApproval(int $tahun, int $bulan, ?int $departmentId = null)
+    public function getPendingApproval(int $tahun, int $bulan, ?int $departmentId = null, ?int $indicatorId = null)
     {
         $db = db_connect();
         $bulanStr = str_pad((string) $bulan, 2, '0', STR_PAD_LEFT);
@@ -649,6 +619,11 @@ class LoadModuleForminputModel extends Model
         if (!empty($departmentId)) {
             $sql .= " AND qir.result_department_id = ?";
             $params[] = $departmentId;
+        }
+
+        if (!empty($indicatorId)) {
+            $sql .= " AND qir.result_indicator_id = ?";
+            $params[] = $indicatorId;
         }
 
         $sql .= " ORDER BY qir.result_indicator_id, qir.result_department_id, qir.result_period ASC";
@@ -690,6 +665,47 @@ class LoadModuleForminputModel extends Model
     }
 
     /**
+     * Ambil daftar indikator yang memiliki data draft (result_record_status='D')
+     * untuk kombinasi tahun+bulan+category tertentu.
+     *
+     * @return array<int, array{indicator_id:int, indicator_element:string}>
+     */
+    public function getActiveIndicatorsWithDraft(int $tahun, int $bulan, ?int $departmentId = null): array
+    {
+        $db = db_connect();
+        $bulanStr = str_pad((string) $bulan, 2, '0', STR_PAD_LEFT);
+
+        $sql = "
+            SELECT DISTINCT
+                qi.indicator_id,
+                qi.indicator_element
+            FROM {$this->tablePrefix}quality_indicator_result qir
+            INNER JOIN {$this->tablePrefix}quality_indicator qi ON qi.indicator_id = qir.result_indicator_id
+            WHERE qir.result_record_status = 'D'
+              AND qi.indicator_category_id = ?
+              AND YEAR(qir.result_period) = ?
+              AND MONTH(qir.result_period) = ?
+        ";
+        $params = [$this->categoryId, $tahun, $bulanStr];
+
+        if (!empty($departmentId)) {
+            $sql .= " AND qir.result_department_id = ?";
+            $params[] = $departmentId;
+        }
+
+        $sql .= " ORDER BY qi.indicator_element ASC";
+
+        $rows = $db->query($sql, $params)->getResult();
+
+        return array_map(function ($r) {
+            return [
+                'indicator_id'      => (int) $r->indicator_id,
+                'indicator_element' => $r->indicator_element ?? '(Tanpa Nama)',
+            ];
+        }, $rows);
+    }
+
+    /**
      * Rekap bulanan per indikator, di-filter ke indikator yang memiliki data draft (status D)
      * pada bulan terpilih. Untuk setiap indikator yang lolos filter, hitung SUM(num)/SUM(denum)
      * per bulan (Jan-Des) pada tahun terpilih, kemudian nilai = (sum_num / sum_denum) * factor * 100.
@@ -704,7 +720,7 @@ class LoadModuleForminputModel extends Model
      *     months:array<int, array{num:float, denum:float, nilai:?float, has_draft:bool, has_approved:bool}>
      * }>
      */
-    public function getRecapByIndicatorWithDraft(int $tahun, int $bulan, ?int $departmentId = null): array
+    public function getRecapByIndicatorWithDraft(int $tahun, int $bulan, ?int $departmentId = null, ?int $indicatorId = null): array
     {
         $db = db_connect();
 
@@ -722,6 +738,10 @@ class LoadModuleForminputModel extends Model
         if ($departmentId !== null && $departmentId > 0) {
             $draftSql .= " AND qir.result_department_id = ?";
             $draftParams[] = $departmentId;
+        }
+        if (!empty($indicatorId)) {
+            $draftSql .= " AND qir.result_indicator_id = ?";
+            $draftParams[] = $indicatorId;
         }
         $draftRows = $db->query($draftSql, $draftParams)->getResultArray();
         $indicatorIds = array_map(static fn($r) => (int) $r['result_indicator_id'], $draftRows);

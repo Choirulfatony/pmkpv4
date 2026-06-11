@@ -77,6 +77,7 @@ class Approval extends AppController
         $bulan = (int) ($this->request->getPost('bulan') ?? date('m'));
         $tanggal = $this->request->getPost('tanggal') ?? '';
         $departmentId = (int) ($this->request->getPost('department') ?? 0);
+        $indicatorId = (int) ($this->request->getPost('indicator_id') ?? 0);
 
         if (!isset($this->modules[$module])) {
             return $this->response->setJSON(['status' => false, 'message' => 'Modul tidak valid']);
@@ -84,7 +85,7 @@ class Approval extends AppController
 
         $cfg = $this->modules[$module];
         $model = new LoadModuleForminputModel($cfg['prefix'], $cfg['categoryId']);
-        $data = $model->getPendingApproval($tahun, $bulan, $departmentId > 0 ? $departmentId : null);
+        $data = $model->getPendingApproval($tahun, $bulan, $departmentId > 0 ? $departmentId : null, $indicatorId > 0 ? $indicatorId : null);
 
         if (!empty($tanggal)) {
             $data = array_filter($data, function ($row) use ($tanggal) {
@@ -126,6 +127,34 @@ class Approval extends AppController
     }
 
     /**
+     * AJAX: Ambil daftar indikator yang punya data draft untuk periode/modul tertentu.
+     */
+    public function ajaxGetIndicators()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Session expired, silakan login ulang']);
+        }
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
+        }
+
+        $module = $this->request->getPost('module') ?? 'inm';
+        $tahun = (int) ($this->request->getPost('tahun') ?? date('Y'));
+        $bulan = (int) ($this->request->getPost('bulan') ?? date('m'));
+        $departmentId = (int) ($this->request->getPost('department') ?? 0);
+
+        if (!isset($this->modules[$module])) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Modul tidak valid']);
+        }
+
+        $cfg = $this->modules[$module];
+        $model = new LoadModuleForminputModel($cfg['prefix'], $cfg['categoryId']);
+        $indicators = $model->getActiveIndicatorsWithDraft($tahun, $bulan, $departmentId > 0 ? $departmentId : null);
+
+        return $this->response->setJSON(['status' => true, 'data' => $indicators]);
+    }
+
+    /**
      * Rekap bulanan per indikator, di-filter ke indikator yang memiliki data draft (status D)
      * pada bulan yang dipilih. Untuk modul approval (siimut/approval/{module}).
      */
@@ -142,6 +171,7 @@ class Approval extends AppController
         $tahun        = (int) ($this->request->getPost('tahun') ?? date('Y'));
         $bulan        = (int) ($this->request->getPost('bulan') ?? date('m'));
         $departmentId = (int) ($this->request->getPost('department') ?? 0);
+        $indicatorId  = (int) ($this->request->getPost('indicator_id') ?? 0);
 
         if (!isset($this->modules[$module])) {
             return $this->response->setJSON(['status' => false, 'message' => 'Modul tidak valid']);
@@ -149,7 +179,7 @@ class Approval extends AppController
 
         $cfg   = $this->modules[$module];
         $model = new LoadModuleForminputModel($cfg['prefix'], $cfg['categoryId']);
-        $data  = $model->getRecapByIndicatorWithDraft($tahun, $bulan, $departmentId > 0 ? $departmentId : null);
+        $data  = $model->getRecapByIndicatorWithDraft($tahun, $bulan, $departmentId > 0 ? $departmentId : null, $indicatorId > 0 ? $indicatorId : null);
 
         return $this->response->setJSON(['status' => true, 'data' => $data]);
     }
@@ -246,14 +276,95 @@ class Approval extends AppController
         }
 
         $model = new ApprovalRequestModel();
+        $request = $model->getById($id);
+
+        if (!$request) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Data request tidak ditemukan']);
+        }
+
         $adminId = (int) (session('profile_id') ?? 0);
         $saved = $model->approveRequest($id, $adminId);
 
-        if ($saved) {
-            return $this->response->setJSON(['status' => true, 'message' => 'Permintaan disetujui']);
+        if (!$saved) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Gagal menyetujui permintaan']);
         }
 
-        return $this->response->setJSON(['status' => false, 'message' => 'Gagal menyetujui permintaan']);
+        // ===== Jika open_period → update group_days otomatis =====
+        if ($request->ar_action_type === 'open_period') {
+            $indicatorId  = $request->ar_indicator_id;
+            $departmentId = $request->ar_department_id;
+            $periodStart  = $request->ar_period;
+            $periodEnd    = $request->ar_period_end;
+
+            if ($indicatorId && $departmentId && $periodStart && $periodEnd) {
+                $groupType = $request->ar_group_type;
+                if (!$groupType) {
+                    $db2 = db_connect();
+                    $catRow = $db2->table('quality_indicator')
+                        ->select('indicator_category_id')
+                        ->where('indicator_id', $indicatorId)
+                        ->get()
+                        ->getRow();
+                    $catId = $catRow ? $catRow->indicator_category_id : null;
+                    if (!$catId) {
+                        // Fallback: check local_quality_indicator
+                        $catRow = $db2->table('local_quality_indicator')
+                            ->select('indicator_category_id')
+                            ->where('indicator_id', $indicatorId)
+                            ->get()
+                            ->getRow();
+                        $catId = $catRow ? $catRow->indicator_category_id : null;
+                    }
+                    $catMap = ['4' => '1', '5' => '5', '6' => '6', '7' => '7'];
+                    $groupType = $catMap[$catId] ?? null;
+                }
+
+                $startDate = new \DateTime($periodStart);
+                $endDate   = new \DateTime($periodEnd);
+                $groupDays = (int) $startDate->diff($endDate)->days + 1;
+                if ($groupDays < 0) $groupDays = 0;
+
+                $db     = db_connect();
+                $period = substr($periodStart, 0, 4);
+                $where  = [
+                    'group_department_id' => (string) $departmentId,
+                    'group_indicator_id'  => (string) $indicatorId,
+                    'group_period'        => $period,
+                    'group_record_status' => 'A',
+                ];
+                if ($groupType) {
+                    $where['group_type'] = (int) $groupType;
+                }
+
+                $tableMap = [1 => 'quality_indicator_group', 5 => 'local_quality_indicator_group', 6 => 'local_quality_indicator_group', 7 => 'local_quality_indicator_group'];
+                $tbl = $groupType ? ($tableMap[(int) $groupType] ?? 'quality_indicator_group') : 'quality_indicator_group';
+
+                $existing = $db->table($tbl)->where($where)->get()->getRow();
+                if ($existing) {
+                    $db->table($tbl)->where($where)->update(['group_days' => $groupDays]);
+                } else {
+                    // Get institution_code from another existing record for same dept
+                    $refRow = $db->table($tbl)
+                        ->select('group_institution_code')
+                        ->where('group_department_id', (string) $departmentId)
+                        ->where('group_record_status', 'A')
+                        ->get()
+                        ->getRow();
+                    $insCode = $refRow ? $refRow->group_institution_code : 'RSSM';
+                    $db->table($tbl)->insert([
+                        'group_indicator_id'     => (string) $indicatorId,
+                        'group_department_id'    => (string) $departmentId,
+                        'group_institution_code' => $insCode,
+                        'group_period'           => $period,
+                        'group_type'             => (int) $groupType,
+                        'group_days'             => $groupDays,
+                        'group_record_status'    => 'A',
+                    ]);
+                }
+            }
+        }
+
+        return $this->response->setJSON(['status' => true, 'message' => 'Permintaan disetujui']);
     }
 
     public function ajaxRejectRequest()

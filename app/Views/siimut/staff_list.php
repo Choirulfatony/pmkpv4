@@ -1,4 +1,21 @@
 <div class="container-fluid">
+    <style>
+        #table-staf_paginate .pagination .page-link {
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+        #table-staf_paginate .pagination {
+            margin-bottom: 0;
+        }
+        #table-staf_length select {
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+        #table-staf_filter input {
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+    </style>
     <div class="row mb-3">
         <div class="col-md-3 col-sm-6">
             <div class="info-box">
@@ -70,6 +87,7 @@ $(document).ready(function() {
     table = $('#table-staf').DataTable({
         processing: true,
         serverSide: true,
+        searching: false,
         ajax: {
             url: '<?= site_url('siimut/staf/ajax-get-data') ?>',
             type: 'POST',

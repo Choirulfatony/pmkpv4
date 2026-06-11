@@ -51,7 +51,8 @@
                             <?php endfor; ?>
                         </select>
                     </div>
-                    <!-- Departemen Filter -->
+                    <!-- Departemen Filter (Admin only) -->
+                    <?php if ($role === 'ADMINISTRATOR'): ?>
                     <div class="input-group input-group-sm" style="width: 220px;">
                         <span class="input-group-text"><i class="fas fa-building"></i></span>
                         <select class="form-select form-select-sm" id="department" onchange="gantiDepartemen()">
@@ -74,8 +75,9 @@
                             <?php endif; ?>
                         </select>
                     </div>
-                    <!-- Draft Count Badge -->
-                    <?php if (!empty($totalDraft) && $totalDraft > 0): ?>
+                    <?php endif; ?>
+                    <!-- Draft Count Badge (Admin only) -->
+                    <?php if ($role === 'ADMINISTRATOR' && !empty($totalDraft) && $totalDraft > 0): ?>
                         <?php
                         $namaBulan = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
                         $breakdownLines = [];
@@ -86,7 +88,7 @@
                         }
                         $tooltipText = 'Tahun ' . $tahun . " | " . implode(' | ', $breakdownLines);
                         ?>
-                        <a href="<?= site_url('siimut/approval') ?>" class="badge bg-warning text-dark text-decoration-none"
+                        <a href="<?= site_url('siimut/approval/inm') ?>" class="badge bg-warning text-dark text-decoration-none"
                            title="<?= esc($tooltipText) ?>"
                            data-bs-toggle="tooltip" data-bs-placement="bottom"
                            style="font-size: 12px; padding: 6px 10px; cursor: pointer;">
@@ -196,7 +198,7 @@
 <script>
     var table_loquin;
     var vtahun = <?= isset($tahun) ? $tahun : "new Date().getFullYear()" ?>;
-    var vdepartment = '';
+    var vdepartment = <?= json_encode(($role !== 'ADMINISTRATOR' && $departmentId) ? (int) $departmentId : '') ?>;
     var target, factor, operator;
 
     $(document).ready(function() {

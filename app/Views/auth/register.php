@@ -68,11 +68,12 @@
                                 <label class="form-label fw-semibold">
                                     <i class="bi bi-gender-ambiguous me-1 text-primary"></i>Jenis Kelamin
                                 </label>
-                                <select name="profile_gender" class="form-select form-select-lg">
+                                <select name="profile_gender" class="form-select form-select-lg" required>
                                     <option value="">-- Pilih --</option>
                                     <option value="1">Laki-laki</option>
                                     <option value="2">Perempuan</option>
                                 </select>
+                                <div class="invalid-feedback">Pilih jenis kelamin</div>
                             </div>
                         </div>
 
@@ -86,6 +87,7 @@
                                        name="profile_birth_place" 
                                        class="form-control form-control-lg" 
                                        placeholder="Contoh: Surabaya">
+                                <div class="invalid-feedback">Masukkan tempat lahir</div>
                             </div>
                         </div>
 
@@ -97,7 +99,8 @@
                                 </label>
                                 <input type="date" 
                                        name="profile_dob" 
-                                       class="form-control form-control-lg">
+                                       class="form-control form-control-lg" required>
+                                <div class="invalid-feedback">Masukkan tanggal lahir</div>
                             </div>
                         </div>
 
@@ -112,7 +115,8 @@
                                     <input type="text" 
                                            name="profile_handphone1" 
                                            class="form-control form-control-lg" 
-                                           placeholder="08xxxxxxxxxx">
+                                           placeholder="08xxxxxxxxxx" required>
+                                    <div class="invalid-feedback">Masukkan nomor HP 1</div>
                                 </div>
                             </div>
                         </div>
@@ -129,6 +133,7 @@
                                            name="profile_handphone2" 
                                            class="form-control form-control-lg" 
                                            placeholder="08xxxxxxxxxx">
+                                    <div class="invalid-feedback">Masukkan nomor HP 2</div>
                                 </div>
                             </div>
                         </div>

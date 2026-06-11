@@ -39,6 +39,8 @@ class RekapLaporanInm extends AppController
         $draftByMonth = $this->rekapModel->getDraftCountByMonth((int) $tahun);
         $totalDraft = array_sum($draftByMonth);
 
+        $departmentId = session()->get('department_id') ?? null;
+
         // Jika ada indicator_id, tampilkan detail
         if ($indicatorId) {
             $detail = $this->rekapModel->getDetailByIdInm((int) $indicatorId);
@@ -64,6 +66,8 @@ class RekapLaporanInm extends AppController
                 'draftCounts'  => $draftCounts,
                 'draftByMonth' => $draftByMonth,
                 'totalDraft'   => $totalDraft,
+                'role'         => $role,
+                'departmentId' => $departmentId,
             ]),
             'menus'    => $menus
         ]);
@@ -83,9 +87,16 @@ class RekapLaporanInm extends AppController
             return $this->response->setJSON(['error' => 'Invalid request - no POST data', 'post_data' => $post]);
         }
 
-        $indicators = $this->rekapModel->getIndicatorInm($post, $departmentId ?? null);
         $tahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
         $departmentId = isset($post['vdepartment']) && $post['vdepartment'] !== '' ? (int) $post['vdepartment'] : null;
+
+        // Non-admin: filter by own department
+        $role = session()->get('user_role') ?? '';
+        if (!in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
+            $departmentId = session()->get('department_id') ?? null;
+        }
+
+        $indicators = $this->rekapModel->getIndicatorInm($post, $departmentId ?? null);
 
         // Ambil SEMUA data sekaligus (1 query saja)
         $indicatorIds = array_column($indicators, 'indicator_id');
@@ -104,7 +115,7 @@ class RekapLaporanInm extends AppController
             // [CHANGED] Tampilkan badge "Non-Aktif" kalo indicator_record_status = 'D'
             $badge = '';
             if (isset($indicator->indicator_record_status) && $indicator->indicator_record_status === 'D') {
-                $badge = ' <span class="badge bg-secondary ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>';
+                $badge = ' <span class="badge bg-warning text-dark ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>';
             }
             $row[] = '<div class="py-1 text-start ps-2">
                 <a href="javascript:void(0);" class="fw-semibold text-decoration-none" title="Detail Rekapan Ruangan" onclick="view_detail_inm(' . $indicator->indicator_id . ');">' 

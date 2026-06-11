@@ -48,6 +48,7 @@
                             <?php endfor; ?>
                         </select>
                     </div>
+                    <?php if ($role === 'ADMINISTRATOR'): ?>
                     <div class="input-group input-group-sm" style="width: 220px;">
                         <span class="input-group-text"><i class="fas fa-building"></i></span>
                         <select class="form-select form-select-sm" id="department" onchange="gantiDepartemen()">
@@ -70,11 +71,12 @@
                             <?php endif; ?>
                         </select>
                     </div>
-                    <?php if (!empty($totalDraft) && $totalDraft > 0): ?>
+                    <?php endif; ?>
+                    <?php if ($role === 'ADMINISTRATOR' && !empty($totalDraft) && $totalDraft > 0): ?>
                         <?php
                         $namaBulan = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
                         $breakdownLines = [];
-                        foreach ($draftByMonth as $bln => $cnt) {
+                        foreach (($draftByMonth ?? []) as $bln => $cnt) {
                             if ($cnt > 0) {
                                 $breakdownLines[] = $namaBulan[$bln] . ': ' . $cnt;
                             }
@@ -158,7 +160,7 @@
 <script>
     var table_loquin;
     var vtahun = <?= isset($tahun) ? $tahun : "new Date().getFullYear()" ?>;
-    var vdepartment = '';
+    var vdepartment = <?= json_encode(($role !== 'ADMINISTRATOR' && $departmentId) ? (int) $departmentId : '') ?>;
     var target, factor, operator;
 
     $(document).ready(function() {

@@ -32,7 +32,7 @@ class LoadModuleForminput extends AppController
         $bulan = $this->request->getGet('bulan') ?? date('m');
         $department_id = session()->get('department_id') ?? 0;
 
-        $departments = $this->model->getIndicators($tahun, $department_id, $bulan);
+        $departments = $this->model->getIndicators($tahun, $department_id);
         // Extract unique departments from the indicators list
         $deptMap = [];
         foreach ($departments as $dept) {
@@ -72,7 +72,8 @@ class LoadModuleForminput extends AppController
                 'departments'      => $departments,
                 'showAllOption'    => $showAllOption,
                 'userDepartmentId' => $userDepartmentId,
-                'profileId'        => session('profile_id') ?? 0
+                'profileId'        => session('profile_id') ?? 0,
+                'categoryId'       => '4'
             ]),
             'menus'        => $menus
         ]);
@@ -373,6 +374,11 @@ class LoadModuleForminput extends AppController
             return $this->response->setJSON(['status' => false, 'message' => 'Data tidak lengkap']);
         }
 
+        $indicator = $this->model->getIndicatorInfo((int)$indicator_id);
+        if ($indicator && $indicator->indicator_record_status === 'D') {
+            return $this->response->setJSON(['status' => false, 'message' => 'Indikator tidak aktif']);
+        }
+
         $result = $this->model->canInputDate((int)$indicator_id, (int)$department_id, $tanggal);
         if (!$result['allowed']) {
             $existing = $this->model->hasExistingData((int)$indicator_id, (int)$department_id, $tanggal);
@@ -387,7 +393,7 @@ class LoadModuleForminput extends AppController
 
         $usedApproval = false;
         if (!empty($result['restricted'])) {
-            $approvalModel = new ApprovalRequestModel();
+            $approvalModel = new \App\Models\ApprovalRequestModel();
             $userId = (int) (session('profile_id') ?? 0);
             if ($approvalModel->isApprovedForAction((int)$indicator_id, (string)$department_id, $tanggal, $userId, 'edit')) {
                 $result['restricted'] = false;
@@ -519,6 +525,11 @@ class LoadModuleForminput extends AppController
         $indicator_id = (int) $this->request->getPost('indicator_id');
         $department_id = (int) $this->request->getPost('department_id');
         $tanggal = $this->request->getPost('tanggal') ?? date('Y-m-d');
+
+        $indicator = $this->model->getIndicatorInfo($indicator_id);
+        if ($indicator && $indicator->indicator_record_status === 'D') {
+            return $this->response->setJSON(['allowed' => false, 'message' => 'Indikator tidak aktif']);
+        }
 
         $result = $this->model->canInputDate($indicator_id, $department_id, $tanggal);
 

@@ -9,7 +9,7 @@
                 </div>
                 <div class="flex-grow-1">
                     <h5 class="mb-1"><strong>Detail Rekap Indikator Mutu Prioritas Unit (IMPUnit)</strong></h5>
-                    <p class="mb-0">Indikator: <strong><?= isset($detail->indicator_element) ? esc($detail->indicator_element) : 'Data Detail' ?><?php if (isset($detail->indicator_record_status) && $detail->indicator_record_status === 'D'): ?> <span class="badge bg-secondary ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span><?php endif; ?></strong></p>
+                    <p class="mb-0">Indikator: <strong><?= isset($detail->indicator_element) ? esc($detail->indicator_element) : 'Data Detail' ?><?php if (isset($detail->indicator_record_status) && $detail->indicator_record_status === 'D'): ?> <span class="badge bg-warning text-dark ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span><?php endif; ?></strong></p>
                     <p class="mb-0">Target: <strong><?= isset($detail->indicator_target) ? esc($detail->indicator_target) : '-' ?></strong>
                         <span class="text-muted"><?= isset($detail->indicator_units) ? esc($detail->indicator_units) : '' ?></span>
                     </p>
@@ -36,7 +36,7 @@
                     <?php if (isset($detail->indicator_element)): ?>
                         <small class="ms-2">- <?= esc($detail->indicator_element) ?></small>
                         <?php if (isset($detail->indicator_record_status) && $detail->indicator_record_status === 'D'): ?>
-                            <span class="badge bg-secondary ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>
+                            <span class="badge bg-warning text-dark ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>
                         <?php endif; ?>
                     <?php endif; ?>
                 </h3>
@@ -477,7 +477,7 @@
                             '<div class="p-3 bg-light" style="border-top:2px solid #ffc107;">' +
                             '<div class="d-flex align-items-start gap-3 flex-wrap">' +
                             '<div><strong>Ruangan:</strong> ' + $('<span>').text(deptData.department_name).html() + '</div>' +
-                            '<div class="badge bg-warning text-dark fs-6">Hari ke-' + hari + '</div>' +
+                            '<div class="badge bg-secondary fs-6">Hari ke-' + hari + '</div>' +
                             '</div>' +
                             '<hr class="my-2">' +
                             '<div class="d-flex align-items-start gap-3 flex-wrap">' +

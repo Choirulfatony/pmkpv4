@@ -74,7 +74,7 @@
                             <i class="bi bi-bullseye me-1"></i>Target: <span id="indicatorTarget" class="fw-bold"></span>
                         </span>
 
-                        <span class="badge bg-secondary fs-6 py-2 px-3">
+                        <span class="badge bg-warning text-dark fs-6 py-2 px-3">
                             <i class="bi bi-rulers me-1"></i>Satuan: <span id="indicatorUnitsLabel" class="fw-bold"></span>
                         </span>
 
@@ -412,7 +412,7 @@
                     if (indicatorName) {
                         var nameText = response.indicator.indicator_element || '';
                         if (response.indicator.indicator_record_status === 'D') {
-                            nameText += ' <span class="badge bg-secondary ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>';
+                            nameText += ' <span class="badge bg-warning text-dark ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>';
                         }
                         indicatorName.innerHTML = nameText;
                     }

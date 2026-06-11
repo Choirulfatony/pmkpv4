@@ -11,7 +11,7 @@
                     <h5 class="mb-1"><strong>Detail Rekap Indikator Mutu Prioritas RS (IMPRS)</strong></h5>
                     <p class="mb-0">Indikator: <strong><?= isset($detail->indicator_element) ? esc($detail->indicator_element) : 'Data Detail' ?></strong>
                         <?php if (isset($detail->indicator_record_status) && $detail->indicator_record_status === 'D'): ?>
-                            <span class="badge bg-secondary ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>
+                            <span class="badge bg-warning text-dark ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>
                         <?php endif; ?>
                     </p>
                     <p class="mb-0">Target: <strong><?= isset($detail->indicator_target) ? esc($detail->indicator_target) : '-' ?></strong>
@@ -37,7 +37,7 @@
                     <i class="fas fa-table me-2"></i>
                     Detail Per Ruangan
                     <?php if (isset($detail->indicator_record_status) && $detail->indicator_record_status === 'D'): ?>
-                        <span class="badge bg-secondary ms-2" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>
+                        <span class="badge bg-warning text-dark ms-2" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>
                     <?php endif; ?>
                 </h3>
                 <div class="card-tools d-flex align-items-center gap-2">
@@ -451,7 +451,7 @@
                             '<div class="p-3 bg-light" style="border-top:2px solid #ffc107;">' +
                             '<div class="d-flex align-items-start gap-3 flex-wrap">' +
                             '<div><strong>Ruangan:</strong> ' + $('<span>').text(deptData.department_name).html() + '</div>' +
-                            '<div class="badge bg-warning text-dark fs-6">Hari ke-' + hari + '</div>' +
+                            '<div class="badge bg-secondary fs-6">Hari ke-' + hari + '</div>' +
                             '</div>' +
                             '<hr class="my-2">' +
                             '<div class="d-flex align-items-start gap-3 flex-wrap">' +

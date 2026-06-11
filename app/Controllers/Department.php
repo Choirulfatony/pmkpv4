@@ -26,9 +26,11 @@ class Department extends AppController
         }
 
         return $this->render('siimut/department_list', [
-            'judul' => 'Daftar Unit / Bagian',
-            'icon'  => '<i class="bi bi-building"></i>',
-            'total' => $this->departmentModel->getTotalDepartments(),
+            'judul'       => 'Daftar Unit / Bagian',
+            'icon'        => '<i class="bi bi-building"></i>',
+            'total'       => $this->departmentModel->getTotalDepartments(),
+            'totalInactive' => $this->departmentModel->getInactiveDepartmentsCount(),
+            'totalWithIndicators' => $this->departmentModel->getDepartmentsWithIndicatorCount(),
         ]);
     }
 
@@ -46,27 +48,28 @@ class Department extends AppController
 
         foreach ($result['data'] as $row) {
             $indicatorTypes = [
-                1 => ['label' => 'INM',     'color' => 'primary', 'module' => 'inm'],
-                5 => ['label' => 'IMPRS',   'color' => 'success', 'module' => 'imprs'],
-                6 => ['label' => 'IMPUNIT', 'color' => 'warning', 'module' => 'impunit'],
-                7 => ['label' => 'IKP',     'color' => 'info',    'module' => 'ikp'],
+                1 => ['label' => 'INM',     'icon' => 'bi-activity',       'color' => 'primary', 'module' => 'inm'],
+                5 => ['label' => 'IMPRS',   'icon' => 'bi-building',       'color' => 'success', 'module' => 'imprs'],
+                6 => ['label' => 'IMPUNIT', 'icon' => 'bi-diagram-3',      'color' => 'warning', 'module' => 'impunit'],
+                7 => ['label' => 'IKP',     'icon' => 'bi-heart-pulse',    'color' => 'info',    'module' => 'ikp'],
             ];
 
-            $badges = '';
+            $badges = '<div class="d-flex flex-wrap gap-1 justify-content-center">';
             foreach ($indicatorTypes as $type => $cfg) {
                 $count = $this->departmentModel->getIndicatorCount($row->department_id, $type);
                 $active = $count > 0;
-                $cls = $active ? 'btn-success' : 'btn-outline-secondary';
+                $cls = $active ? 'btn-outline-' . $cfg['color'] : 'btn-outline-secondary';
                 $title = $cfg['label'] . ($active ? " ({$count} indikator)" : ' (belum ada data)');
-                $badges .= '<button type="button" class="btn btn-sm btn-indicator ' . $cls . ' btn-show-indicators" '
+                $badges .= '<button type="button" class="btn btn-sm btn-icon ' . $cls . ' btn-show-indicators" '
                     . 'data-dept-id="' . $row->department_id . '" '
                     . 'data-dept-name="' . esc($row->department_name) . '" '
                     . 'data-type="' . $type . '" '
                     . 'data-label="' . $cfg['label'] . '" '
                     . 'title="' . $title . '">'
-                    . $cfg['label']
-                    . '</button> ';
+                    . '<i class="bi ' . $cfg['icon'] . '"></i>'
+                    . '</button>';
             }
+            $badges .= '</div>';
 
             $isAktif = $row->department_record_status === 'A';
             $disableChecked = $isAktif ? 'checked' : '';
@@ -635,5 +638,66 @@ class Department extends AppController
         }
 
         return $this->response->setJSON(['status' => false, 'message' => 'Gagal mengubah status']);
+    }
+
+    public function ajaxGetRequestStatus()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => false]);
+        }
+
+        $departmentId = $this->request->getPost('department_id');
+        $groupType    = $this->request->getPost('group_type');
+        $userId = (int) (session('profile_id') ?? 0);
+
+        if (!$departmentId || !$userId) {
+            return $this->response->setJSON(['status' => false, 'data' => []]);
+        }
+
+        $model = new \App\Models\ApprovalRequestModel();
+        $data = $model->getUserRequests($userId, (string) $departmentId, 'open_period', $groupType);
+
+        return $this->response->setJSON(['status' => true, 'data' => $data]);
+    }
+
+    public function ajaxRequestOpenPeriod()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $indicatorId   = (int) $this->request->getPost('indicator_id');
+        $departmentId  = $this->request->getPost('department_id');
+        $periodStart   = $this->request->getPost('period_start');
+        $periodEnd     = $this->request->getPost('period_end');
+        $reason        = trim($this->request->getPost('reason') ?? '');
+        $groupType     = $this->request->getPost('group_type');
+        $userId        = (int) (session('profile_id') ?? 0);
+
+        if (!$indicatorId || !$departmentId || !$periodStart || !$periodEnd || !$reason) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Data tidak lengkap']);
+        }
+
+        if ($periodStart > $periodEnd) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Tanggal mulai tidak boleh melebihi tanggal selesai']);
+        }
+
+        $approvalModel = new \App\Models\ApprovalRequestModel();
+        $saved = $approvalModel->saveOpenPeriodRequest(
+            $indicatorId,
+            (string) $departmentId,
+            $periodStart,
+            $periodEnd,
+            $reason,
+            $userId,
+            'open_period',
+            $groupType
+        );
+
+        if ($saved) {
+            return $this->response->setJSON(['status' => true, 'message' => 'Permohonan buka periode berhasil dikirim']);
+        }
+
+        return $this->response->setJSON(['status' => false, 'message' => 'Gagal mengirim permohonan']);
     }
 }

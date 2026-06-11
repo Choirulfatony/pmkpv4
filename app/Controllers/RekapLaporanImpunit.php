@@ -46,6 +46,8 @@ class RekapLaporanImpunit extends AppController
         // Total draft keseluruhan (jumlah baris draft, tanpa double-count)
         $totalDraft = array_sum($draftByMonth);
 
+        $departmentId = session()->get('department_id') ?? null;
+
         // Jika ada indicator_id, tampilkan detail
         if ($indicatorId) {
             $detail = $this->rekapModel->getDetailByIdImpunit((int) $indicatorId);
@@ -71,6 +73,8 @@ class RekapLaporanImpunit extends AppController
                 'draftCounts'  => $draftCounts,
                 'draftByMonth' => $draftByMonth,
                 'totalDraft'   => $totalDraft,
+                'role'         => $role,
+                'departmentId' => $departmentId,
             ]),
             'menus'    => $menus
         ]);
@@ -93,6 +97,12 @@ class RekapLaporanImpunit extends AppController
         $tahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
         $departmentId = isset($post['vdepartment']) && $post['vdepartment'] !== '' ? (int) $post['vdepartment'] : null;
 
+        // Non-admin: filter by own department
+        $role = session()->get('user_role') ?? '';
+        if (!in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
+            $departmentId = session()->get('department_id') ?? null;
+        }
+
         $indicators = $this->rekapModel->getIndicatorImpunit($post, $departmentId);
         log_message('error', 'IMPUnit - Indicators count: ' . count($indicators) . ', tahun: ' . $tahun);
 
@@ -114,7 +124,7 @@ class RekapLaporanImpunit extends AppController
             $row[] = '<div class="fw-bold">' . $no . '</div>';
 
             $nonActiveBadge = !empty($indicator->indicator_record_status) && $indicator->indicator_record_status === 'D'
-                ? ' <span class="badge bg-secondary ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>'
+                ? ' <span class="badge bg-warning text-dark ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>'
                 : '';
             $row[] = '<div class="py-1 text-start ps-2">
                 <a href="javascript:void(0);" class="fw-semibold text-decoration-none" title="Detail Rekapan Ruangan" onclick="view_detail_impunit(' . $indicator->indicator_id . ');">'

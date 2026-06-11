@@ -63,7 +63,7 @@
             </div>
         </div>
 
-        <?php if (!empty($showDepartmentFilter)): ?>
+        <?php if ($role === 'ADMINISTRATOR' && !empty($showDepartmentFilter)): ?>
         <!-- FILTER DEPARTEMEN -->
         <div class="col-md-3">
             <label class="form-label fw-semibold mb-1">Pilih Ruangan</label>
@@ -102,12 +102,14 @@
                 }
                 $tooltipText = 'Tahun ' . $tahun . " | " . implode(' | ', $breakdownLines);
                 ?>
-                <a href="<?= site_url('siimut/approval') ?>" class="badge bg-warning text-dark text-decoration-none"
+                <?php if ($role === 'ADMINISTRATOR'): ?>
+                <a href="<?= site_url('siimut/approval/inm') ?>" class="badge bg-warning text-dark text-decoration-none"
                    title="<?= esc($tooltipText) ?>"
                    data-bs-toggle="tooltip" data-bs-placement="bottom"
                    style="font-size: 12px; padding: 8px 12px; cursor: pointer;">
                     <i class="bi bi-clock me-1"></i> Draft Menunggu Approval: <?= $totalDraft ?>
                 </a>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
 
@@ -267,7 +269,7 @@
                 type: 'POST',
                 data: function(d) {
                     d.tahun = vtahun;
-                    d.department_id = $('#filter_department').length ? $('#filter_department').val() : '';
+                    d.department_id = <?= json_encode(($role !== 'ADMINISTRATOR' && $departmentId) ? (int) $departmentId : '') ?>;
                     return d;
                 },
                 dataSrc: 'data',
@@ -330,7 +332,7 @@
                     render: function(data, type, row) {
                         var badge = '';
                         if (row.indicator_record_status === 'D') {
-                            badge = ' <span class="badge bg-secondary ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>';
+                            badge = ' <span class="badge bg-warning text-dark ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>';
                         }
                         return '<div class="text-start">' + data + badge + '</div>';
                     }

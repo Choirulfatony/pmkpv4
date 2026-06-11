@@ -17,7 +17,7 @@
             </div>
         </div>
 
-        <?php if (!empty($showDepartmentFilter)): ?>
+        <?php if ($role === 'ADMINISTRATOR' && !empty($showDepartmentFilter)): ?>
         <div class="col-md-3">
             <label class="form-label fw-semibold mb-1">Pilih Ruangan</label>
             <select class="form-select form-select-sm" id="filter_department" onchange="gantiDepartemen()" style="max-width: 280px;">
@@ -43,7 +43,7 @@
         <?php endif; ?>
 
         <div class="col-md-<?= !empty($showDepartmentFilter) ? '3' : '9' ?> d-flex align-items-end">
-            <?php if (!empty($totalDraft) && $totalDraft > 0): ?>
+            <?php if ($role === 'ADMINISTRATOR' && !empty($totalDraft) && $totalDraft > 0): ?>
                 <?php
                 $namaBulan = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
                 $breakdownLines = [];
@@ -192,7 +192,7 @@
                 type: 'POST',
                 data: function(d) {
                     d.tahun = vtahun;
-                    d.department_id = $('#filter_department').length ? $('#filter_department').val() : '';
+                    d.department_id = <?= json_encode(($role !== 'ADMINISTRATOR' && $departmentId) ? (int) $departmentId : '') ?>;
                     return d;
                 },
                 dataSrc: 'data',
@@ -255,7 +255,7 @@
                     render: function(data, type, row) {
                         var badge = '';
                         if (row.indicator_record_status === 'D') {
-                            badge = ' <span class="badge bg-secondary ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>';
+                            badge = ' <span class="badge bg-warning text-dark ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>';
                         }
                         return '<div class="text-start">' + data + badge + '</div>';
                     }

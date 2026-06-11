@@ -11,10 +11,10 @@ class ApprovalRequestModel extends Model
     protected $table = 'approval_requests';
     protected $primaryKey = 'id';
     protected $allowedFields = [
-        'ar_indicator_id', 'ar_department_id', 'ar_period',
+        'ar_indicator_id', 'ar_department_id', 'ar_period', 'ar_period_end',
         'ar_reason', 'ar_status', 'ar_request_by',
         'ar_request_date', 'ar_approve_by', 'ar_approve_date', 'ar_notes',
-        'ar_action_type'
+        'ar_action_type', 'ar_group_type'
     ];
     protected $useTimestamps = false;
 
@@ -32,13 +32,30 @@ class ApprovalRequestModel extends Model
         ]);
     }
 
+    public function saveOpenPeriodRequest(int $indicatorId, string $departmentId, string $periodStart, string $periodEnd, string $reason, int $userId, string $actionType = 'open_period', ?string $groupType = null): bool
+    {
+        return (bool) $this->insert([
+            'ar_indicator_id'   => $indicatorId,
+            'ar_department_id'  => $departmentId,
+            'ar_period'         => $periodStart,
+            'ar_period_end'     => $periodEnd,
+            'ar_reason'         => $reason,
+            'ar_action_type'    => $actionType,
+            'ar_group_type'     => $groupType,
+            'ar_status'         => 'pending',
+            'ar_request_by'     => $userId,
+            'ar_request_date'   => date('Y-m-d H:i:s'),
+        ]);
+    }
+
     public function getPendingRequests(): array
     {
         $db = db_connect();
         return $db->table('approval_requests ar')
-            ->select('ar.*, up.profile_fullname as request_by_name, qi.indicator_element as indicator_name, mid.department_name')
+            ->select("ar.*, up.profile_fullname as request_by_name, COALESCE(qi.indicator_element, lqi.indicator_element) as indicator_name, mid.department_name, COALESCE(qi.indicator_category_id, lqi.indicator_category_id) as indicator_category_id")
             ->join('user_profile up', 'up.profile_id = ar.ar_request_by', 'left')
             ->join('quality_indicator qi', 'qi.indicator_id = ar.ar_indicator_id', 'left')
+            ->join('local_quality_indicator lqi', 'lqi.indicator_id = ar.ar_indicator_id', 'left')
             ->join('master_institution_department mid', 'mid.department_id = ar.ar_department_id', 'left')
             ->where('ar.ar_status', 'pending')
             ->orderBy('ar.ar_request_date', 'DESC')
@@ -50,11 +67,28 @@ class ApprovalRequestModel extends Model
     {
         $db = db_connect();
         return $db->table('approval_requests ar')
-            ->select('ar.*, up1.profile_fullname as request_by_name, up2.profile_fullname as approve_by_name, qi.indicator_element as indicator_name, mid.department_name')
+            ->select("ar.*, up1.profile_fullname as request_by_name, up2.profile_fullname as approve_by_name, COALESCE(qi.indicator_element, lqi.indicator_element) as indicator_name, mid.department_name, COALESCE(qi.indicator_category_id, lqi.indicator_category_id) as indicator_category_id")
             ->join('user_profile up1', 'up1.profile_id = ar.ar_request_by', 'left')
             ->join('user_profile up2', 'up2.profile_id = ar.ar_approve_by', 'left')
             ->join('quality_indicator qi', 'qi.indicator_id = ar.ar_indicator_id', 'left')
+            ->join('local_quality_indicator lqi', 'lqi.indicator_id = ar.ar_indicator_id', 'left')
             ->join('master_institution_department mid', 'mid.department_id = ar.ar_department_id', 'left')
+            ->orderBy('ar.ar_request_date', 'DESC')
+            ->get()
+            ->getResult();
+    }
+
+    public function getPendingByType(string $actionType): array
+    {
+        $db = db_connect();
+        return $db->table('approval_requests ar')
+            ->select("ar.*, up.profile_fullname as request_by_name, COALESCE(qi.indicator_element, lqi.indicator_element) as indicator_name, mid.department_name")
+            ->join('user_profile up', 'up.profile_id = ar.ar_request_by', 'left')
+            ->join('quality_indicator qi', 'qi.indicator_id = ar.ar_indicator_id', 'left')
+            ->join('local_quality_indicator lqi', 'lqi.indicator_id = ar.ar_indicator_id', 'left')
+            ->join('master_institution_department mid', 'mid.department_id = ar.ar_department_id', 'left')
+            ->where('ar.ar_status', 'pending')
+            ->where('ar.ar_action_type', $actionType)
             ->orderBy('ar.ar_request_date', 'DESC')
             ->get()
             ->getResult();
@@ -133,6 +167,35 @@ class ApprovalRequestModel extends Model
             ->where('ar_request_by', $userId)
             ->where('ar_status', 'approved')
             ->update(['ar_status' => 'completed']);
+    }
+
+    public function getUserRequests(int $userId, string $departmentId, ?string $actionType = null, ?string $groupType = null): array
+    {
+        $db = db_connect();
+        $q = $db->table('approval_requests ar')
+            ->select("ar.*, up.profile_fullname as approve_by_name, COALESCE(qi.indicator_element, lqi.indicator_element) as indicator_name")
+            ->join('user_profile up', 'up.profile_id = ar.ar_approve_by', 'left')
+            ->join('quality_indicator qi', 'qi.indicator_id = ar.ar_indicator_id', 'left')
+            ->join('local_quality_indicator lqi', 'lqi.indicator_id = ar.ar_indicator_id', 'left')
+            ->where('ar.ar_request_by', $userId)
+            ->where('ar.ar_department_id', $departmentId)
+            ->orderBy('ar.ar_request_date', 'DESC')
+            ->limit(5);
+
+        if ($actionType !== null) {
+            $q->where('ar.ar_action_type', $actionType);
+        }
+
+        if ($groupType !== null && $groupType !== '') {
+            $q->where('ar.ar_group_type', $groupType);
+        }
+
+        return $q->get()->getResult();
+    }
+
+    public function getById(int $id)
+    {
+        return $this->asObject()->find($id);
     }
 
     public function getRequestStatus(int $indicatorId, string $departmentId, string $period, int $userId)

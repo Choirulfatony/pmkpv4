@@ -1,4 +1,9 @@
 
+<style>
+    td.day-cell.cell-disabled { opacity: 0.5; cursor: default; }
+    td.day-cell.cell-disabled * { pointer-events: none; }
+</style>
+
 <div class="container-fluid py-4">
     <div class="form-inm-header">
         <div class="row align-items-center">
@@ -75,6 +80,9 @@
         <div class="card table-card">
             <div class="card-header">
                 <i class="bi bi-list-ul me-2"></i>Daftar Indikator INM
+                <button type="button" class="btn btn-light btn-sm float-end" onclick="openRequestBukaPeriodeModal()">
+                    <i class="bi bi-unlock me-1"></i> Minta Buka Periode
+                </button>
             </div>
             <div class="card-body p-2">
                 <div class="row mb-2">
@@ -96,6 +104,7 @@
                                 <input type="search" class="form-control form-control-sm" id="searchInput" onkeyup="filterIndicators()">
                             </label>
                             <button class="btn btn-sm btn-outline-secondary" onclick="loadData()" title="Reload Data"><i class="bi bi-arrow-clockwise"></i></button>
+                            <button class="btn btn-sm btn-outline-info" onclick="openHistoryModal()" title="Riwayat Permintaan"><i class="bi bi-clock-history"></i></button>
                         </div>
                     </div>
                 </div>
@@ -121,6 +130,45 @@
                     <span><span class="legend-box" style="background:#f8d7da"></span> Target Tidak Tercapai</span>
                     <span><span class="legend-box" style="background:#e2e3e5"></span> Belum Ada Data</span>
                     <span style="color:#0d6efd;font-weight:600;"><i class="bi bi-pencil-square"></i> Dapat Diinput</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Minta Buka Periode -->
+<div class="modal fade" id="modalBukaPeriode" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-lg-down">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title"><i class="bi bi-unlock me-1"></i> Minta Buka Periode</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label class="form-label fw-bold small mb-1">Indikator</label>
+                    <select class="form-select form-select-sm" id="bp-indicator">
+                        <option value="">-- Pilih Indikator --</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label fw-bold small mb-1">Periode Mulai</label>
+                    <input type="date" class="form-control form-control-sm" id="bp-period-start">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label fw-bold small mb-1">Periode Selesai</label>
+                    <input type="date" class="form-control form-control-sm" id="bp-period-end">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label fw-bold small mb-1">Alasan</label>
+                    <textarea class="form-control" id="bp-reason" rows="3" placeholder="Tulis alasan permintaan buka periode..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer d-flex flex-wrap gap-1">
+                <small class="text-muted"><i class="bi bi-info-circle"></i> Hari = Tgl Selesai &minus; Tgl Mulai</small>
+                <div class="d-flex gap-1 ms-auto">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="submitBukaPeriode()"><i class="bi bi-send me-1"></i> Kirim</button>
                 </div>
             </div>
         </div>
@@ -301,9 +349,58 @@
 </div>
 
 
+<!-- Modal Riwayat Permintaan -->
+<div class="modal fade" id="modalHistory" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title"><i class="bi bi-clock-history me-1"></i> Riwayat Permintaan</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="historyModalBody">
+                <div class="text-center py-3 text-muted">Memuat data...</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal View Detail Permintaan -->
+<div class="modal fade" id="modalViewRequest" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title"><i class="bi bi-info-circle me-1"></i> Detail Permintaan</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr><td class="text-muted small" style="width:100px;">ID</td><td id="view-request-id">-</td></tr>
+                    <tr><td class="text-muted small">Tgl Request</td><td id="view-request-date">-</td></tr>
+                    <tr><td class="text-muted small">Periode Mulai</td><td id="view-period-start">-</td></tr>
+                    <tr><td class="text-muted small">Periode Selesai</td><td id="view-period-end">-</td></tr>
+                    <tr><td class="text-muted small">Alasan</td><td id="view-reason">-</td></tr>
+                    <tr><td class="text-muted small">Status</td><td id="view-status">-</td></tr>
+                    <tr><td class="text-muted small">Disetujui Oleh</td><td id="view-approved-by">-</td></tr>
+                    <tr><td class="text-muted small">Tgl Proses</td><td id="view-approved-date">-</td></tr>
+                    <tr><td class="text-muted small">Catatan</td><td id="view-notes">-</td></tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <script>
     var currentUserId = <?= (int) ($profileId ?? 0) ?>;
     var modalInput = null;
+    var catId = '4';
+    var groupTypeMap = {4:1, 5:5, 6:6, 7:7};
 
     document.addEventListener('DOMContentLoaded', function() {
         modalInput = new bootstrap.Modal(document.getElementById('modalInput'));
@@ -412,6 +509,7 @@
             var row = data[i];
             var daily = row.daily || [];
             var freq = row.indicator_frequency || 'D';
+            var isInactive = row.indicator_record_status === 'D';
             html += '<tr class="indicator-row">';
             html += '<td class="text-center fw-bold">' + (i + 1) + '</td>';
             html += '<td class="text-start">' + escHtml(row.indicator_element) + ' <span class="badge bg-secondary ms-1">' + freq + '</span></td>';
@@ -433,12 +531,18 @@
                     cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
                 }
 
-                if (isInputable(item.hari, freq, row.group_days)) {
+                if (!isInactive && isInputable(item.hari, freq, row.group_days)) {
                     cellClass += ' cell-inputable';
                 }
+                if (isInactive) {
+                    cellClass += ' cell-disabled';
+                }
 
-                html += '<td class="' + cellClass + '" colspan="' + days + '" ' +
-                    'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')">' +
+                html += '<td class="' + cellClass + '" colspan="' + days + '"';
+                if (!isInactive) {
+                    html += ' onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')"';
+                }
+                html += '>' +
                     '<div class="fw-bold">' + nilaiDisplay + '</div>' +
                     '<div class="num-denum">' + (item.num || 0) + ' / ' + (item.denum || 0) + '</div></td>';
             } else if (freq === 'W') {
@@ -459,13 +563,19 @@
                         cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
                     }
 
-                    if (isInputable(item.hari, freq, row.group_days)) {
+                    if (!isInactive && isInputable(item.hari, freq, row.group_days)) {
                         cellClass += ' cell-inputable';
+                    }
+                    if (isInactive) {
+                        cellClass += ' cell-disabled';
                     }
 
                     var weekLabel = 'Mg ' + (item.week || (w + 1));
-                    html += '<td class="' + cellClass + '" colspan="' + colspan + '" ' +
-                        'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')">' +
+                    html += '<td class="' + cellClass + '" colspan="' + colspan + '"';
+                    if (!isInactive) {
+                        html += ' onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')"';
+                    }
+                    html += '>' +
                         '<div class="fw-bold">' + weekLabel + ': ' + nilaiDisplay + '</div>' +
                         '<div class="num-denum">' + (item.num || 0) + ' / ' + (item.denum || 0) + '</div></td>';
                 }
@@ -486,12 +596,18 @@
                         cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
                     }
 
-                    if (isInputable(item.hari, freq, row.group_days)) {
+                    if (!isInactive && isInputable(item.hari, freq, row.group_days)) {
                         cellClass += ' cell-inputable';
                     }
+                    if (isInactive) {
+                        cellClass += ' cell-disabled';
+                    }
 
-                    html += '<td class="' + cellClass + '" ' +
-                        'onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')">' +
+                    html += '<td class="' + cellClass + '"';
+                    if (!isInactive) {
+                        html += ' onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')"';
+                    }
+                    html += '>' +
                         '<div class="fw-bold">' + nilaiDisplay + '</div>' +
                         '<div class="num-denum">' + (item.num || 0) + ' / ' + (item.denum || 0) + '</div></td>';
                 }
@@ -933,6 +1049,7 @@
                     if (resp.status) {
                         toastSuccess(resp.message);
                         modalInput.hide();
+                        checkRequestStatus();
                     } else {
                         toastError(resp.message);
                     }
@@ -940,6 +1057,135 @@
             };
             xhr.send('indicator_id=' + indicator_id + '&department_id=' + department_id + '&tanggal=' + tanggal + '&reason=' + encodeURIComponent(reason) + '&action_type=' + action);
         });
+    }
+
+    function openRequestBukaPeriodeModal() {
+        document.getElementById('bp-period-start').value = '';
+        document.getElementById('bp-period-end').value = '';
+        document.getElementById('bp-reason').value = '';
+
+        var sel = document.getElementById('bp-indicator');
+        sel.innerHTML = '<option value="">-- Pilih Indikator --</option>';
+        if (_allData && _allData.length > 0) {
+            for (var i = 0; i < _allData.length; i++) {
+                var opt = document.createElement('option');
+                opt.value = _allData[i].indicator_id + '|' + _allData[i].department_id;
+                opt.textContent = _allData[i].indicator_element || 'Indikator #' + (i + 1);
+                sel.appendChild(opt);
+            }
+        }
+
+        var modal = new bootstrap.Modal(document.getElementById('modalBukaPeriode'));
+        modal.show();
+    }
+
+    function submitBukaPeriode() {
+        var val = document.getElementById('bp-indicator').value;
+        if (!val || val.indexOf('|') === -1) {
+            toastError('Pilih indikator terlebih dahulu');
+            return;
+        }
+        var parts = val.split('|');
+        var indicatorId = parts[0];
+        var departmentId = parts[1];
+        var periodStart = document.getElementById('bp-period-start').value;
+        var periodEnd = document.getElementById('bp-period-end').value;
+        var reason = document.getElementById('bp-reason').value.trim();
+
+        if (!periodStart || !periodEnd || !reason) {
+            toastError('Semua field harus diisi');
+            return;
+        }
+        if (periodStart > periodEnd) {
+            toastError('Periode mulai tidak boleh melebihi periode selesai');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Kirim permintaan buka periode?',
+            text: 'Periode ' + periodStart + ' s.d. ' + periodEnd,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, kirim',
+            cancelButtonText: 'Batal'
+        }).then(function(result) {
+            if (!result.isConfirmed) return;
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '<?= site_url('siimut/unit/ajax-request-open-period') ?>', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var resp = JSON.parse(xhr.responseText);
+                    if (resp.status) {
+                        toastSuccess(resp.message);
+                        bootstrap.Modal.getInstance(document.getElementById('modalBukaPeriode')).hide();
+                        checkRequestStatus();
+                    } else {
+                        toastError(resp.message);
+                    }
+                }
+            };
+            var grpType = groupTypeMap[catId] || '';
+            xhr.send('indicator_id=' + indicatorId + '&department_id=' + departmentId + '&period_start=' + periodStart + '&period_end=' + periodEnd + '&reason=' + encodeURIComponent(reason) + '&group_type=' + grpType);
+        });
+    }
+
+    function checkRequestStatus() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '<?= site_url('siimut/unit/ajax-get-request-status') ?>', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                var resp = JSON.parse(xhr.responseText);
+                if (resp.status && resp.data && resp.data.length > 0) {
+                    var html = '';
+                    for (var i = 0; i < resp.data.length; i++) {
+                        var r = resp.data[i];
+                        var statusBadge = r.ar_status === 'approved' ? '<span class="badge bg-success">Disetujui</span>' :
+                                          r.ar_status === 'rejected' ? '<span class="badge bg-danger">Ditolak</span>' :
+                                          '<span class="badge bg-warning text-dark">Pending</span>';
+                        var actionLabel = r.ar_action_type === 'open_period' ? 'Buka Periode' :
+                                          r.ar_action_type === 'delete' ? 'Hapus' : 'Edit';
+                        html += '<div class="accordion-item">';
+                        html += '    <h2 class="accordion-header">';
+                        html += '        <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#hist-' + i + '">';
+                        html += '            <div class="d-flex w-100 justify-content-between align-items-center me-3">';
+                        html += '                <span><strong>' + (r.ar_request_date || '-') + '</strong> — ' + actionLabel + '</span>';
+                        html += '                <span>' + statusBadge + '</span>';
+                        html += '            </div>';
+                        html += '        </button>';
+                        html += '    </h2>';
+                        html += '    <div id="hist-' + i + '" class="accordion-collapse collapse" data-bs-parent="#historyAccordion">';
+                        html += '        <div class="accordion-body py-2">';
+                        html += '            <table class="table table-sm table-borderless mb-0">';
+                        html += '                <tr><td class="text-muted" style="width:110px;">Indikator</td><td>' + escHtml(r.indicator_name || '-') + '</td></tr>';
+                        html += '                <tr><td class="text-muted">Periode</td><td>' + (r.ar_period || '-') + (r.ar_period_end ? ' s.d. ' + r.ar_period_end : '') + '</td></tr>';
+                        html += '                <tr><td class="text-muted">Alasan</td><td>' + escHtml(r.ar_reason) + '</td></tr>';
+                        html += '                <tr><td class="text-muted">Status</td><td>' + statusBadge + '</td></tr>';
+                        html += '                <tr><td class="text-muted">Diproses</td><td>' + escHtml(r.approve_by_name || '-') + '</td></tr>';
+                        if (r.ar_notes) html += '<tr><td class="text-muted">Catatan</td><td>' + escHtml(r.ar_notes) + '</td></tr>';
+                        html += '            </table>';
+                        html += '        </div>';
+                        html += '    </div>';
+                        html += '</div>';
+                    }
+                    document.getElementById('historyModalBody').innerHTML = '<div class="accordion" id="historyAccordion">' + html + '</div>';
+                } else {
+                    document.getElementById('historyModalBody').innerHTML = '<div class="text-center py-3 text-muted">Belum ada riwayat permintaan</div>';
+                }
+            }
+        };
+        var grpType = groupTypeMap[catId] || '';
+        xhr.send('action_type=open_period&department_id=' + document.getElementById('filter_department').value + '&category_id=' + catId + '&group_type=' + grpType);
+    }
+
+    function openHistoryModal() {
+        checkRequestStatus();
+        var modal = new bootstrap.Modal(document.getElementById('modalHistory'));
+        modal.show();
     }
 
     function toastSuccess(msg) {

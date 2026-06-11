@@ -175,6 +175,29 @@ class DepartmentModel extends Model
             ->countAllResults();
     }
 
+    public function getInactiveDepartmentsCount(): int
+    {
+        $db = db_connect();
+        return (int) $db->table('master_institution_department')
+            ->where('department_record_status', 'D')
+            ->countAllResults();
+    }
+
+    public function getDepartmentsWithIndicatorCount(): int
+    {
+        $db = db_connect();
+        return (int) $db->query("
+            SELECT COUNT(DISTINCT mid.department_id)
+            FROM master_institution_department mid
+            INNER JOIN (
+                SELECT result_department_id FROM local_quality_indicator_result
+                UNION
+                SELECT result_department_id FROM quality_indicator_result
+            ) qir ON qir.result_department_id = mid.department_id
+            WHERE mid.department_record_status = 'A'
+        ")->getResultArray()[0]['COUNT(DISTINCT mid.department_id)'] ?? 0;
+    }
+
     public function nameExists(string $name, int $excludeId = 0): bool
     {
         $db = db_connect();

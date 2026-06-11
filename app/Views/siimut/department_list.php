@@ -1,11 +1,79 @@
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
 <div class="container-fluid">
+    <style>
+        #table-unit_paginate .pagination .page-link {
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+
+        #table-unit_paginate .pagination {
+            margin-bottom: 0;
+        }
+
+        #table-unit_length select {
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+
+        #table-unit_filter input {
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+
+        .dataTables_info {
+            padding-top: 4px !important;
+            font-size: 12px;
+        }
+
+        .info-box {
+            min-height: 60px;
+        }
+
+        .info-box .info-box-icon {
+            width: 50px;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width:576px) {
+            .info-box .info-box-icon {
+                width: 40px;
+                font-size: 1rem;
+            }
+
+            .info-box-content .info-box-text {
+                font-size: 12px;
+            }
+
+            .info-box-content .info-box-number {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
     <div class="row mb-3">
-        <div class="col-md-3 col-sm-6">
+        <div class="col-md-4 col-sm-6 col-12 mb-2 mb-sm-0">
             <div class="info-box">
                 <span class="info-box-icon bg-info"><i class="bi bi-building"></i></span>
                 <div class="info-box-content">
-                    <span class="info-box-text">Total Unit / Bagian</span>
+                    <span class="info-box-text">Unit Aktif</span>
                     <span class="info-box-number"><?= $total ?></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6 col-12 mb-2 mb-sm-0">
+            <div class="info-box">
+                <span class="info-box-icon bg-secondary"><i class="bi bi-building-slash"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Unit Nonaktif</span>
+                    <span class="info-box-number"><?= $totalInactive ?></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-12 col-12">
+            <div class="info-box">
+                <span class="info-box-icon bg-success"><i class="bi bi-bar-chart"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Unit dengan Indikator</span>
+                    <span class="info-box-number"><?= $totalWithIndicators ?></span>
                 </div>
             </div>
         </div>
@@ -14,15 +82,15 @@
     <div class="card card-outline">
         <div class="card-header">
             <div class="card-tools d-flex flex-wrap justify-content-between w-100 align-items-center gap-2">
-                <form onsubmit="event.preventDefault(); table.draw();" class="mb-0">
-                    <div class="input-group input-group-sm" style="max-width: 260px;">
+                <form onsubmit="event.preventDefault(); table.draw();" class="mb-0 flex-fill" style="min-width:180px;max-width:260px;">
+                    <div class="input-group input-group-sm w-100">
                         <input type="text" id="cari_unit" class="form-control" placeholder="Cari nama unit...">
                         <button class="btn btn-outline-secondary" type="submit" title="Cari">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
                 </form>
-                <div class="d-flex gap-1">
+                <div class="d-flex flex-wrap gap-1">
                     <a href="<?= site_url('siimut/unit/create') ?>" class="btn btn-sm btn-outline-primary">
                         <i class="fas fa-plus-circle"></i> Tambah Unit
                     </a>
@@ -35,16 +103,16 @@
                 </div>
             </div>
         </div>
-        <div class="card-body" style="overflow-x:auto;">
+        <div class="card-body">
             <div class="table-responsive">
                 <table id="table-unit" class="table table-striped table-bordered" style="width:100%;">
                     <thead>
                         <tr>
                             <th class="text-center" style="width:40px;">#</th>
-                            <th>Nama Unit / Bagian</th>
-                            <th>Keterangan</th>
-                            <th>Akses Indikator</th>
-                            <th class="text-center">Status</th>
+                            <th style="min-width:150px;">Nama Unit / Bagian</th>
+                            <th style="min-width:120px;">Keterangan</th>
+                            <th style="min-width:200px;">Akses Indikator</th>
+                            <th class="text-center" style="width:80px;">Status</th>
                             <th class="text-center" style="width:100px;">Aksi</th>
                         </tr>
                     </thead>
@@ -53,10 +121,10 @@
         </div>
         <div class="card-footer text-muted small">
             <i class="bi bi-info-circle"></i>
-            <strong>Keterangan Akses Indikator:</strong>
-            <span class="badge bg-success ms-1">Hijau</span> = Unit/bagian memiliki data indikator |
-            <span class="badge bg-secondary ms-1">Abu-abu</span> = Belum ada data indikator |
-            INM | IMPRS | IMPUNIT | IKP
+            <strong>Keterangan Akses Indikator:</strong><br>
+            <span class="badge bg-success ms-1 mt-1">Hijau</span> = Unit/bagian memiliki data indikator<br>
+            <span class="badge bg-secondary ms-1">Abu-abu</span> = Belum ada data indikator
+            <span class="mt-1 d-inline-block">INM | IMPRS | IMPUNIT | IKP</span>
         </div>
     </div>
 </div>
@@ -68,6 +136,7 @@
         table = $('#table-unit').DataTable({
             processing: true,
             serverSide: true,
+            responsive: true,
             searching: false,
             ajax: {
                 url: '<?= site_url('siimut/unit/ajax-get-data') ?>',
@@ -87,12 +156,14 @@
                     data: 'nama'
                 },
                 {
-                    data: 'keterangan'
+                    data: 'keterangan',
+                    responsivePriority: 2
                 },
                 {
                     data: 'akses',
                     className: 'text-center',
-                    orderable: false
+                    orderable: false,
+                    responsivePriority: 1
                 },
                 {
                     data: 'status',
@@ -107,6 +178,19 @@
             ],
             order: [
                 [1, 'asc']
+            ],
+            columnDefs: [{
+                    responsivePriority: 1,
+                    targets: 1
+                },
+                {
+                    responsivePriority: 2,
+                    targets: 3
+                },
+                {
+                    responsivePriority: 3,
+                    targets: 5
+                }
             ],
             language: {
                 processing: "Memuat...",
@@ -227,23 +311,21 @@
                 </div>
             </div>
             <div class="modal-body p-2">
-                <div class="table-responsive">
-                    <table class="table table-sm table-striped table-bordered mb-0" id="table-indicator-modal" style="width:100%;">
-                        <thead>
-                            <tr>
-                                <th class="text-center" style="width:40px;">#</th>
-                                <th>Periode</th>
-                                <th>Judul Indikator</th>
-                                <th class="text-center">Group Days</th>
-                                <th class="text-center">Status</th>
-                                <th class="text-center text-nowrap">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="indicator-modal-body"></tbody>
-                    </table>
-                </div>
+                <table class="table table-sm table-striped table-bordered mb-0 w-100" id="table-indicator-modal">
+                    <thead>
+                        <tr>
+                            <th class="text-center" data-priority="3">#</th>
+                            <th data-priority="1">Periode</th>
+                            <th data-priority="2">Judul Indikator</th>
+                            <th class="text-center" data-priority="5">Group Days</th>
+                            <th class="text-center" data-priority="4">Status</th>
+                            <th class="text-center text-nowrap" data-priority="1">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="indicator-modal-body"></tbody>
+                </table>
             </div>
-            <div class="modal-footer justify-content-between flex-wrap gap-1">
+            <div class="modal-footer d-flex justify-content-between align-items-center flex-wrap gap-1 px-2 py-2">
                 <small class="text-muted"><i class="bi bi-pencil"></i> edit · <i class="bi bi-trash"></i> hapus</small>
                 <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Tutup</button>
             </div>
@@ -279,10 +361,18 @@
                         <div class="text-danger small d-none" id="form-period-error"></div>
                     </div>
 
-                    <div class="mb-2">
-                        <label class="form-label small">Group Days</label>
-                        <input type="number" class="form-control form-control-sm" name="group_days" id="form-days" value="0">
-                        <div class="text-danger small d-none" id="form-days-error"></div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label small">Tanggal Mulai <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control form-control-sm" name="group_start_date" id="form-start-date">
+                            <div class="text-danger small d-none" id="form-start-date-error"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">Tanggal Selesai <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control form-control-sm" name="group_end_date" id="form-end-date">
+                            <div class="text-danger small d-none" id="form-end-date-error"></div>
+                        </div>
+                        <input type="hidden" name="group_days" id="form-days" value="0">
                     </div>
 
                     <div class="mb-0">
@@ -290,15 +380,19 @@
                         <input type="text" class="form-control form-control-sm" name="institution_code" id="form-institution-code" value="RSSM" maxlength="11">
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-check-lg"></i> Simpan</button>
+                <div class="modal-footer d-flex flex-wrap gap-1">
+                    <small class="text-muted"><i class="bi bi-info-circle"></i> Hari = Tgl Selesai &minus; Tgl Mulai</small>
+                    <div class="d-flex gap-1 ms-auto">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-check-lg"></i> Simpan</button>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 <script>
     var currentDeptId = 0;
     var currentGroupType = 0;
@@ -370,13 +464,17 @@
                             [5, 10, 25, 50],
                             [5, 10, 25, 50]
                         ],
-                        autoWidth: false,
+                        responsive: {
+                            details: {
+                                display: $.fn.dataTable.Responsive.display.modal({
+                                    header: function(row) {
+                                        return 'Detail Indikator';
+                                    }
+                                }),
+                                renderer: $.fn.dataTable.Responsive.renderer.listHiddenNodes()
+                            }
+                        },
                         order: [],
-                        columnDefs: [
-                            { targets: [0], width: '40px' },
-                            { targets: [3, 4], className: 'text-center' },
-                            { targets: [5], className: 'text-center text-nowrap' }
-                        ],
                         language: {
                             search: 'Cari:',
                             searchPlaceholder: 'Ketik kata kunci...',
@@ -414,7 +512,8 @@
         $('#modal-form-title').html('<i class="bi bi-plus-circle"></i> Tambah Indikator ' + currentLabel);
         $('#indicator-select-wrapper').show();
         $('#form-indicator-id').val('').trigger('change');
-        $('#form-period').val(new Date().getFullYear().toString());
+        $('#form-start-date').val('');
+        $('#form-end-date').val('');
         $('#form-days').val(0);
         $('#form-institution-code').val('RSSM');
         $('.text-danger.small').addClass('d-none');
@@ -452,6 +551,8 @@
         $('#modal-form-title').html('<i class="bi bi-pencil"></i> Edit Indikator');
         $('#indicator-select-wrapper').hide();
         $('#form-period').val(btn.data('period'));
+        $('#form-start-date').val('');
+        $('#form-end-date').val('');
         $('#form-days').val(btn.data('days'));
         $('#form-institution-code').val('RSSM');
         $('.text-danger.small').addClass('d-none');
@@ -499,13 +600,35 @@
         });
     });
 
+    // Auto-calculate days from date range
+    function calcDays() {
+        var start = $('#form-start-date').val();
+        var end = $('#form-end-date').val();
+        if (start && end) {
+            var d1 = new Date(start);
+            var d2 = new Date(end);
+            if (d2 >= d1) {
+                var diff = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
+                $('#form-days').val(diff);
+                return diff;
+            }
+        }
+        $('#form-days').val(0);
+        return 0;
+    }
+    $('#form-start-date, #form-end-date').on('change', calcDays);
+
     // Submit form add/edit
     $('#form-indicator-group').on('submit', function(e) {
         e.preventDefault();
         $('.text-danger.small').addClass('d-none');
+        $('.is-invalid').removeClass('is-invalid');
 
+        calcDays();
         var actionType = $('#form-action-type').val();
         var period = $('#form-period').val().trim();
+        var startDate = $('#form-start-date').val();
+        var endDate = $('#form-end-date').val();
         var days = parseInt($('#form-days').val()) || 0;
         var valid = true;
 
@@ -519,9 +642,23 @@
             valid = false;
         }
 
+        if (!startDate) {
+            $('#form-start-date').addClass('is-invalid');
+            $('#form-start-date-error').removeClass('d-none').text('Tanggal mulai wajib diisi');
+            valid = false;
+        }
+        if (!endDate) {
+            $('#form-end-date').addClass('is-invalid');
+            $('#form-end-date-error').removeClass('d-none').text('Tanggal selesai wajib diisi');
+            valid = false;
+        }
+        if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+            $('#form-end-date').addClass('is-invalid');
+            $('#form-end-date-error').removeClass('d-none').text('Tanggal selesai harus setelah tanggal mulai');
+            valid = false;
+        }
+
         if (days < 0) {
-            $('#form-days').addClass('is-invalid');
-            $('#form-days-error').removeClass('d-none').text('Group days tidak boleh minus');
             valid = false;
         }
 

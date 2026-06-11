@@ -39,6 +39,8 @@ class RekapLaporanImprs extends AppController
         $draftByMonth = $this->rekapModel->getDraftCountByMonth((int) $tahun);
         $totalDraft = array_sum($draftByMonth);
 
+        $departmentId = session()->get('department_id') ?? null;
+
         // Jika ada indicator_id, tampilkan detail
         if ($indicatorId) {
             $detail = $this->rekapModel->getDetailByIdImprs((int) $indicatorId);
@@ -64,6 +66,8 @@ class RekapLaporanImprs extends AppController
                 'draftCounts'  => $draftCounts,
                 'draftByMonth' => $draftByMonth,
                 'totalDraft'   => $totalDraft,
+                'role'         => $role,
+                'departmentId' => $departmentId,
             ]),
             'menus'    => $menus
         ]);
@@ -83,14 +87,20 @@ class RekapLaporanImprs extends AppController
             return $this->response->setJSON(['error' => 'Invalid request - no POST data', 'post_data' => $post]);
         }
 
-        $indicators = $this->rekapModel->getIndicatorImprs($post, $departmentId ?? null);
+        $tahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
+        $departmentId = isset($post['vdepartment']) && $post['vdepartment'] !== '' ? (int) $post['vdepartment'] : null;
+
+        // Non-admin: filter by own department
+        $role = session()->get('user_role') ?? '';
+        if (!in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
+            $departmentId = session()->get('department_id') ?? null;
+        }
+
+        $indicators = $this->rekapModel->getIndicatorImprs($post, $departmentId);
         log_message('error', 'Indicators count: ' . count($indicators));
 
         // Clear cache untuk memastikan data terbaru
         $this->rekapModel->clearCache();
-
-        $tahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
-        $departmentId = isset($post['vdepartment']) && $post['vdepartment'] !== '' ? (int) $post['vdepartment'] : null;
 
         // Ambil SEMUA data sekaligus (1 query saja)
         $indicatorIds = array_column($indicators, 'indicator_id');

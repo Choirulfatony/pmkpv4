@@ -101,6 +101,20 @@ $ADMINLTE_CSS     = $asset('https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-beta3/d
     --siimut-color-3: #0a5d6b;
     --siimut-color-rgb: 23, 162, 184;
 }
+.form-ikp-header,
+.page-ikp {
+    --siimut-color-1: #6f42c1;
+    --siimut-color-2: #5530a3;
+    --siimut-color-3: #3d1f7a;
+    --siimut-color-rgb: 111, 66, 193;
+}
+/*
+ * IKP table cell colour overrides (purple theme — no target/approval)
+ */
+.table-inm-ikp .cell-has-data { background-color: #f3e8ff !important; }
+.table-inm-ikp .cell-empty { background-color: #e2e3e5 !important; }
+.table-inm-ikp td.day-cell.cell-inputable .fw-bold { color: #6f42c1 !important; }
+.table-inm-ikp td.day-cell.cell-inputable .num-denum { color: #6f42c1 !important; }
 .header-row {
     background: linear-gradient(50deg, red, orange, yellow, green, blue, indigo, violet);
     background-size: 400% 400%;
@@ -130,7 +144,8 @@ $ADMINLTE_CSS     = $asset('https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-beta3/d
 .table-sm > :not(caption) > * > * { padding: 0.2rem 0.3rem; }
 .form-inm-header,
 .form-imprs-header,
-.form-impunit-header {
+.form-impunit-header,
+.form-ikp-header {
     color: white;
     padding: 20px;
     border-radius: 10px;
@@ -139,6 +154,7 @@ $ADMINLTE_CSS     = $asset('https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-beta3/d
 .form-inm-header { background: linear-gradient(135deg, var(--siimut-color-1) 0%, var(--siimut-color-2) 100%); }
 .form-imprs-header { background: linear-gradient(135deg, var(--siimut-color-1) 0%, var(--siimut-color-2) 100%); }
 .form-impunit-header { background: linear-gradient(135deg, var(--siimut-color-1) 0%, var(--siimut-color-2) 100%); }
+.form-ikp-header { background: linear-gradient(135deg, var(--siimut-color-1) 0%, var(--siimut-color-2) 100%); }
 .card-form-inm { border: none; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
 .card-form-inm .card-header {
     background: var(--bs-tertiary-bg);
@@ -147,14 +163,16 @@ $ADMINLTE_CSS     = $asset('https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-beta3/d
 }
 .btn-inm-primary,
 .btn-imprs-primary,
-.btn-impunit-primary {
+.btn-impunit-primary,
+.btn-ikp-primary {
     background: linear-gradient(135deg, var(--siimut-color-1) 0%, var(--siimut-color-2) 100%);
     border: none;
     color: white;
 }
 .btn-inm-primary:hover,
 .btn-imprs-primary:hover,
-.btn-impunit-primary:hover {
+.btn-impunit-primary:hover,
+.btn-ikp-primary:hover {
     background: linear-gradient(135deg, var(--siimut-color-2) 0%, var(--siimut-color-3) 100%);
     color: white;
 }
@@ -164,24 +182,26 @@ $ADMINLTE_CSS     = $asset('https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-beta3/d
 }
 .modal-header.modal-inm,
 .modal-header.modal-imprs,
-.modal-header.modal-impunit {
+.modal-header.modal-impunit,
+.modal-header.modal-ikp {
     background: linear-gradient(135deg, var(--siimut-color-1) 0%, var(--siimut-color-2) 100%);
     color: white;
 }
 .modal-inm .btn-close,
 .modal-imprs .btn-close,
-.modal-impunit .btn-close { filter: brightness(0) invert(1); }
+.modal-impunit .btn-close,
+.modal-ikp .btn-close { filter: brightness(0) invert(1); }
 .table-wrap { overflow-x: auto; max-width: 100%; border: 1px solid #dee2e6; border-radius: 8px; }
-.table-inm-inm, .table-inm-imprs, .table-inm-impunit {
+.table-inm-inm, .table-inm-imprs, .table-inm-impunit, .table-inm-ikp {
     margin-bottom: 0;
     border-collapse: separate;
     border-spacing: 0;
 }
-.table-inm-inm > thead, .table-inm-imprs > thead, .table-inm-impunit > thead {
+.table-inm-inm > thead, .table-inm-imprs > thead, .table-inm-impunit > thead, .table-inm-ikp > thead {
     background: linear-gradient(135deg, var(--siimut-color-1) 0%, var(--siimut-color-2) 100%);
     color: white;
 }
-.table-inm-inm > thead th, .table-inm-imprs > thead th, .table-inm-impunit > thead th {
+.table-inm-inm > thead th, .table-inm-imprs > thead th, .table-inm-impunit > thead th, .table-inm-ikp > thead th {
     position: sticky;
     top: 0;
     z-index: 2;
@@ -194,11 +214,13 @@ $ADMINLTE_CSS     = $asset('https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-beta3/d
 }
 .table-inm-inm > thead th.fixed-col,
 .table-inm-imprs > thead th.fixed-col,
-.table-inm-impunit > thead th.fixed-col { position: sticky; left: 0; z-index: 3; background: var(--siimut-color-2); }
+.table-inm-impunit > thead th.fixed-col,
+.table-inm-ikp > thead th.fixed-col { position: sticky; left: 0; z-index: 3; background: var(--siimut-color-2); }
 .table-inm-inm > thead th.fixed-col2,
 .table-inm-imprs > thead th.fixed-col2,
-.table-inm-impunit > thead th.fixed-col2 { position: sticky; z-index: 3; background: var(--siimut-color-2); }
-.table-inm-inm tbody td, .table-inm-imprs tbody td, .table-inm-impunit tbody td {
+.table-inm-impunit > thead th.fixed-col2,
+.table-inm-ikp > thead th.fixed-col2 { position: sticky; z-index: 3; background: var(--siimut-color-2); }
+.table-inm-inm tbody td, .table-inm-imprs tbody td, .table-inm-impunit tbody td, .table-inm-ikp tbody td {
     padding: 8px 6px;
     border: 1px solid #dee2e6;
     text-align: center;
@@ -207,10 +229,12 @@ $ADMINLTE_CSS     = $asset('https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-beta3/d
 }
 .table-inm-inm tbody td.fixed-col,
 .table-inm-imprs tbody td.fixed-col,
-.table-inm-impunit tbody td.fixed-col { position: sticky; left: 0; z-index: 1; background: white; }
+.table-inm-impunit tbody td.fixed-col,
+.table-inm-ikp tbody td.fixed-col { position: sticky; left: 0; z-index: 1; background: white; }
 .table-inm-inm tbody td.fixed-col2,
 .table-inm-imprs tbody td.fixed-col2,
-.table-inm-impunit tbody td.fixed-col2 { position: sticky; z-index: 1; background: white; }
+.table-inm-impunit tbody td.fixed-col2,
+.table-inm-ikp tbody td.fixed-col2 { position: sticky; z-index: 1; background: white; }
 .day-cell { cursor: pointer; min-width: 70px; transition: all 0.15s ease; }
 .day-cell:hover { transform: scale(1.05); box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1; position: relative; }
 .legend-box { display: inline-block; width: 16px; height: 16px; border-radius: 3px; border: 1px solid #dee2e6; vertical-align: middle; margin-right: 4px; }
@@ -228,13 +252,16 @@ td.day-cell.cell-inputable .num-denum { color: #0d6efd !important; }
 .day-header { font-weight: 600; font-size: 13px; }
 .table-inm-inm tbody tr.indicator-row:hover td,
 .table-inm-imprs tbody tr.indicator-row:hover td,
-.table-inm-impunit tbody tr.indicator-row:hover td { background-color: #e8f4fd; }
+.table-inm-impunit tbody tr.indicator-row:hover td,
+.table-inm-ikp tbody tr.indicator-row:hover td { background-color: #e8f4fd; }
 .table-inm-inm tbody tr.indicator-row:hover td.fixed-col,
 .table-inm-inm tbody tr.indicator-row:hover td.fixed-col2,
 .table-inm-imprs tbody tr.indicator-row:hover td.fixed-col,
 .table-inm-imprs tbody tr.indicator-row:hover td.fixed-col2,
 .table-inm-impunit tbody tr.indicator-row:hover td.fixed-col,
-.table-inm-impunit tbody tr.indicator-row:hover td.fixed-col2 { background-color: #e8f4fd; }
+.table-inm-impunit tbody tr.indicator-row:hover td.fixed-col2,
+.table-inm-ikp tbody tr.indicator-row:hover td.fixed-col,
+.table-inm-ikp tbody tr.indicator-row:hover td.fixed-col2 { background-color: #e8f4fd; }
 .dataTables_length label, .dataTables_filter label { font-weight: normal; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
 .dataTables_length select { width: auto; display: inline-block; }
 .dataTables_filter input { width: auto; display: inline-block; margin-left: 4px; }

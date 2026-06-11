@@ -33,6 +33,8 @@ class RekapPeriodeInm extends AppController
         $draftByMonth = $this->rekapModel->getDraftCountByMonth((int) $tahun);
         $totalDraft = array_sum($draftByMonth);
 
+        $departmentId = session()->get('department_id') ?? null;
+
         return $this->render('siimut/rekap_periode_inm', [
             'judul'    => 'Rekap INM per Periode',
             'icon'     => '<i class="bi bi-calendar-range"></i>',
@@ -43,6 +45,8 @@ class RekapPeriodeInm extends AppController
                 'draftByMonth'         => $draftByMonth,
                 'totalDraft'           => $totalDraft,
                 'showDepartmentFilter' => true,
+                'role'                 => $role,
+                'departmentId'         => $departmentId,
             ]),
             'menus'    => $menus
         ]);

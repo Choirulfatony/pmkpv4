@@ -240,11 +240,6 @@ class RekapLaporanInmModel extends Model
             WHERE lqir.result_indicator_id = quality_indicator.indicator_id
             AND YEAR(lqir.result_period) = {$vtahun}
         )");
-        // For current year, override the IN ('A', 'D') to only show active
-        if ((int) $vtahun === (int) date('Y')) {
-            $builder->where('quality_indicator.indicator_record_status', 'A');
-        }
-
         // Filter by user role / department override
         $userRole = session('user_role') ?? '';
         $userDepartmentId = session('department_id') ?? 0;
@@ -365,7 +360,7 @@ class RekapLaporanInmModel extends Model
         $db = db_connect();
 
         // Query sama dengan getIndicatorInm tapi hanya COUNT
-        $statusFilter = ((int) $vtahun === (int) date('Y')) ? "= 'A'" : "IN ('A', 'D')";
+        $statusFilter = "IN ('A', 'D')";
         $query = $db->query("
             SELECT COUNT(*) as total FROM (
                 SELECT DISTINCT quality_indicator.indicator_id
@@ -594,7 +589,7 @@ class RekapLaporanInmModel extends Model
         }
 
         // Query sama dengan getIndicatorInm tapi hanya COUNT
-        $statusFilter = ((int) $vtahun === (int) date('Y')) ? "= 'A'" : "IN ('A', 'D')";
+        $statusFilter = "IN ('A', 'D')";
         $query = $db->query("
             SELECT COUNT(*) as total FROM (
                 SELECT DISTINCT quality_indicator.indicator_id
@@ -667,12 +662,6 @@ class RekapLaporanInmModel extends Model
             WHERE lqir_sub.result_indicator_id = quality_indicator.indicator_id
             AND YEAR(lqir_sub.result_period) = {$tahun}
         )");
-
-        // For current year: only active indicators
-        $tahunNow = (int) date('Y');
-        if ((int) $tahun === $tahunNow) {
-            $builder->where('quality_indicator.indicator_record_status', 'A');
-        }
 
         // Filter by user role / department override
         $userRole = session('user_role') ?? '';

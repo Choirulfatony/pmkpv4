@@ -24,23 +24,22 @@
         </div>
         <div class="card-body">
             <div class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Bulan</label>
-                    <select class="form-select form-select-sm" id="filter_bulan" onchange="onPeriodeChange()">
-                        <?php for ($m = 1; $m <= 12; $m++): ?>
-                            <option value="<?= $m ?>" <?= ((int)$bulan === $m) ? 'selected' : '' ?>><?= $namaBulan[$m] ?></option>
-                        <?php endfor; ?>
-                    </select>
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label fw-bold">Periode</label>
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" id="filter_bulan" onchange="onPeriodeChange()">
+                            <?php for ($m = 1; $m <= 12; $m++): ?>
+                                <option value="<?= $m ?>" <?= ((int)$bulan === $m) ? 'selected' : '' ?>><?= $namaBulan[$m] ?></option>
+                            <?php endfor; ?>
+                        </select>
+                        <select class="form-select form-select-sm" id="filter_tahun" onchange="onPeriodeChange()">
+                            <?php for ($y = (int)date('Y'); $y >= 2020; $y--): ?>
+                                <option value="<?= $y ?>" <?= ((int)$tahun === $y) ? 'selected' : '' ?>><?= $y ?></option>
+                            <?php endfor; ?>
+                        </select>
+                    </div>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-bold">Tahun</label>
-                    <select class="form-select form-select-sm" id="filter_tahun" onchange="onPeriodeChange()">
-                        <?php for ($y = (int)date('Y'); $y >= 2020; $y--): ?>
-                            <option value="<?= $y ?>" <?= ((int)$tahun === $y) ? 'selected' : '' ?>><?= $y ?></option>
-                        <?php endfor; ?>
-                    </select>
-                </div>
-                <div class="col-md-3">
+                <div class="col-md-3 col-sm-6">
                     <label class="form-label fw-bold">Departemen</label>
                     <select class="form-select form-select-sm" id="filter_department" onchange="onDepartmentChange()">
                         <option value="0">-- Semua Departemen --</option>
@@ -51,14 +50,16 @@
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <button type="button" class="btn btn-primary btn-sm w-100" onclick="loadData()">
-                        <i class="bi bi-arrow-clockwise me-1"></i> Tampilkan / Reload
-                    </button>
+                <div class="col-md-4 col-sm-6">
+                    <label class="form-label fw-bold">Indikator</label>
+                    <select class="form-select form-select-sm" id="filter_indicator" onchange="onIndicatorChange()">
+                        <option value="0">-- Semua Indikator --</option>
+                    </select>
                 </div>
-                <div class="col-md-2">
-                    <button type="button" class="btn btn-success btn-sm w-100" id="btnApproveSelected" onclick="approveSelected()" disabled>
-                        <i class="bi bi-check2-all me-1"></i> Approve
+                <div class="col-md-2 col-sm-6">
+                    <label class="form-label fw-bold">&nbsp;</label>
+                    <button type="button" class="btn btn-primary btn-sm w-100" onclick="loadData()">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Tampilkan
                     </button>
                 </div>
             </div>
@@ -72,11 +73,13 @@
 
     <div id="tableContainer">
         <div class="card card-approve">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex align-items-center">
                 <span><i class="bi bi-list-check me-2"></i>Data Draft Menunggu Approval</span>
-                <span class="approve-stats" id="statsInfo">0 data</span>
+                <button type="button" class="btn btn-success btn-sm ms-auto" id="btnApproveSelected" onclick="approveSelected()" disabled>
+                    <i class="bi bi-check2-all me-1"></i> Approve
+                </button>
             </div>
-            <div class="card-body p-0">
+            <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover table-approve mb-0" id="approveTable">
                         <thead>
@@ -85,15 +88,15 @@
                                     <input type="checkbox" id="checkAll" onchange="toggleAll(this)">
                                 </th>
                                 <th style="width:50px;">No</th>
-                                <th>Indikator</th>
-                                <th>Departemen</th>
-                                <th>Tanggal</th>
-                                <th style="width:80px;">Numerator</th>
-                                <th style="width:80px;">Denumerator</th>
+                                <th style="min-width:200px;">Indikator</th>
+                                <th style="min-width:150px;">Departemen</th>
+                                <th style="width:110px;">Tanggal</th>
+                                <th style="width:90px;">Numerator</th>
+                                <th style="width:90px;">Denumerator</th>
                                 <th style="width:90px;">Nilai</th>
-                                <th style="width:80px;">Target</th>
-                                <th style="width:60px;">Status</th>
-                                <th style="width:150px;">Input Oleh</th>
+                                <th style="width:90px;">Target</th>
+                                <th style="width:70px;">Status</th>
+                                <th style="width:120px;">Input Oleh</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">
@@ -150,18 +153,21 @@
         inm: {
             getData: '<?= site_url('siimut/approval/ajax-get-data') ?>',
             getDepartments: '<?= site_url('siimut/approval/ajax-get-departments') ?>',
+            getIndicators: '<?= site_url('siimut/approval/ajax-get-indicators') ?>',
             getRecap: '<?= site_url('siimut/approval/ajax-get-recap') ?>',
             approve: '<?= site_url('siimut/approval/ajax-approve') ?>'
         },
         imprs: {
             getData: '<?= site_url('siimut/approval/ajax-get-data') ?>',
             getDepartments: '<?= site_url('siimut/approval/ajax-get-departments') ?>',
+            getIndicators: '<?= site_url('siimut/approval/ajax-get-indicators') ?>',
             getRecap: '<?= site_url('siimut/approval/ajax-get-recap') ?>',
             approve: '<?= site_url('siimut/approval/ajax-approve') ?>'
         },
         impunit: {
             getData: '<?= site_url('siimut/approval/ajax-get-data') ?>',
             getDepartments: '<?= site_url('siimut/approval/ajax-get-departments') ?>',
+            getIndicators: '<?= site_url('siimut/approval/ajax-get-indicators') ?>',
             getRecap: '<?= site_url('siimut/approval/ajax-get-recap') ?>',
             approve: '<?= site_url('siimut/approval/ajax-approve') ?>'
         }
@@ -176,6 +182,9 @@
     function onPeriodeChange() {
         var bulan = document.getElementById('filter_bulan').value;
         var tahun = document.getElementById('filter_tahun').value;
+
+        // Reset indicator dropdown
+        document.getElementById('filter_indicator').innerHTML = '<option value="0">-- Semua Indikator --</option>';
 
         var xhr = new XMLHttpRequest();
         xhr.open('POST', moduleRoutes[module].getDepartments, true);
@@ -197,15 +206,15 @@
                         }
                     }
                 } catch (e) {
-                    // silent — fallback to "Semua Departemen"
+                    // silent
                 }
             }
-            // Auto-reload data dengan filter baru
+            loadIndicators();
             loadData();
             loadRecap();
         };
         xhr.onerror = function() {
-            // Tetap load data meski dropdown gagal
+            loadIndicators();
             loadData();
             loadRecap();
         };
@@ -213,14 +222,53 @@
     }
 
     function onDepartmentChange() {
+        loadIndicators();
         loadData();
         loadRecap();
+    }
+
+    function onIndicatorChange() {
+        loadData();
+        loadRecap();
+    }
+
+    function loadIndicators() {
+        var bulan = document.getElementById('filter_bulan').value;
+        var tahun = document.getElementById('filter_tahun').value;
+        var department = document.getElementById('filter_department').value;
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', moduleRoutes[module].getIndicators, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.onload = function() {
+            var dropdown = document.getElementById('filter_indicator');
+            var currentVal = dropdown.value;
+            dropdown.innerHTML = '<option value="0">-- Semua Indikator --</option>';
+            if (xhr.status === 200) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.status && response.data) {
+                        for (var i = 0; i < response.data.length; i++) {
+                            var ind = response.data[i];
+                            var opt = document.createElement('option');
+                            opt.value = ind.indicator_id;
+                            opt.textContent = ind.indicator_element;
+                            dropdown.appendChild(opt);
+                        }
+                    }
+                } catch (e) {}
+            }
+            dropdown.value = currentVal;
+        };
+        xhr.send('module=' + module + '&bulan=' + bulan + '&tahun=' + tahun + '&department=' + department);
     }
 
     function loadData() {
         var bulan = document.getElementById('filter_bulan').value;
         var tahun = document.getElementById('filter_tahun').value;
         var department = document.getElementById('filter_department').value;
+        var indicator = document.getElementById('filter_indicator').value;
 
         document.getElementById('loadingIndicator').style.display = 'flex';
         document.getElementById('tableContainer').style.display = 'none';
@@ -265,13 +313,14 @@
                 '<i class="bi bi-exclamation-circle me-1"></i> Gagal memuat data' +
                 '</td></tr>';
         };
-        xhr.send('module=' + module + '&bulan=' + bulan + '&tahun=' + tahun + '&department=' + department);
+        xhr.send('module=' + module + '&bulan=' + bulan + '&tahun=' + tahun + '&department=' + department + '&indicator_id=' + indicator);
     }
 
     function loadRecap() {
         var bulan = document.getElementById('filter_bulan').value;
         var tahun = document.getElementById('filter_tahun').value;
         var department = document.getElementById('filter_department').value;
+        var indicator = document.getElementById('filter_indicator').value;
 
         document.getElementById('recapLoadingIndicator').style.display = 'flex';
         document.getElementById('recapContainer').style.display = 'none';
@@ -320,7 +369,7 @@
                 '</td></tr>';
             document.getElementById('recapStatsInfo').textContent = '0 indikator';
         };
-        xhr.send('module=' + module + '&bulan=' + bulan + '&tahun=' + tahun + '&department=' + department);
+        xhr.send('module=' + module + '&bulan=' + bulan + '&tahun=' + tahun + '&department=' + department + '&indicator_id=' + indicator);
     }
 
     function renderRecap(data) {
@@ -400,10 +449,9 @@
             columnDefs: [
                 { orderable: false, targets: [0, 10] },
                 { className: 'text-center', targets: [0, 1, 5, 6, 7, 8, 9, 10] },
-                { width: '40px', targets: 0 },
-                { width: '50px', targets: 1 },
-                { width: '80px', targets: [5, 6, 7, 8, 9] },
-                { width: '150px', targets: 10 }
+                { responsivePriority: 1, targets: 2 },
+                { responsivePriority: 2, targets: 3 },
+                { responsivePriority: 3, targets: 4 }
             ],
             drawCallback: function() {
                 updateApproveButton();
@@ -413,13 +461,10 @@
     }
 
     function renderTable(data) {
-        var statsInfo = document.getElementById('statsInfo');
-
         initApproveTable();
 
         if (!data || data.length === 0) {
             approveTable.clear().draw();
-            statsInfo.textContent = '0 data';
             document.getElementById('btnApproveSelected').disabled = true;
             return;
         }
@@ -451,7 +496,6 @@
         }
 
         approveTable.rows.add(rows).draw();
-        statsInfo.textContent = data.length + ' data draft';
     }
 
     function toggleAll(source) {
@@ -556,6 +600,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        loadIndicators();
         loadData();
         loadRecap();
     });

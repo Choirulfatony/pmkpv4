@@ -100,6 +100,7 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->get('approval/(:any)', 'Approval::index/$1');
         $routes->post('approval/ajax-get-data', 'Approval::ajaxGetData');
         $routes->post('approval/ajax-get-departments', 'Approval::ajaxGetDepartments');
+        $routes->post('approval/ajax-get-indicators', 'Approval::ajaxGetIndicators');
         $routes->post('approval/ajax-get-recap', 'Approval::ajaxGetRecap');
         $routes->post('approval/ajax-approve', 'Approval::ajaxApprove');
 
@@ -220,6 +221,8 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('unit/ajax-get-trash', 'Department::ajaxGetTrash');
         $routes->post('unit/ajax-permanent-delete', 'Department::ajaxPermanentDelete');
         $routes->post('unit/ajax-restore-group', 'Department::ajaxRestoreGroup');
+        $routes->post('unit/ajax-request-open-period', 'Department::ajaxRequestOpenPeriod');
+        $routes->post('unit/ajax-get-request-status', 'Department::ajaxGetRequestStatus');
     });
 
     // ========== IKPRS ==========
