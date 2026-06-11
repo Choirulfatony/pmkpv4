@@ -117,7 +117,17 @@
                 max-width: calc(100% - 1rem);
             }
         }
-    </style>
+</style>
+
+<script>
+// Paksa sidebar collapse setelah AdminLTE jalan
+(function() {
+    var t = setTimeout(function() {
+        document.body.classList.remove('sidebar-open');
+        document.body.classList.add('sidebar-collapse');
+    }, 100);
+})();
+</script>
     <div class="modal fade" id="idleWarningModal"
         tabindex="-1"
         data-bs-backdrop="static"
@@ -201,5 +211,146 @@
 
     .nav-link .nav-arrow {
         margin-left: auto;
+    }
+
+    /* ===============================
+       RESPONSIVE GLOBAL
+    ================================ */
+    @media (max-width: 767.98px) {
+        .app-content {
+            padding: 0.5rem !important;
+        }
+        .app-content-header {
+            padding: 0.5rem 0.5rem 0 !important;
+        }
+        .content-header h5 {
+            font-size: 1rem;
+        }
+        .card-body {
+            padding: 0.5rem !important;
+        }
+        .card-header {
+            padding: 0.5rem 0.5rem !important;
+        }
+        .info-box {
+            min-height: 60px;
+        }
+        .info-box .info-box-icon {
+            width: 50px;
+            font-size: 1.2rem;
+        }
+        .info-box .info-box-content {
+            padding: 0 0 0 0.5rem;
+        }
+        .info-box .info-box-text {
+            font-size: 0.7rem;
+            white-space: nowrap;
+        }
+        .info-box .info-box-number {
+            font-size: 1rem;
+        }
+        table.dataTable {
+            font-size: 0.75rem;
+        }
+        table.dataTable th,
+        table.dataTable td {
+            padding: 0.25rem 0.3rem !important;
+        }
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            font-size: 0.75rem;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 0;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button .page-link {
+            padding: 0.2rem 0.5rem;
+            font-size: 0.7rem;
+        }
+        .dataTables_length select {
+            font-size: 0.75rem;
+            padding: 0.15rem 0.3rem !important;
+        }
+        .dataTables_filter input {
+            font-size: 0.75rem;
+            padding: 0.15rem 0.3rem !important;
+            max-width: 120px;
+        }
+        .modal-body {
+            padding: 0.5rem !important;
+        }
+        .modal-header {
+            padding: 0.5rem !important;
+        }
+        .modal-footer {
+            padding: 0.5rem !important;
+        }
+        .btn-sm {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+        }
+        .container-fluid {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+        .app-footer {
+            font-size: 10px !important;
+            padding: 0.5rem !important;
+            text-align: center;
+        }
+        .app-footer .float-end {
+            float: none !important;
+            display: block !important;
+        }
+        .row {
+            margin-left: -0.25rem;
+            margin-right: -0.25rem;
+        }
+        .row > [class*="col-"] {
+            padding-left: 0.25rem;
+            padding-right: 0.25rem;
+        }
+        .card-tools .input-group {
+            max-width: 100% !important;
+        }
+        .table-responsive {
+            font-size: 0.7rem;
+        }
+        .breadcrumb {
+            font-size: 0.75rem;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .app-content {
+            padding: 0.25rem !important;
+        }
+        .info-box {
+            margin-bottom: 0.5rem;
+        }
+        h6 {
+            font-size: 0.85rem;
+        }
+        .card-header .card-title {
+            font-size: 0.85rem;
+        }
+        .nav-pills .nav-link {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.3rem;
+        }
+    }
+
+    @media (min-width: 768px) and (max-width: 991.98px) {
+        .app-content {
+            padding: 0.75rem !important;
+        }
+        .card-body {
+            padding: 0.75rem !important;
+        }
     }
 </style>

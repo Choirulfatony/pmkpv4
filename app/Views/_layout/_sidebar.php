@@ -78,34 +78,18 @@
 
 <script>
     (function() {
-        // Simpan state sebelum navigasi
+        // Navigasi sidebar — saat klik link, tutup sidebar di mobile
         document.addEventListener('click', function(e) {
             var link = e.target.closest('.sidebar-menu a.nav-link');
             if (!link) return;
             var href = link.getAttribute('href');
             if (href && href !== '#' && href !== 'javascript:void(0)') {
-                if (document.body.classList.contains('sidebar-open')) {
-                    sessionStorage.setItem('sidebar_collapse', '1');
+                if (window.innerWidth < 992) {
+                    document.body.classList.remove('sidebar-open');
+                    document.body.classList.add('sidebar-collapse');
                 }
             }
         }, true);
-
-        // Pulihkan state setelah halaman baru selesai dimuat
-        var restore = function() {
-            if (sessionStorage.getItem('sidebar_collapse') === '1') {
-                sessionStorage.removeItem('sidebar_collapse');
-                document.body.classList.remove('sidebar-open');
-                document.body.classList.add('sidebar-collapse');
-            }
-        };
-
-        if (document.readyState === 'complete') {
-            setTimeout(restore, 50);
-        } else {
-            window.addEventListener('load', function() {
-                setTimeout(restore, 50);
-            });
-        }
     })();
 </script>
 
