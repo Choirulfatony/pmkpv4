@@ -695,9 +695,74 @@ class Department extends AppController
         );
 
         if ($saved) {
+            $this->sendWaOpenPeriodNotification($indicatorId, $departmentId, $periodStart, $periodEnd, $reason, $groupType);
             return $this->response->setJSON(['status' => true, 'message' => 'Permohonan buka periode berhasil dikirim']);
         }
 
         return $this->response->setJSON(['status' => false, 'message' => 'Gagal mengirim permohonan']);
+    }
+
+    private function sendWaOpenPeriodNotification(int $indicatorId, string $departmentId, string $periodStart, string $periodEnd, string $reason, ?string $groupType): void
+    {
+        $db = db_connect();
+
+        // Nama indikator
+        if ($groupType === '1') {
+            $ind = $db->table('quality_indicator')->select('indicator_element')->where('indicator_id', $indicatorId)->get()->getRow();
+        } else {
+            $ind = $db->table('local_quality_indicator')->select('indicator_element')->where('indicator_id', $indicatorId)->get()->getRow();
+        }
+        $indicatorName = $ind->indicator_element ?? '-';
+
+        // Nama unit
+        $dept = $db->table('master_institution_department')->select('department_name')->where('department_id', $departmentId)->get()->getRow();
+        $departmentName = $dept->department_name ?? '-';
+
+        // Nama type
+        $typeNames = ['1' => 'INM', '5' => 'IMPRS', '6' => 'IMP Unit', '7' => 'IKP'];
+        $typeName = $typeNames[$groupType] ?? 'INDIKATOR';
+
+        $phone = '6285859410265';
+        $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZD';
+        $url = "https://graph.facebook.com/v19.0/1128976353628313/messages";
+
+        $params = [
+            ['type' => 'text', 'text' => $typeName],
+            ['type' => 'text', 'text' => $departmentName],
+            ['type' => 'text', 'text' => $indicatorName],
+            ['type' => 'text', 'text' => $periodStart],
+            ['type' => 'text', 'text' => $periodEnd],
+            ['type' => 'text', 'text' => $reason],
+        ];
+
+        $data = [
+            'messaging_product' => 'whatsapp',
+            'to' => $phone,
+            'type' => 'template',
+            'template' => [
+                'name' => 'to_admin_pengajuan',
+                'language' => ['code' => 'id'],
+                'components' => [
+                    ['type' => 'body', 'parameters' => $params],
+                ],
+            ],
+        ];
+
+        $headers = [
+            'Authorization: Bearer ' . $token,
+            'Content-Type: application/json',
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $response = curl_exec($ch);
+        $err = curl_error($ch);
+        curl_close($ch);
+
+        log_message('error', 'WA open_period: phone=' . $phone . ', group_type=' . ($groupType ?? '') . ', response=' . ($response ?: 'none') . ', error=' . ($err ?: 'none'));
     }
 }
