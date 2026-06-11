@@ -192,6 +192,12 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('data-indikator/save-numdenum', 'DataIndikator::saveNumDenum');
         $routes->post('data-indikator/delete-numdenum', 'DataIndikator::deleteNumDenum');
 
+        // Profil Saya
+        $routes->get('profile', 'Profile::index');
+        $routes->post('profile/update', 'Profile::update');
+        $routes->post('profile/change-password', 'Profile::changePassword');
+        $routes->post('profile/update-photo', 'Profile::updatePhoto');
+
         // Manajemen Staf
         $routes->get('staf', 'Staff::index');
         $routes->post('staf/ajax-get-data', 'Staff::ajaxGetData');

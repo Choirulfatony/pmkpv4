@@ -38,6 +38,7 @@ class StaffModel extends Model
         'profile_update_by',
         'profile_update_date',
         'profile_is_verified',
+        'profile_confirm_password',
     ];
 
     public function getDatatable(array $post)

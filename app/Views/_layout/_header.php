@@ -403,7 +403,7 @@
                         </p>
                     </li>
                     <li class="user-footer">
-                        <a href="#" class="btn btn-default btn-flat">Profile</a>
+                        <a href="<?= site_url('siimut/profile') ?>" class="btn btn-default btn-flat">Profile</a>
                         <a href="<?= site_url('auth/logout') ?>"
                             class="btn btn-default btn-flat float-end">
                             Sign out
