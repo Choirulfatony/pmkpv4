@@ -8,8 +8,9 @@
  */
 $offline = defined('SIIMUT_OFFLINE_MODE') ? SIIMUT_OFFLINE_MODE : true;
 
-$asset = function (string $cdnUrl, string $localPath) use ($offline): string {
-    return $offline ? base_url($localPath) : $cdnUrl;
+$ver = defined('SIIMUT_ASSET_VERSION') ? '?v=' . SIIMUT_ASSET_VERSION : '';
+$asset = function (string $cdnUrl, string $localPath) use ($offline, $ver): string {
+    return $offline ? base_url($localPath . $ver) : $cdnUrl;
 };
 
 $JQUERY_JS          = $asset('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js',                                              'assets/adminlte/js/jquery-3.7.1.min.js');

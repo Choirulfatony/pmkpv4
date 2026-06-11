@@ -95,3 +95,14 @@ if ($_siiimutOffline === false || $_siiimutOffline === '') {
     $_siiimutOffline = 'true';
 }
 defined('SIIMUT_OFFLINE_MODE') || define('SIIMUT_OFFLINE_MODE', filter_var($_siiimutOffline, FILTER_VALIDATE_BOOLEAN));
+
+/*
+  | --------------------------------------------------------------------------
+  | Asset Cache-Busting Version
+  | --------------------------------------------------------------------------
+  |
+  | Increment this number when updating assets to force browsers to
+  | reload the cached files (appended as ?v= to local asset URLs).
+  |
+  */
+defined('SIIMUT_ASSET_VERSION') || define('SIIMUT_ASSET_VERSION', '1');
