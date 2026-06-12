@@ -268,6 +268,7 @@ class Department extends AppController
                     qig.group_id,
                     qig.group_period,
                     qig.group_days,
+                    qig.group_days_changed_at,
                     qig.group_indicator_id,
                     qig.group_record_status,
                     qi.indicator_id,
@@ -287,10 +288,19 @@ class Department extends AppController
         $freqMap = ['D' => 'Harian', 'M' => 'Bulanan', 'W' => 'Mingguan', 'Y' => 'Tahunan'];
         $rows = [];
         foreach ($data as $row) {
+            $days = (int) ($row->group_days ?? 0);
+            $changedAt = $row->group_days_changed_at ?? null;
+            $expired = false;
+            if ($days > 0 && $changedAt) {
+                $expired = (time() - strtotime($changedAt)) > 172800;
+            }
             $rows[] = [
                 'group_id'            => (int) $row->group_id,
                 'group_period'        => $row->group_period,
-                'group_days'          => (int) ($row->group_days ?? 0),
+                'group_days'          => $days,
+                'group_days_effective' => $expired ? 0 : $days,
+                'group_days_expired'  => $expired,
+                'group_days_changed_at' => $changedAt,
                 'group_record_status' => $row->group_record_status,
                 'indicator_id'        => (int) $row->indicator_id,
                 'indicator_element'   => $row->indicator_element ?? '(indikator tidak ditemukan)',
@@ -368,7 +378,7 @@ class Department extends AppController
             return $this->response->setJSON(['status' => false, 'message' => 'Indikator sudah terdaftar untuk periode ini']);
         }
 
-        $db->table($groupTable)->insert([
+        $insertData = [
             'group_indicator_id'     => $indicatorId,
             'group_department_id'    => (string) $deptId,
             'group_institution_code' => $institutionCode,
@@ -376,7 +386,12 @@ class Department extends AppController
             'group_type'             => (string) $type,
             'group_days'             => $days,
             'group_record_status'    => 'A',
-        ]);
+        ];
+        if ($days > 0) {
+            $insertData['group_days_changed_at'] = date('Y-m-d H:i:s');
+        }
+
+        $db->table($groupTable)->insert($insertData);
 
         return $this->response->setJSON(['status' => true, 'message' => 'Indikator berhasil ditambahkan']);
     }
@@ -404,12 +419,17 @@ class Department extends AppController
         $groupTable = $tableMap[$type] ?? 'quality_indicator_group';
 
         $db = db_connect();
+        $oldRow = $db->table($groupTable)->select('group_days')->where('group_id', $groupId)->get()->getRow();
+        $oldDays = $oldRow ? (int) $oldRow->group_days : 0;
+
+        $updateData = ['group_period' => $period, 'group_days' => $days];
+        if ($days !== $oldDays) {
+            $updateData['group_days_changed_at'] = date('Y-m-d H:i:s');
+        }
+
         $db->table($groupTable)
             ->where('group_id', $groupId)
-            ->update([
-                'group_period' => $period,
-                'group_days'   => $days,
-            ]);
+            ->update($updateData);
 
         return $this->response->setJSON(['status' => true, 'message' => 'Data berhasil diperbarui']);
     }

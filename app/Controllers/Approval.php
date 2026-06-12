@@ -341,7 +341,10 @@ class Approval extends AppController
 
                 $existing = $db->table($tbl)->where($where)->get()->getRow();
                 if ($existing) {
-                    $db->table($tbl)->where($where)->update(['group_days' => $groupDays]);
+                    $db->table($tbl)->where($where)->update([
+                        'group_days'             => $groupDays,
+                        'group_days_changed_at'  => date('Y-m-d H:i:s'),
+                    ]);
                 } else {
                     // Get institution_code from another existing record for same dept
                     $refRow = $db->table($tbl)
@@ -358,6 +361,7 @@ class Approval extends AppController
                         'group_period'           => $period,
                         'group_type'             => (int) $groupType,
                         'group_days'             => $groupDays,
+                        'group_days_changed_at'  => date('Y-m-d H:i:s'),
                         'group_record_status'    => 'A',
                     ]);
                 }

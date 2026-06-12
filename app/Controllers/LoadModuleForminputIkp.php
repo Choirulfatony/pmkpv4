@@ -90,6 +90,7 @@ class LoadModuleForminputIkp extends AppController
         }
 
         $indicatorIds = array_map(fn($i) => (int) $i->indicator_id, $indicators);
+        $numDenUnits = $this->model->getNumDenUnits($indicatorIds);
         $rawDaily = $this->model->getDailyDataForMultipleIndicators($indicatorIds, $tahun, $bulan);
 
         $dailyMap = [];
@@ -115,6 +116,10 @@ class LoadModuleForminputIkp extends AppController
                 $ind->monthly_num = 0;
                 $ind->monthly_den = 0;
             }
+
+            $uid = (int) $ind->indicator_id;
+            $ind->num_unit = $numDenUnits[$uid]['num_unit'] ?? '';
+            $ind->den_unit = $numDenUnits[$uid]['den_unit'] ?? '';
 
             $target  = (float) ($ind->indicator_target ?? 0);
             $factors = (float) ($ind->indicator_factors ?? 1);

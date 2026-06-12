@@ -248,11 +248,11 @@
             ajax: {
                 url: '<?= site_url('siimut/approval/ajax-get-all-requests-data') ?>',
                 type: 'POST',
-                dataType: 'json'
-            },
-            dataSrc: function(json) {
-                _historyData = json.data ? json.data.filter(function(row) { return row.ar_status !== 'pending'; }) : [];
-                return _historyData;
+                dataType: 'json',
+                dataSrc: function(json) {
+                    _historyData = json.data ? json.data.filter(function(row) { return row.ar_status !== 'pending'; }) : [];
+                    return _historyData;
+                }
             },
             columns: [
                 { data: null, className: 'dt-center', render: function(data, type, row, meta) { return meta.row + 1; } },

@@ -297,20 +297,20 @@
 
 <!-- Modal Indikator -->
 <div class="modal fade" id="modal-indikator" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-fullscreen-lg-down">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header" id="modal-indicator-header" style="color: white;">
                 <h6 class="modal-title">
-                    <i class="bi bi-bar-chart"></i> <span id="modal-indicator-title">Indikator</span>
+                    <i class="bi bi-bar-chart" id="modal-indicator-icon"></i> <span id="modal-indicator-title">Indikator</span>
                 </h6>
                 <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-sm btn-primary" id="btn-add-indicator" title="Tambah Indikator">
+                    <button type="button" class="btn btn-sm btn-light" id="btn-add-indicator" title="Tambah Indikator">
                         <i class="bi bi-plus-circle"></i> Tambah
                     </button>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: brightness(0) invert(1);"></button>
                 </div>
             </div>
-            <div class="modal-body p-2">
+            <div class="modal-body p-3">
                 <table class="table table-sm table-striped table-bordered mb-0 w-100" id="table-indicator-modal">
                     <thead>
                         <tr>
@@ -325,7 +325,7 @@
                     <tbody id="indicator-modal-body"></tbody>
                 </table>
             </div>
-            <div class="modal-footer d-flex justify-content-between align-items-center flex-wrap gap-1 px-2 py-2">
+            <div class="modal-footer d-flex justify-content-between align-items-center flex-wrap gap-1 px-3 py-2">
                 <small class="text-muted"><i class="bi bi-pencil"></i> edit · <i class="bi bi-trash"></i> hapus</small>
                 <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Tutup</button>
             </div>
@@ -335,11 +335,11 @@
 
 <!-- Modal Form Add/Edit -->
 <div class="modal fade" id="modal-form-indicator" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-fullscreen-lg-down">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header" id="modal-form-header" style="color: white;">
                 <h6 class="modal-title" id="modal-form-title"><i class="bi bi-plus-circle"></i> Tambah Indikator</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: brightness(0) invert(1);"></button>
             </div>
             <form id="form-indicator-group" novalidate>
                 <div class="modal-body">
@@ -399,6 +399,14 @@
     var currentLabel = '';
     var dtIndicator = null;
 
+    // Module colors & icons matching form input pages
+    var moduleStyles = {
+        1: { color1: '#007bff', color2: '#0056b3', icon: 'bi-bar-chart', label: 'INM' },
+        5: { color1: '#28a745', color2: '#1e7e34', icon: 'bi-clipboard-data', label: 'IMPRS' },
+        6: { color1: '#ffc107', color2: '#e0a800', icon: 'bi-building', label: 'IMPUNIT' },
+        7: { color1: '#17a2b8', color2: '#0f7c8f', icon: 'bi-shield-check', label: 'IKP' }
+    };
+
     // Open modal when indicator button clicked
     $(document).on('click', '.btn-show-indicators', function() {
         var btn = $(this);
@@ -411,6 +419,13 @@
             dtIndicator.destroy();
             dtIndicator = null;
         }
+
+        // Set header color & icon based on module type
+        var modStyle = moduleStyles[currentGroupType] || { color1: '#6f42c1', color2: '#5530a3', icon: 'bi-bar-chart' };
+        var header = document.getElementById('modal-indicator-header');
+        header.style.background = 'linear-gradient(135deg, ' + modStyle.color1 + ' 0%, ' + modStyle.color2 + ' 100%)';
+        var icon = document.getElementById('modal-indicator-icon');
+        icon.className = 'bi ' + modStyle.icon;
 
         $('#modal-indicator-title').text(currentLabel + ' — ' + btn.data('dept-name'));
         $('#indicator-modal-body').html('<tr><td colspan="6" class="text-center text-muted py-3">Memuat data...</td></tr>');
@@ -503,8 +518,16 @@
         });
     }
 
+    // Set form modal header style
+    function setFormHeaderStyle() {
+        var modStyle = moduleStyles[currentGroupType] || { color1: '#6f42c1', color2: '#5530a3' };
+        var header = document.getElementById('modal-form-header');
+        header.style.background = 'linear-gradient(135deg, ' + modStyle.color1 + ' 0%, ' + modStyle.color2 + ' 100%)';
+    }
+
     // Open ADD form
     $('#btn-add-indicator').on('click', function() {
+        setFormHeaderStyle();
         $('#form-action-type').val('add');
         $('#form-edit-group-id').val('0');
         $('#form-department-id').val(currentDeptId);
@@ -544,6 +567,7 @@
     // Open EDIT form
     $(document).on('click', '.btn-edit-indicator', function() {
         var btn = $(this);
+        setFormHeaderStyle();
         $('#form-action-type').val('edit');
         $('#form-edit-group-id').val(btn.data('group-id'));
         $('#form-department-id').val(currentDeptId);

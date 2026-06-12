@@ -180,11 +180,17 @@ class LoadModuleForminputModel extends Model
             ->get()
             ->getRow();
 
+        $units = $this->getNumDenUnits([$indicatorId]);
+        $numUnit = $units[$indicatorId]['num_unit'] ?? '';
+        $denUnit = $units[$indicatorId]['den_unit'] ?? '';
+
         return [
             'indicator' => $indicator,
             'existing_data' => $existingData,
             'monthly_total' => $monthlyTotal,
-            'rencana_perbaikan' => $rencanaPerbaikan
+            'rencana_perbaikan' => $rencanaPerbaikan,
+            'num_unit' => $numUnit,
+            'den_unit' => $denUnit
         ];
     }
 
@@ -889,6 +895,18 @@ class LoadModuleForminputModel extends Model
         ", [$tahun, $bulanStr])->getResult();
     }
 
+    private function applyGroupDaysAutoRevert(int $days, ?string $changedAt): int
+    {
+        if ($days <= 0 || $changedAt === null) {
+            return $days;
+        }
+        $changed = strtotime($changedAt);
+        if ((time() - $changed) > 172800) { // 48 jam
+            return 0;
+        }
+        return $days;
+    }
+
     public function canInputDate(int $indicatorId, int $departmentId, string $tanggal): array
     {
         $db = db_connect();
@@ -900,6 +918,20 @@ class LoadModuleForminputModel extends Model
         // Masa depan
         if ($tgl > $today) {
             return ['allowed' => false, 'restricted' => false, 'message' => 'Tidak bisa input untuk tanggal yang akan datang', 'max_days' => 0];
+        }
+
+        // Lock pada tgl 6 bulan berikutnya
+        $inputMonth = (int) $tgl->format('m');
+        $inputYear = (int) $tgl->format('Y');
+        $cutoffMonth = $inputMonth + 1;
+        $cutoffYear = $inputYear;
+        if ($cutoffMonth > 12) {
+            $cutoffMonth = 1;
+            $cutoffYear++;
+        }
+        $cutoffDate = new \DateTime(sprintf('%04d-%02d-07', $cutoffYear, $cutoffMonth)); // mulai tgl 7
+        if ($today >= $cutoffDate) {
+            return ['allowed' => false, 'restricted' => false, 'message' => 'Periode input ditutup setiap tanggal 6 bulan berikutnya', 'max_days' => 0];
         }
 
         // Get indicator frequency
@@ -915,7 +947,7 @@ class LoadModuleForminputModel extends Model
         if ($frequency === 'W' || $frequency === 'M' || $frequency === 'Y') {
             $maxDays = 9999;
             $row = $db->table($this->tablePrefix . 'quality_indicator_group')
-                ->select('group_days')
+                ->select('group_days, group_days_changed_at')
                 ->where('group_indicator_id', $indicatorId)
                 ->where('group_department_id', $departmentId)
                 ->where('group_period', $tahun)
@@ -923,6 +955,7 @@ class LoadModuleForminputModel extends Model
                 ->get()
                 ->getRow();
             $maxDays = $row ? (int) $row->group_days : 9999;
+            $maxDays = $this->applyGroupDaysAutoRevert($maxDays, $row->group_days_changed_at ?? null);
 
             if ($diffDays <= $maxDays) {
                 return ['allowed' => true, 'restricted' => false, 'message' => '', 'max_days' => $maxDays];
@@ -944,7 +977,7 @@ class LoadModuleForminputModel extends Model
         // Lebih dari 30 hari → cek group_days (only for non-local modules)
         $maxDays = 30;
         $row = $db->table($this->tablePrefix . 'quality_indicator_group')
-            ->select('group_days')
+            ->select('group_days, group_days_changed_at')
             ->where('group_indicator_id', $indicatorId)
             ->where('group_department_id', $departmentId)
             ->where('group_period', $tahun)
@@ -952,6 +985,7 @@ class LoadModuleForminputModel extends Model
             ->get()
             ->getRow();
         $maxDays = $row ? (int) $row->group_days : 30;
+        $maxDays = $this->applyGroupDaysAutoRevert($maxDays, $row->group_days_changed_at ?? null);
 
         if ($diffDays <= $maxDays) {
             $restricted = $diffDays > 30;
@@ -1009,9 +1043,42 @@ class LoadModuleForminputModel extends Model
         $db->query("
             DELETE FROM {$this->tablePrefix}quality_indicator_result
             WHERE result_id IN ($ids)
-              AND result_record_status = 'X'
+               AND result_record_status = 'X'
         ");
 
         return $db->affectedRows();
+    }
+
+    public function getNumDenUnits(array $indicatorIds): array
+    {
+        if (empty($indicatorIds)) {
+            return [];
+        }
+
+        $db = db_connect();
+        $vt = $this->tablePrefix . 'quality_indicator_variable';
+
+        $rows = $db->table($vt)
+            ->select('variable_indicator_id, variable_type, variable_unit_name')
+            ->whereIn('variable_indicator_id', $indicatorIds)
+            ->whereIn('variable_type', ['N', 'D'])
+            ->where('variable_record_status', 'A')
+            ->get()
+            ->getResult();
+
+        $result = [];
+        foreach ($rows as $r) {
+            $id = (int) $r->variable_indicator_id;
+            if (!isset($result[$id])) {
+                $result[$id] = ['num_unit' => '', 'den_unit' => ''];
+            }
+            if ($r->variable_type === 'N') {
+                $result[$id]['num_unit'] = $r->variable_unit_name ?? '';
+            } elseif ($r->variable_type === 'D') {
+                $result[$id]['den_unit'] = $r->variable_unit_name ?? '';
+            }
+        }
+
+        return $result;
     }
 }

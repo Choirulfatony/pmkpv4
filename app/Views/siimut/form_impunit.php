@@ -138,7 +138,7 @@
 
 <!-- Modal Minta Buka Periode -->
 <div class="modal fade" id="modalBukaPeriode" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered modal-fullscreen-lg-down">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title"><i class="bi bi-unlock me-1"></i> Minta Buka Periode</h6>
@@ -540,7 +540,7 @@
 
                 html += '<td class="' + cellClass + '" colspan="' + days + '"';
                 if (!isInactive) {
-                    html += ' onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')"';
+                    html += ' onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\', \'' + escJs(row.num_unit || '') + '\', \'' + escJs(row.den_unit || '') + '\')"';
                 }
                 html += '>' +
                         '<div class="fw-bold">' + nilaiDisplay + '</div>' +
@@ -573,7 +573,7 @@
                     var weekLabel = 'Mg ' + (item.week || (w + 1));
                     html += '<td class="' + cellClass + '" colspan="' + colspan + '"';
                     if (!isInactive) {
-                        html += ' onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')"';
+                        html += ' onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\', \'' + escJs(row.num_unit || '') + '\', \'' + escJs(row.den_unit || '') + '\')"';
                     }
                     html += '>' +
                         '<div class="fw-bold">' + weekLabel + ': ' + nilaiDisplay + '</div>' +
@@ -605,7 +605,7 @@
 
                     html += '<td class="' + cellClass + '"';
                     if (!isInactive) {
-                        html += ' onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\')"';
+                        html += ' onclick="openModal(' + row.indicator_id + ', ' + row.department_id + ', \'' + escJs(row.department_name) + '\', ' + item.hari + ', \'' + escJs(row.indicator_element) + '\', \'' + escJs(row.indicator_target) + '\', \'' + escJs(row.indicator_units) + '\', \'' + escJs(row.indicator_target_unit || '') + '\', \'' + freq + '\', \'' + escJs(row.num_unit || '') + '\', \'' + escJs(row.den_unit || '') + '\')"';
                     }
                     html += '>' +
                         '<div class="fw-bold">' + nilaiDisplay + '</div>' +
@@ -678,7 +678,7 @@
         applyPagination();
     }
 
-    function openModal(indicatorId, departmentId, departmentName, hari, indicatorName, target, units, targetUnit, freq) {
+    function openModal(indicatorId, departmentId, departmentName, hari, indicatorName, target, units, targetUnit, freq, numUnit, denUnit) {
         var periode = document.getElementById('filter_periode').value;
         var tahun = periode.substring(0, 4);
         var bulan = periode.substring(5, 7);
@@ -707,7 +707,7 @@
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     var resp = JSON.parse(xhr.responseText);
                     if (resp.allowed) {
-                        _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, resp.restricted, resp.approved_action || null);
+                        _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, resp.restricted, resp.approved_action || null, numUnit, denUnit);
                     } else {
                         toastError(resp.message || 'Tidak bisa input untuk tanggal ini');
                     }
@@ -719,7 +719,7 @@
 
         // Dalam 30 hari (harian saja)
         if (diffDays <= 30) {
-            _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, false, null);
+            _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, false, null, numUnit, denUnit);
             return;
         }
 
@@ -732,7 +732,7 @@
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var resp = JSON.parse(xhr.responseText);
                 if (resp.allowed) {
-                    _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, resp.restricted, resp.approved_action || null);
+                    _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, resp.restricted, resp.approved_action || null, numUnit, denUnit);
                 } else {
                     toastError(resp.message || 'Tidak bisa input untuk tanggal ini');
                 }
@@ -741,7 +741,7 @@
         xhr.send('indicator_id=' + indicatorId + '&department_id=' + departmentId + '&tanggal=' + tanggal);
     }
 
-    function _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, restricted, approvedAction) {
+    function _openModalContinue(indicatorId, departmentId, departmentName, tanggal, indicatorName, target, units, targetUnit, restricted, approvedAction, numUnit, denUnit) {
         document.getElementById('input_indicator_id').value = indicatorId;
         document.getElementById('input_department_id').value = departmentId;
         document.getElementById('input_department_name').value = departmentName;
@@ -750,8 +750,8 @@
         document.getElementById('modalIndikatorNama').textContent = indicatorName || '-';
         document.getElementById('modalTarget').textContent = target || '-';
         document.getElementById('modalSatuan').textContent = units || '-';
-        document.getElementById('num_unit').textContent = units || '-';
-        document.getElementById('denum_unit').textContent = targetUnit || '-';
+        document.getElementById('num_unit').textContent = numUnit || units || '-';
+        document.getElementById('denum_unit').textContent = denUnit || targetUnit || '-';
 
         showFormMode();
 

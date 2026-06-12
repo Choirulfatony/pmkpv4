@@ -84,6 +84,9 @@ class LoadModuleForminputImpunit extends AppController
 
         $indicators = $this->model->getIndicators($tahun, $department_id);
 
+        $indicatorIds = array_map(fn($i) => (int) $i->indicator_id, $indicators);
+        $numDenUnits = $this->model->getNumDenUnits($indicatorIds);
+
         $statusList = $this->model->getFillStatus($tahun, str_pad((string) $bulan, 2, '0', STR_PAD_LEFT));
 
         $statusMap = [];
@@ -118,6 +121,10 @@ class LoadModuleForminputImpunit extends AppController
                 $ind->monthly_num = 0;
                 $ind->monthly_den = 0;
             }
+
+            $uid = (int) $ind->indicator_id;
+            $ind->num_unit = $numDenUnits[$uid]['num_unit'] ?? '';
+            $ind->den_unit = $numDenUnits[$uid]['den_unit'] ?? '';
 
             $target  = (float) ($ind->indicator_target ?? 0);
             $factors = (float) ($ind->indicator_factors ?? 1);
