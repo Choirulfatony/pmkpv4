@@ -153,7 +153,6 @@ class ApprovalRequestModel extends Model
         $cutoff = date('Y-m-d H:i:s', strtotime('-48 hours'));
         $db->table('approval_requests')
             ->where('ar_status', 'approved')
-            ->where('ar_approve_date IS NOT NULL')
             ->where('ar_approve_date <', $cutoff)
             ->update([
                 'ar_status' => 'rejected',
