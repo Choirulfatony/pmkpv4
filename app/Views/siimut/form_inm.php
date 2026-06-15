@@ -7,6 +7,7 @@
     td.day-cell.cell-inputable .num-denum { color: #0d6efd !important; }
 </style>
 
+
 <div class="container-fluid py-4">
     <div class="form-inm-header">
         <div class="row align-items-center">
@@ -24,7 +25,6 @@
             </div>
         </div>
     </div>
-
     <div class="card card-form-inm mb-4">
         <div class="card-header">
             <i class="bi bi-filter me-2"></i>Filter

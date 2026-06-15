@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Controllers;
-
 use App\Models\StaffModel;
 
 class Profile extends AppController

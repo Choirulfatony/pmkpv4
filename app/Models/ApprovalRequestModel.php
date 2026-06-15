@@ -17,6 +17,7 @@ class ApprovalRequestModel extends Model
         'ar_action_type', 'ar_group_type'
     ];
     protected $useTimestamps = false;
+    
 
     public function saveRequest(int $indicatorId, string $departmentId, string $period, string $reason, int $userId, string $actionType = 'edit', ?string $groupType = null): bool
     {

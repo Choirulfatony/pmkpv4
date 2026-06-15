@@ -15,6 +15,7 @@
             padding-bottom: 2px;
         }
 
+        
         #table-unit_filter input {
             padding-top: 2px;
             padding-bottom: 2px;

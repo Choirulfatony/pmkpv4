@@ -19,6 +19,7 @@ class LoadModuleForminputModel extends Model
         'result_update_by',
         'result_update_at'
     ];
+    
     protected $useTimestamps = false;
 
     protected string $tablePrefix = '';

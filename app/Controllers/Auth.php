@@ -145,6 +145,7 @@ class Auth extends BaseController
     //     log_message('error', 'DEBUG LOGIN:APP - session set, redirecting to dashboard');
     //     return redirect()->to('dashboard');
     // }
+    
 
     private function loginAplikasi(string $email, string $password, bool $remember = false)
     {
