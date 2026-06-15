@@ -392,7 +392,8 @@ class Approval extends AppController
 
                 $startDate = new \DateTime($periodStart);
                 $endDate   = new \DateTime($periodEnd);
-                $groupDays = (int) $startDate->diff($endDate)->days + 1;
+                $todayDt   = new \DateTime();
+                $groupDays = (int) $todayDt->diff($startDate)->days;
                 if ($groupDays < 0) $groupDays = 0;
 
                 $db     = db_connect();

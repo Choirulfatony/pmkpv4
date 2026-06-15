@@ -920,20 +920,6 @@ class LoadModuleForminputModel extends Model
             return ['allowed' => false, 'restricted' => false, 'message' => 'Tidak bisa input untuk tanggal yang akan datang', 'max_days' => 0];
         }
 
-        // Lock pada tgl 6 bulan berikutnya
-        $inputMonth = (int) $tgl->format('m');
-        $inputYear = (int) $tgl->format('Y');
-        $cutoffMonth = $inputMonth + 1;
-        $cutoffYear = $inputYear;
-        if ($cutoffMonth > 12) {
-            $cutoffMonth = 1;
-            $cutoffYear++;
-        }
-        $cutoffDate = new \DateTime(sprintf('%04d-%02d-07', $cutoffYear, $cutoffMonth)); // mulai tgl 7
-        if ($today >= $cutoffDate) {
-            return ['allowed' => false, 'restricted' => false, 'message' => 'Periode input ditutup setiap tanggal 6 bulan berikutnya', 'max_days' => 0];
-        }
-
         // Get indicator frequency
         $freqRow = $db->table($this->tablePrefix . 'quality_indicator')
             ->select('indicator_frequency')
@@ -943,24 +929,48 @@ class LoadModuleForminputModel extends Model
             ->getRow();
         $frequency = $freqRow ? $freqRow->indicator_frequency : 'D';
 
-        // For W/M/Y: no 30-day hard limit, use group_days from database
-        if ($frequency === 'W' || $frequency === 'M' || $frequency === 'Y') {
-            $maxDays = 9999;
-            $row = $db->table($this->tablePrefix . 'quality_indicator_group')
-                ->select('group_days, group_days_changed_at')
-                ->where('group_indicator_id', $indicatorId)
-                ->where('group_department_id', $departmentId)
-                ->where('group_period', $tahun)
-                ->where('group_record_status', 'A')
-                ->get()
-                ->getRow();
-            $maxDays = $row ? (int) $row->group_days : 9999;
-            $maxDays = $this->applyGroupDaysAutoRevert($maxDays, $row->group_days_changed_at ?? null);
+        // Get group_days (used both for open_period override and normal logic)
+        $groupRow = $db->table($this->tablePrefix . 'quality_indicator_group')
+            ->select('group_days, group_days_changed_at')
+            ->where('group_indicator_id', $indicatorId)
+            ->where('group_department_id', $departmentId)
+            ->where('group_period', $tahun)
+            ->where('group_record_status', 'A')
+            ->get()
+            ->getRow();
+        $groupDays = $groupRow ? (int) $groupRow->group_days : 0;
+        $groupDays = $this->applyGroupDaysAutoRevert($groupDays, $groupRow->group_days_changed_at ?? null);
 
+        // Jika group_days mencukupi, izinkan langsung (override "tanggal 6" lock)
+        if ($groupDays > 0 && $diffDays <= $groupDays) {
+            $restricted = $diffDays > 30 && $frequency === 'D';
+            return [
+                'allowed' => true,
+                'restricted' => $restricted,
+                'message' => $restricted ? 'Data hanya bisa dilihat, hubungi admin untuk edit/hapus' : '',
+                'max_days' => $groupDays
+            ];
+        }
+
+        // Lock pada tgl 6 bulan berikutnya (hanya jika group_days tidak override)
+        $inputMonth = (int) $tgl->format('m');
+        $inputYear = (int) $tgl->format('Y');
+        $cutoffMonth = $inputMonth + 1;
+        $cutoffYear = $inputYear;
+        if ($cutoffMonth > 12) {
+            $cutoffMonth = 1;
+            $cutoffYear++;
+        }
+        $cutoffDate = new \DateTime(sprintf('%04d-%02d-07', $cutoffYear, $cutoffMonth));
+        if ($today >= $cutoffDate) {
+            return ['allowed' => false, 'restricted' => false, 'message' => 'Periode input ditutup setiap tanggal 6 bulan berikutnya', 'max_days' => 0];
+        }
+
+        if ($frequency === 'W' || $frequency === 'M' || $frequency === 'Y') {
+            $maxDays = $groupDays > 0 ? $groupDays : 9999;
             if ($diffDays <= $maxDays) {
                 return ['allowed' => true, 'restricted' => false, 'message' => '', 'max_days' => $maxDays];
             }
-
             return [
                 'allowed' => false,
                 'restricted' => false,
@@ -974,25 +984,13 @@ class LoadModuleForminputModel extends Model
             return ['allowed' => true, 'restricted' => false, 'message' => '', 'max_days' => 30];
         }
 
-        // Lebih dari 30 hari → cek group_days (only for non-local modules)
-        $maxDays = 30;
-        $row = $db->table($this->tablePrefix . 'quality_indicator_group')
-            ->select('group_days, group_days_changed_at')
-            ->where('group_indicator_id', $indicatorId)
-            ->where('group_department_id', $departmentId)
-            ->where('group_period', $tahun)
-            ->where('group_record_status', 'A')
-            ->get()
-            ->getRow();
-        $maxDays = $row ? (int) $row->group_days : 30;
-        $maxDays = $this->applyGroupDaysAutoRevert($maxDays, $row->group_days_changed_at ?? null);
-
+        // Lebih dari 30 hari → cek group_days
+        $maxDays = $groupDays > 0 ? $groupDays : 30;
         if ($diffDays <= $maxDays) {
-            $restricted = $diffDays > 30;
             return [
                 'allowed' => true,
-                'restricted' => $restricted,
-                'message' => $restricted ? 'Data hanya bisa dilihat, hubungi admin untuk edit/hapus' : '',
+                'restricted' => true,
+                'message' => 'Data hanya bisa dilihat, hubungi admin untuk edit/hapus',
                 'max_days' => $maxDays
             ];
         }
