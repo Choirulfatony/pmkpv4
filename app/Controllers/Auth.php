@@ -985,6 +985,19 @@ class Auth extends BaseController
     }
 
     /**
+     * Sync profile data from Google
+     */
+    public function googleSync()
+    {
+        if (!session()->get('logged_in')) {
+            return redirect()->to('/auth');
+        }
+        $googleLogin = new GoogleLogin();
+        $googleLogin->setState('sync');
+        return redirect()->to($googleLogin->getAuthUrl());
+    }
+
+    /**
      * Redirect to Google OAuth
      */
     public function googleLogin()
@@ -1025,7 +1038,9 @@ class Auth extends BaseController
         log_message('error', 'GOOGLE CALLBACK: Method called');
         
         $code = $this->request->getGet('code');
-        $isPopup = $this->request->getGet('state') === 'popup';
+        $state = $this->request->getGet('state');
+        $isPopup = $state === 'popup';
+        $isSync = $state === 'sync';
 
         if (!$code) {
             log_message('error', 'GOOGLE CALLBACK: No code received');
@@ -1052,6 +1067,30 @@ class Auth extends BaseController
             $picture = $userInfo->getPicture();
 
             log_message('error', 'GOOGLE CALLBACK: User info - Email: ' . $email . ', Name: ' . $name . ', Verified: ' . ($userInfo->getVerifiedEmail() ? 'Yes' : 'No'));
+
+            // Sync mode: update profile data and redirect back
+            if ($isSync) {
+                $profileId = session()->get('profile_id');
+                $sessionEmail = session()->get('profile_email');
+                if (!$profileId || !$sessionEmail) {
+                    return redirect()->to(site_url('siimut/profile'))->with('error', 'Sesi tidak valid, silakan login ulang');
+                }
+                if ($email !== $sessionEmail) {
+                    return redirect()->to(site_url('siimut/profile'))->with('error', 'Email Google tidak cocok dengan akun Anda');
+                }
+                $db = db_connect();
+                $db->table('user_profile')
+                    ->where('profile_id', $profileId)
+                    ->update([
+                        'profile_fullname' => $name,
+                        'profile_photo' => $picture,
+                    ]);
+                session()->set([
+                    'nama_lengkap'    => $name,
+                    'profile_picture' => $picture,
+                ]);
+                return redirect()->to(site_url('siimut/profile'))->with('success', 'Profil berhasil disinkronkan dari Google');
+            }
 
             // Validasi apakah email telah diverifikasi oleh Google
             if (!$userInfo->getVerifiedEmail()) {

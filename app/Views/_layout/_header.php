@@ -326,8 +326,6 @@
     }
 </style>
 
-
-
 <!--begin::Header / Navbar-->
 <nav id="mainNavbar"
     class="app-header navbar navbar-expand border-bottom">

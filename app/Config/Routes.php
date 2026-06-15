@@ -21,6 +21,7 @@ $routes->get('auth/cek_session', 'Auth::cek_session');
 // Google Login
 $routes->get('auth/google-login', 'Auth::googleLogin');
 $routes->get('auth/google-callback', 'Auth::googleCallback');
+$routes->get('auth/google-sync', 'Auth::googleSync');
 
 // Registrasi
 $routes->get('auth/register', 'Auth::showRegister');

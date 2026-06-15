@@ -30,6 +30,13 @@
                                 <input type="file" name="profile_photo" id="profile_photo" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none;">
                             </form>
 
+                            <?php if (session('auth_method') === 'GOOGLE'): ?>
+                            <hr>
+                            <a href="<?= site_url('auth/google-sync') ?>" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-google"></i> Sync dari Google
+                            </a>
+                            <?php endif; ?>
+
                             <hr>
 
                             <div class="text-start small">
