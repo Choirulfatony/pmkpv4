@@ -164,11 +164,15 @@
         word-break: break-word;
     }
 
+    #backdate-notif-items .flex-grow-1 {
+        min-width: 0;
+    }
+
     #backdate-notif-items .notif-title {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        max-width: 220px;
+        max-width: 180px;
     }
 
     #backdate-notif-items small {
@@ -177,7 +181,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        max-width: 260px;
+        max-width: 220px;
     }
 
     .notif-status {
@@ -871,7 +875,9 @@
                     var date = item.ar_request_date || '';
                     var dateShort = date.substring(0, 10);
                     var link = '<?= site_url('siimut/backdate/requests-list') ?>/' + slug;
-                    html += `
+                    var clickable = user_role !== 'KENDALI_MUTU';
+                    if (clickable) {
+                        html += `
                         <a href="${link}" class="dropdown-item">
                             <div class="d-flex align-items-start gap-2">
                                 <div class="notif-icon"><i class="bi bi-calendar-check text-warning"></i></div>
@@ -884,6 +890,21 @@
                                 </div>
                             </div>
                         </a>`;
+                    } else {
+                        html += `
+                        <div class="dropdown-item">
+                            <div class="d-flex align-items-start gap-2">
+                                <div class="notif-icon"><i class="bi bi-calendar-check text-warning"></i></div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between">
+                                        <div class="notif-title">${typeName} - ${unit}</div>
+                                        <div class="notif-time">${dateShort}</div>
+                                    </div>
+                                    <small class="text-muted">${name}</small>
+                                </div>
+                            </div>
+                        </div>`;
+                    }
                 });
                 $bdItems.html(html);
             },
