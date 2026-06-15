@@ -120,6 +120,7 @@
     var selectedRequestId = null;
     var _pendingData = [];
     var _historyData = [];
+    var _groupType = '<?= $groupType ?? '' ?>';
 
     function reloadData() {
         loadPendingTable();
@@ -205,9 +206,10 @@
             processing: false,
             serverSide: false,
             ajax: {
-                url: '<?= site_url('siimut/approval/ajax-get-requests-data') ?>',
+                url: '<?= site_url('siimut/backdate/ajax-get-requests-data') ?>',
                 type: 'POST',
                 dataType: 'json',
+                data: { group_type: _groupType },
                 dataSrc: function(json) { _pendingData = json.data || []; return _pendingData; }
             },
             columns: [
@@ -246,9 +248,10 @@
             processing: false,
             serverSide: false,
             ajax: {
-                url: '<?= site_url('siimut/approval/ajax-get-all-requests-data') ?>',
+                url: '<?= site_url('siimut/backdate/ajax-get-all-requests-data') ?>',
                 type: 'POST',
                 dataType: 'json',
+                data: { group_type: _groupType },
                 dataSrc: function(json) {
                     _historyData = json.data ? json.data.filter(function(row) { return row.ar_status !== 'pending'; }) : [];
                     return _historyData;
@@ -293,7 +296,7 @@
         }).then(function(result) {
             if (!result.isConfirmed) return;
             var xhr = new XMLHttpRequest();
-            xhr.open('POST', '<?= site_url('siimut/approval/ajax-approve-request') ?>', true);
+            xhr.open('POST', '<?= site_url('siimut/backdate/ajax-approve-request') ?>', true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
             xhr.onreadystatechange = function() {
@@ -322,7 +325,7 @@
         var notes = document.getElementById('rejectNotes').value.trim();
         if (!notes) { toastAlert('warning', 'Alasan penolakan harus diisi'); return; }
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', '<?= site_url('siimut/approval/ajax-reject-request') ?>', true);
+        xhr.open('POST', '<?= site_url('siimut/backdate/ajax-reject-request') ?>', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         xhr.onreadystatechange = function() {

@@ -209,6 +209,36 @@
           font-weight: 600;
       }
 
+      /* ===== RESPONSIVE ===== */
+      @media (max-width: 767px) {
+          #contentIKP .row > .col-md-3 {
+              position: fixed;
+              left: -100%;
+              top: 0;
+              bottom: 0;
+              width: 280px;
+              z-index: 1050;
+              transition: left 0.3s ease;
+              background: var(--bs-body-bg);
+              box-shadow: 2px 0 10px rgba(0,0,0,0.15);
+              overflow-y: auto;
+              padding-top: 60px;
+          }
+          #contentIKP .row > .col-md-3.show {
+              left: 0;
+          }
+          #contentIKP .row > .col-md-9 {
+              flex: 0 0 100%;
+              max-width: 100%;
+          }
+          .sidebar-toggle {
+              display: inline-block !important;
+          }
+      }
+      .sidebar-toggle {
+          display: none;
+      }
+
       /* ===== TOP LOADING BAR (RGB JELAS) ===== */
       .top-loading {
           position: absolute;
@@ -250,6 +280,9 @@
           <div class="row">
               <!-- SIDEBAR -->
               <!-- LEFT SIDEBAR -->
+              <button class="btn btn-outline-secondary btn-sm sidebar-toggle d-none mb-2" type="button" onclick="document.querySelector('#contentIKP .row > .col-md-3').classList.toggle('show')">
+                  <i class="bi bi-list"></i> Menu
+              </button>
               <div class="col-md-3">
                   <!-- <a href="#" class="btn btn-primary w-100 mb-3">Compose</a> -->
 
@@ -1322,4 +1355,13 @@
             timerProgressBar: true
         });
     }
+
+    // Mobile sidebar: close on outside click
+    document.addEventListener('click', function(e) {
+        var sidebar = document.querySelector('#contentIKP .row > .col-md-3');
+        if (!sidebar || !sidebar.classList.contains('show')) return;
+        var toggle = document.querySelector('.sidebar-toggle');
+        if (sidebar.contains(e.target) || (toggle && toggle.contains(e.target))) return;
+        sidebar.classList.remove('show');
+    });
     </script>

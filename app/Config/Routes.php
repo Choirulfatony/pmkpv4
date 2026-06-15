@@ -91,12 +91,13 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('ikp/request-approval', 'LoadModuleForminputIkp::request_approval');
         $routes->post('ikp/check-request-status', 'LoadModuleForminputIkp::check_request_status');
 
-        // Approval
-        $routes->get('approval/requests-list', 'Approval::requests_list');
-        $routes->post('approval/ajax-get-requests-data', 'Approval::ajaxGetRequestsData');
-        $routes->post('approval/ajax-get-all-requests-data', 'Approval::ajaxGetAllRequestsData');
-        $routes->post('approval/ajax-approve-request', 'Approval::ajaxApproveRequest');
-        $routes->post('approval/ajax-reject-request', 'Approval::ajaxRejectRequest');
+        // Backdate Request
+        $routes->get('backdate/requests-list', 'Approval::requests_list');
+        $routes->get('backdate/requests-list/(:any)', 'Approval::requestsListByType/$1');
+        $routes->post('backdate/ajax-get-requests-data', 'Approval::ajaxGetRequestsData');
+        $routes->post('backdate/ajax-get-all-requests-data', 'Approval::ajaxGetAllRequestsData');
+        $routes->post('backdate/ajax-approve-request', 'Approval::ajaxApproveRequest');
+        $routes->post('backdate/ajax-reject-request', 'Approval::ajaxRejectRequest');
         $routes->get('approval/(:any)', 'Approval::index/$1');
         $routes->post('approval/ajax-get-data', 'Approval::ajaxGetData');
         $routes->post('approval/ajax-get-departments', 'Approval::ajaxGetDepartments');

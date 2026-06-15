@@ -546,6 +546,7 @@ class LoadModuleForminputIkp extends AppController
         $tanggal = $this->request->getPost('tanggal');
         $reason = trim($this->request->getPost('reason') ?? '');
         $actionType = $this->request->getPost('action_type') ?? 'edit';
+        $groupType = $this->request->getPost('group_type');
         $userId = (int) (session('profile_id') ?? 0);
 
         if (!$indicatorId || !$departmentId || !$tanggal || !$reason) {
@@ -557,7 +558,7 @@ class LoadModuleForminputIkp extends AppController
         }
 
         $approvalModel = new \App\Models\ApprovalRequestModel();
-        $saved = $approvalModel->saveRequest($indicatorId, $departmentId, $tanggal, $reason, $userId, $actionType);
+        $saved = $approvalModel->saveRequest($indicatorId, $departmentId, $tanggal, $reason, $userId, $actionType, $groupType);
 
         if ($saved) {
             return $this->response->setJSON(['status' => true, 'message' => 'Permintaan persetujuan berhasil dikirim']);

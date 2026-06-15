@@ -844,8 +844,8 @@
 
     // });
 
-    setTanggal("#tgl_masuk_view", "#tgl_masuk");
-    setTanggal("#tgl_insiden_view", "#tgl_insiden");
+    try { setTanggal("#tgl_masuk_view", "#tgl_masuk"); } catch(e) { console.warn('flatpickr tgl_masuk:', e); }
+    try { setTanggal("#tgl_insiden_view", "#tgl_insiden"); } catch(e) { console.warn('flatpickr tgl_insiden:', e); }
 
     function setTanggal(view, hidden) {
 
@@ -864,7 +864,7 @@
 
                     let formatDB = yyyy + "-" + mm + "-" + dd;
 
-                    $(hidden).val(formatDB);
+                    $(hidden).val(formatDB).trigger('change');
 
                 }
 
@@ -934,7 +934,10 @@
             if (raw.length > 3) formatted += '-' + raw.substring(3, 5);
             if (raw.length > 5) formatted += '-' + raw.substring(5, 7);
 
-            input.value = formatted;
+            // hanya set jika benar-benar berubah, cegah infinite loop input event
+            if (input.value !== formatted) {
+                input.value = formatted;
+            }
             input.setSelectionRange(formatted.length, formatted.length);
 
             if (raw.length === 7 && typeof tryCariPasienAuto === 'function') {
@@ -946,8 +949,9 @@
     // cari pasien
     function cariPasien() {
 
-        if (IKP.isSearching) return;
-        IKP.isSearching = true;
+        if (!window.IKP) window.IKP = { isSearching: false, lastMedrec: null };
+        if (window.IKP.isSearching) return;
+        window.IKP.isSearching = true;
 
         const kd_pasien = $('#kd_pasien').val();
         const tgl_masuk = $('#tgl_masuk').val();
@@ -967,7 +971,7 @@
 
             success: function(res) {
                 $('#loading_pasien').hide();
-                IKP.isSearching = false;
+                if (window.IKP) window.IKP.isSearching = false;
 
                 if (res.status === 'success') {
                     const d = res.data;
@@ -989,7 +993,7 @@
 
             error: function() {
                 $('#loading_pasien').hide();
-                IKP.isSearching = false;
+                if (window.IKP) window.IKP.isSearching = false;
                 toastError('Terjadi kesalahan koneksi ke server');
             }
         });
@@ -1069,9 +1073,9 @@
             kd_pasien_raw.length === 7 &&
             tgl_masuk &&
             asal_pasien &&
-            IKP.lastMedrec !== kd_pasien_raw
+            (!window.IKP || window.IKP.lastMedrec !== kd_pasien_raw)
         ) {
-            IKP.lastMedrec = kd_pasien_raw;
+            if (window.IKP) window.IKP.lastMedrec = kd_pasien_raw;
             cariPasien();
         }
     }
@@ -1847,5 +1851,52 @@
 
     #ikpStepper .bs-stepper-header .step.active {
         opacity: 1;
+    }
+
+    @media (max-width: 767px) {
+        #ikpStepper .bs-stepper-header {
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            flex-wrap: nowrap !important;
+            gap: 0 !important;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            padding-bottom: 4px;
+        }
+        #ikpStepper .bs-stepper-header .step {
+            flex: 0 0 auto !important;
+            min-width: 50px !important;
+        }
+        #ikpStepper .bs-stepper-header .step .bs-stepper-label {
+            font-size: 9px !important;
+            white-space: nowrap;
+        }
+        #ikpStepper .bs-stepper-header .step .bs-stepper-circle {
+            width: 1.75rem !important;
+            height: 1.75rem !important;
+            font-size: .7rem !important;
+            line-height: 1.75rem !important;
+        }
+        #ikpStepper .bs-stepper-header .line {
+            flex: 0 0 10px !important;
+            min-width: 10px !important;
+        }
+
+        #ikpStepper .bs-stepper-content .row > [class*="col-"] {
+            padding-left: 4px !important;
+            padding-right: 4px !important;
+        }
+
+        #ikpStepper .bs-stepper-content .card-body {
+            padding: 0.75rem !important;
+        }
+
+        #ikpStepper .modal-footer {
+            flex-direction: column !important;
+            gap: 0.5rem !important;
+        }
+        #ikpStepper .modal-footer button {
+            width: 100% !important;
+        }
     }
 </style>

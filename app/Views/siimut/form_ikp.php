@@ -917,7 +917,7 @@
                     }
                 }
             };
-            xhr.send('indicator_id=' + indicator_id + '&department_id=' + department_id + '&tanggal=' + tanggal + '&reason=' + encodeURIComponent(reason) + '&action_type=' + action);
+            xhr.send('indicator_id=' + indicator_id + '&department_id=' + department_id + '&tanggal=' + tanggal + '&reason=' + encodeURIComponent(reason) + '&action_type=' + action + '&group_type=' + (groupTypeMap[catId] || ''));
         });
     }
 

@@ -18,7 +18,7 @@ class ApprovalRequestModel extends Model
     ];
     protected $useTimestamps = false;
 
-    public function saveRequest(int $indicatorId, string $departmentId, string $period, string $reason, int $userId, string $actionType = 'edit'): bool
+    public function saveRequest(int $indicatorId, string $departmentId, string $period, string $reason, int $userId, string $actionType = 'edit', ?string $groupType = null): bool
     {
         return (bool) $this->insert([
             'ar_indicator_id'   => $indicatorId,
@@ -26,6 +26,7 @@ class ApprovalRequestModel extends Model
             'ar_period'         => $period,
             'ar_reason'         => $reason,
             'ar_action_type'    => $actionType,
+            'ar_group_type'     => $groupType,
             'ar_status'         => 'pending',
             'ar_request_by'     => $userId,
             'ar_request_date'   => date('Y-m-d H:i:s'),
@@ -48,34 +49,38 @@ class ApprovalRequestModel extends Model
         ]);
     }
 
-    public function getPendingRequests(): array
+    public function getPendingRequests(?string $groupType = null): array
     {
         $db = db_connect();
-        return $db->table('approval_requests ar')
+        $q = $db->table('approval_requests ar')
             ->select("ar.*, up.profile_fullname as request_by_name, COALESCE(qi.indicator_element, lqi.indicator_element) as indicator_name, mid.department_name, COALESCE(qi.indicator_category_id, lqi.indicator_category_id) as indicator_category_id")
             ->join('user_profile up', 'up.profile_id = ar.ar_request_by', 'left')
             ->join('quality_indicator qi', 'qi.indicator_id = ar.ar_indicator_id', 'left')
             ->join('local_quality_indicator lqi', 'lqi.indicator_id = ar.ar_indicator_id', 'left')
             ->join('master_institution_department mid', 'mid.department_id = ar.ar_department_id', 'left')
             ->where('ar.ar_status', 'pending')
-            ->orderBy('ar.ar_request_date', 'DESC')
-            ->get()
-            ->getResult();
+            ->orderBy('ar.ar_request_date', 'DESC');
+        if ($groupType !== null) {
+            $q->where('ar.ar_group_type', $groupType);
+        }
+        return $q->get()->getResult();
     }
 
-    public function getAllRequests(): array
+    public function getAllRequests(?string $groupType = null): array
     {
         $db = db_connect();
-        return $db->table('approval_requests ar')
+        $q = $db->table('approval_requests ar')
             ->select("ar.*, up1.profile_fullname as request_by_name, up2.profile_fullname as approve_by_name, COALESCE(qi.indicator_element, lqi.indicator_element) as indicator_name, mid.department_name, COALESCE(qi.indicator_category_id, lqi.indicator_category_id) as indicator_category_id")
             ->join('user_profile up1', 'up1.profile_id = ar.ar_request_by', 'left')
             ->join('user_profile up2', 'up2.profile_id = ar.ar_approve_by', 'left')
             ->join('quality_indicator qi', 'qi.indicator_id = ar.ar_indicator_id', 'left')
             ->join('local_quality_indicator lqi', 'lqi.indicator_id = ar.ar_indicator_id', 'left')
             ->join('master_institution_department mid', 'mid.department_id = ar.ar_department_id', 'left')
-            ->orderBy('ar.ar_request_date', 'DESC')
-            ->get()
-            ->getResult();
+            ->orderBy('ar.ar_request_date', 'DESC');
+        if ($groupType !== null) {
+            $q->where('ar.ar_group_type', $groupType);
+        }
+        return $q->get()->getResult();
     }
 
     public function getPendingByType(string $actionType): array

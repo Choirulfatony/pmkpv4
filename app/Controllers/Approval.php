@@ -231,11 +231,47 @@ class Approval extends AppController
         $menus = $menuModel->getMenuByRole($role);
 
         return $this->render('siimut/approval_requests', [
-            'judul'    => 'Approval Request',
+            'judul'    => 'Backdate Request',
             'icon'     => '<i class="bi bi-envelope-open"></i>',
             'menus'    => $menus,
             '_content' => view('siimut/approval_requests', [
-                'profileId' => session('profile_id') ?? 0
+                'profileId' => session('profile_id') ?? 0,
+                'groupType' => null
+            ])
+        ]);
+    }
+
+    public function requestsListByType(string $type)
+    {
+        if (!session()->get('logged_in')) {
+            return redirect()->to('/auth');
+        }
+
+        $typeMap = [
+            'inm'    => ['id' => '1', 'title' => 'INM'],
+            'imprs'  => ['id' => '5', 'title' => 'IMPRS'],
+            'impunit' => ['id' => '6', 'title' => 'IMPUNIT'],
+            'ikp'    => ['id' => '7', 'title' => 'IKP'],
+        ];
+
+        if (!isset($typeMap[$type])) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        $this->disableCache();
+
+        $role = session()->get('user_role');
+        $menuModel = new SiimutMenuModel();
+        $menus = $menuModel->getMenuByRole($role);
+        $cfg = $typeMap[$type];
+
+        return $this->render('siimut/approval_requests', [
+            'judul'    => 'Backdate Request - ' . $cfg['title'],
+            'icon'     => '<i class="bi bi-envelope-open"></i>',
+            'menus'    => $menus,
+            '_content' => view('siimut/approval_requests', [
+                'profileId' => session('profile_id') ?? 0,
+                'groupType' => $cfg['id']
             ])
         ]);
     }
@@ -247,7 +283,8 @@ class Approval extends AppController
         }
 
         $model = new ApprovalRequestModel();
-        $data = $model->getPendingRequests();
+        $groupType = $this->request->getPost('group_type');
+        $data = $model->getPendingRequests($groupType);
 
         return $this->response->setJSON(['status' => true, 'data' => $data]);
     }
@@ -259,7 +296,8 @@ class Approval extends AppController
         }
 
         $model = new ApprovalRequestModel();
-        $data = $model->getAllRequests();
+        $groupType = $this->request->getPost('group_type');
+        $data = $model->getAllRequests($groupType);
 
         return $this->response->setJSON(['status' => true, 'data' => $data]);
     }
