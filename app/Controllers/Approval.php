@@ -302,6 +302,23 @@ class Approval extends AppController
         return $this->response->setJSON(['status' => true, 'data' => $data]);
     }
 
+    public function ajaxBackdateNotification()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Invalid request']);
+        }
+
+        $model = new ApprovalRequestModel();
+        $data = $model->getPendingRequests(null, 5);
+        $count = $model->getPendingCount();
+
+        return $this->response->setJSON([
+            'status' => true,
+            'total'  => $count,
+            'data'   => $data
+        ]);
+    }
+
     public function ajaxApproveRequest()
     {
         if (!$this->request->isAJAX()) {

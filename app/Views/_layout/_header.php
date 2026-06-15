@@ -334,21 +334,27 @@
                     data-bs-toggle="dropdown">
                     <i class="bi bi-bell"></i>
                     <span id="badge-notif_header" class="badge bg-danger navbar-badge"></span>
+                    <span id="badge-backdate_header" class="badge bg-warning navbar-badge" style="display:none;position:absolute;top:-2px;right:-12px;font-size:.55rem;"></span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg">
                     <span class="dropdown-item dropdown-header">
                         Informasi
                     </span>
                     <div class="dropdown-divider"></div>
-                    <!-- <a href="#" class="dropdown-item">
-                        <i class="bi bi-envelope me-2"></i> Pesan baru
-                    </a> -->
                     <div id="notif-list"></div>
 
+                    <div class="dropdown-divider" id="backdate-divider" style="display:none;"></div>
+                    <div id="backdate-notif-list" style="display:none;">
+                        <span class="dropdown-item dropdown-header small bg-warning-subtle">
+                            <i class="bi bi-calendar-check me-1"></i> Backdate Request
+                        </span>
+                        <div id="backdate-notif-items"></div>
+                    </div>
+
                     <div class="dropdown-divider"></div>
-                    <span class="dropdown-item-text text-muted small">
-                        Klik menu <strong>Info</strong> di sidebar untuk melihat semua notifikasi
-                    </span>
+                    <a href="<?= site_url('siimut/backdate/requests-list') ?>" class="dropdown-item-text text-muted small text-decoration-none">
+                        <i class="bi bi-arrow-right-circle me-1"></i> Lihat semua Backdate Request
+                    </a>
                 </div>
             </li>
 
@@ -773,6 +779,77 @@
             error: function(xhr, status, error) {
                 if (status !== 'abort') {
                     console.log('Notif error:', status, error);
+                }
+            }
+        });
+
+        /* =============================
+           BACKDATE REQUEST NOTIFICATION
+        ============================= */
+        $.ajax({
+            url: "<?= base_url('siimut/backdate/ajax-notification') ?>",
+            type: "GET",
+            dataType: "json",
+            cache: false,
+            global: false,
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            },
+            success: function(res) {
+                if (!res.status || !res.data) return;
+
+                var bdCount = res.total ?? 0;
+                var bdData = res.data ?? [];
+
+                // Badge counter
+                var $badge = $('#badge-backdate_header');
+                if (bdCount > 0) {
+                    $badge.text(bdCount > 9 ? '9+' : bdCount).show();
+                } else {
+                    $badge.hide();
+                }
+
+                // Dropdown items
+                var $divider = $('#backdate-divider');
+                var $bdList = $('#backdate-notif-list');
+                var $bdItems = $('#backdate-notif-items');
+
+                if (bdData.length === 0) {
+                    $divider.hide();
+                    $bdList.hide();
+                    return;
+                }
+
+                $divider.show();
+                $bdList.show();
+
+                var typeNames = {1:'INM', 5:'IMPRS', 6:'IMPUNIT', 7:'IKP'};
+                var html = '';
+                bdData.forEach(function(item) {
+                    var typeName = typeNames[item.ar_group_type] || '?';
+                    var name = item.indicator_name || '-';
+                    var unit = item.department_name || '-';
+                    var date = item.ar_request_date || '';
+                    var dateShort = date.substring(0, 10);
+                    html += `
+                        <a href="<?= site_url('siimut/backdate/requests-list') ?>" class="dropdown-item notif-item">
+                            <div class="d-flex align-items-start gap-2">
+                                <div class="notif-icon"><i class="bi bi-calendar-check text-warning"></i></div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between">
+                                        <div class="notif-title">${typeName} - ${unit}</div>
+                                        <div class="notif-time">${dateShort}</div>
+                                    </div>
+                                    <small class="text-muted">${name}</small>
+                                </div>
+                            </div>
+                        </a>`;
+                });
+                $bdItems.html(html);
+            },
+            error: function(xhr, status, error) {
+                if (status !== 'abort') {
+                    console.log('Backdate notif error:', status, error);
                 }
             }
         });

@@ -49,7 +49,7 @@ class ApprovalRequestModel extends Model
         ]);
     }
 
-    public function getPendingRequests(?string $groupType = null): array
+    public function getPendingRequests(?string $groupType = null, ?int $limit = null): array
     {
         $db = db_connect();
         $q = $db->table('approval_requests ar')
@@ -63,7 +63,21 @@ class ApprovalRequestModel extends Model
         if ($groupType !== null) {
             $q->where('ar.ar_group_type', $groupType);
         }
+        if ($limit !== null) {
+            $q->limit($limit);
+        }
         return $q->get()->getResult();
+    }
+
+    public function getPendingCount(?string $groupType = null): int
+    {
+        $db = db_connect();
+        $q = $db->table('approval_requests ar')
+            ->where('ar_status', 'pending');
+        if ($groupType !== null) {
+            $q->where('ar_group_type', $groupType);
+        }
+        return $q->countAllResults();
     }
 
     public function getAllRequests(?string $groupType = null): array

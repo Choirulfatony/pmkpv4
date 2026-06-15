@@ -98,6 +98,7 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('backdate/ajax-get-all-requests-data', 'Approval::ajaxGetAllRequestsData');
         $routes->post('backdate/ajax-approve-request', 'Approval::ajaxApproveRequest');
         $routes->post('backdate/ajax-reject-request', 'Approval::ajaxRejectRequest');
+        $routes->get('backdate/ajax-notification', 'Approval::ajaxBackdateNotification');
         $routes->get('approval', 'Approval::index');
         $routes->get('approval/(:any)', 'Approval::index/$1');
         $routes->post('approval/ajax-get-data', 'Approval::ajaxGetData');
