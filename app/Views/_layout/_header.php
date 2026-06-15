@@ -492,8 +492,8 @@
 
         console.log('CLICK notif:', insiden_id);
 
-        // ❌ pelapor tidak boleh klik langsung ke detail dari notifikasi
-        if (user_role === 'PELAPOR') {
+        // ❌ pelapor dan kendali mutu tidak boleh klik langsung ke detail dari notifikasi
+        if (user_role === 'PELAPOR' || user_role === 'KENDALI_MUTU') {
             return false;
         }
 
@@ -756,8 +756,8 @@
 
                         let disabledClass = '';
 
-                        // PELAPOR tidak bisa klik dari notifikasi
-                        if (user_role === 'PELAPOR') {
+                        // PELAPOR & KENDALI_MUTU tidak bisa klik dari notifikasi
+                        if (user_role === 'PELAPOR' || user_role === 'KENDALI_MUTU') {
                             disabledClass = 'notif-disabled';
                             // Disable klik dengan inline style juga
                         } else {
