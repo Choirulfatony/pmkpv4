@@ -351,10 +351,7 @@
                         <div id="backdate-notif-items"></div>
                     </div>
 
-                    <div class="dropdown-divider"></div>
-                    <a href="<?= site_url('siimut/backdate/requests-list') ?>" class="dropdown-item-text text-muted small text-decoration-none">
-                        <i class="bi bi-arrow-right-circle me-1"></i> Lihat semua Backdate Request
-                    </a>
+
                 </div>
             </li>
 
@@ -824,15 +821,18 @@
                 $bdList.show();
 
                 var typeNames = {1:'INM', 5:'IMPRS', 6:'IMPUNIT', 7:'IKP'};
+                var typeSlugs = {1:'inm', 5:'imprs', 6:'impunit', 7:'ikp'};
                 var html = '';
                 bdData.forEach(function(item) {
                     var typeName = typeNames[item.ar_group_type] || '?';
+                    var slug = typeSlugs[item.ar_group_type] || '';
                     var name = item.indicator_name || '-';
                     var unit = item.department_name || '-';
                     var date = item.ar_request_date || '';
                     var dateShort = date.substring(0, 10);
+                    var link = '<?= site_url('siimut/backdate/requests-list') ?>/' + slug;
                     html += `
-                        <a href="<?= site_url('siimut/backdate/requests-list') ?>" class="dropdown-item notif-item">
+                        <a href="${link}" class="dropdown-item notif-item">
                             <div class="d-flex align-items-start gap-2">
                                 <div class="notif-icon"><i class="bi bi-calendar-check text-warning"></i></div>
                                 <div class="flex-grow-1">
