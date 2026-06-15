@@ -794,80 +794,6 @@
                 }
             }
         });
-
-        /* =============================
-           BACKDATE REQUEST NOTIFICATION
-        ============================= */
-        $.ajax({
-            url: "<?= base_url('siimut/backdate/ajax-notification') ?>",
-            type: "GET",
-            dataType: "json",
-            cache: false,
-            global: false,
-            beforeSend: function(xhr) {
-                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-            },
-            success: function(res) {
-                if (!res.status || !res.data) return;
-
-                var bdCount = res.total ?? 0;
-                var bdData = res.data ?? [];
-
-                // Badge counter
-                var $badge = $('#badge-backdate_header');
-                if (bdCount > 0) {
-                    $badge.text(bdCount > 9 ? '9+' : bdCount).show();
-                } else {
-                    $badge.hide();
-                }
-
-                // Dropdown items
-                var $divider = $('#backdate-divider');
-                var $bdList = $('#backdate-notif-list');
-                var $bdItems = $('#backdate-notif-items');
-
-                if (bdData.length === 0) {
-                    $divider.hide();
-                    $bdList.hide();
-                    return;
-                }
-
-                $divider.show();
-                $bdList.show();
-
-                var typeNames = {1:'INM', 5:'IMPRS', 6:'IMPUNIT', 7:'IKP'};
-                var typeSlugs = {1:'inm', 5:'imprs', 6:'impunit', 7:'ikp'};
-                var html = '';
-                bdData.forEach(function(item) {
-                    var typeName = typeNames[item.ar_group_type] || '?';
-                    var slug = typeSlugs[item.ar_group_type] || '';
-                    var name = item.indicator_name || '-';
-                    var unit = item.department_name || '-';
-                    var date = item.ar_request_date || '';
-                    var dateShort = date.substring(0, 10);
-                    var link = '<?= site_url('siimut/backdate/requests-list') ?>/' + slug;
-                    html += `
-                        <a href="${link}" class="dropdown-item notif-item">
-                            <div class="d-flex align-items-start gap-2">
-                                <div class="notif-icon"><i class="bi bi-calendar-check text-warning"></i></div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between">
-                                        <div class="notif-title">${typeName} - ${unit}</div>
-                                        <div class="notif-time">${dateShort}</div>
-                                    </div>
-                                    <small class="text-muted">${name}</small>
-                                </div>
-                            </div>
-                        </a>`;
-                });
-                $bdItems.html(html);
-            },
-            error: function(xhr, status, error) {
-                if (status !== 'abort') {
-                    console.log('Backdate notif error:', status, error);
-                }
-            }
-        });
     }
 
     /* =============================
@@ -937,6 +863,8 @@
             }
         });
     }
+
+    function updateClock() {
         const now = new Date();
 
         const h = String(now.getHours()).padStart(2, '0');
