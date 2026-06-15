@@ -302,6 +302,7 @@
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     var resp = JSON.parse(xhr.responseText);
+                    if (resp.debug) console.log('[open_period debug]', resp.debug);
                     toastAlert(resp.status ? 'success' : 'error', resp.message);
                     if (resp.status) {
                         bootstrap.Modal.getInstance(document.getElementById('modalDetail'))?.hide();

@@ -412,6 +412,12 @@ class Approval extends AppController
                 $tbl = $groupType ? ($tableMap[(int) $groupType] ?? 'quality_indicator_group') : 'quality_indicator_group';
 
                 $existing = $db->table($tbl)->where($where)->get()->getRow();
+                $debug = [
+                    'table' => $tbl,
+                    'where' => $where,
+                    'groupDays' => $groupDays,
+                    'existing_found' => $existing ? true : false,
+                ];
                 if ($existing) {
                     $db->table($tbl)->where($where)->update([
                         'group_days' => $groupDays,
@@ -438,7 +444,11 @@ class Approval extends AppController
             }
         }
 
-        return $this->response->setJSON(['status' => true, 'message' => 'Permintaan disetujui']);
+        $resp = ['status' => true, 'message' => 'Permintaan disetujui'];
+        if (isset($debug)) {
+            $resp['debug'] = $debug;
+        }
+        return $this->response->setJSON($resp);
     }
 
     public function ajaxRejectRequest()

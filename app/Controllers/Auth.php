@@ -280,6 +280,7 @@ class Auth extends BaseController
             'hris_nip'        => $user->nip,
             'hris_full_name'  => $user->nama_lengkap ?? $user->nama,
             'nama_lengkap'    => $user->nama_lengkap ?? $user->nama,
+            'profile_id'      => $profile->profile_id ?? ($user->profile_id ?? null),
             'department_name' => $user->department_name ?? '',
             'user_role'       => $role,
             'login_time'      => date('Y-m-d H:i:s'),

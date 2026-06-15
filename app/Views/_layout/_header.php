@@ -458,7 +458,9 @@
                         </p>
                     </li>
                     <li class="user-footer">
+                        <?php if (service('uri')->getSegment(1) !== 'ikprs'): ?>
                         <a href="<?= site_url('siimut/profile') ?>" class="btn btn-default btn-flat">Profile</a>
+                        <?php endif; ?>
                         <a href="<?= site_url('auth/logout') ?>"
                             class="btn btn-default btn-flat float-end">
                             Sign out
@@ -884,6 +886,9 @@
                 var $bdItems = $('#backdate-notif-items');
                 var typeNames = {1:'INM', 5:'IMPRS', 6:'IMPUNIT', 7:'IKP'};
                 var typeSlugs = {1:'inm', 5:'imprs', 6:'impunit', 7:'ikp'};
+                var actionLabels = {edit:'Edit', delete:'Hapus', open_period:'Buka Periode'};
+                var actionIcons = {edit:'bi-pencil', delete:'bi-trash', open_period:'bi-unlock'};
+                var actionColors = {edit:'info', delete:'warning', open_period:'primary'};
                 var html = '';
 
                 /* ---------- MENUNGGU (pending) ---------- */
@@ -892,6 +897,9 @@
                     bdData.forEach(function(item) {
                         var typeName = typeNames[item.ar_group_type] || '?';
                         var slug = typeSlugs[item.ar_group_type] || '';
+                        var actName = actionLabels[item.ar_action_type] || item.ar_action_type || '?';
+                        var actIcon = actionIcons[item.ar_action_type] || 'bi-question';
+                        var actColor = actionColors[item.ar_action_type] || 'secondary';
                         var name = item.indicator_name || '-';
                         var unit = item.department_name || '-';
                         var link = '<?= site_url('siimut/backdate/requests-list') ?>/' + slug;
@@ -902,7 +910,10 @@
                             '<div class="d-flex align-items-start gap-2">'+
                                 '<div class="notif-icon"><i class="bi bi-calendar-check text-warning"></i></div>'+
                                 '<div class="flex-grow-1" style="min-width:0">'+
-                                    '<div class="notif-title">'+typeName+' - '+unit+'</div>'+
+                                    '<div class="d-flex justify-content-between align-items-center gap-1">'+
+                                        '<div class="notif-title text-truncate">'+typeName+' - '+unit+'</div>'+
+                                        '<span class="badge bg-'+actColor+' flex-shrink-0" style="font-size:10px;"><i class="'+actIcon+' me-1"></i>'+actName+'</span>'+
+                                    '</div>'+
                                     '<small class="text-muted d-block text-truncate">'+name+'</small>'+
                                     '<small class="text-muted d-block" style="font-size:11px;opacity:.7">'+fmtBDDate(item.ar_request_date)+'</small>'+
                                 '</div>'+
@@ -919,6 +930,9 @@
                         var typeName = typeNames[item.ar_group_type] || '?';
                         var name = item.indicator_name || '-';
                         var unit = item.department_name || '-';
+                        var actName = actionLabels[item.ar_action_type] || item.ar_action_type || '?';
+                        var actIcon = actionIcons[item.ar_action_type] || 'bi-question';
+                        var actColor = actionColors[item.ar_action_type] || 'secondary';
                         var status = item.ar_status || '';
                         var statusBadge = '';
                         var statusClass = '';
@@ -937,6 +951,7 @@
                                 '<div class="flex-grow-1" style="min-width:0">'+
                                     '<div class="d-flex justify-content-between align-items-center gap-1">'+
                                         '<div class="notif-title text-truncate">'+typeName+' - '+unit+'</div>'+
+                                        '<span class="badge bg-'+actColor+' flex-shrink-0 me-1" style="font-size:10px;"><i class="'+actIcon+' me-1"></i>'+actName+'</span>'+
                                         '<div class="flex-shrink-0">'+statusBadge+'</div>'+
                                     '</div>'+
                                     '<small class="text-muted d-block text-truncate">'+name+'</small>'+

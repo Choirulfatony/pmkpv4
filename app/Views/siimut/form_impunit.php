@@ -2,6 +2,9 @@
 <style>
     td.day-cell.cell-disabled { opacity: 0.5; cursor: default; }
     td.day-cell.cell-disabled * { pointer-events: none; }
+    td.day-cell.cell-inputable { cursor: pointer; }
+    td.day-cell.cell-inputable .fw-bold { color: #0d6efd !important; }
+    td.day-cell.cell-inputable .num-denum { color: #0d6efd !important; }
 </style>
 
 <div class="container-fluid py-4">

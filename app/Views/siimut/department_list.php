@@ -293,6 +293,18 @@
             });
         });
     });
+
+    // Reflow DataTable when modals open/close
+    $('#modal-indikator').on('shown.bs.modal', function() {
+        if (dtIndicator) {
+            dtIndicator.columns.adjust().responsive.recalc();
+        }
+    });
+    $('#modal-form-indicator').on('hidden.bs.modal', function() {
+        if (dtIndicator) {
+            dtIndicator.columns.adjust().responsive.recalc();
+        }
+    });
 </script>
 
 <!-- Modal Indikator -->
@@ -338,7 +350,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header" id="modal-form-header" style="color: white;">
-                <h6 class="modal-title" id="modal-form-title"><i class="bi bi-plus-circle"></i> Tambah Indikator</h6>
+                <h6 class="modal-title" id="modal-form-title"><i class="bi bi-plus-circle" id="modal-form-icon"></i> <span id="modal-form-title-text">Tambah Indikator</span></h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: brightness(0) invert(1);"></button>
             </div>
             <form id="form-indicator-group" novalidate>
@@ -395,6 +407,7 @@
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 <script>
     var currentDeptId = 0;
+    var currentDeptName = '';
     var currentGroupType = 0;
     var currentLabel = '';
     var dtIndicator = null;
@@ -411,14 +424,9 @@
     $(document).on('click', '.btn-show-indicators', function() {
         var btn = $(this);
         currentDeptId = btn.data('dept-id');
+        currentDeptName = btn.data('dept-name');
         currentGroupType = btn.data('type');
         currentLabel = btn.data('label');
-
-        // Destroy previous DataTable
-        if (dtIndicator) {
-            dtIndicator.destroy();
-            dtIndicator = null;
-        }
 
         // Set header color & icon based on module type
         var modStyle = moduleStyles[currentGroupType] || { color1: '#6f42c1', color2: '#5530a3', icon: 'bi-bar-chart' };
@@ -434,95 +442,101 @@
         loadIndicatorList();
     });
 
-    function loadIndicatorList() {
-        // Destroy previous DataTable instance
+    function initIndicatorDataTable() {
         if (dtIndicator) {
-            dtIndicator.destroy();
-            dtIndicator = null;
+            dtIndicator.ajax.reload();
+            return;
         }
-        $.ajax({
-            url: '<?= site_url('siimut/unit/ajax-get-indicators') ?>',
-            type: 'POST',
-            data: {
-                department_id: currentDeptId,
-                group_type: currentGroupType
-            },
-            dataType: 'json',
-            success: function(res) {
-                var tbody = $('#indicator-modal-body');
-                tbody.empty();
-                if (res.data && res.data.length > 0) {
-                    $.each(res.data, function(i, row) {
-                        tbody.append(
-                            '<tr>' +
-                            '<td class="text-center">' + (i + 1) + '</td>' +
-                            '<td><strong>' + row.group_period + '</strong></td>' +
-                            '<td>' + row.indicator_element + '</td>' +
-                            '<td class="text-center">' + row.group_days + '</td>' +
-                            '<td class="text-center">' + (row.group_record_status === 'A' ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Nonaktif</span>') + '</td>' +
-                            '<td class="text-center text-nowrap">' +
-                            '<button type="button" class="btn btn-sm btn-outline-primary btn-edit-indicator me-1" title="Edit" data-group-id="' + row.group_id + '" data-period="' + row.group_period + '" data-days="' + row.group_days + '"><i class="bi bi-pencil"></i></button>' +
-                            '<button type="button" class="btn btn-sm btn-outline-danger btn-delete-indicator" title="Hapus" data-group-id="' + row.group_id + '" data-name="' + row.indicator_element + '"><i class="bi bi-trash"></i></button>' +
-                            '</td>' +
-                            '</tr>'
-                        );
-                    });
-
-                    // Init DataTable
-                    dtIndicator = $('#table-indicator-modal').DataTable({
-                        paging: true,
-                        searching: true,
-                        info: true,
-                        lengthChange: true,
-                        pageLength: 10,
-                        lengthMenu: [
-                            [5, 10, 25, 50],
-                            [5, 10, 25, 50]
-                        ],
-                        responsive: {
-                            details: {
-                                display: $.fn.dataTable.Responsive.display.modal({
-                                    header: function(row) {
-                                        return 'Detail Indikator';
-                                    }
-                                }),
-                                renderer: $.fn.dataTable.Responsive.renderer.listHiddenNodes()
-                            }
-                        },
-                        order: [],
-                        language: {
-                            search: 'Cari:',
-                            searchPlaceholder: 'Ketik kata kunci...',
-                            lengthMenu: 'Tampilkan _MENU_',
-                            info: '_START_ - _END_ dari _TOTAL_',
-                            infoEmpty: '0 - 0 dari 0',
-                            infoFiltered: '(difilter dari _MAX_ total)',
-                            zeroRecords: 'Data tidak ditemukan',
-                            paginate: {
-                                first: 'Awal',
-                                last: 'Akhir',
-                                next: '<i class="bi bi-chevron-right"></i>',
-                                previous: '<i class="bi bi-chevron-left"></i>'
-                            }
-                        },
-                        dom: '<"d-flex justify-content-between align-items-center gap-2 px-1 mb-2"<"d-flex align-items-center gap-2"l><"d-flex align-items-center"f>>rt<"d-flex justify-content-between align-items-center gap-2 px-1 mt-2"<i><p>>'
-                    });
-
-                } else {
-                    tbody.html('<tr><td colspan="6" class="text-center text-muted py-3">Belum ada indikator untuk unit ini</td></tr>');
+        dtIndicator = $('#table-indicator-modal').DataTable({
+            processing: true,
+            serverSide: false,
+            ajax: {
+                url: '<?= site_url('siimut/unit/ajax-get-indicators') ?>',
+                type: 'POST',
+                data: function(d) {
+                    d.department_id = currentDeptId;
+                    d.group_type = currentGroupType;
                 }
             },
-            error: function() {
-                $('#indicator-modal-body').html('<tr><td colspan="6" class="text-center text-danger py-3">Gagal memuat data</td></tr>');
+            columns: [
+                { data: null, className: 'text-center', orderable: false, render: function(d,t,r,m) { return m.row + 1; } },
+                { data: 'group_period', render: function(d) { return '<strong>' + d + '</strong>'; } },
+                { data: 'indicator_element' },
+                { data: 'group_days', className: 'text-center' },
+                {
+                    data: 'group_record_status',
+                    className: 'text-center',
+                    render: function(d) {
+                        return d === 'A' ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Nonaktif</span>';
+                    }
+                },
+                {
+                    data: null,
+                    className: 'text-center text-nowrap',
+                    orderable: false,
+                    render: function(d) {
+                        return '<button type="button" class="btn btn-sm btn-outline-primary btn-edit-indicator me-1" title="Edit" data-group-id="' + d.group_id + '" data-period="' + d.group_period + '" data-days="' + d.group_days + '"><i class="bi bi-pencil"></i></button>' +
+                            '<button type="button" class="btn btn-sm btn-outline-danger btn-delete-indicator" title="Hapus" data-group-id="' + d.group_id + '" data-name="' + d.indicator_element + '"><i class="bi bi-trash"></i></button>';
+                    }
+                }
+            ],
+            paging: true,
+            searching: true,
+            info: true,
+            lengthChange: true,
+            pageLength: 10,
+            lengthMenu: [
+                [5, 10, 25, 50],
+                [5, 10, 25, 50]
+            ],
+            responsive: {
+                details: {
+                    display: $.fn.dataTable.Responsive.display.modal({
+                        header: function(row) {
+                            return 'Detail Indikator';
+                        }
+                    }),
+                    renderer: $.fn.dataTable.Responsive.renderer.listHiddenNodes()
+                }
+            },
+            order: [],
+            language: {
+                search: 'Cari:',
+                searchPlaceholder: 'Ketik kata kunci...',
+                lengthMenu: 'Tampilkan _MENU_',
+                info: '_START_ - _END_ dari _TOTAL_',
+                infoEmpty: '0 - 0 dari 0',
+                infoFiltered: '(difilter dari _MAX_ total)',
+                zeroRecords: 'Data tidak ditemukan',
+                paginate: {
+                    first: 'Awal',
+                    last: 'Akhir',
+                    next: '<i class="bi bi-chevron-right"></i>',
+                    previous: '<i class="bi bi-chevron-left"></i>'
+                }
+            },
+            dom: '<"d-flex justify-content-between align-items-center gap-2 px-1 mb-2"<"d-flex align-items-center gap-2"l><"d-flex align-items-center"f>>rt<"d-flex justify-content-between align-items-center gap-2 px-1 mt-2"<i><p>>',
+            initComplete: function() {
+                this.api().columns.adjust().responsive.recalc();
             }
         });
     }
 
+    function loadIndicatorList() {
+        if (dtIndicator) {
+            dtIndicator.ajax.reload();
+        } else {
+            initIndicatorDataTable();
+        }
+    }
+
     // Set form modal header style
     function setFormHeaderStyle() {
-        var modStyle = moduleStyles[currentGroupType] || { color1: '#6f42c1', color2: '#5530a3' };
+        var modStyle = moduleStyles[currentGroupType] || { color1: '#6f42c1', color2: '#5530a3', icon: 'bi-bar-chart' };
         var header = document.getElementById('modal-form-header');
         header.style.background = 'linear-gradient(135deg, ' + modStyle.color1 + ' 0%, ' + modStyle.color2 + ' 100%)';
+        var titleEl = document.getElementById('modal-form-icon');
+        if (titleEl) titleEl.className = 'bi ' + modStyle.icon;
     }
 
     // Open ADD form
@@ -532,7 +546,7 @@
         $('#form-edit-group-id').val('0');
         $('#form-department-id').val(currentDeptId);
         $('#form-group-type').val(currentGroupType);
-        $('#modal-form-title').html('<i class="bi bi-plus-circle"></i> Tambah Indikator ' + currentLabel);
+        $('#modal-form-title-text').text(currentLabel + ' — ' + currentDeptName);
         $('#indicator-select-wrapper').show();
         $('#form-indicator-id').val('').trigger('change');
         $('#form-start-date').val('');
@@ -572,7 +586,7 @@
         $('#form-edit-group-id').val(btn.data('group-id'));
         $('#form-department-id').val(currentDeptId);
         $('#form-group-type').val(currentGroupType);
-        $('#modal-form-title').html('<i class="bi bi-pencil"></i> Edit Indikator');
+        $('#modal-form-title-text').text(currentLabel + ' — ' + currentDeptName);
         $('#indicator-select-wrapper').hide();
         $('#form-period').val(btn.data('period'));
         $('#form-start-date').val('');

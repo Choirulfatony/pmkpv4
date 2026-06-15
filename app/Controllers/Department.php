@@ -742,6 +742,8 @@ class Department extends AppController
         $typeNames = ['1' => 'INM', '5' => 'IMPRS', '6' => 'IMP Unit', '7' => 'IKP'];
         $typeName = $typeNames[$groupType] ?? 'INDIKATOR';
 
+        log_message('error', 'WA DEBUG: indicatorId=' . $indicatorId . ', groupType=' . ($groupType ?? 'null') . ', indicatorName=' . $indicatorName . ', typeName=' . $typeName . ', deptName=' . $departmentName);
+
         $phone = '6285859410265';
         $token = 'EAAOPZAk50d4QBRWgRZBlswqPFxIjTIWToyWsrS5Hj0ZCw7fVjSydW3sRqiUM6dgZCITNOK3MK7bDdl7Qbmt9LBMcbnhwXrZC9xoiNcS8Y4tjbj1kB0VgwI8ZBBhITGyzAeuFy2EXXzIeM3z6VDsw9NZCXlZAvku93DZAS2jiVBZCTBSf3nZCoBxGZBP0x7DopUOsDgZD';
         $url = "https://graph.facebook.com/v19.0/1128976353628313/messages";

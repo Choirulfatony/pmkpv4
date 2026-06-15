@@ -21,7 +21,7 @@ class Profile extends AppController
         }
 
         $profileId = session()->get('profile_id');
-        $user = $this->staffModel->getStaffById($profileId);
+        $user = $this->staffModel->getStaffById((int) $profileId);
 
         if (!$user) {
             return redirect()->to('/siimut/dashboard')->with('error', 'User tidak ditemukan');

@@ -40,88 +40,61 @@ class LoadModuleForminputModel extends Model
 
         $db = db_connect();
 
-        if ($this->tablePrefix === 'local_') {
-            $builder = $db->table($this->tablePrefix . 'quality_indicator_group qig');
-            $builder->select('
-                qig.group_indicator_id,
-                qig.group_department_id AS department_id,
-                qig.group_days,
-                qi.indicator_id,
-                qi.indicator_category_id,
-                qi.indicator_element,
-                qi.indicator_target,
-                qi.indicator_units,
-                qi.indicator_target_unit,
-                qi.indicator_target_calculation,
-                qi.indicator_factors,
-                qi.indicator_frequency,
-                qi.indicator_record_status,
-                mid.department_name
-            ');
-            $builder->join($this->tablePrefix . 'quality_indicator qi', 'qi.indicator_id = qig.group_indicator_id', 'left');
-            $builder->join('master_institution_department mid', 'mid.department_id = qig.group_department_id', 'left');
-            $builder->where('qi.indicator_category_id', $this->categoryId);
-            $builder->where('qig.group_record_status', 'A');
-            $builder->groupStart();
-            $builder->where('qig.group_period', $tahun);
-            $builder->orWhere('qig.group_period', $tahun - 1);
-            $builder->orWhere('qig.group_period', $tahun - 2);
-            $builder->groupEnd();
+        $tableQig = $this->tablePrefix . 'quality_indicator_group';
+        $tableQi  = $this->tablePrefix . 'quality_indicator';
 
-            if ($departmentId !== null && $departmentId > 0) {
-                $builder->where('qig.group_department_id', $departmentId);
-            }
-
-            $userRole = session()->get('user_role') ?? '';
-            $userDepartmentId = session()->get('department_id') ?? 0;
-            if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
-                $builder->where('qig.group_department_id', $userDepartmentId);
-            }
-
-            $builder->groupBy('qig.group_indicator_id, qig.group_department_id');
-            $builder->orderBy('qi.indicator_id ASC');
-        } else {
-            // Regular modules (INM) - uses quality_indicator_group (same pattern as IMPRS)
-            $builder = $db->table($this->tablePrefix . 'quality_indicator_group qig');
-            $builder->select('
-                qig.group_indicator_id,
-                qig.group_department_id AS department_id,
-                qig.group_days,
-                qi.indicator_id,
-                qi.indicator_category_id,
-                qi.indicator_element,
-                qi.indicator_target,
-                qi.indicator_units,
-                qi.indicator_target_unit,
-                qi.indicator_target_calculation,
-                qi.indicator_factors,
-                qi.indicator_frequency,
-                qi.indicator_record_status,
-                mid.department_name
-            ');
-            $builder->join($this->tablePrefix . 'quality_indicator qi', 'qi.indicator_id = qig.group_indicator_id', 'left');
-            $builder->join('master_institution_department mid', 'mid.department_id = qig.group_department_id', 'left');
-            $builder->where('qi.indicator_category_id', $this->categoryId);
-            $builder->where('qig.group_record_status', 'A');
-            $builder->groupStart();
-            $builder->where('qig.group_period', $tahun);
-            $builder->orWhere('qig.group_period', $tahun - 1);
-            $builder->orWhere('qig.group_period', $tahun - 2);
-            $builder->groupEnd();
-
-            if ($departmentId !== null && $departmentId > 0) {
-                $builder->where('qig.group_department_id', $departmentId);
-            }
-
-            $userRole = session()->get('user_role') ?? '';
-            $userDepartmentId = session()->get('department_id') ?? 0;
-            if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
-                $builder->where('qig.group_department_id', $userDepartmentId);
-            }
-
-            $builder->groupBy('qig.group_indicator_id, qig.group_department_id');
-            $builder->orderBy('qi.indicator_id ASC');
+        // Subquery: get latest period's group_days per indicator+dept
+        $sub = $db->table($tableQig . ' qig2');
+        $sub->select('MAX(qig2.group_period) as max_period, qig2.group_indicator_id, qig2.group_department_id');
+        $sub->where('qig2.group_record_status', 'A');
+        $sub->groupStart();
+        $sub->where('qig2.group_period', $tahun);
+        $sub->orWhere('qig2.group_period', $tahun - 1);
+        $sub->orWhere('qig2.group_period', $tahun - 2);
+        $sub->groupEnd();
+        if ($departmentId !== null && $departmentId > 0) {
+            $sub->where('qig2.group_department_id', $departmentId);
         }
+        $userRole = session()->get('user_role') ?? '';
+        $userDepartmentId = session()->get('department_id') ?? 0;
+        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
+            $sub->where('qig2.group_department_id', $userDepartmentId);
+        }
+        $sub->groupBy('qig2.group_indicator_id, qig2.group_department_id');
+        $subSql = $sub->getCompiledSelect();
+
+        $builder = $db->table($tableQig . ' qig');
+        $builder->select('
+            qig.group_indicator_id,
+            qig.group_department_id AS department_id,
+            qig.group_days,
+            qi.indicator_id,
+            qi.indicator_category_id,
+            qi.indicator_element,
+            qi.indicator_target,
+            qi.indicator_units,
+            qi.indicator_target_unit,
+            qi.indicator_target_calculation,
+            qi.indicator_factors,
+            qi.indicator_frequency,
+            qi.indicator_record_status,
+            mid.department_name
+        ');
+        $builder->join('(' . $subSql . ') latest', 'latest.group_indicator_id = qig.group_indicator_id AND latest.group_department_id = qig.group_department_id AND latest.max_period = qig.group_period', 'inner');
+        $builder->join($tableQi . ' qi', 'qi.indicator_id = qig.group_indicator_id', 'left');
+        $builder->join('master_institution_department mid', 'mid.department_id = qig.group_department_id', 'left');
+        $builder->where('qi.indicator_category_id', $this->categoryId);
+        $builder->where('qig.group_record_status', 'A');
+
+        // Re-apply department filter on main query too (in addition to subquery)
+        if ($departmentId !== null && $departmentId > 0) {
+            $builder->where('qig.group_department_id', $departmentId);
+        }
+        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
+            $builder->where('qig.group_department_id', $userDepartmentId);
+        }
+
+        $builder->orderBy('qi.indicator_id ASC');
 
         return $builder->get()->getResult();
     }
