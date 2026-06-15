@@ -1070,21 +1070,19 @@ class Auth extends BaseController
 
             // Sync mode: update profile data and redirect back
             if ($isSync) {
-                $profileId = session()->get('profile_id');
-                $sessionEmail = session()->get('profile_email');
-                if (!$profileId || !$sessionEmail) {
-                    return redirect()->to(site_url('siimut/profile'))->with('error', 'Sesi tidak valid, silakan login ulang');
-                }
-                if ($email !== $sessionEmail) {
-                    return redirect()->to(site_url('siimut/profile'))->with('error', 'Email Google tidak cocok dengan akun Anda');
+                if (!session()->get('logged_in')) {
+                    return redirect()->to(site_url('auth'))->with('error', 'Silakan login terlebih dahulu');
                 }
                 $db = db_connect();
-                $db->table('user_profile')
-                    ->where('profile_id', $profileId)
-                    ->update([
-                        'profile_fullname' => $name,
-                        'profile_photo' => $picture,
-                    ]);
+                $profileId = session()->get('profile_id');
+                if ($profileId) {
+                    $db->table('user_profile')
+                        ->where('profile_id', $profileId)
+                        ->update([
+                            'profile_fullname' => $name,
+                            'profile_photo' => $picture,
+                        ]);
+                }
                 session()->set([
                     'nama_lengkap'    => $name,
                     'profile_picture' => $picture,
