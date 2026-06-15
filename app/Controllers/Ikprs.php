@@ -286,7 +286,6 @@ class Ikprs extends AppController
             ]);
         }
 
-        // 🔥 INI WAJIB
         $model = new MloadModuleIkp();
 
         $data = $model->cari_pasien($kd_pasien, $tgl_masuk, $asal_pasien);

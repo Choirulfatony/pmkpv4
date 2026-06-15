@@ -292,7 +292,7 @@ class Auth extends BaseController
     {
         $db = db_connect();
 
-        $user = $db->table('unit_karu uk')
+        $roles = $db->table('unit_karu uk')
             ->select('
             uk.role_id,
             uk.department_id,
@@ -308,30 +308,36 @@ class Auth extends BaseController
             ->where('uk.hris_user_id', $hris_user_id)
             ->where('uk.aktif', 1)
             ->get()
-            ->getRow();
+            ->getResult();
 
-        if ($user) {
+        if (empty($roles)) {
+            return 'PELAPOR';
+        }
 
-            session()->set([
-                'karu_fullname'  => $user->profile_fullname,
-                'karu_room_name' => $user->department_name
-            ]);
+        $priority = [
+            2 => 'KOMITE',
+            4 => 'KEPALA_KEPERAWATAN',
+            1 => 'KARU',
+        ];
 
-            // 🔹 DETEKSI ROLE
-            if ($user->role_id == 1) {
-                return 'KARU';
+        $selectedRole = 'PELAPOR';
+
+        foreach ($roles as $role) {
+            // Simpan data KARU jika ada
+            if ($role->role_id == 1) {
+                session()->set([
+                    'karu_fullname'  => $role->profile_fullname,
+                    'karu_room_name' => $role->department_name,
+                ]);
             }
 
-            if ($user->role_id == 2) {
-                return 'KOMITE';
-            }
-
-            if ($user->role_id == 4) {
-                return 'KEPALA_KEPERAWATAN';
+            // Pilih role dengan prioritas tertinggi
+            if (isset($priority[$role->role_id])) {
+                $selectedRole = $priority[$role->role_id];
             }
         }
 
-        return 'PELAPOR';
+        return $selectedRole;
     }
     // private function loginHris(string $nip, string $password)
     // {

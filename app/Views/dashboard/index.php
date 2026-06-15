@@ -4,5 +4,16 @@
         'userRole' => session('role') ?? session('user_role') ?? '',
         'department' => session('department_name') ?? '',
         'loginSource' => session('login_source') ?? 'APP',
+        'bulan' => $bulan ?? date('m'),
+        'tahun' => $tahun ?? date('Y'),
+        'summary' => $summary ?? [],
+        'progress' => $progress ?? [],
+        'targetStatus' => $targetStatus ?? [],
+        'deptWithoutInput' => $deptWithoutInput ?? [],
+        'trend' => $trend ?? [],
+        'topInm' => $topInm ?? [],
+        'topImprs' => $topImprs ?? [],
+        'topImpunit' => $topImpunit ?? [],
+        'draftCounts' => $draftCounts ?? [],
     ]) ?>
 </div>
