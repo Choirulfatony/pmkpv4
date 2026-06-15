@@ -153,6 +153,33 @@
         word-break: break-word;
     }
 
+    #backdate-notif-items {
+        max-height: 320px;
+        overflow-y: auto;
+        max-width: 100%;
+    }
+
+    #backdate-notif-items .dropdown-item {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    #backdate-notif-items .notif-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 220px;
+    }
+
+    #backdate-notif-items small {
+        display: block;
+        line-height: 1.3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 260px;
+    }
+
     .notif-status {
         margin-top: 8px;
         font-size: 0.82rem;
@@ -356,7 +383,7 @@
                     <i class="bi bi-calendar-check"></i>
                     <span id="badge-backdate_header" class="badge bg-warning navbar-badge" style="display:none;"></span>
                 </a>
-                <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg">
+                <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg" style="max-width:340px;">
                     <span class="dropdown-item dropdown-header">
                         <i class="bi bi-calendar-check me-1"></i> Backdate Request
                     </span>
