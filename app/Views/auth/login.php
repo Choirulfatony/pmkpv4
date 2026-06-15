@@ -89,7 +89,9 @@
 <section class="login-wallpaper">
     <div class="login-overlay">
 
-        <div class="login-card">
+        <div class="login-card position-relative">
+
+            <!-- <button type="button" class="btn-close position-absolute top-0 end-0 mt-3 me-3" style="z-index:5;" aria-label="Close" onclick="window.location.href='<?= site_url() ?>'"></button> -->
 
             <h4 class="text-center mb-4 fw-bold">Login Sistem</h4>
 
@@ -188,7 +190,7 @@
             </div>
 
             <div class="text-center">
-                <a href="<?= site_url('auth/google-login') ?>" class="btn btn-outline-danger btn-lg w-100 d-flex align-items-center justify-content-center gap-2">
+                <a href="#" onclick="openGooglePopup()" class="btn btn-outline-danger btn-lg w-100 d-flex align-items-center justify-content-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
                         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
                         <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
@@ -228,13 +230,20 @@ $registerName = session('register_name');
                 </div>
             <?php endif; ?>
 
-            <div class="modal-body p-4">
-                <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
-                    <i class="bi bi-info-circle-fill me-2 fs-5"></i>
-                    <div>
-                        Lengkapi data berikut untuk menyelesaikan pendaftaran. Email telah terisi otomatis dari akun Google Anda.
+                <div class="modal-body p-4">
+                    <?php if (session()->getFlashdata('info')) : ?>
+                        <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                            <div><?= session()->getFlashdata('info') ?></div>
+                        </div>
+                    <?php else: ?>
+                    <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+                        <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                        <div>
+                            Lengkapi data berikut untuk menyelesaikan pendaftaran. Email telah terisi otomatis dari akun Google Anda.
+                        </div>
                     </div>
-                </div>
+                    <?php endif; ?>
 
                 <form action="<?= site_url('auth/register/process') ?>" method="post" id="registerForm">
                     <div class="row g-3">
@@ -365,11 +374,27 @@ $registerName = session('register_name');
 </div>
 
 <script>
-    function closeRegisterModal() {
-        const modal = bootstrap.Modal.getInstance(document.getElementById('registerModal'));
-        if (modal) {
-            modal.hide();
+    function openGooglePopup() {
+        var popup = window.open("<?= site_url('auth/google-login?popup=1') ?>", "googleLogin", "width=600,height=700,left=200,top=100");
+        if (!popup) {
+            alert("Popup diblokir. Izinkan popup untuk situs ini.");
         }
+        return false;
+    }
+
+    window.addEventListener("message", function(event) {
+        var allowedOrigin = "<?php $bu = base_url(); $scheme = parse_url($bu, PHP_URL_SCHEME); $host = parse_url($bu, PHP_URL_HOST); $port = parse_url($bu, PHP_URL_PORT); echo $scheme . '://' . $host . ($port && $port != 80 && $port != 443 ? ':' . $port : ''); ?>";
+        if (event.origin !== allowedOrigin) return;
+        if (event.data.status === "success") {
+            window.location.href = event.data.redirect;
+        } else if (event.data.status === "show_register") {
+            window.location.href = event.data.redirect;
+        } else if (event.data.status === "error" && event.data.message) {
+            alert(event.data.message);
+        }
+    });
+
+    function clearRegisterSession() {
         fetch("<?= site_url('auth/clear_register_session') ?>", {
             method: 'POST',
             headers: {
@@ -377,6 +402,23 @@ $registerName = session('register_name');
             }
         });
     }
+
+    function closeRegisterModal() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('registerModal'));
+        if (modal) {
+            modal.hide();
+        }
+        clearRegisterSession();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const registerModalEl = document.getElementById('registerModal');
+        if (registerModalEl) {
+            registerModalEl.addEventListener('hidden.bs.modal', function() {
+                clearRegisterSession();
+            });
+        }
+    });
 
     document.addEventListener('DOMContentLoaded', function() {
         const btn = document.getElementById('btnRefreshCaptcha');

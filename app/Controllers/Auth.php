@@ -32,6 +32,13 @@ class Auth extends BaseController
             $this->session->setFlashdata('error', 'Session Anda berakhir karena tidak aktif.');
         }
 
+        if (!$this->request->getGet('show_register')) {
+            $this->session->remove([
+                'register_email', 'register_name', 'register_picture',
+                'registered_email', 'registered_name', 'requires_verification'
+            ]);
+        }
+
         $captcha = $this->captcha->generate([
             'min' => 1,
             'max' => 20
@@ -75,6 +82,8 @@ class Auth extends BaseController
 
     public function process()
     {
+        log_message('error', 'DEBUG process() called - POST identity=' . $this->request->getPost('identity'));
+
         $identity = trim($this->request->getPost('identity'));
         $password = $this->request->getPost('password');
         $captcha  = strtoupper($this->request->getPost('captcha'));
@@ -159,6 +168,7 @@ class Auth extends BaseController
 
         $roleMap = [
             'Kendali Mutu dan Tim Pokja' => 'KENDALI_MUTU',
+            'Kendali Mutu'             => 'KENDALI_MUTU',
             'Komite'                    => 'KOMITE',
             'Administrator'             => 'ADMINISTRATOR'
         ];
@@ -225,6 +235,8 @@ class Auth extends BaseController
 
         $role = $this->detectRoleByHrisId($user->id);
 
+        log_message('error', 'DEBUG loginHris: user_id=' . $user->id . ', nip=' . $user->nip . ', detected_role=' . $role);
+
         $db = db_connect();
         $profile = $db->table('user_profile')
             ->where('profile_employee_id', $user->nip)
@@ -268,6 +280,7 @@ class Auth extends BaseController
             'hris_nip'        => $user->nip,
             'hris_full_name'  => $user->nama_lengkap ?? $user->nama,
             'nama_lengkap'    => $user->nama_lengkap ?? $user->nama,
+            'profile_id'      => $profile->profile_id ?? ($user->profile_id ?? null),
             'department_name' => $user->department_name ?? '',
             'user_role'       => $role,
             'login_time'      => date('Y-m-d H:i:s'),
@@ -280,7 +293,7 @@ class Auth extends BaseController
     {
         $db = db_connect();
 
-        $user = $db->table('unit_karu uk')
+        $roles = $db->table('unit_karu uk')
             ->select('
             uk.role_id,
             uk.department_id,
@@ -296,26 +309,36 @@ class Auth extends BaseController
             ->where('uk.hris_user_id', $hris_user_id)
             ->where('uk.aktif', 1)
             ->get()
-            ->getRow();
+            ->getResult();
 
-        if ($user) {
+        if (empty($roles)) {
+            return 'PELAPOR';
+        }
 
-            session()->set([
-                'karu_fullname'  => $user->profile_fullname,
-                'karu_room_name' => $user->department_name
-            ]);
+        $priority = [
+            2 => 'KOMITE',
+            4 => 'KEPALA_KEPERAWATAN',
+            1 => 'KARU',
+        ];
 
-            // 🔹 DETEKSI ROLE
-            if ($user->role_id == 1) {
-                return 'KARU';
+        $selectedRole = 'PELAPOR';
+
+        foreach ($roles as $role) {
+            // Simpan data KARU jika ada
+            if ($role->role_id == 1) {
+                session()->set([
+                    'karu_fullname'  => $role->profile_fullname,
+                    'karu_room_name' => $role->department_name,
+                ]);
             }
 
-            if ($user->role_id == 2) {
-                return 'KOMITE';
+            // Pilih role dengan prioritas tertinggi
+            if (isset($priority[$role->role_id])) {
+                $selectedRole = $priority[$role->role_id];
             }
         }
 
-        return 'PELAPOR';
+        return $selectedRole;
     }
     // private function loginHris(string $nip, string $password)
     // {
@@ -482,6 +505,16 @@ class Auth extends BaseController
             $timeout = 1800; // 30 menit
 
             if ($lastActivity && $timeDiff > $timeout) {
+                $profileId = session('profile_id');
+                if ($profileId) {
+                    $db = db_connect();
+                    $db->table('user_profile')
+                        ->where('profile_id', $profileId)
+                        ->update([
+                            'profile_online_status' => 0,
+                            'profile_remember_token' => null,
+                        ]);
+                }
                 session()->destroy();
                 http_response_code(401);
                 echo json_encode([
@@ -697,22 +730,22 @@ class Auth extends BaseController
         $email = \Config\Services::email();
 
         // Configure email (you may need to adjust these settings)
-        $email->setFrom('noreply@pmkpv4.example.com', 'PMKP v4');
+        $email->setFrom('noreply@siimut.example.com', 'SIIMUT');
         $email->setTo($emailTo);
-        $email->setSubject('Verifikasi Akun PMKP v4');
+        $email->setSubject('Verifikasi Akun SIIMUT');
 
         $verificationUrl = site_url('auth/verify_email?token=' . $token . '&email=' . urlencode($emailTo));
 
         // $message = "
         // <html>
         // <head>
-        //     <title>Verifikasi Akun PMKP v4</title>
+        //     <title>Verifikasi Akun SIIMUT</title>
         // </head>
         // <body>
         //     <h2>Halo " . $fullname . ",</h2>
-        //     <p>Terima kasih telah mendaftar di PMKP v4. Untuk melengkapi pendaftaran Anda, silakan verifikasi alamat email Anda dengan mengikuti link di bawah ini:</p>
+        //     <p>Terima kasih telah mendaftar di SIIMUT. Untuk melengkapi pendaftaran Anda, silakan verifikasi alamat email Anda dengan mengikuti link di bawah ini:</p>
         //     <p><a href='" . $verificationUrl . "'>Verifikasi Email Saya</a></p>
-        //     <p>Jika Anda tidak mendaftar di PMKP v4, silakan abaikan email ini.</p>
+        //     <p>Jika Anda tidak mendaftar di SIIMUT, silakan abaikan email ini.</p>
         //     <p>Link verifikasi akan kadaluarsa dalam 24 jam.</p>
         //     <hr>
         //     <p>Email ini dikirim secara otomatis, jangan balas ke email ini.</p>
@@ -724,14 +757,14 @@ class Auth extends BaseController
             <div style="max-width:600px; margin:auto; background:#ffffff; padding:25px; border-radius:8px;">
 
                 <h2 style="text-align:center; color:#0d6efd;">
-                    Aktivasi Akun PMKP v4
+                    Aktivasi Akun SIIMUT
                 </h2>
 
                 <p>Halo <b>' . $fullname . '</b>,</p>
 
                 <p>
                     Terima kasih telah melakukan pendaftaran akun di 
-                    <b>Sistem PMKP v4</b>.
+                    <b>Sistem SIIMUT</b>.
                 </p>
 
                 <p>
@@ -943,7 +976,11 @@ class Auth extends BaseController
 
         return $this->response->setJSON([
             'logged_in'    => true,
-            'login_source' => $session->get('login_source')
+            'login_source' => $session->get('login_source'),
+            'user_role'    => $session->get('user_role'),
+            'hris_user_id' => $session->get('hris_user_id'),
+            'hris_nip'     => $session->get('hris_nip'),
+            'hris_full_name' => $session->get('hris_full_name'),
         ]);
     }
 
@@ -953,8 +990,31 @@ class Auth extends BaseController
     public function googleLogin()
     {
         $googleLogin = new GoogleLogin();
+        $isPopup = $this->request->getGet('popup') === '1';
+        if ($isPopup) {
+            $googleLogin->setState('popup');
+        }
         $authUrl = $googleLogin->getAuthUrl();
         return redirect()->to($authUrl);
+    }
+
+    private function _popupResponse(string $status, string $redirectUrl, string $message = '')
+    {
+        $response = '<!DOCTYPE html><html><head><title>Redirecting...</title></head><body>';
+        $response .= '<script>';
+        $response .= 'if (window.opener) {';
+        $bu = base_url();
+        $scheme = parse_url($bu, PHP_URL_SCHEME);
+        $host = parse_url($bu, PHP_URL_HOST);
+        $port = parse_url($bu, PHP_URL_PORT);
+        $origin = $scheme . '://' . $host . ($port && $port != 80 && $port != 443 ? ':' . $port : '');
+        $response .= '  window.opener.postMessage({status: "' . $status . '", redirect: "' . $redirectUrl . '", message: "' . $message . '"}, "' . $origin . '");';
+        $response .= '}';
+        $response .= 'window.close();';
+        $response .= '</script>';
+        $response .= '</body></html>';
+        session_write_close();
+        return $this->response->setContentType('text/html')->setBody($response);
     }
 
     /**
@@ -965,9 +1025,11 @@ class Auth extends BaseController
         log_message('error', 'GOOGLE CALLBACK: Method called');
         
         $code = $this->request->getGet('code');
+        $isPopup = $this->request->getGet('state') === 'popup';
 
         if (!$code) {
             log_message('error', 'GOOGLE CALLBACK: No code received');
+            if ($isPopup) return $this->_popupResponse('error', site_url('auth'), 'Login Google gagal');
             return redirect()->to(site_url('auth'))->with('error', 'Login Google gagal');
         }
 
@@ -978,6 +1040,7 @@ class Auth extends BaseController
 
             if (isset($token['error'])) {
                 log_message('error', 'GOOGLE CALLBACK: Token error - ' . $token['error']);
+                if ($isPopup) return $this->_popupResponse('error', site_url('auth'), 'Gagal mendapatkan akses Google');
                 return redirect()->to(site_url('auth'))->with('error', 'Gagal mendapatkan akses Google');
             }
 
@@ -993,6 +1056,7 @@ class Auth extends BaseController
             // Validasi apakah email telah diverifikasi oleh Google
             if (!$userInfo->getVerifiedEmail()) {
                 log_message('error', 'GOOGLE CALLBACK: Email not verified by Google - ' . $email);
+                if ($isPopup) return $this->_popupResponse('error', site_url('auth'), 'Email Google belum terverifikasi');
                 return redirect()->to(site_url('auth'))->with('error', 'Email Google belum terverifikasi. Silakan verifikasi email terlebih dahulu.');
             }
 
@@ -1103,7 +1167,8 @@ class Auth extends BaseController
 
                 log_message('error', 'GOOGLE CALLBACK: Login success - ' . $email . ' role: ' . $userRole);
 
-                return redirect()->to('/siimut/dashboard');
+                if ($isPopup) return $this->_popupResponse('success', site_url('siimut/dashboard'));
+                return redirect()->to(site_url('siimut/dashboard'));
             } else {
                 // Email tidak terdaftar - redirect ke halaman register
                 session()->set([
@@ -1111,15 +1176,18 @@ class Auth extends BaseController
                     'register_name'     => $name,
                     'register_picture'  => $picture,
                 ]);
+                session()->setFlashdata('info', 'Email ' . $email . ' belum terdaftar. Silakan lengkapi data registrasi di bawah ini.');
 
                 log_message('error', 'GOOGLE CALLBACK: Email not registered - ' . $email . ' - redirect to register');
 
+                if ($isPopup) return $this->_popupResponse('show_register', site_url('auth?show_register=1'), 'Email belum terdaftar');
                 return redirect()->to(site_url('auth/register'));
             }
         } catch (\Exception $e) {
             log_message('error', 'Google Login Error: ' . $e->getMessage());
             log_message('error', 'Google Login Error Trace: ' . $e->getTraceAsString());
             log_message('error', 'Google Login Error File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+            if ($isPopup) return $this->_popupResponse('error', site_url('auth'), 'Terjadi kesalahan saat login Google');
             return redirect()->to(site_url('auth'))->with('error', 'Terjadi kesalahan saat login Google - ' . $e->getMessage());
         }
     }

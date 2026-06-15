@@ -22,7 +22,7 @@ class MloadModuleIkp extends Model
         $this->dbSimrs = Database::connect('simrs_db'); // PostgreSQL
     }
 
-    public function cari_pasien($kd_pasien, $tgl_masuk, $kd_bagian)
+    public function cari_pasien($kd_pasien, $tgl_masuk, $asal_pasien)
     {
         $sql = "
         SELECT
@@ -71,14 +71,19 @@ class MloadModuleIkp extends Model
         WHERE
             kunjungan.kd_pasien = ?
             AND kunjungan.tgl_masuk = ?
-            AND unit.kd_bagian = ?
         ";
 
-        $query = $this->dbSimrs->query($sql, [
-            $kd_pasien,
-            $tgl_masuk,
-            $kd_bagian
-        ]);
+        $params = [$kd_pasien, $tgl_masuk];
+
+        if ($asal_pasien == 2) {
+            $sql .= " AND unit.kd_bagian = '2'";
+        } elseif ($asal_pasien == 3) {
+            $sql .= " AND unit.kd_bagian = '3'";
+        } else {
+            $sql .= " AND unit.kd_bagian NOT IN ('2', '3')";
+        }
+
+        $query = $this->dbSimrs->query($sql, $params);
 
         return $query->getRow();
     }

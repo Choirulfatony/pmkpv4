@@ -28,11 +28,25 @@ class RekapPeriodeInm extends AppController
 
         $tahun = $this->request->getGet('tahun') ?? date('Y');
 
+        $departments = $this->rekapModel->getActiveDepartmentsForYear((int) $tahun);
+        $draftCounts = $this->rekapModel->getDraftCountByDepartment((int) $tahun);
+        $draftByMonth = $this->rekapModel->getDraftCountByMonth((int) $tahun);
+        $totalDraft = array_sum($draftByMonth);
+
+        $departmentId = session()->get('department_id') ?? null;
+
         return $this->render('siimut/rekap_periode_inm', [
             'judul'    => 'Rekap INM per Periode',
             'icon'     => '<i class="bi bi-calendar-range"></i>',
             '_content' => view('siimut/rekap_periode_inm', [
-                'tahun' => $tahun,
+                'tahun'                => $tahun,
+                'departments'          => $departments,
+                'draftCounts'          => $draftCounts,
+                'draftByMonth'         => $draftByMonth,
+                'totalDraft'           => $totalDraft,
+                'showDepartmentFilter' => true,
+                'role'                 => $role,
+                'departmentId'         => $departmentId,
             ]),
             'menus'    => $menus
         ]);
@@ -45,10 +59,12 @@ class RekapPeriodeInm extends AppController
         // Get tahun from route parameter first, then POST, then default to current year
         $tahun = $tahun ? (int) $tahun : (isset($post['tahun']) ? (int) $post['tahun'] : (int) date('Y'));
 
-        log_message('error', 'REKAP PERIODE INM: tahun=' . $tahun);
+        $departmentId = isset($post['department_id']) ? (int) $post['department_id'] : null;
+
+        log_message('error', 'REKAP PERIODE INM: tahun=' . $tahun . ', department_id=' . ($departmentId ?? 'null'));
 
         try {
-            $data = $this->rekapModel->getRekapPeriode($tahun);
+            $data = $this->rekapModel->getRekapPeriode($tahun, $departmentId);
 
             log_message('error', 'REKAP PERIODE INM: data count=' . count($data));
 
@@ -80,13 +96,14 @@ class RekapPeriodeInm extends AppController
     public function exportExcel()
     {
         $tahun = $this->request->getGet('tahun') ?? date('Y');
+        $departmentId = $this->request->getGet('department_id') ? (int) $this->request->getGet('department_id') : null;
 
         if (ob_get_level()) {
             ob_end_clean();
         }
 
         try {
-            $data = $this->rekapModel->getRekapPeriode($tahun);
+            $data = $this->rekapModel->getRekapPeriode($tahun, $departmentId);
 
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
 

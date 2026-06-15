@@ -28,7 +28,7 @@ Setelah pengecekan, ditemukan 2 masalah:
 
 1. **Buka:**
    ```
-   http://localhost/pmkpv4/activate_google_users.php
+   http://localhost/siimut/activate_google_users.php
    ```
 
 2. **Lihat daftar user yang perlu difix:**
@@ -113,7 +113,7 @@ if ($isVerified == 0 && $isGoogleUser) {
 ### 1. Test Login Google OAuth
 
 **Steps:**
-1. Buka: `http://localhost/pmkpv4/index.php/auth`
+1. Buka: `http://localhost/siimut/index.php/auth`
 2. Klik "Login with Google"
 3. Pilih akun Google Anda (`choirulfatoni@gmail.com`)
 4. **Expected:** Login berhasil dan redirect ke `/siimut/dashboard` ✅

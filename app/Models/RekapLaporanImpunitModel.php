@@ -99,6 +99,7 @@ class RekapLaporanImpunitModel extends Model
                     lqi.indicator_category_id,
                     lqi.indicator_id,
                     lqi.indicator_element,
+                    lqi.indicator_record_status,
 
                     SUM(lqir.result_numerator_value) AS num,
                     SUM(lqir.result_denumerator_value) AS denum,
@@ -135,6 +136,8 @@ class RekapLaporanImpunitModel extends Model
 
         $builder->where('lqi.indicator_category_id', '6');
         $builder->where('lqi.indicator_id', $indicator);
+        $builder->whereIn("lqi.indicator_record_status", ['A', 'D']);
+        $builder->where('lqir.result_record_status', 'A');
 
         $builder->groupBy([
             'lqi.indicator_category_id',
@@ -168,7 +171,7 @@ class RekapLaporanImpunitModel extends Model
      * Ambil SEMUA data bulanan dalam 1 query (OPTIMIZED + CACHE)
      * Berdasarkan indicator_category_id = 6
      */
-    public function getAllMonthlyData(array $indicatorIds, int $tahun)
+    public function getAllMonthlyData(array $indicatorIds, int $tahun, ?int $departmentId = null)
     {
         if (empty($indicatorIds)) {
             return [];
@@ -204,9 +207,13 @@ class RekapLaporanImpunitModel extends Model
         $builder->join('local_quality_indicator lqi', 'lqir.result_indicator_id = lqi.indicator_id', 'inner');
 
         $builder->where("lqi.indicator_category_id", '6');
-        $builder->where("lqi.indicator_record_status", 'A');
+        $builder->whereIn("lqi.indicator_record_status", ['A', 'D']);
         $builder->where("YEAR(lqir.result_period)", $tahun);
         $builder->whereIn('lqi.indicator_id', $indicatorIds);
+        $builder->where('lqir.result_record_status', 'A');
+        if ($departmentId !== null && $departmentId > 0) {
+            $builder->where('lqir.result_department_id', $departmentId);
+        }
         $this->filterActiveOrHasData($builder, $tahun . '-01-01', $tahun . '-12-31');
 
         $builder->groupBy([
@@ -232,7 +239,7 @@ class RekapLaporanImpunitModel extends Model
 /**
      * Ambil indikator dengan pagination
      */
-    public function getIndicatorImpunit($post)
+    public function getIndicatorImpunit($post, ?int $departmentId = null)
     {
         $db = db_connect();
         $builder = $db->table('local_quality_indicator lqi');
@@ -246,19 +253,52 @@ class RekapLaporanImpunitModel extends Model
             lqi.indicator_units,
             lqi.indicator_target_unit,
             lqi.indicator_target_calculation AS operator,
-            lqi.indicator_factors AS factors
+            lqi.indicator_factors AS factors,
+            lqi.indicator_record_status
         ");
 
-        $builder->join('local_quality_indicator_group lqig', 'lqi.indicator_id = lqig.group_indicator_id', 'left');
-        $builder->join('master_institution_department mid', 'mid.department_id = lqig.group_department_id', 'left');
-
         $builder->where("lqi.indicator_category_id", '6');
-        $builder->where("lqi.indicator_record_status", 'A');
-        $builder->groupStart()
-            ->where('lqig.group_record_status', 'A')
-            ->orWhere('lqig.group_record_status IS NULL', null, false)
-        ->groupEnd();
-        $this->filterActiveOrHasData($builder, $vtahun . '-01-01', $vtahun . '-12-31');
+        $builder->whereIn("lqi.indicator_record_status", ['A', 'D']);
+
+        // Smart filter: show only indicators with data in selected year
+        $vtahunNow = (int) date('Y');
+        $builder->groupStart();
+        if ((int) $vtahun === $vtahunNow) {
+            // Current year: only active indicators with data
+            $builder->where('lqi.indicator_record_status', 'A');
+            $builder->where("EXISTS (
+                SELECT 1 FROM local_quality_indicator_result lqir_sub
+                WHERE lqir_sub.result_indicator_id = lqi.indicator_id
+                AND YEAR(lqir_sub.result_period) = {$vtahun}
+                AND lqir_sub.result_record_status = 'A'
+            )", null, false);
+        } else {
+            // Past years: any indicator that had data
+            $builder->where("EXISTS (
+                SELECT 1 FROM local_quality_indicator_result lqir_sub
+                WHERE lqir_sub.result_indicator_id = lqi.indicator_id
+                AND YEAR(lqir_sub.result_period) = {$vtahun}
+                AND lqir_sub.result_record_status = 'A'
+            )", null, false);
+        }
+        $builder->groupEnd();
+
+        // Filter by user role
+        $userRole = session('user_role') ?? '';
+        $userDepartmentId = session('department_id') ?? 0;
+        $effectiveDeptId = $departmentId !== null && $departmentId > 0
+            ? $departmentId
+            : ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? $userDepartmentId : null);
+
+        if ($effectiveDeptId !== null) {
+            $builder->where("EXISTS (
+                SELECT 1 FROM local_quality_indicator_result lqir_sub
+                WHERE lqir_sub.result_indicator_id = lqi.indicator_id
+                AND YEAR(lqir_sub.result_period) = {$vtahun}
+                AND lqir_sub.result_department_id = {$effectiveDeptId}
+                AND lqir_sub.result_record_status = 'A'
+            )", null, false);
+        }
 
         // Filter indicator_active_from dan indicator_active_to
         // Jika indicator_active_from ada, minimal tahun filter >= tahun mulai
@@ -364,12 +404,25 @@ class RekapLaporanImpunitModel extends Model
 
         $db = db_connect();
 
+        $departmentClause = '';
+        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
+            $departmentClause = "AND EXISTS (
+                SELECT 1 FROM local_quality_indicator_result lqir_sub
+                WHERE lqir_sub.result_indicator_id = local_quality_indicator.indicator_id
+                AND YEAR(lqir_sub.result_period) = {$vtahun}
+                AND lqir_sub.result_department_id = {$userDepartmentId}
+            )";
+        }
+
         // Query - berdasarkan indicator_category_id = 6
+        $statusFilter = ((int) $vtahun === (int) date('Y')) ? "= 'A'" : "IN ('A', 'D')";
         $query = $db->query("
             SELECT COUNT(DISTINCT local_quality_indicator.indicator_id) as total
             FROM local_quality_indicator
             JOIN local_quality_indicator_result ON local_quality_indicator_result.result_indicator_id = local_quality_indicator.indicator_id
             WHERE local_quality_indicator.indicator_category_id = '6'
+            AND local_quality_indicator.indicator_record_status {$statusFilter}
+            {$departmentClause}
             AND YEAR(local_quality_indicator_result.result_period) = ?
         ", [$vtahun]);
 
@@ -384,13 +437,19 @@ class RekapLaporanImpunitModel extends Model
     /**
      * Ambil semua ruangan untuk indicator tertentu
      */
-    public function getDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [])
+    public function getDepartmentsByIndicator(int $indicatorId, int $tahun, $post = [], ?int $departmentId = null)
     {
         $db = db_connect();
 
-        $searchParam = null;
+        $searchCondition = '';
         if (isset($post['search']['value']) && !empty($post['search']['value'])) {
-            $searchParam = '%' . $post['search']['value'] . '%';
+            $searchValue = addslashes($post['search']['value']);
+            $searchCondition = "AND master_institution_department.department_name LIKE '%{$searchValue}%'";
+        }
+
+        $deptCondition = '';
+        if ($departmentId !== null) {
+            $deptCondition = "AND master_institution_department.department_id = " . (int) $departmentId;
         }
 
         $limit = '';
@@ -400,44 +459,25 @@ class RekapLaporanImpunitModel extends Model
             $limit = "LIMIT {$length} OFFSET {$start}";
         }
 
-        if ($searchParam) {
-            $query = $db->query("
-                SELECT DISTINCT 
-                    local_quality_indicator.indicator_id,
-                    local_quality_indicator.indicator_element,
-                    master_institution_department.department_id,
-                    master_institution_department.department_name,
-                    local_quality_indicator_group.group_indicator_id
-                FROM local_quality_indicator_group
-                JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id
-                JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_group.group_department_id
-                WHERE local_quality_indicator.indicator_category_id = '6' 
-                AND local_quality_indicator_group.group_record_status = 'A'
-                AND local_quality_indicator_group.group_indicator_id = ?
-                AND master_institution_department.department_name LIKE ?
-                GROUP BY master_institution_department.department_id
-                ORDER BY master_institution_department.department_name ASC
-                {$limit}
-            ", [$indicatorId, $searchParam]);
-        } else {
-            $query = $db->query("
-                SELECT DISTINCT 
-                    local_quality_indicator.indicator_id,
-                    local_quality_indicator.indicator_element,
-                    master_institution_department.department_id,
-                    master_institution_department.department_name,
-                    local_quality_indicator_group.group_indicator_id
-                FROM local_quality_indicator_group
-                JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id
-                JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_group.group_department_id
-                WHERE local_quality_indicator.indicator_category_id = '6' 
-                AND local_quality_indicator_group.group_record_status = 'A'
-                AND local_quality_indicator_group.group_indicator_id = ?
-                GROUP BY master_institution_department.department_id
-                ORDER BY master_institution_department.department_name ASC
-                {$limit}
-            ", [$indicatorId]);
-        }
+        $query = $db->query("
+            SELECT DISTINCT 
+                local_quality_indicator.indicator_id,
+                local_quality_indicator.indicator_element,
+                master_institution_department.department_id,
+                master_institution_department.department_name
+            FROM local_quality_indicator_result
+            JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_result.result_indicator_id
+            JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_result.result_department_id
+            WHERE local_quality_indicator.indicator_category_id = '6' 
+            AND local_quality_indicator.indicator_record_status IN ('A', 'D')
+            AND local_quality_indicator_result.result_indicator_id = ?
+            AND YEAR(local_quality_indicator_result.result_period) = ?
+            {$searchCondition}
+            {$deptCondition}
+            GROUP BY master_institution_department.department_id
+            ORDER BY master_institution_department.department_name ASC
+            {$limit}
+        ", [$indicatorId, $tahun]);
 
         return $query->getResult();
     }
@@ -456,10 +496,12 @@ class RekapLaporanImpunitModel extends Model
                 local_quality_indicator.indicator_target,
                 local_quality_indicator.indicator_factors,
                 local_quality_indicator.indicator_target_calculation,
-                local_quality_indicator.indicator_units
+                local_quality_indicator.indicator_units,
+                local_quality_indicator.indicator_record_status
             FROM local_quality_indicator
             WHERE local_quality_indicator.indicator_id = ?
             AND local_quality_indicator.indicator_category_id = '6'
+            AND local_quality_indicator.indicator_record_status IN ('A', 'D')
         ", [$indicatorId]);
 
         return $query->getRow();
@@ -468,10 +510,10 @@ class RekapLaporanImpunitModel extends Model
     /**
      * Ambil semua data detail per ruangan dalam 1 query
      */
-    public function getAllDetailData(int $indicatorId, int $tahun)
+    public function getAllDetailData(int $indicatorId, int $tahun, ?int $departmentId = null)
     {
         $cache = \Config\Services::cache();
-        $cacheKey = 'detail_data_' . $indicatorId . '_' . $tahun;
+        $cacheKey = 'detail_data_' . $indicatorId . '_' . $tahun . '_dept_' . ($departmentId ?? 'all');
 
         $db = db_connect();
         $builder = $db->table('local_quality_indicator_result lqir');
@@ -511,6 +553,11 @@ class RekapLaporanImpunitModel extends Model
         $builder->where('lqi.indicator_category_id', '6');
         $builder->where('YEAR(lqir.result_period)', $tahun);
         $builder->where('lqir.result_indicator_id', $indicatorId);
+        $builder->where('lqir.result_record_status', 'A');
+
+        if ($departmentId !== null) {
+            $builder->where('lqir.result_department_id', $departmentId);
+        }
 
         $builder->groupBy([
             'lqir.result_department_id',
@@ -548,13 +595,14 @@ class RekapLaporanImpunitModel extends Model
 
         $query = $db->query("
             SELECT COUNT(DISTINCT master_institution_department.department_id) as total
-            FROM local_quality_indicator_group
-            JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id
-            JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_group.group_department_id
-            WHERE local_quality_indicator_group.group_indicator_id = ?
+            FROM local_quality_indicator_result
+            JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_result.result_indicator_id
+            JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_result.result_department_id
+            WHERE local_quality_indicator_result.result_indicator_id = ?
             AND local_quality_indicator.indicator_category_id = '6'
+            AND YEAR(local_quality_indicator_result.result_period) = ?
             {$searchCondition}
-        ", [$indicatorId]);
+        ", [$indicatorId, $tahun]);
 
         return $query->getRow()->total ?? 0;
     }
@@ -570,6 +618,16 @@ class RekapLaporanImpunitModel extends Model
 
         $db = db_connect();
 
+        $departmentClause = '';
+        if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
+            $departmentClause = "AND EXISTS (
+                SELECT 1 FROM local_quality_indicator_result lqir_sub
+                WHERE lqir_sub.result_indicator_id = local_quality_indicator.indicator_id
+                AND YEAR(lqir_sub.result_period) = {$vtahun}
+                AND lqir_sub.result_department_id = {$userDepartmentId}
+            )";
+        }
+
         // Search condition
         $searchCondition = '';
         if (isset($post['search']['value']) && !empty($post['search']['value'])) {
@@ -579,11 +637,14 @@ class RekapLaporanImpunitModel extends Model
         }
 
         // Query - berdasarkan indicator_category_id = 6
+        $statusFilter = ((int) $vtahun === (int) date('Y')) ? "= 'A'" : "IN ('A', 'D')";
         $query = $db->query("
             SELECT COUNT(DISTINCT local_quality_indicator.indicator_id) as total
             FROM local_quality_indicator
             JOIN local_quality_indicator_result ON local_quality_indicator_result.result_indicator_id = local_quality_indicator.indicator_id
             WHERE local_quality_indicator.indicator_category_id = '6'
+            AND local_quality_indicator.indicator_record_status {$statusFilter}
+            {$departmentClause}
             AND YEAR(local_quality_indicator_result.result_period) = ?
             {$searchCondition}
         ", [$vtahun]);
@@ -616,7 +677,7 @@ class RekapLaporanImpunitModel extends Model
         }
 
         $db = db_connect();
-        $query = $db->query("SELECT DISTINCT group_period FROM local_quality_indicator_group WHERE group_record_status = 'A' ORDER BY group_period DESC");
+        $query = $db->query("SELECT DISTINCT YEAR(result_period) AS group_period FROM local_quality_indicator_result ORDER BY group_period DESC");
         $periods = array_column($query->getResult(), 'group_period');
 
         $cache->save($cacheKey, $periods, 3600);
@@ -626,7 +687,7 @@ class RekapLaporanImpunitModel extends Model
     /**
      * Ambil data rekap per Triwulan, Semester, dan Tahun
      */
-    public function getRekapPeriode(int $tahun)
+    public function getRekapPeriode(int $tahun, ?int $departmentId = null)
     {
         $db = db_connect();
 
@@ -638,27 +699,50 @@ class RekapLaporanImpunitModel extends Model
             lqi.indicator_target,
             lqi.indicator_factors,
             lqi.indicator_units,
-            lqi.indicator_target_calculation
+            lqi.indicator_target_calculation,
+            lqi.indicator_record_status
         ");
 
-        $builder->join('local_quality_indicator_group lqig', 'lqi.indicator_id = lqig.group_indicator_id', 'left');
-
         $builder->where("lqi.indicator_category_id", '6');
-        $builder->where("lqi.indicator_record_status", 'A');
-        $builder->groupStart()
-            ->where('lqig.group_record_status', 'A')
-            ->orWhere('lqig.group_record_status IS NULL', null, false)
-        ->groupEnd();
-        $this->filterActiveOrHasData($builder, $tahun . '-01-01', $tahun . '-12-31');
+        $builder->whereIn("lqi.indicator_record_status", ['A', 'D']);
 
-        $builder->groupStart()
-            ->where('lqi.indicator_active_from IS NULL', null, false)
-            ->orWhere("YEAR(lqi.indicator_active_from) <= {$tahun}", null, false);
-        $builder->groupEnd();
-        $builder->groupStart()
-            ->where('lqi.indicator_active_to IS NULL', null, false)
-            ->orWhere("YEAR(lqi.indicator_active_to) >= {$tahun}", null, false);
-        $builder->groupEnd();
+        // Smart filter: only indicators with data in selected year
+        $builder->where("EXISTS (
+            SELECT 1 FROM local_quality_indicator_result lqir_sub
+            WHERE lqir_sub.result_indicator_id = lqi.indicator_id
+            AND YEAR(lqir_sub.result_period) = {$tahun}
+            AND lqir_sub.result_record_status = 'A'
+        )", null, false);
+
+        // For current year: only active indicators
+        $tahunNow = (int) date('Y');
+        if ((int) $tahun === $tahunNow) {
+            $builder->where('lqi.indicator_record_status', 'A');
+        }
+
+        // Filter by user role / department override
+        $userRole = session('user_role') ?? '';
+        $userDepartmentId = session('department_id') ?? 0;
+        $filterDepartmentId = null;
+        if ($departmentId !== null && $departmentId > 0) {
+            $builder->where("EXISTS (
+                SELECT 1 FROM local_quality_indicator_result lqir_sub
+                WHERE lqir_sub.result_indicator_id = lqi.indicator_id
+                AND YEAR(lqir_sub.result_period) = {$tahun}
+                AND lqir_sub.result_department_id = {$departmentId}
+                AND lqir_sub.result_record_status = 'A'
+            )", null, false);
+            $filterDepartmentId = $departmentId;
+        } elseif (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
+            $builder->where("EXISTS (
+                SELECT 1 FROM local_quality_indicator_result lqir_sub
+                WHERE lqir_sub.result_indicator_id = lqi.indicator_id
+                AND YEAR(lqir_sub.result_period) = {$tahun}
+                AND lqir_sub.result_department_id = {$userDepartmentId}
+                AND lqir_sub.result_record_status = 'A'
+            )", null, false);
+            $filterDepartmentId = $userDepartmentId;
+        }
 
         $builder->groupBy('lqi.indicator_id');
 
@@ -667,7 +751,7 @@ class RekapLaporanImpunitModel extends Model
         if (empty($indicators)) return [];
 
         $indicatorIds = array_column($indicators, 'indicator_id');
-        $allMonthlyData = $this->getAllMonthlyData($indicatorIds, $tahun);
+        $allMonthlyData = $this->getAllMonthlyData($indicatorIds, $tahun, $filterDepartmentId);
 
         // mapping
         $monthlyByIndicator = [];
@@ -914,7 +998,7 @@ class RekapLaporanImpunitModel extends Model
     /**
      * Ambil data bulanan untuk satu indikator
      */
-    public function getMonthlyDataByIndicator(int $indicatorId, int $tahun): array
+    public function getMonthlyDataByIndicator(int $indicatorId, int $tahun, ?int $departmentId = null): array
     {
         $db = db_connect();
         $builder = $db->table('local_quality_indicator_result lqir');
@@ -927,7 +1011,18 @@ class RekapLaporanImpunitModel extends Model
 
         $builder->join('local_quality_indicator lqi', 'lqir.result_indicator_id = lqi.indicator_id', 'LEFT');
         $builder->where('lqir.result_indicator_id', $indicatorId);
+        $builder->where('lqir.result_record_status', 'A');
         $builder->where("YEAR(lqir.result_period)", $tahun);
+        if ($departmentId === null) {
+            $userRole = session('user_role') ?? '';
+            $userDepartmentId = session('department_id') ?? 0;
+            if (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
+                $departmentId = $userDepartmentId;
+            }
+        }
+        if ($departmentId !== null && $departmentId > 0) {
+            $builder->where('lqir.result_department_id', $departmentId);
+        }
         $builder->groupBy('MONTH(lqir.result_period)');
 
         $results = $builder->get()->getResult();
@@ -958,9 +1053,9 @@ class RekapLaporanImpunitModel extends Model
     /**
      * Ambil nilai triwulan
      */
-    public function getNilaiTriwulan(int $indicatorId, int $tahun): array
+    public function getNilaiTriwulan(int $indicatorId, int $tahun, ?int $departmentId = null): array
     {
-        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
+        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun, $departmentId);
 
         $indicator = $this->getDetailByIdImpunit($indicatorId);
         $target = (float) ($indicator->indicator_target ?? 0);
@@ -991,9 +1086,9 @@ class RekapLaporanImpunitModel extends Model
     /**
      * Ambil nilai semester
      */
-    public function getNilaiSemester(int $indicatorId, int $tahun): array
+    public function getNilaiSemester(int $indicatorId, int $tahun, ?int $departmentId = null): array
     {
-        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
+        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun, $departmentId);
 
         $indicator = $this->getDetailByIdImpunit($indicatorId);
         $target = (float) ($indicator->indicator_target ?? 0);
@@ -1024,9 +1119,9 @@ class RekapLaporanImpunitModel extends Model
     /**
      * Ambil nilai tahunan
      */
-    public function getNilaiTahun(int $indicatorId, int $tahun): array
+    public function getNilaiTahun(int $indicatorId, int $tahun, ?int $departmentId = null): array
     {
-        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun);
+        $monthly = $this->getMonthlyDataByIndicator($indicatorId, $tahun, $departmentId);
 
         $indicator = $this->getDetailByIdImpunit($indicatorId);
         $target = (float) ($indicator->indicator_target ?? 0);
@@ -1049,7 +1144,7 @@ class RekapLaporanImpunitModel extends Model
     /**
      * Ambil nilai per tahun (5 tahun terakhir)
      */
-    public function getNilaiPerTahun(int $indicatorId, int $tahun): array
+    public function getNilaiPerTahun(int $indicatorId, int $tahun, ?int $departmentId = null): array
     {
         $indicator = $this->getDetailByIdImpunit($indicatorId);
         $target = (float) ($indicator->indicator_target ?? 0);
@@ -1060,7 +1155,7 @@ class RekapLaporanImpunitModel extends Model
         $tahunMulai = $tahun - 4;
 
         for ($th = $tahunMulai; $th <= $tahun; $th++) {
-            $monthly = $this->getMonthlyDataByIndicator($indicatorId, $th);
+            $monthly = $this->getMonthlyDataByIndicator($indicatorId, $th, $departmentId);
 
             $totalNum = 0;
             $totalDenum = 0;
@@ -1076,5 +1171,147 @@ class RekapLaporanImpunitModel extends Model
         }
 
         return $perTahun;
+    }
+
+    public function getDailyDataAllDepartments(int $indicatorId, int $tahun, int $bulan, ?int $departmentId = null)
+    {
+        $db = db_connect();
+        $builder = $db->table('local_quality_indicator_result lqir');
+
+        $builder->select("
+            lqir.result_department_id,
+            DAY(lqir.result_period) AS tanggal,
+            SUM(lqir.result_numerator_value) AS num,
+            SUM(lqir.result_denumerator_value) AS denum
+        ");
+
+        $builder->where('lqir.result_indicator_id', $indicatorId);
+        $builder->where('YEAR(lqir.result_period)', $tahun);
+        $builder->where('MONTH(lqir.result_period)', $bulan);
+
+        if ($departmentId !== null) {
+            $builder->where('lqir.result_department_id', $departmentId);
+        }
+
+        $builder->groupBy(['lqir.result_department_id', 'lqir.result_period']);
+        $builder->orderBy('lqir.result_department_id');
+        $builder->orderBy('lqir.result_period', 'ASC');
+
+        return $builder->get()->getResult();
+    }
+
+    public function getKendalaPerbaikan(int $indicatorId, int $tahun, int $bulan, ?int $departmentId = null): array
+    {
+        $db = db_connect();
+        $builder = $db->table('local_rencana_perbaikan');
+
+        $builder->select("
+            result_department_id,
+            DAY(result_period) AS tanggal,
+            kendala,
+            perbaikan
+        ");
+
+        $builder->where('result_indicator_id', $indicatorId);
+        $builder->where('indicator_category_id', '6');
+        $builder->where('YEAR(result_period)', $tahun);
+        $builder->where('MONTH(result_period)', $bulan);
+
+        if ($departmentId !== null) {
+            $builder->where('result_department_id', $departmentId);
+        }
+
+        $results = $builder->get()->getResult();
+
+        $map = [];
+        foreach ($results as $row) {
+            $did = (int) $row->result_department_id;
+            $tgl = (int) $row->tanggal;
+            $map[$did . '_' . $tgl] = [
+                'kendala'   => $row->kendala,
+                'perbaikan' => $row->perbaikan,
+            ];
+        }
+
+        return $map;
+    }
+
+    /**
+     * Ambil daftar departemen yang punya data approved di tahun tertentu
+     */
+    public function getActiveDepartmentsForYear(int $tahun)
+    {
+        $db = db_connect();
+        return $db->table('master_institution_department mid')
+            ->distinct()
+            ->select('mid.department_id, mid.department_name')
+            ->join('local_quality_indicator_result lqir', 'lqir.result_department_id = mid.department_id', 'inner')
+            ->join('local_quality_indicator lqi', 'lqi.indicator_id = lqir.result_indicator_id', 'inner')
+            ->where('lqi.indicator_category_id', '6')
+            ->where('lqir.result_record_status', 'A')
+            ->where('YEAR(lqir.result_period)', $tahun)
+            ->orderBy('mid.department_name', 'ASC')
+            ->get()
+            ->getResult();
+    }
+
+    /**
+     * Hitung jumlah draft (belum disetujui) per departemen untuk IMPUnit
+     * Menghitung kombinasi unik (indikator + bulan + departemen) — setiap baris draft dihitung 1x
+     */
+    public function getDraftCountByDepartment(int $tahun): array
+    {
+        $db = db_connect();
+        $rows = $db->table('local_quality_indicator_result lqir')
+            ->select("
+                lqir.result_department_id AS department_id,
+                mid.department_name,
+                COUNT(*) AS total_draft
+            ")
+            ->join('local_quality_indicator lqi', 'lqir.result_indicator_id = lqi.indicator_id', 'inner')
+            ->join('master_institution_department mid', 'mid.department_id = lqir.result_department_id', 'left')
+            ->where('lqi.indicator_category_id', '6')
+            ->where('lqir.result_record_status', 'D')
+            ->where('YEAR(lqir.result_period)', $tahun)
+            ->groupBy('lqir.result_department_id, mid.department_name')
+            ->orderBy('mid.department_name', 'ASC')
+            ->get()
+            ->getResult();
+
+        return array_map(function ($r) {
+            return [
+                'department_id'   => (int) $r->department_id,
+                'department_name' => $r->department_name ?? '(Tanpa Departemen)',
+                'total_draft'     => (int) $r->total_draft,
+            ];
+        }, $rows);
+    }
+
+    /**
+     * Hitung jumlah draft (belum disetujui) per bulan untuk IMPUnit
+     * Return array [bulan => total_draft]
+     */
+    public function getDraftCountByMonth(int $tahun): array
+    {
+        $db = db_connect();
+        $rows = $db->table('local_quality_indicator_result lqir')
+            ->select("
+                MONTH(lqir.result_period) AS bulan,
+                COUNT(*) AS total_draft
+            ")
+            ->join('local_quality_indicator lqi', 'lqir.result_indicator_id = lqi.indicator_id', 'inner')
+            ->where('lqi.indicator_category_id', '6')
+            ->where('lqir.result_record_status', 'D')
+            ->where('YEAR(lqir.result_period)', $tahun)
+            ->groupBy('MONTH(lqir.result_period)')
+            ->orderBy('MONTH(lqir.result_period)', 'ASC')
+            ->get()
+            ->getResult();
+
+        $result = array_fill(1, 12, 0);
+        foreach ($rows as $r) {
+            $result[(int) $r->bulan] = (int) $r->total_draft;
+        }
+        return $result;
     }
 }

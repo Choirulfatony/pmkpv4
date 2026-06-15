@@ -1,191 +1,4 @@
-<style>
-    .chart-container {
-        position: relative;
-        height: 350px;
-        background: var(--bs-body-bg);
-        border-radius: 8px;
-        padding: 15px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
 
-    .indicator-info {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        color: white;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-    }
-
-    .target-badge {
-        background: rgba(255, 255, 255, 0.2);
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 14px;
-    }
-
-    .status-badge {
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-weight: bold;
-    }
-
-    .status-tercap {
-        background: #28a745;
-        color: white;
-    }
-
-    .status-tidak {
-        background: #dc3545;
-        color: white;
-    }
-
-    .card-grafik {
-        border: none;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-    }
-
-    .card-grafik .card-header {
-        background: var(--bs-tertiary-bg);
-        border-bottom: 2px solid #28a745;
-        font-weight: bold;
-        color: var(--bs-body-color);
-    }
-
-    .table-responsive {
-        position: relative;
-    }
-
-    .overlay-wrapper {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-    }
-
-    .overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: var(--bs-body-bg);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-
-    .loader {
-        width: 3em;
-        height: 3em;
-        transform: rotate(165deg);
-    }
-
-    .loader:before,
-    .loader:after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        display: block;
-        width: 1em;
-        height: 1em;
-        border-radius: 0.5em;
-        transform: translate(-50%, -50%);
-    }
-
-    .loader:before {
-        animation: before8 2s infinite;
-    }
-
-    .loader:after {
-        animation: after6 2s infinite;
-    }
-
-    @keyframes before8 {
-        0% {
-            width: 1em;
-            box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
-        }
-
-        35% {
-            width: 4em;
-            box-shadow: 0 -1em rgba(225, 20, 98, 0.75), 0 1em rgba(111, 202, 220, 0.75);
-        }
-
-        70% {
-            width: 1em;
-            box-shadow: -2em -1em rgba(225, 20, 98, 0.75), 2em 1em rgba(111, 202, 220, 0.75);
-        }
-
-        100% {
-            box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
-        }
-    }
-
-    @keyframes after6 {
-        0% {
-            height: 1em;
-            box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
-        }
-
-        35% {
-            height: 4em;
-            box-shadow: 1em 0 rgba(61, 184, 143, 0.75), -1em 0 rgba(233, 169, 32, 0.75);
-        }
-
-        70% {
-            height: 1em;
-            box-shadow: 1em -2em rgba(61, 184, 143, 0.75), -1em 2em rgba(233, 169, 32, 0.75);
-        }
-
-        100% {
-            box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
-        }
-    }
-
-    /* Select2 dark mode support */
-    [data-bs-theme="dark"] .select2-selection,
-    [data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection,
-    [data-bs-theme="dark"] .select2-container--open .select2-selection {
-        background-color: #2b3035 !important;
-        border-color: #495057 !important;
-    }
-
-    [data-bs-theme="dark"] .select2-selection__rendered,
-    [data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection__rendered,
-    [data-bs-theme="dark"] #select2-indicator_id-container,
-    [data-bs-theme="dark"] #select2-tahun-container {
-        color: #dee2e6 !important;
-        background-color: transparent !important;
-    }
-
-    [data-bs-theme="dark"] .select2-dropdown,
-    [data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-dropdown {
-        background-color: #2b3035 !important;
-        border-color: #495057 !important;
-    }
-
-    [data-bs-theme="dark"] .select2-results__option,
-    [data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-results__option {
-        color: #dee2e6 !important;
-    }
-
-    [data-bs-theme="dark"] .select2-results__option--highlighted,
-    [data-bs-theme="dark"] .select2-results__option--highlighted[aria-selected] {
-        background-color: #0d6efd !important;
-        color: white !important;
-    }
-
-    [data-bs-theme="dark"] .select2-selection__arrow b,
-    [data-bs-theme="dark"] .select2-selection--single .select2-selection__arrow::after {
-        border-color: #dee2e6 transparent transparent transparent !important;
-    }
-</style>
-<!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" rel="stylesheet" /> -->
 
 <div class="container-fluid py-4">
     <div class="card shadow-sm mb-4">
@@ -208,7 +21,7 @@
                 <div class="col-md-6">
                     <div class="row g-2 justify-content-end">
 
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <select class="form-select form-select-sm" id="tahun">
                                 <?php for ($y = date('Y'); $y >= date('Y') - 5; $y--): ?>
                                     <option value="<?= $y ?>" <?= ($y == $tahun) ? 'selected' : '' ?>>
@@ -218,15 +31,24 @@
                             </select>
                         </div>
 
-                        <div class="col-md-8">
+                        <div class="col-md-4">
                             <select class="form-select form-select-sm select2" id="indicator_id" style="width:100%;">
                                 <option value="">Pilih indikator...</option>
                                 <?php foreach ($indicators as $ind): ?>
                                     <option value="<?= $ind->indicator_id ?>"
                                         <?= ($ind->indicator_id == $indicatorId) ? 'selected' : '' ?>>
                                         <?= esc($ind->indicator_element) ?>
+                                        <?php if (isset($ind->indicator_record_status) && $ind->indicator_record_status === 'D'): ?>
+                                            [Non-Aktif]
+                                        <?php endif; ?>
                                     </option>
                                 <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="col-md-5">
+                            <select class="form-select form-select-sm select2" id="department_id" style="width:100%;">
+                                <option value="">Semua Departemen</option>
                             </select>
                         </div>
 
@@ -238,20 +60,6 @@
         </div>
     </div>
 
-    <!-- <div id="indicatorInfo" class="indicator-info" style="display: none;">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h4 id="indicatorName" class="mb-2 fw-bold"></h4>
-                <div>
-                    <span class="badge bg-secondary me-2">Target: <span id="indicatorTarget"></span> <span id="indicatorUnits"></span></span>
-                    <span class="badge bg-secondary me-2">Satuan: <span id="indicatorUnitsLabel"></span></span>
-                    <span id="statusBadge" class="badge"></span>
-                </div>
-            </div>
-            <div class="col-md-4 text-end">
-            </div>
-        </div>
-    </div> -->
     
     <div id="indicatorInfo" class="card border-0 shadow-sm mb-3" style="display:none;">
         <div class="card-body py-3">
@@ -266,7 +74,7 @@
                             <i class="bi bi-bullseye me-1"></i>Target: <span id="indicatorTarget" class="fw-bold"></span>
                         </span>
 
-                        <span class="badge bg-secondary fs-6 py-2 px-3">
+                        <span class="badge bg-warning text-dark fs-6 py-2 px-3">
                             <i class="bi bi-rulers me-1"></i>Satuan: <span id="indicatorUnitsLabel" class="fw-bold"></span>
                         </span>
 
@@ -347,7 +155,7 @@
             <div class="col-md-3">
                 <div class="card border-warning border-2 shadow-sm h-100" style="border-width: 2px;">
                     <div class="card-body text-center py-3">
-                        <h2 class="mb-1" id="summaryTrend">-</h2>
+                        <h1 class="mb-1 display-6" id="summaryTrend">-</h1>
                         <small class="text-muted fw-semibold">Trend</small>
                     </div>
                 </div>
@@ -355,7 +163,7 @@
             <div class="col-md-3">
                 <div class="card border-2 shadow-sm h-100" style="border-width: 2px;">
                     <div class="card-body text-center py-3">
-                        <h2 class="mb-1 fw-bold" id="summaryStatus">-</h2>
+                        <h1 class="mb-1 fw-bold display-6" id="summaryStatus">-</h1>
                         <small class="text-muted fw-semibold">Status</small>
                     </div>
                 </div>
@@ -415,8 +223,7 @@
     </div>
 </div>
 
-<!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> -->
+
 <script>
     var lineChart, triwulanChart, semesterChart, perTahunChart;
     var currentIndicatorData = null;
@@ -437,14 +244,56 @@
             width: '100%'
         });
 
-        // Handle tahun change - reload graph without resetting indicator
+        var $department = $('#department_id').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Semua Departemen',
+            allowClear: true,
+            width: '100%'
+        });
+
+        // Handle tahun change - reload indicators via AJAX
         $tahun.on('change', function() {
-            loadGrafik(true);
+            var newTahun = $(this).val();
+            $.ajax({
+                url: '<?= site_url('siimut/grafik-inm/indicators') ?>',
+                type: 'POST',
+                data: { tahun: newTahun },
+                dataType: 'json',
+                beforeSend: function() {
+                    // Reset indicator
+                    $indicator.empty().append('<option value="">Memuat...</option>').prop('disabled', true).trigger('change');
+                },
+                success: function(indicators) {
+                    $indicator.empty().append('<option value="">--Pilih Indikator--</option>');
+                    $.each(indicators, function(i, ind) {
+                        var label = ind.indicator_element;
+                        if (ind.indicator_record_status === 'D') {
+                            label += ' [Non-Aktif]';
+                        }
+                        $indicator.append('<option value="' + ind.indicator_id + '">' + label + '</option>');
+                    });
+                    $indicator.prop('disabled', false).trigger('change');
+                },
+                error: function() {
+                    $indicator.empty().append('<option value="">--Pilih Indikator--</option>').prop('disabled', false).trigger('change');
+                }
+            });
+            // Sembunyikan grafik yang sedang tampil
+            if (document.getElementById('grafikContainer')) document.getElementById('grafikContainer').style.display = 'none';
+            if (document.getElementById('indicatorInfo')) document.getElementById('indicatorInfo').style.display = 'none';
+            resetSummaryCards();
         });
 
         // Handle indicator change
         $indicator.on('change', function() {
             loadGrafik(false);
+        });
+
+        // Handle department change
+        $department.on('change', function() {
+            if (!window._populatingDept) {
+                loadGrafik(false);
+            }
         });
 
         // Clear indicator selection on page load if no URL indicator_id param
@@ -519,7 +368,7 @@
 
         // When year changes, keep indicator selection and reload graph
         // Only hide graph if no indicator is selected
-        if (!indicatorId || indicatorId === '') {
+        if (!indicatorId || indicatorId === '0' || indicatorId === '') {
             if (document.getElementById('indicatorInfo')) {
                 document.getElementById('indicatorInfo').style.display = 'none';
             }
@@ -536,8 +385,9 @@
         if (document.getElementById('loadingGrafik')) {
             document.getElementById('loadingGrafik').style.display = 'block';
         }
-        var grafikContainer = document.getElementById('grafikContainer');
-        if (grafikContainer) grafikContainer.style.display = 'none';
+        if (document.getElementById('grafikContainer')) {
+            document.getElementById('grafikContainer').style.display = 'none';
+        }
 
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '<?= site_url('siimut/grafik-inm/data') ?>', true);
@@ -558,11 +408,47 @@
                     
                     if (grafikContainer) grafikContainer.style.display = 'block';
                     if (indicatorInfo) indicatorInfo.style.display = 'block';
-                    if (indicatorName) indicatorName.textContent = response.indicator.indicator_element;
+                    // Tampilkan badge kalo indikator non-aktif
+                    if (indicatorName) {
+                        var nameText = response.indicator.indicator_element || '';
+                        if (response.indicator.indicator_record_status === 'D') {
+                            nameText += ' <span class="badge bg-warning text-dark ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>';
+                        }
+                        indicatorName.innerHTML = nameText;
+                    }
                     if (indicatorTarget) indicatorTarget.textContent = response.indicator.indicator_target;
                     var units = response.indicator.indicator_units || '';
                     if (indicatorUnits) indicatorUnits.textContent = units;
                     if (indicatorUnitsLabel) indicatorUnitsLabel.textContent = units;
+
+                    // Populate department dropdown
+                    window._populatingDept = true;
+                    var $deptSelect = $('#department_id');
+                    var currentDept = $deptSelect.val();
+                    $deptSelect.find('option:not([value=""])').remove();
+                    if (response.departments && response.departments.length > 0) {
+                        $.each(response.departments, function(i, dept) {
+                            $deptSelect.append('<option value="' + dept.department_id + '">' + dept.department_name + '</option>');
+                        });
+                        var userRole = response.user_role || '';
+                        if (!['ADMINISTRATOR', 'KOMITE'].includes(userRole)) {
+                            // Non-admin: paksa departemen login, disable dropdown
+                            if (response.user_department_id) {
+                                $deptSelect.val(response.user_department_id);
+                                $deptSelect.prop('disabled', true);
+                            }
+                        } else {
+                            // Admin: enable dropdown, pertahankan selection sebelumnya
+                            $deptSelect.prop('disabled', false);
+                            if (currentDept) {
+                                $deptSelect.val(currentDept);
+                            }
+                        }
+                    } else {
+                        $deptSelect.prop('disabled', true);
+                    }
+                    $deptSelect.trigger('change.select2');
+                    window._populatingDept = false;
                     var statusBadge = document.getElementById('statusBadge');
                     var target = parseFloat(response.indicator.indicator_target || 0);
                     var units = response.indicator.indicator_units || '';
@@ -587,80 +473,90 @@
                     // Calculate trend (bandingkan dengan nilai tahun lalu)
                     var perTahun = response.per_tahun;
                     var tahunKeys = Object.keys(perTahun).sort();
-                    var lastYear = tahunKeys[tahunKeys.length - 2]; // tahun lalu
+                    var lastYear = tahunKeys[tahunKeys.length - 2];
                     var trendEl = document.getElementById('summaryTrend');
                     var statusEl = document.getElementById('summaryStatus');
 
-                    var diff = 0;
-                    var lastYearNilai = 0;
-                    var hasLastYearData = !!(lastYear && perTahun[lastYear] && perTahun[lastYear].nilai);
+                    if (lastYear && perTahun[lastYear] && perTahun[lastYear].nilai) {
+                        var currentYear = tahunKeys[tahunKeys.length - 1];
+                        var diff = nilai - perTahun[lastYear].nilai;
+                        var trendText = '';
 
-                    if (hasLastYearData) {
-                        diff = nilai - perTahun[lastYear].nilai;
-                        lastYearNilai = perTahun[lastYear].nilai;
-                    }
-
-                    var trendText = '';
-
-                    if (trendEl) {
-                        if (hasLastYearData) {
-                            if (diff > 0) {
-                                trendEl.textContent = '⬆ +' + diff.toFixed(1) + '%';
-                                trendEl.className = 'mb-1 text-success fw-bold';
-                                trendText = 'meningkat';
-                            } else if (diff < 0) {
-                                trendEl.textContent = '⬇ ' + Math.abs(diff).toFixed(1) + '%';
-                                trendEl.className = 'mb-1 text-danger fw-bold';
-                                trendText = 'menurun';
-                            } else {
-                                trendEl.textContent = '➡ Stabil';
-                                trendEl.className = 'mb-1 text-muted fw-bold';
-                                trendText = 'stabil';
-                            }
+                        if (diff > 0) {
+                            trendEl.textContent = '⬆ +' + diff.toFixed(1) + '%';
+                            trendEl.className = 'mb-1 text-success fw-bold';
+                            trendText = 'mengalami peningkatan ' + diff.toFixed(1) + '%';
+                        } else if (diff < 0) {
+                            trendEl.textContent = '⬇ ' + Math.abs(diff).toFixed(1) + '%';
+                            trendEl.className = 'mb-1 text-danger fw-bold';
+                            trendText = 'mengalami penurunan ' + Math.abs(diff).toFixed(1) + '%';
                         } else {
-                            trendEl.textContent = 'Baru';
-                            trendEl.className = 'mb-1 text-info fw-bold';
-                            trendText = 'data baru';
+                            trendEl.textContent = '➡ Stabil';
+                            trendEl.className = 'mb-1 text-muted fw-bold';
+                            trendText = 'stabil';
                         }
-                    }
 
-                    if (statusEl) {
                         if (response.tahunan.tercap) {
                             statusEl.textContent = 'TERCAPAI ✓';
                             statusEl.className = 'mb-1 text-success fw-bold';
-                            if (statusEl.parentElement && statusEl.parentElement.parentElement) {
-                                statusEl.parentElement.parentElement.classList.add('border-success');
-                            }
+                            statusEl.parentElement.parentElement.classList.add('border-success');
                         } else {
                             statusEl.textContent = 'TIDAK TERCAPAI ✗';
                             statusEl.className = 'mb-1 text-danger fw-bold';
-                            if (statusEl.parentElement && statusEl.parentElement.parentElement) {
-                                statusEl.parentElement.parentElement.classList.add('border-danger');
+                            statusEl.parentElement.parentElement.classList.add('border-danger');
+                        }
+
+                        var lastYearNilai = perTahun[lastYear].nilai;
+                        var analisasHtml = '<strong>Analisis:</strong><br><br>';
+
+                        if (response.tahunan.tercap) {
+                            analisasHtml += '<span class="text-success">';
+                            analisasHtml += 'Capaian indikator sebesar ' + nilai.toFixed(2) + ' ' + units + ' telah melampaui target ' + target + '% yang ditetapkan.<br><br>';
+
+                            if (diff > 0) {
+                                analisasHtml += 'Jika dibandingkan dengan tahun sebelumnya (' + lastYearNilai.toFixed(2) + '%), ';
+                                analisasHtml += 'terdapat peningkatan sebesar ' + diff.toFixed(2) + '%.<br>';
+                                analisasHtml += 'Peningkatan ini menunjukkan adanya perbaikan kinerja yang perlu dipertahankan.<br><br>';
+                                analisasHtml += '<strong>Kesimpulan:</strong> Capaian indikator tetap baik dan berada di atas standar. ';
+                                analisasHtml += 'Perlu dilakukan monitoring untuk menjaga konsistensi capaian indikator.</span>';
+                            } else if (diff < 0) {
+                                analisasHtml += 'Jika dibandingkan dengan tahun sebelumnya (' + lastYearNilai.toFixed(2) + '%), ';
+                                analisasHtml += 'terdapat penurunan sebesar ' + Math.abs(diff).toFixed(2) + '%.<br>';
+                                analisasHtml += 'Meskipun demikian, capaian masih berada di atas standar yang ditetapkan.<br><br>';
+                                analisasHtml += '<strong>Kesimpulan:</strong> Capaian indikator masih dalam batas aman. ';
+                                analisasHtml += 'Penurunan ini perlu dimonitor untuk menjaga konsistensi mutu pelayanan.</span>';
+                            } else {
+                                analisasHtml += 'Capaian relatif stabil dibandingkan tahun sebelumnya.<br><br>';
+                                analisasHtml += '<strong>Kesimpulan:</strong> Capaian indikator tetap baik dan stabil. ';
+                                analisasHtml += 'Perlu dilakukan monitoring untuk menjaga konsistensi capaian indikator.</span>';
+                            }
+                        } else {
+                            analisasHtml += '<span class="text-danger">';
+                            analisasHtml += 'Capaian indikator sebesar ' + nilai.toFixed(2) + ' ' + units + ' belum mencapai target ' + target + '% yang ditetapkan.<br><br>';
+
+                            if (diff > 0) {
+                                analisasHtml += 'Jika dibandingkan dengan tahun sebelumnya (' + lastYearNilai.toFixed(2) + '%), ';
+                                analisasHtml += 'terdapat peningkatan sebesar ' + diff.toFixed(2) + '%. ';
+                                analisasHtml += 'Namun capaian belum memenuhi standar yang ditetapkan.<br><br>';
+                                analisasHtml += '<strong>Kesimpulan:</strong> Diperlukan evaluasi dan perencanaan perbaikan untuk meningkatkan capaian indikator.</span>';
+                            } else if (diff < 0) {
+                                analisasHtml += 'Jika dibandingkan dengan tahun sebelumnya (' + lastYearNilai.toFixed(2) + '%), ';
+                                analisasHtml += 'terdapat penurunan sebesar ' + Math.abs(diff).toFixed(2) + '%.<br>';
+                                analisasHtml += 'Penurunan ini memerlukan perhatian serius dan segera.<br><br>';
+                                analisasHtml += '<strong>Kesimpulan:</strong> Diperlukan analisis root cause dan rencana perbaikan segera untuk meningkatkan capaian indikator.</span>';
+                            } else {
+                                analisasHtml += 'Capaian stagnan dibandingkan tahun sebelumnya dan masih di bawah standar.<br><br>';
+                                analisasHtml += '<strong>Kesimpulan:</strong> Diperlukan analisis root cause dan rencana perbaikan untuk meningkatkan capaian indikator.</span>';
                             }
                         }
-                    }
-
-                    var analisasHtml = '<strong>Analisis:</strong><br>';
-                    if (response.tahunan.tercap) {
-                        analisasHtml += '<span class="text-success">Capaian: ' + nilai.toFixed(2) + ' ' + units + ' | Target: ' + target + ' ' + units + '</span><br><br>';
-                        if (hasLastYearData) {
-                            analisasHtml += 'Banding tahun lalu (' + lastYearNilai.toFixed(2) + ' ' + units + '): ' + trendText + ' ' + diff.toFixed(2) + '%<br><br>';
-                            analisasHtml += '<strong>Kesimpulan:</strong> Capaian baik, pertahankan.';
-                        } else {
-                            analisasHtml += 'Ini adalah data pertama.<br><strong>Kesimpulan:</strong> Capaian baik.';
-                        }
+                        document.getElementById('keterangan').innerHTML = analisasHtml;
                     } else {
-                        analisasHtml += '<span class="text-danger">Capaian: ' + nilai.toFixed(2) + ' ' + units + ' | Target: ' + target + ' ' + units + '</span><br><br>';
-                        if (hasLastYearData) {
-                            analisasHtml += 'Banding tahun lalu (' + lastYearNilai.toFixed(2) + ' ' + units + '): ' + trendText + ' ' + diff.toFixed(2) + '%<br><br>';
-                            analisasHtml += '<strong>Kesimpulan:</strong> Perlu perbaikan.';
-                        } else {
-                            analisasHtml += 'Ini adalah data pertama.<br><strong>Kesimpulan:</strong> Perlu evaluasi.';
-                        }
+                        trendEl.textContent = '-';
+                        trendEl.className = 'mb-1';
+                        statusEl.textContent = '-';
+                        statusEl.className = 'mb-1';
+                        document.getElementById('keterangan').innerHTML = '<i class="bi bi-info-circle me-1"></i> Capaian indikator: ' + nilai + ' ' + units + ' | Target: ' + target + ' ' + units;
                     }
-
-                    var keterangan = document.getElementById('keterangan');
-                    if (keterangan) keterangan.innerHTML = analisasHtml;
                     
                     renderLineChart(response.bulanan, response.indicator);
                     renderTabelNumDenum(response.bulanan, response.indicator);
@@ -672,7 +568,8 @@
                 }
             }
         };
-        xhr.send('tahun=' + tahun + '&indicator_id=' + indicatorId);
+        var departmentId = document.getElementById('department_id').value;
+        xhr.send('tahun=' + tahun + '&indicator_id=' + indicatorId + '&department_id=' + departmentId);
     }
 
     function renderLineChart(bulanan, indicator) {

@@ -1,201 +1,3 @@
-<style>
-    .cell-target {
-        background-color: rgba(41, 185, 92) !important;
-        font-weight: bold;
-    }
-
-    .cell-empty {
-        background-color: rgba(255, 222, 60) !important;
-        font-weight: bold;
-    }
-
-    .cell-fail {
-        background-color: rgba(220, 57, 57) !important;
-        color: #fff !important;
-        font-weight: bold;
-    }
-
-    .cell-target *,
-    .cell-fail * {
-        color: #fff !important;
-    }
-
-    .cell-empty * {
-        color: #000 !important;
-    }
-
-    .legend-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 3px;
-        display: inline-block;
-    }
-
-    #ajax_data_rekap td,
-    #ajax_data_rekap th {
-        font-size: 13px;
-        vertical-align: middle;
-        white-space: nowrap;
-        padding: 10px 8px !important;
-    }
-
-    #ajax_data_rekap th {
-        background-color: #363636 !important;
-        color: #fff;
-        text-align: center;
-        font-weight: 600;
-    }
-
-    #ajax_data_rekap td a {
-        color: #000;
-        text-decoration: none;
-        font-weight: 600;
-    }
-
-    #ajax_data_rekap td a:hover {
-        color: #363636;
-        text-decoration: underline;
-    }
-
-    [data-bs-theme="dark"] #ajax_data_rekap td,
-    [data-bs-theme="dark"] #ajax_data_rekap th {
-        color: #fff !important;
-    }
-
-    [data-bs-theme="dark"] #ajax_data_rekap td a {
-        color: #fff !important;
-    }
-
-    [data-bs-theme="dark"] #ajax_data_rekap td a:hover {
-        color: #80bdff !important;
-    }
-
-    [data-bs-theme="dark"] #ajax_data_rekap td .text-muted {
-        color: #adb5bd !important;
-    }
-
-    [data-bs-theme="dark"] #ajax_data_rekap td .small {
-        color: #ced4da !important;
-    }
-
-    [data-bs-theme="dark"] #ajax_data_rekap td span#total {
-        color: #fff !important;
-    }
-
-    [data-bs-theme="dark"] #ajax_data_rekap td span#num,
-    [data-bs-theme="dark"] #ajax_data_rekap td span#denum {
-        color: #ced4da !important;
-    }
-
-    .dataTables_wrapper .dataTables_processing {
-        display: none !important;
-    }
-
-    table.dataTable {
-        opacity: 1;
-        transition: opacity 0.1s ease;
-    }
-
-    table.dataTable.loading {
-        opacity: 0.2;
-    }
-
-    .table-responsive {
-        position: relative;
-    }
-
-    .overlay-wrapper {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: transparent;
-        z-index: 9999;
-    }
-
-    .overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: transparent;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-
-    .loader {
-        width: 3em;
-        height: 3em;
-        transform: rotate(165deg);
-    }
-
-    .loader:before,
-    .loader:after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        display: block;
-        width: 1em;
-        height: 1em;
-        border-radius: 0.5em;
-        transform: translate(-50%, -50%);
-    }
-
-    .loader:before {
-        animation: before8 2s infinite;
-    }
-
-    .loader:after {
-        animation: after6 2s infinite;
-    }
-
-    @keyframes before8 {
-        0% {
-            width: 1em;
-            box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
-        }
-
-        35% {
-            width: 4em;
-            box-shadow: 0 -1em rgba(225, 20, 98, 0.75), 0 1em rgba(111, 202, 220, 0.75);
-        }
-
-        70% {
-            width: 1em;
-            box-shadow: -2em -1em rgba(225, 20, 98, 0.75), 2em 1em rgba(111, 202, 220, 0.75);
-        }
-
-        100% {
-            box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
-        }
-    }
-
-    @keyframes after6 {
-        0% {
-            height: 1em;
-            box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
-        }
-
-        35% {
-            height: 4em;
-            box-shadow: 1em 0 rgba(61, 184, 143, 0.75), -1em 0 rgba(233, 169, 32, 0.75);
-        }
-
-        70% {
-            height: 1em;
-            box-shadow: 1em -2em rgba(61, 184, 143, 0.75), -1em 2em rgba(233, 169, 32, 0.75);
-        }
-
-        100% {
-            box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
-        }
-    }
-</style>
 
 <div class="row mb-3">
     <div class="col-12">
@@ -237,7 +39,7 @@
                     <i class="fas fa-chart-bar me-2"></i>
                     Rekap IMPUnit per Bulan
                 </h3>
-                <div class="card-tools d-flex align-items-center gap-2">
+                <div class="card-tools d-flex align-items-center gap-2 flex-wrap">
                     <div class="input-group input-group-sm" style="width: 130px;">
                         <span class="input-group-text"><i class="fas fa-calendar"></i></span>
                         <select class="form-select form-select-sm" id="tahun" onchange="gantiTahun()">
@@ -246,6 +48,48 @@
                             <?php endfor; ?>
                         </select>
                     </div>
+                    <?php if ($role === 'ADMINISTRATOR'): ?>
+                    <div class="input-group input-group-sm" style="width: 220px;">
+                        <span class="input-group-text"><i class="fas fa-building"></i></span>
+                        <select class="form-select form-select-sm" id="department" onchange="gantiDepartemen()">
+                            <option value="">-- Semua Departemen --</option>
+                            <?php if (!empty($departments)): ?>
+                                <?php foreach ($departments as $dept): ?>
+                                    <?php
+                                    $draftInfo = '';
+                                    foreach ($draftCounts as $dc) {
+                                        if ((int)$dc['department_id'] === (int)$dept->department_id) {
+                                            $draftInfo = ' (Draft: ' . $dc['total_draft'] . ')';
+                                            break;
+                                        }
+                                    }
+                                    ?>
+                                    <option value="<?= esc($dept->department_id) ?>">
+                                        <?= esc($dept->department_name) ?><?= $draftInfo ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+                    <?php endif; ?>
+                    <?php if ($role === 'ADMINISTRATOR' && !empty($totalDraft) && $totalDraft > 0): ?>
+                        <?php
+                        $namaBulan = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
+                        $breakdownLines = [];
+                        foreach (($draftByMonth ?? []) as $bln => $cnt) {
+                            if ($cnt > 0) {
+                                $breakdownLines[] = $namaBulan[$bln] . ': ' . $cnt;
+                            }
+                        }
+                        $tooltipText = 'Tahun ' . $tahun . " | " . implode(' | ', $breakdownLines);
+                        ?>
+                        <a href="<?= site_url('siimut/approval/impunit') ?>" class="badge bg-warning text-dark text-decoration-none"
+                           title="<?= esc($tooltipText) ?>"
+                           data-bs-toggle="tooltip" data-bs-placement="bottom"
+                           style="font-size: 12px; padding: 6px 10px; cursor: pointer;">
+                            <i class="fas fa-clock me-1"></i> Draft Menunggu Approval: <?= $totalDraft ?>
+                        </a>
+                    <?php endif; ?>
                     <div class="btn-group btn-group-sm">
                         <button type="button" class="btn btn-outline-secondary" onclick="reload_table_impunit()" title="Refresh">
                             <i class="fas fa-sync-alt"></i>
@@ -267,7 +111,7 @@
                             <i class="loader"></i>
                         </div>
                     </div>
-                    <table id="ajax_data_rekap" class="table table-bordered table-hover table-striped mb-0" style="width: 100%;">
+                    <table id="ajax_data_rekap_impunit" class="table table-bordered table-hover table-striped mb-0" style="width: 100%;">
                         <thead>
                             <tr class="align-middle">
                                 <th style="width: 50px;" class="text-center">#</th>
@@ -316,13 +160,18 @@
 <script>
     var table_loquin;
     var vtahun = <?= isset($tahun) ? $tahun : "new Date().getFullYear()" ?>;
+    var vdepartment = <?= json_encode(($role !== 'ADMINISTRATOR' && $departmentId) ? (int) $departmentId : '') ?>;
     var target, factor, operator;
 
     $(document).ready(function() {
         $('#tahun').val(vtahun);
         $('#btn-export').attr('href', '<?= site_url('siimut/rekap-laporan-impunit/export') ?>?tahun=' + vtahun);
 
-        table_loquin = $('#ajax_data_rekap').DataTable({
+        // Inisialisasi tooltip untuk badge draft
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (el) { return new bootstrap.Tooltip(el); });
+
+        table_loquin = $('#ajax_data_rekap_impunit').DataTable({
             processing: false,
             serverSide: true,
             autoWidth: false,
@@ -336,6 +185,7 @@
                 type: 'POST',
                 data: function(d) {
                     d.vtahun = vtahun;
+                    d.vdepartment = vdepartment;
                     return d;
                 },
                 beforeSend: function(xhr) {
@@ -424,6 +274,13 @@
     function gantiTahun() {
         vtahun = $('#tahun').val();
         $('#btn-export').attr('href', '<?= site_url('siimut/rekap-laporan-impunit/export') ?>?tahun=' + vtahun);
+        if (table_loquin) {
+            table_loquin.ajax.url('<?= site_url('siimut/rekap-laporan-impunit/ajax_rekap_impunit') ?>').load();
+        }
+    }
+
+    function gantiDepartemen() {
+        vdepartment = $('#department').val();
         if (table_loquin) {
             table_loquin.ajax.url('<?= site_url('siimut/rekap-laporan-impunit/ajax_rekap_impunit') ?>').load();
         }

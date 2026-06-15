@@ -1,8 +1,8 @@
-# Agent Guidelines for PMKPV4
+# Agent Guidelines for SIIMUT
 
 ## Project Overview
 
-This is a CodeIgniter 4 PHP application (PMK PV4). It uses:
+This is a CodeIgniter 4 PHP application (SIIMUT - Sistem Informasi Indikator Mutu). It uses:
 - PHP 8.1+
 - CodeIgniter 4 framework
 - PHPUnit for testing

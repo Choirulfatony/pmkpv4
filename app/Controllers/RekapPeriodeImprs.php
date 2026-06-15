@@ -28,11 +28,25 @@ class RekapPeriodeImprs extends AppController
 
         $tahun = $this->request->getGet('tahun') ?? date('Y');
 
+        $departments = $this->rekapModel->getActiveDepartmentsForYear((int) $tahun);
+        $draftCounts = $this->rekapModel->getDraftCountByDepartment((int) $tahun);
+        $draftByMonth = $this->rekapModel->getDraftCountByMonth((int) $tahun);
+        $totalDraft = array_sum($draftByMonth);
+
+        $departmentId = session()->get('department_id') ?? null;
+
         return $this->render('siimut/rekap_periode_imprs', [
             'judul'    => 'Rekap IMPRS per Periode',
             'icon'     => '<i class="bi bi-calendar-range"></i>',
             '_content' => view('siimut/rekap_periode_imprs', [
-                'tahun' => $tahun,
+                'tahun'                => $tahun,
+                'departments'          => $departments,
+                'draftCounts'          => $draftCounts,
+                'draftByMonth'         => $draftByMonth,
+                'totalDraft'           => $totalDraft,
+                'showDepartmentFilter' => true,
+                'role'                 => $role,
+                'departmentId'         => $departmentId,
             ]),
             'menus'    => $menus
         ]);
@@ -44,8 +58,10 @@ class RekapPeriodeImprs extends AppController
 
         $tahun = $tahun ? (int) $tahun : (isset($post['tahun']) ? (int) $post['tahun'] : (int) date('Y'));
 
+        $departmentId = isset($post['department_id']) ? (int) $post['department_id'] : null;
+
         try {
-            $data = $this->rekapModel->getRekapPeriode($tahun);
+            $data = $this->rekapModel->getRekapPeriode($tahun, $departmentId);
 
             return $this->response->setJSON([
                 'draw' => $post['draw'] ?? 1,
@@ -68,13 +84,14 @@ class RekapPeriodeImprs extends AppController
     public function exportExcel()
     {
         $tahun = $this->request->getGet('tahun') ?? date('Y');
+        $departmentId = $this->request->getGet('department_id') ? (int) $this->request->getGet('department_id') : null;
 
         if (ob_get_level()) {
             ob_end_clean();
         }
 
         try {
-            $data = $this->rekapModel->getRekapPeriode($tahun);
+            $data = $this->rekapModel->getRekapPeriode($tahun, $departmentId);
 
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
 

@@ -1,0 +1,279 @@
+<div class="card-header mailbox-header d-flex align-items-start gap-2 flex-wrap">
+
+    <!-- LEFT TOOLBAR -->
+    <div class="d-flex gap-2">
+        <button class="btn btn-mailbox btn-sm btn-pending-reload" title="Reload">
+            <i class="bi bi-arrow-repeat"></i>
+        </button>
+
+        <!-- CHECKBOX TOGGLE ALL -->
+        <button class="btn btn-mailbox btn-sm checkbox-toggle" title="Pilih Semua">
+            <i class="bi bi-square"></i>
+        </button>
+    </div>
+
+    <!-- PUSH RIGHT -->
+    <div class="ms-auto"></div>
+
+    <!-- RIGHT AREA: SEARCH + INFO -->
+    <div class="d-flex flex-column align-items-end gap-1">
+
+        <!-- SEARCH -->
+        <div class="input-group input-group-sm mailbox-search" style="width: 220px;">
+            <input type="text"
+                class="form-control"
+                id="searchPending"
+                placeholder="Cari pending..."
+                value="<?= esc($keyword ?? '') ?>">
+
+            <button class="btn btn-primary btn-search-pending" type="button">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<div class="card-body p-0">
+    <div class="table-responsive">
+        <table class="table table-hover mailbox-table mb-0">
+            <tbody>
+
+                <?php if (empty($list)): ?>
+                <tr>
+                    <td colspan="6" class="text-center text-muted p-4">
+                        <i class="bi bi-check-circle text-success fs-1 d-block mb-2"></i>
+                        Tidak ada laporan pending
+                    </td>
+                </tr>
+                <?php else: ?>
+
+                    <?php foreach ($list as $row): ?>
+                        <tr class="pending-row <?= $row['is_read'] ? '' : 'notif-unread' ?>"
+                            data-id="<?= esc($row['id']) ?>"
+                            style="cursor:pointer">
+
+                            <!-- CHECKBOX -->
+                            <td class="mailbox-check" onclick="event.stopPropagation();">
+                                <input class="form-check-input mailbox-checkbox check-item"
+                                       type="checkbox"
+                                       value="<?= esc($row['id']) ?>">
+                            </td>
+
+                            <!-- ICON -->
+                            <td class="mailbox-star text-muted">
+                                <?php if (!$row['is_read']): ?>
+                                    <div class="notif-dot blink"></div>
+                                    <i class="bi bi-info-circle" style="font-size:15px;" title="Pending"></i>
+                                <?php else: ?>
+                                    <i class="bi bi-file-earmark-text me-2 text-muted" style="font-size:15px;"></i>
+                                <?php endif; ?>
+                            </td>
+
+                            <!-- PASIEN -->
+                            <td class="mailbox-name">
+                                <div class="fw-normal"><?= esc($row['nama_pasien']) ?></div>
+                                <small class="text-muted">
+                                    <?= esc($row['kd_pasien']) ?>
+                                </small>
+                            </td>
+
+                            <!-- ISI -->
+                            <td class="mailbox-subject">
+                                <strong><?= esc($row['jenis_insiden']) ?></strong>
+                                <span class="text-muted d-block text-truncate">
+                                    <?= esc(substr(strip_tags($row['insiden']), 0, 50)) ?>...
+                                </span>
+                                <?php if (($row['status_laporan'] ?? '') === 'SELESAI'): ?>
+                                    <span class="text-success d-block small mt-1" style="border-left:3px solid #198754; padding-left:6px;">
+                                        <i class="bi bi-check-circle-fill" style="font-size:10px;"></i>
+                                        <strong><?= esc($row['grading_final'] ?? '-') ?></strong> – 
+                                        <?= esc(substr(strip_tags($row['catatan_komite'] ?? ''), 0, 200)) ?>
+                                    </span>
+                                    <span class="d-block small mt-1" style="font-size:11px; color:#6c757d;">
+                                        <i class="bi bi-person-check"></i> <?= esc($row['komite_nama'] ?? 'Komite PMKP') ?>
+                                        <i class="bi bi-clock ms-2"></i> <?= date('d M Y H:i', strtotime($row['validated_at'] ?? $row['selesai_at'] ?? '')) ?>
+                                    </span>
+                                <?php elseif (($row['status_laporan'] ?? '') === 'KARU' && !empty($row['catatan_atasan'])): ?>
+                                    <span class="text-info d-block small mt-1" style="border-left:3px solid #0dcaf0; padding-left:6px;">
+                                        <i class="bi bi-chat-dots" style="font-size:10px;"></i>
+                                        <?= esc(substr(strip_tags($row['catatan_atasan']), 0, 60)) ?>
+                                    </span>
+                                <?php endif; ?>
+                            </td>
+
+                            <!-- STATUS -->
+                            <td class="text-center align-middle">
+                                <?php
+                                $statusLabels = [
+                                    'PENDING'   => ['secondary', 'Menunggu'],
+                                    'KARU'      => ['info', 'Dibaca KARU'],
+                                    'TERKIRIM'  => ['primary', 'Terkirim'],
+                                    'INSTALASI' => ['warning', 'Instalasi'],
+                                    'SELESAI'   => ['success', 'Selesai']
+                                ];
+                                $s = $row['status_laporan'] ?? 'PENDING';
+                                $badge = $statusLabels[$s] ?? ['secondary', $s];
+                                ?>
+                                <span class="badge bg-<?= $badge[0] ?>"><?= $badge[1] ?></span>
+                                <?php if ($s === 'SELESAI' && !empty($row['komite_nama'])): ?>
+                                    <small class="d-block text-muted mt-1" style="font-size:10px; line-height:1.2;">
+                                        oleh <?= esc($row['komite_nama']) ?>
+                                    </small>
+                                <?php endif; ?>
+                            </td>
+
+                            <!-- TANGGAL -->
+                            <td class="mailbox-date text-nowrap">
+                                <?= date('d M Y H:i', strtotime($row['created_at'])) ?>
+                            </td>
+
+                        </tr>
+                    <?php endforeach; ?>
+
+                <?php endif; ?>
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<?php
+$start = $total > 0 ? (($page - 1) * 10) + 1 : 0;
+$end   = $total > 0 ? min($page * 10, $total) : 0;
+?>
+
+<div class="card-header mailbox-header d-flex align-items-center gap-2">
+
+    <!-- INFO -->
+    <span class="text-muted small">
+        <?= $start ?> – <?= $end ?> / <?= $total ?>
+    </span>
+
+    <div class="ms-auto"></div>
+
+    <span class="text-muted small">
+        <?= $total > 0 ? $page : 0 ?> / <?= $total_pages ?>
+    </span>
+
+    <div class="btn-group btn-group-sm">
+        <button class="btn btn-mailbox btn-pending-prev"
+            data-page="<?= $page - 1 ?>"
+            <?= ($page <= 1 || $total == 0 ? 'disabled' : '') ?>>
+            <i class="bi bi-chevron-left"></i>
+        </button>
+
+        <button class="btn btn-mailbox btn-pending-next"
+            data-page="<?= $page + 1 ?>"
+            <?= ($page >= $total_pages || $total == 0 ? 'disabled' : '') ?>>
+            <i class="bi bi-chevron-right"></i>
+        </button>
+    </div>
+
+</div>
+<script>
+    $(document).on('click', '.checkbox-toggle', function() {
+        const total = $('.mailbox-checkbox').length;
+        const checked = $('.mailbox-checkbox:checked').length;
+        const checkAll = checked !== total;
+        $('.mailbox-checkbox').prop('checked', checkAll);
+        updateCheckboxIcon();
+    });
+
+    $(document).on('change', '.mailbox-checkbox', function() {
+        updateCheckboxIcon();
+    });
+
+    function updateCheckboxIcon() {
+        const total = $('.mailbox-checkbox').length;
+        const checked = $('.mailbox-checkbox:checked').length;
+        const $icon = $('.checkbox-toggle i');
+        $icon.removeClass('bi-square bi-check-square-fill bi-dash-square');
+        if (checked === 0) {
+            $icon.addClass('bi-square');
+        } else if (checked === total) {
+            $icon.addClass('bi-check-square-fill');
+        } else {
+            $icon.addClass('bi-dash-square');
+        }
+    }
+
+    function resetMailboxSelection() {
+        $('.mailbox-checkbox').prop('checked', false);
+        updateCheckboxIcon();
+    }
+</script>
+
+<style>
+    .btn-mailbox {
+        background: var(--bs-secondary-bg);
+        border: 1px solid var(--bs-border-color);
+        color: var(--bs-body-color);
+        transition: all 0.2s ease;
+    }
+
+    .btn-mailbox:hover {
+        background: var(--bs-tertiary-bg);
+        border-color: var(--bs-border-color);
+        color: var(--bs-body-color);
+    }
+
+    .btn-mailbox:active {
+        background: var(--bs-secondary-bg);
+        transform: scale(0.95);
+    }
+
+    .dark-mode .btn-mailbox {
+        background: #2b2b2b;
+        border: 1px solid #444;
+        color: #ddd;
+    }
+
+    .dark-mode .btn-mailbox:hover {
+        background: #333;
+        border-color: #555;
+        color: #fff;
+    }
+
+    .dark-mode .btn-mailbox:active {
+        background: #262626;
+    }
+
+    .mailbox-name div {
+        font-size: 14px;
+        font-weight: normal;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .notif-dot.blink {
+        animation: blink 1.5s infinite;
+    }
+
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+    }
+
+    .mailbox-subject strong {
+        font-size: 14px;
+        font-weight: normal;
+    }
+
+    .mailbox-date {
+        font-size: 14px;
+        font-weight: normal;
+    }
+
+    .mailbox-star {
+        font-size: 14px;
+    }
+
+    .mailbox-name,
+    .mailbox-subject,
+    .mailbox-date {
+        font-size: 14px !important;
+        font-weight: normal !important;
+    }
+</style>

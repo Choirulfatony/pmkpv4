@@ -1,8 +1,8 @@
-# PMKPV4 - Project Context
+# SIIMUT - Project Context
 
 ## Project Overview
 
-**PMKPV4** (PMKP v4) is a CodeIgniter 4 PHP web application developed for **RS Dr. Soedono Madiun** (RSSM), a hospital in Indonesia. The application manages hospital quality management (PMKP = *Penilaian Mutu Keselamatan Pasien* - Patient Safety and Quality Assessment).
+**SIIMUT** (Sistem Informasi Indikator Mutu) is a CodeIgniter 4 PHP web application developed for **RS Dr. Soedono Madiun** (RSSM), a hospital in Indonesia. The application manages hospital quality management (PMKP = *Penilaian Mutu Keselamatan Pasien* - Patient Safety and Quality Assessment).
 
 The application features two main modules:
 1. **SIIMUT** - Quality assessment reports, recapitulation, and charting (INM reports)
@@ -18,7 +18,7 @@ The application features two main modules:
 ## Project Structure
 
 ```
-pmkpv4/
+siimut/
 ├── app/
 │   ├── Config/          # Configuration (App, Database, Routes, Filters, etc.)
 │   ├── Controllers/     # HTTP controllers (Auth, Dashboard, Ikprs, RekapLaporanInm, etc.)
@@ -81,7 +81,7 @@ cp env .env
 php spark serve
 ```
 
-The application is configured to run at `http://localhost/pmkpv4/` by default.
+The application is configured to run at `http://localhost/siimut/` by default.
 
 ### Testing
 ```bash

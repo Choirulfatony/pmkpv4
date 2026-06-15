@@ -153,6 +153,37 @@
         word-break: break-word;
     }
 
+    #backdate-notif-items {
+        max-height: 320px;
+        overflow-y: auto;
+        max-width: 100%;
+    }
+
+    #backdate-notif-items .dropdown-item {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    #backdate-notif-items .flex-grow-1 {
+        min-width: 0;
+    }
+
+    #backdate-notif-items .notif-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 180px;
+    }
+
+    #backdate-notif-items small {
+        display: block;
+        line-height: 1.3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 220px;
+    }
+
     .notif-status {
         margin-top: 8px;
         font-size: 0.82rem;
@@ -282,6 +313,17 @@
     .dropdown-footer:hover {
         background: rgba(255, 255, 255, 0.05);
     }
+
+    /* backdate dropdown item: no blue on click */
+    .bd-item {
+        color: inherit !important;
+    }
+    .bd-item:active,
+    .bd-item:focus,
+    .bd-item:hover {
+        background: rgba(128,128,128,0.08) !important;
+        color: inherit !important;
+    }
 </style>
 
 
@@ -302,8 +344,8 @@
             </li>
 
 
-            <!-- Dashboard (KOMITE & KARU only) -->
-            <?php if (in_array(session('user_role'), ['KARU', 'KOMITE'])): ?>
+            <!-- Dashboard (KOMITE, KEPALA_KEPERAWATAN & KARU only) -->
+            <?php if (in_array(session('user_role'), ['KARU', 'KOMITE', 'KEPALA_KEPERAWATAN'])): ?>
             <li class="nav-item">
                 <a href="<?= site_url('ikprs') ?>" class="nav-link">
                     <i class="bi bi-speedometer"></i>
@@ -328,8 +370,8 @@
             </li>
 
 
-            <!-- NOTIFICATION -->
-            <li class="nav-item dropdown">
+            <!-- NOTIFICATION IKP (HRIS only) -->
+            <li class="nav-item dropdown" id="notif-ikp-nav"<?= session('login_source') != 'HRIS' ? ' style="display:none;"' : '' ?>>
                 <a href="#" class="nav-link position-relative"
                     data-bs-toggle="dropdown">
                     <i class="bi bi-bell"></i>
@@ -340,15 +382,28 @@
                         Informasi
                     </span>
                     <div class="dropdown-divider"></div>
-                    <!-- <a href="#" class="dropdown-item">
-                        <i class="bi bi-envelope me-2"></i> Pesan baru
-                    </a> -->
                     <div id="notif-list"></div>
 
                     <div class="dropdown-divider"></div>
                     <span class="dropdown-item-text text-muted small">
                         Klik menu <strong>Info</strong> di sidebar untuk melihat semua notifikasi
                     </span>
+                </div>
+            </li>
+
+            <!-- BACKDATE REQUEST (APP only: Administrator, Kendali Mutu, Validasi) -->
+            <li class="nav-item dropdown" id="notif-backdate-nav"<?= session('login_source') == 'HRIS' ? ' style="display:none;"' : '' ?>>
+                <a href="#" class="nav-link position-relative"
+                    data-bs-toggle="dropdown">
+                    <i class="bi bi-calendar-check"></i>
+                    <span id="badge-backdate_header" class="badge bg-warning navbar-badge" style="display:none;"></span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg" style="max-width:340px;">
+                    <span class="dropdown-item dropdown-header">
+                        <i class="bi bi-calendar-check me-1"></i> Backdate Request
+                    </span>
+                    <div class="dropdown-divider"></div>
+                    <div id="backdate-notif-items"></div>
                 </div>
             </li>
 
@@ -369,22 +424,13 @@
             <?php 
             $profilePic = session('profile_picture');
             $namaLengkap = session('nama_lengkap');
+            $userId = session('profile_id') ?: 0;
             
             // Debug info - remove after testing
             // echo "<!-- DEBUG: profile_picture = " . print_r($profilePic, true) . " -->";
             
-            // Jika ada foto dan berupa URL Google yang valid
-            if ($profilePic && strpos($profilePic, 'googleusercontent') !== false) {
-                $displayPic = $profilePic;
-            } 
-            // Jika foto ada tapi bukan URL Google (path lokal)
-            elseif (!empty($profilePic)) {
-                $displayPic = base_url($profilePic);
-            }
-            // Jika tidak ada foto
-            else {
-                $displayPic = base_url('assets/adminlte/img/logorssmnew.png');
-            }
+            // Gunakan helper untuk mendapatkan foto profil dengan caching
+            $displayPic = get_profile_picture($profilePic, $userId, $namaLengkap);
             ?>
             <li class="nav-item dropdown user-menu">
                 <a href="#"
@@ -412,7 +458,9 @@
                         </p>
                     </li>
                     <li class="user-footer">
-                        <a href="#" class="btn btn-default btn-flat">Profile</a>
+                        <?php if (service('uri')->getSegment(1) !== 'ikprs'): ?>
+                        <a href="<?= site_url('siimut/profile') ?>" class="btn btn-default btn-flat">Profile</a>
+                        <?php endif; ?>
                         <a href="<?= site_url('auth/logout') ?>"
                             class="btn btn-default btn-flat float-end">
                             Sign out
@@ -429,20 +477,25 @@
 <script>
     window.user_id = "<?= session('hris_user_id') ?? '' ?>";
     window.user_role = "<?= session('user_role') ?? '' ?>";
-    window.lastInboxCount = 0;
-    window.lastDraftCount = 0;
-    window.lastSendCount = 0;
-    window.lastNotifCount = 0;
+    window.lastInboxCount = -1;
+    window.lastPendingCount = -1;
+    window.lastSendCount = -1;
+    window.lastNotifCount = -1;
 </script>
 
 <script>
     $(document).ready(function() {
 
         refreshNotif();
+        refreshBackdateNotif();
 
         setInterval(function() {
             refreshNotif();
         }, 8000);
+
+        setInterval(function() {
+            refreshBackdateNotif();
+        }, 15000);
     });
 
 
@@ -456,8 +509,8 @@
 
         console.log('CLICK notif:', insiden_id);
 
-        // ❌ pelapor tidak boleh klik langsung ke detail dari notifikasi
-        if (user_role === 'PELAPOR') {
+        // ❌ pelapor dan kendali mutu tidak boleh klik langsung ke detail dari notifikasi
+        if (user_role === 'PELAPOR' || user_role === 'KENDALI_MUTU') {
             return false;
         }
 
@@ -497,15 +550,16 @@
 
                 let notif = res.total_notif ?? 0;
                 let inbox = res.total_inbox ?? 0;
-                let draft = res.total_draft ?? 0;
+                let pending = res.total_pending ?? 0;
                 let send = res.total_send ?? 0;
                 let totalNotif = res.total_notif ?? 0;
 
                 /* =============================
-                      🔔 SOUND NOTIFIKASI (BERULANG KALAU BELUM DIBUKA)
-                      Hanya untuk KARU dan KOMITE, tidak untuk PELAPOR
+                      🔔 SOUND NOTIFIKASI - HANYA BUNYI SEKALI SAAT ADA INBOX BARU
+                      Tidak untuk tipe INFO
                  ============================= */
-                if (totalNotif > 0 && totalNotif >= lastNotifCount && (user_role === 'KARU' || user_role === 'KOMITE')) {
+                let newInbox = (inbox > lastInboxCount);
+                if (newInbox && (user_role === 'KARU' || user_role === 'KOMITE' || user_role === 'PELAPOR' || user_role === 'KEPALA_KEPERAWATAN')) {
                     try {
                         const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
                         const oscillator = audioCtx.createOscillator();
@@ -522,34 +576,23 @@
                         oscillator.start(audioCtx.currentTime);
                         oscillator.stop(audioCtx.currentTime + 0.5);
                     } catch (e) {}
-                } else if (totalNotif == 0) {
-                    lastNotifCount = 0;
-                }
-                lastNotifCount = totalNotif;
-
-                if (inbox > lastInboxCount) {
-                    console.log("Inbox baru masuk");
-                    if (typeof loadInbox === "function") {
-                        loadInbox();
-                    }
                 }
 
-                if (draft > lastDraftCount) {
-                    console.log("Draft baru masuk");
-                    if (typeof loadDrafts === "function") {
-                        loadDrafts();
-                    }
-                }
-
-                if (send > lastSendCount) {
-                    console.log("Sent baru masuk");
-                    if (typeof loadSend === "function") {
-                        loadSend();
+                // Auto-refresh konten tab IKP yang sedang aktif (setiap 8 detik)
+                // Info tab punya interval sendiri (30 detik) — tidak perlu di-refresh dari sini
+                // Jangan refresh kalau sedang lihat detail (detailOpen = true)
+                if ($('#btnInbox').length && !window.detailOpen) {
+                    if ($('#btnInbox').hasClass('active') && typeof loadInbox === 'function') {
+                        loadInbox(1);
+                    } else if ($('#btnPending').hasClass('active') && typeof loadPending === 'function') {
+                        loadPending(1);
+                    } else if ($('#btnSend').hasClass('active') && typeof loadSend === 'function') {
+                        loadSend(1);
                     }
                 }
 
                 lastInboxCount = inbox;
-                lastDraftCount = draft;
+                lastPendingCount = pending;
                 lastSendCount = send;
 
                 /* =============================
@@ -568,8 +611,8 @@
                     .removeClass('bg-primary')
                     .addClass('bg-primary');
 
-                $('#badge-draft')
-                    .text(draft)
+                $('#badge-pending')
+                    .text(pending)
                     .removeClass('bg-warning')
                     .addClass('bg-warning');
 
@@ -643,7 +686,7 @@
 
                             if (item.is_read == 1) {
                                 // Sudah dibaca (sudah klik notifikasi)
-                                if (status === 'DRAFT') {
+                                if (status === 'PENDING') {
                                     status_read = "Menunggu Verifikasi KARU";
                                     warna_status = "text-secondary";
 
@@ -664,7 +707,7 @@
                                 }
                             } else {
                                 // Belum dibaca (belum klik notifikasi)
-                                if (status === 'DRAFT') {
+                                if (status === 'PENDING') {
                                     status_read = "Menunggu Verifikasi KARU";
                                     warna_status = "text-danger";
 
@@ -710,8 +753,8 @@
                                 status_read = "Belum Dibaca";
                                 warna_status = "text-danger";
                             }
-                        } else if (user_role === 'KOMITE') {
-                            // KOMITE: cek komite sudah baca atau belum
+                        } else if (user_role === 'KOMITE' || user_role === 'KEPALA_KEPERAWATAN') {
+                            // KOMITE / KEPALA_KEPERAWATAN: cek sudah baca atau belum
                             if (item.komite_read_at) {
                                 status_read = "Sudah Dibaca";
                                 warna_status = "text-success";
@@ -730,8 +773,8 @@
 
                         let disabledClass = '';
 
-                        // PELAPOR tidak bisa klik dari notifikasi
-                        if (user_role === 'PELAPOR') {
+                        // PELAPOR & KENDALI_MUTU tidak bisa klik dari notifikasi
+                        if (user_role === 'PELAPOR' || user_role === 'KENDALI_MUTU') {
                             disabledClass = 'notif-disabled';
                             // Disable klik dengan inline style juga
                         } else {
@@ -792,6 +835,141 @@
             error: function(xhr, status, error) {
                 if (status !== 'abort') {
                     console.log('Notif error:', status, error);
+                }
+            }
+        });
+    }
+
+    /* =============================
+       BACKDATE REQUEST: date+time helper
+    ============================= */
+    function fmtBDDate(dt) {
+        if (!dt) return '-';
+        var d = new Date(dt.replace(' ','T'));
+        if (isNaN(d)) return dt.substring(0,16);
+        var dd = String(d.getDate()).padStart(2,'0');
+        var mm = String(d.getMonth()+1).padStart(2,'0');
+        var yyyy = d.getFullYear();
+        var hh = String(d.getHours()).padStart(2,'0');
+        var mi = String(d.getMinutes()).padStart(2,'0');
+        return dd+'-'+mm+'-'+yyyy+' '+hh+':'+mi;
+    }
+
+    function refreshBackdateNotif() {
+        // Hanya untuk APP login (Administrator, Kendali Mutu, Validasi)
+        if ('<?= session('login_source') ?>' !== 'APP') {
+            return;
+        }
+        $.ajax({
+            url: "<?= base_url('siimut/backdate/ajax-notification') ?>",
+            type: "GET",
+            dataType: "json",
+            cache: false,
+            global: false,
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            },
+            success: function(res) {
+                if (!res.status) return;
+
+                var bdCount = res.total ?? 0;
+                var bdData = res.data ?? [];
+                var myData = res.my_requests ?? [];
+
+                var $badge = $('#badge-backdate_header');
+                if (bdCount > 0) {
+                    $badge.text(bdCount > 9 ? '9+' : bdCount).show();
+                } else {
+                    $badge.hide();
+                }
+
+                var $bdItems = $('#backdate-notif-items');
+                var typeNames = {1:'INM', 5:'IMPRS', 6:'IMPUNIT', 7:'IKP'};
+                var typeSlugs = {1:'inm', 5:'imprs', 6:'impunit', 7:'ikp'};
+                var actionLabels = {edit:'Edit', delete:'Hapus', open_period:'Buka Periode'};
+                var actionIcons = {edit:'bi-pencil', delete:'bi-trash', open_period:'bi-unlock'};
+                var actionColors = {edit:'info', delete:'warning', open_period:'primary'};
+                var html = '';
+
+                /* ---------- MENUNGGU (pending) ---------- */
+                if (bdData.length > 0) {
+                    html += '<span class="dropdown-item dropdown-header small py-1">Menunggu Persetujuan</span>';
+                    bdData.forEach(function(item) {
+                        var typeName = typeNames[item.ar_group_type] || '?';
+                        var slug = typeSlugs[item.ar_group_type] || '';
+                        var actName = actionLabels[item.ar_action_type] || item.ar_action_type || '?';
+                        var actIcon = actionIcons[item.ar_action_type] || 'bi-question';
+                        var actColor = actionColors[item.ar_action_type] || 'secondary';
+                        var name = item.indicator_name || '-';
+                        var unit = item.department_name || '-';
+                        var link = '<?= site_url('siimut/backdate/requests-list') ?>/' + slug;
+                        var clickable = user_role !== 'KENDALI_MUTU';
+                        var tag = clickable ? 'a' : 'div';
+                        var hrefAttr = clickable ? ' href="'+link+'"' : '';
+                        html += '<'+tag+hrefAttr+' class="dropdown-item bd-item">'+
+                            '<div class="d-flex align-items-start gap-2">'+
+                                '<div class="notif-icon"><i class="bi bi-calendar-check text-warning"></i></div>'+
+                                '<div class="flex-grow-1" style="min-width:0">'+
+                                    '<div class="d-flex justify-content-between align-items-center gap-1">'+
+                                        '<div class="notif-title text-truncate">'+typeName+' - '+unit+'</div>'+
+                                        '<span class="badge bg-'+actColor+' flex-shrink-0" style="font-size:10px;"><i class="'+actIcon+' me-1"></i>'+actName+'</span>'+
+                                    '</div>'+
+                                    '<small class="text-muted d-block text-truncate">'+name+'</small>'+
+                                    '<small class="text-muted d-block" style="font-size:11px;opacity:.7">'+fmtBDDate(item.ar_request_date)+'</small>'+
+                                '</div>'+
+                            '</div>'+
+                        '</'+tag+'>';
+                    });
+                }
+
+                /* ---------- REQUEST SAYA ---------- */
+                if (myData.length > 0) {
+                    if (html) html += '<div class="dropdown-divider"></div>';
+                    html += '<span class="dropdown-item dropdown-header small py-1">Request Saya</span>';
+                    myData.forEach(function(item) {
+                        var typeName = typeNames[item.ar_group_type] || '?';
+                        var name = item.indicator_name || '-';
+                        var unit = item.department_name || '-';
+                        var actName = actionLabels[item.ar_action_type] || item.ar_action_type || '?';
+                        var actIcon = actionIcons[item.ar_action_type] || 'bi-question';
+                        var actColor = actionColors[item.ar_action_type] || 'secondary';
+                        var status = item.ar_status || '';
+                        var statusBadge = '';
+                        var statusClass = '';
+                        if (status === 'pending') {
+                            statusBadge = '<span class="badge bg-warning text-dark">Pending</span>';
+                        } else if (status === 'approved') {
+                            statusBadge = '<span class="badge bg-success">Disetujui</span>';
+                        } else if (status === 'rejected') {
+                            statusBadge = '<span class="badge bg-danger">Ditolak</span>';
+                        } else {
+                            statusBadge = '<span class="badge bg-secondary">'+status+'</span>';
+                        }
+                        html += '<div class="dropdown-item bd-item">'+
+                            '<div class="d-flex align-items-start gap-2">'+
+                                '<div class="notif-icon"><i class="bi bi-clock-history text-secondary"></i></div>'+
+                                '<div class="flex-grow-1" style="min-width:0">'+
+                                    '<div class="d-flex justify-content-between align-items-center gap-1">'+
+                                        '<div class="notif-title text-truncate">'+typeName+' - '+unit+'</div>'+
+                                        '<span class="badge bg-'+actColor+' flex-shrink-0 me-1" style="font-size:10px;"><i class="'+actIcon+' me-1"></i>'+actName+'</span>'+
+                                        '<div class="flex-shrink-0">'+statusBadge+'</div>'+
+                                    '</div>'+
+                                    '<small class="text-muted d-block text-truncate">'+name+'</small>'+
+                                    '<small class="text-muted d-block" style="font-size:11px;opacity:.7">'+fmtBDDate(item.ar_request_date)+'</small>'+
+                                '</div>'+
+                            '</div>'+
+                        '</div>';
+                    });
+                }
+
+                if (!html) {
+                    html = '<a class="dropdown-item text-muted text-center small">Tidak ada backdate request</a>';
+                }
+                $bdItems.html(html);
+            },
+            error: function(xhr, status, error) {
+                if (status !== 'abort') {
+                    console.log('Backdate notif error:', status, error);
                 }
             }
         });

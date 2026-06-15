@@ -29,7 +29,6 @@ class GrafikInm extends AppController
         $tahun = $this->request->getGet('tahun') ?? date('Y');
         $indicatorId = $this->request->getGet('indicator_id');
 
-        // Ambil semua indikator untuk dropdown - dengan sorting: indikator dengan data di atas
         $indicators = $this->rekapModel->getIndicatorInm(['vtahun' => (int) $tahun]);
 
         return $this->render('siimut/grafik_inm', [
@@ -44,6 +43,16 @@ class GrafikInm extends AppController
         ]);
     }
 
+    /**
+     * [CHANGED] Ambil daftar indikator untuk tahun tertentu (biar dropdown refresh pas ganti tahun)
+     */
+    public function getIndicatorsByYear()
+    {
+        $tahun = $this->request->getPost('tahun') ?? date('Y');
+        $indicators = $this->rekapModel->getIndicatorInm(['vtahun' => (int) $tahun]);
+        return $this->response->setJSON($indicators);
+    }
+
     public function getDataGrafik()
     {
         $post = $this->request->getPost();
@@ -54,26 +63,52 @@ class GrafikInm extends AppController
             return $this->response->setJSON(['error' => 'Indicator ID diperlukan']);
         }
 
-        // Ambil data bulanan
-        $monthlyData = $this->rekapModel->getMonthlyDataByIndicator($indicatorId, $tahun);
+        // ADMINISTRATOR & KOMITE → bisa filter per departemen atau global
+        // KENDALI_MUTU, APP → filter by department login saja
+        $role = session()->get('user_role') ?? '';
+        $sessionDeptId = session()->get('department_id') ?? null;
+        $departmentId = null;
+
+        if (in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
+            // Ambil dari POST jika ada, null = semua departemen
+            $departmentId = isset($post['department_id']) && $post['department_id'] !== ''
+                ? (int) $post['department_id']
+                : null;
+        } else {
+            // User departemen: paksa pakai department login
+            $departmentId = $sessionDeptId;
+        }
+
+        // Ambil daftar departemen untuk indikator ini (untuk dropdown)
+        $departments = $this->rekapModel->getDepartmentsByIndicator($indicatorId, $tahun);
+
+        // Ambil data bulanan (filter by department jika bukan ADMIN)
+        $monthlyData = $this->rekapModel->getMonthlyDataByIndicator($indicatorId, $tahun, $departmentId);
         
         // Ambil detail indikator
         $indicator = $this->rekapModel->getDetailByIdInm($indicatorId);
 
-        // Hitung triwulan dan semester
-        $triwulan = $this->rekapModel->getNilaiTriwulan($indicatorId, $tahun);
-        $semester = $this->rekapModel->getNilaiSemester($indicatorId, $tahun);
-        $tahunan = $this->rekapModel->getNilaiTahun($indicatorId, $tahun);
-        $perTahun = $this->rekapModel->getNilaiPerTahun($indicatorId, $tahun);
+        if (!$indicator) {
+            return $this->response->setJSON(['error' => 'Data indikator tidak ditemukan']);
+        }
+
+        // Hitung triwulan dan semester (filter by department jika bukan ADMIN)
+        $triwulan = $this->rekapModel->getNilaiTriwulan($indicatorId, $tahun, $departmentId);
+        $semester = $this->rekapModel->getNilaiSemester($indicatorId, $tahun, $departmentId);
+        $tahunan = $this->rekapModel->getNilaiTahun($indicatorId, $tahun, $departmentId);
+        $perTahun = $this->rekapModel->getNilaiPerTahun($indicatorId, $tahun, $departmentId);
 
         return $this->response->setJSON([
-            'indicator'  => $indicator,
-            'bulanan'    => $monthlyData,
-            'triwulan'   => $triwulan,
-            'semester'   => $semester,
-            'tahunan'    => $tahunan,
-            'per_tahun'  => $perTahun,
-            'tahun'      => $tahun
+            'indicator'     => $indicator,
+            'bulanan'       => $monthlyData,
+            'triwulan'      => $triwulan,
+            'semester'      => $semester,
+            'tahunan'       => $tahunan,
+            'per_tahun'     => $perTahun,
+            'tahun'         => $tahun,
+            'departments'   => $departments,
+            'user_role'     => $role,
+            'user_department_id' => $sessionDeptId,
         ]);
     }
 }

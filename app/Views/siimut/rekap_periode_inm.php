@@ -1,152 +1,3 @@
-<style>
-    #ajax_data_periode_inm td,
-    #ajax_data_periode_inm th {
-        font-size: 12px;
-        vertical-align: middle;
-        text-align: center;
-        padding: 12px 8px !important;
-        white-space: nowrap;
-    }
-
-    #ajax_data_periode_inm th {
-        background-color: #198754 !important;
-        color: #fff;
-        white-space: nowrap;
-    }
-
-    #ajax_data_periode_inm td:first-child {
-        text-align: left;
-        white-space: nowrap;
-    }
-
-    .cell-target {
-        background-color: rgba(40, 167, 69, 0.9) !important;
-        color: #fff !important;
-    }
-
-    .cell-empty {
-        background-color: rgba(255, 193, 7, 0.9) !important;
-        color: #000 !important;
-    }
-
-    .cell-fail {
-        background-color: rgba(220, 53, 69, 0.9) !important;
-        color: #fff !important;
-    }
-
-    .dataTables_wrapper .dataTables_processing {
-        display: none !important;
-    }
-
-    /* Table loading state - prevent white/black flash */
-    table.dataTable.loading {
-        opacity: 0.2;
-    }
-
-    /* Prevent white flash in dark mode */
-    .dataTables_scrollBody {
-        background-color: transparent !important;
-    }
-
-    [data-bs-theme="dark"] .dataTables_scrollBody {
-        background-color: transparent !important;
-    }
-
-    .table-responsive {
-        position: relative;
-    }
-
-    .overlay-wrapper {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: transparent;
-    }
-
-    .overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: transparent;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-
-    .loader {
-        width: 3em;
-        height: 3em;
-        transform: rotate(165deg);
-    }
-
-    .loader:before,
-    .loader:after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        display: block;
-        width: 1em;
-        height: 1em;
-        border-radius: 0.5em;
-        transform: translate(-50%, -50%);
-    }
-
-    .loader:before {
-        animation: before8 2s infinite;
-    }
-
-    .loader:after {
-        animation: after6 2s infinite;
-    }
-
-    @keyframes before8 {
-        0% {
-            width: 1em;
-            box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
-        }
-
-        35% {
-            width: 4em;
-            box-shadow: 0 -1em rgba(225, 20, 98, 0.75), 0 1em rgba(111, 202, 220, 0.75);
-        }
-
-        70% {
-            width: 1em;
-            box-shadow: -2em -1em rgba(225, 20, 98, 0.75), 2em 1em rgba(111, 202, 220, 0.75);
-        }
-
-        100% {
-            box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
-        }
-    }
-
-    @keyframes after6 {
-        0% {
-            height: 1em;
-            box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
-        }
-
-        35% {
-            height: 4em;
-            box-shadow: 1em 0 rgba(61, 184, 143, 0.75), -1em 0 rgba(233, 169, 32, 0.75);
-        }
-
-        70% {
-            height: 1em;
-            box-shadow: 1em -2em rgba(61, 184, 143, 0.75), -1em 2em rgba(233, 169, 32, 0.75);
-        }
-
-        100% {
-            box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
-        }
-    }
-</style>
 
 <div class="container-fluid py-4">
     <!-- <div class="row mb-3">
@@ -194,7 +45,7 @@
     <div class="row mb-3 align-items-end">
 
         <!-- PILIH TAHUN -->
-        <div class="col-md-4">
+        <div class="col-md-3">
             <label class="form-label fw-semibold mb-1">Pilih Tahun</label>
 
             <div class="input-group input-group-sm" style="max-width: 220px;">
@@ -212,8 +63,58 @@
             </div>
         </div>
 
+        <?php if ($role === 'ADMINISTRATOR' && !empty($showDepartmentFilter)): ?>
+        <!-- FILTER DEPARTEMEN -->
+        <div class="col-md-3">
+            <label class="form-label fw-semibold mb-1">Pilih Ruangan</label>
+            <select class="form-select form-select-sm" id="filter_department" onchange="gantiDepartemen()" style="max-width: 280px;">
+                <option value="">-- Semua Ruangan --</option>
+                <?php if (!empty($departments)): ?>
+                    <?php foreach ($departments as $dept): ?>
+                        <?php
+                        $draftInfo = '';
+                        if (!empty($draftCounts)) {
+                            foreach ($draftCounts as $dc) {
+                                if ((int)$dc['department_id'] === (int)$dept->department_id) {
+                                    $draftInfo = ' (Draft: ' . $dc['total_draft'] . ')';
+                                    break;
+                                }
+                            }
+                        }
+                        ?>
+                        <option value="<?= esc($dept->department_id) ?>"><?= esc($dept->department_name) ?><?= $draftInfo ?></option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </select>
+        </div>
+        <?php endif; ?>
+
+        <!-- BADGE DRAFT -->
+        <div class="col-md-<?= !empty($showDepartmentFilter) ? '3' : '9' ?> d-flex align-items-end">
+            <?php if (!empty($totalDraft) && $totalDraft > 0): ?>
+                <?php
+                $namaBulan = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
+                $breakdownLines = [];
+                foreach (($draftByMonth ?? []) as $bln => $cnt) {
+                    if ($cnt > 0) {
+                        $breakdownLines[] = $namaBulan[$bln] . ': ' . $cnt;
+                    }
+                }
+                $tooltipText = 'Tahun ' . $tahun . " | " . implode(' | ', $breakdownLines);
+                ?>
+                <?php if ($role === 'ADMINISTRATOR'): ?>
+                <a href="<?= site_url('siimut/approval/inm') ?>" class="badge bg-warning text-dark text-decoration-none"
+                   title="<?= esc($tooltipText) ?>"
+                   data-bs-toggle="tooltip" data-bs-placement="bottom"
+                   style="font-size: 12px; padding: 8px 12px; cursor: pointer;">
+                    <i class="bi bi-clock me-1"></i> Draft Menunggu Approval: <?= $totalDraft ?>
+                </a>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+
         <!-- FILTER PERIODE -->
-        <div class="col-md-8">
+        <div class="col-md-<?= !empty($showDepartmentFilter) ? '6' : '9' ?>">
             <label class="form-label fw-semibold mb-1">Filter Periode</label>
 
             <div class="d-flex flex-wrap align-items-center gap-2">
@@ -316,6 +217,9 @@
         vtahun = <?= date('Y') ?>;
         $('#tahun').val(vtahun);
         initTable();
+
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (el) { return new bootstrap.Tooltip(el); });
     });
 
 
@@ -350,6 +254,10 @@
         table_periode.ajax.reload();
     }
 
+    function gantiDepartemen() {
+        refreshPage();
+    }
+
     function initTable() {
         var tableWrapper = $('#ajax_data_periode_inm').closest('.table-responsive');
 
@@ -361,6 +269,7 @@
                 type: 'POST',
                 data: function(d) {
                     d.tahun = vtahun;
+                    d.department_id = <?= json_encode(($role !== 'ADMINISTRATOR' && $departmentId) ? (int) $departmentId : '') ?>;
                     return d;
                 },
                 dataSrc: 'data',
@@ -421,7 +330,11 @@
                 {
                     data: 'indicator_element',
                     render: function(data, type, row) {
-                        return '<div class="text-start">' + data + '</div>';
+                        var badge = '';
+                        if (row.indicator_record_status === 'D') {
+                            badge = ' <span class="badge bg-warning text-dark ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>';
+                        }
+                        return '<div class="text-start">' + data + badge + '</div>';
                     }
                 },
                 {
@@ -570,7 +483,11 @@
 
     $(document).on('click', '#btn-export-periode', function(e) {
         e.preventDefault();
-        var exportUrl = '<?= site_url('siimut/rekap-periode-inm/export') ?>?tahun=' + vtahun;
+        var deptParam = '';
+        if ($('#filter_department').length && $('#filter_department').val()) {
+            deptParam = '&department_id=' + $('#filter_department').val();
+        }
+        var exportUrl = '<?= site_url('siimut/rekap-periode-inm/export') ?>?tahun=' + vtahun + deptParam;
         window.location.href = exportUrl;
     });
 </script>

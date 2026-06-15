@@ -104,11 +104,11 @@ class AppController extends Controller
     //         $ikpModel = new \App\Models\IkpInsidenModel();
 
     //         // 🔥 HITUNG BADGE GLOBAL DI SINI
-    //         $data['total_draft'] = $ikpModel->countDraftByUser($user_id);
+        //         $data['total_pending'] = $ikpModel->countPendingByUser($user_id);
     //         // kalau belum ada inbox, set 0 dulu
     //         $data['total_inbox'] = $data['total_inbox'] ?? 0;
     //     } else {
-    //         $data['total_draft'] = 0;
+    //         $data['total_pending'] = 0;
     //         $data['total_inbox'] = 0;
     //     }
 

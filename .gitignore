@@ -87,6 +87,13 @@ phpunit
 vendor/
 
 #-------------------------
+# Node.js
+#-------------------------
+node_modules/
+package.json
+package-lock.json
+
+#-------------------------
 # IDE / Development Files
 #-------------------------
 
@@ -129,3 +136,4 @@ _modules/*
 # Windows special files
 #-------------------------
 nul
+.env.bak

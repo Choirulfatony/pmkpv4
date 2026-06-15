@@ -173,22 +173,28 @@
           font-weight: 600;
       }
 
-      /* BUTTON btnDrafts */
-      #btnDrafts:hover {
-          background-color: #e2e4e7;
+      /* BUTTON btnPending */
+      #btnPending:hover {
+          background-color: #e9ecef;
       }
 
-      #btnDrafts.active {
+      #btnPending.active {
           background-color: #e2e4e7;
+          color: white;
+      }
+
+      #btnPending.active {
+          background-color: #e2e4e7;
+          color: white;
           font-weight: 600;
       }
 
       /* BUTTON btnSent */
-      #btnSent:hover {
+      #btnSend:hover {
           background-color: #e2e4e7;
       }
 
-      #btnSent.active {
+      #btnSend.active {
           background-color: #e2e4e7;
           font-weight: 600;
       }
@@ -201,6 +207,36 @@
       #btnInfo.active {
           background-color: #e2e4e7;
           font-weight: 600;
+      }
+
+      /* ===== RESPONSIVE ===== */
+      @media (max-width: 767px) {
+          #contentIKP .row > .col-md-3 {
+              position: fixed;
+              left: -100%;
+              top: 0;
+              bottom: 0;
+              width: 280px;
+              z-index: 1050;
+              transition: left 0.3s ease;
+              background: var(--bs-body-bg);
+              box-shadow: 2px 0 10px rgba(0,0,0,0.15);
+              overflow-y: auto;
+              padding-top: 60px;
+          }
+          #contentIKP .row > .col-md-3.show {
+              left: 0;
+          }
+          #contentIKP .row > .col-md-9 {
+              flex: 0 0 100%;
+              max-width: 100%;
+          }
+          .sidebar-toggle {
+              display: inline-block !important;
+          }
+      }
+      .sidebar-toggle {
+          display: none;
       }
 
       /* ===== TOP LOADING BAR (RGB JELAS) ===== */
@@ -244,6 +280,9 @@
           <div class="row">
               <!-- SIDEBAR -->
               <!-- LEFT SIDEBAR -->
+              <button class="btn btn-outline-secondary btn-sm sidebar-toggle d-none mb-2" type="button" onclick="document.querySelector('#contentIKP .row > .col-md-3').classList.toggle('show')">
+                  <i class="bi bi-list"></i> Menu
+              </button>
               <div class="col-md-3">
                   <!-- <a href="#" class="btn btn-primary w-100 mb-3">Compose</a> -->
 
@@ -269,7 +308,7 @@
                                   Kepala Ruangan - <?= esc(session('karu_room_name')) ?>
                               </small>
 
-                          <?php elseif (session('user_role') === 'KOMITE'): ?>
+                          <?php elseif (in_array(session('user_role'), ['KOMITE', 'KEPALA_KEPERAWATAN'])): ?>
 
                               <h5 class="fw-bold mb-1">
                                   <?= esc(session('hris_full_name')) ?>
@@ -280,7 +319,7 @@
                               </small>
 
                               <small class="text-muted fst-italic d-block">
-                                  Komite PMKP
+                                  <?= session('user_role') === 'KOMITE' ? 'Komite PMKP' : 'Kepala Keperawatan' ?>
                               </small>
 
                           <?php else: ?>
@@ -310,54 +349,47 @@
                           </button>
 
 
-<ul class="nav nav-pills flex-column">
-                                <?php
-                                $role = session('user_role');
-                                $infoLabel = 'Info';
-                                $infoIcon = 'bi-bell';
-                                if ($role === 'KARU') {
-                                    $infoLabel = 'Inbox';
-                                    $infoIcon = 'bi-inbox';
-                                } elseif ($role === 'KOMITE') {
-                                    $infoLabel = 'Inbox';
-                                    $infoIcon = 'bi-inbox';
-                                }
-                                ?>
-                                <li class="nav-item">
-                                    <a id="btnInfo" href="#" class="nav-link d-flex align-items-center">
-                                        <i class="bi <?= $infoIcon ?> me-2"></i>
-                                        <?= $infoLabel ?>
-                                        <span id="badge-notif" class="badge bg-info ms-auto">0</span>
-                                    </a>
-                                </li>
+                          <ul class="nav nav-pills flex-column">
+                               <li class="nav-item">
+                                   <a id="btnInfo" href="#" class="nav-link d-flex align-items-center">
+                                       <i class="bi bi-bell me-2"></i>
+                                       Info
+                                       <span id="badge-notif" class="badge bg-info ms-auto">0</span>
+                                   </a>
+                               </li>
 
-                                <li class="nav-item">
-                                    <a id="btnInbox" href="#" class="nav-link d-flex align-items-center">
-                                        <i class="bi bi-inbox me-2"></i>
-                                        Inbox
-                                        <span id="badge-inbox" class="badge bg-primary ms-auto">0</span>
-                                    </a>
-                                </li>
 
-                                <li class="nav-item">
-                                    <a id="btnSend" href="#" class="nav-link d-flex align-items-center">
-                                        <i class="bi bi-send me-2"></i>
-                                        Sent
-                                        <span id="badge-send" class="badge bg-success ms-auto">
-                                            0
-                                        </span>
-                                    </a>
-                                </li>
+                              <li class="nav-item">
+                                  <a id="btnInbox" href="#" class="nav-link d-flex align-items-center">
+                                      <i class="bi bi-inbox me-2"></i>
+                                      Inbox
+                                      <span id="badge-inbox" class="badge bg-primary ms-auto">
+                                          0
+                                      </span>
+                                  </a>
+                              </li>
 
-                                <li class="nav-item">
-                                    <a id="btnDrafts" href="#" class="nav-link d-flex align-items-center">
-                                        <i class="bi bi-file-earmark-text me-2"></i>
-                                        Drafts
-                                        <span id="badge-draft" class="badge bg-warning ms-auto">
-                                            0
-                                        </span>
-                                    </a>
-                                </li>
+
+                              <li class="nav-item">
+                                  <a id="btnSend" href="#" class="nav-link d-flex align-items-center">
+                                      <i class="bi bi-send me-2"></i>
+                                      Sent
+                                      <span id="badge-send" class="badge bg-success ms-auto">
+                                          0
+                                      </span>
+                                  </a>
+                              </li>
+
+                              <li class="nav-item">
+                                   <a id="btnPending" href="#" class="nav-link d-flex align-items-center">
+                                       <i class="bi bi-file-earmark-text me-2"></i>
+                                       Pending
+                                       <span id="badge-pending" class="badge bg-secondary ms-auto">
+                                           0
+                                       </span>
+                                   </a>
+                              </li>
+                          </ul>
 
                       </div>
                   </div>
@@ -382,55 +414,62 @@
   </div>
 
   <script>
+      /* =====================================================
+           TOAST HELPER (SweetAlert2) — DEFINED FIRST agar selalu tersedia
+         ===================================================== */
+      function toastWarning(msg) {
+          Swal.fire({toast:true, position:'top-end', icon:'warning', iconColor:'#f0ad4e', title:msg, showConfirmButton:false, timer:3000, timerProgressBar:true});
+      }
+      function toastError(msg) {
+          Swal.fire({toast:true, position:'top-end', icon:'error', iconColor:'#d9534f', title:msg, showConfirmButton:false, timer:3000, timerProgressBar:true});
+      }
+      function toastSuccess(msg) {
+          Swal.fire({toast:true, position:'top-end', icon:'success', iconColor:'#5cb85c', title:msg, showConfirmButton:false, timer:3000, timerProgressBar:true});
+      }
+
       let inboxLoading = false;
-      let draftsLoading = false;
+      let pendingLoading = false;
       let sendLoading = false;
       let infoLoading = false;
       let lastInboxCount = 0;
       const user_role = "<?= session('user_role') ?>";
 
-      window.IKP = {
-          isSearching: false
-      };
+       window.IKP = {
+           isSearching: false
+       };
 
-      $(document).ready(function() {
-          // Load tab dari hidden input
-          const initialTab = $('#initialTabInput').val();
-          
-          // Load initial content
-          const userRole = "<?= session('user_role') ?>";
-          if (initialTab === 'info') {
-              loadInfo(1);
-          } else if (userRole !== 'PELAPOR') {
-              loadInbox();
-          }
+        $(document).ready(function() {
 
-          // Update badge from counter-ajax - hanya untuk HRIS login (yang punya hris_user_id)
-          const hrisUserId = "<?= session('hris_user_id') ?? '' ?>";
-          if (hrisUserId !== '') {
-              $.get("<?= site_url('ikprs/counter-ajax') ?>", function(res) {
-                  console.log('counterAjax response:', res);
-                  if (res.error && res.error === 'User belum login') {
-                      console.log('User not logged in, skipping badge update');
-                      return;
-                  }
-                  if (res.total_notif !== undefined) {
-                      $('#badge-notif').text(res.total_notif);
-                  }
-                  if (res.total_inbox !== undefined) {
-                      $('#badge-inbox').text(res.total_inbox);
-                  }
-                  if (res.total_send !== undefined) {
-                      $('#badge-send').text(res.total_send);
-                  }
-              }).fail(function(xhr) {
-                  // Ignore network errors
-              });
-          }
+            // Load inbox pertama kali + tandai tab aktif
+            $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
+            $('#btnInbox').addClass('active');
+            loadInbox(1);
 
-          initValidasiKomite();
+            // Load info jika ada parameter ?info=1
+            const urlParams = new URLSearchParams(window.location.search);
+            const infoParam = urlParams.get('info');
+            if (infoParam === '1') {
+                $('#btnInfo').click();
+            }
 
-      });
+            // Load pending jika ada parameter ?pending=1
+            const pendingParam = urlParams.get('pending');
+            if (pendingParam === '1') {
+                $('#btnPending').click();
+            }
+
+            const insidenIdFromUrl = urlParams.get('id');
+            if (insidenIdFromUrl) {
+                loadDetailInsiden(insidenIdFromUrl, 'inbox');
+                // Hapus parameter id dari URL agar tidak reload terus
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            // Update badge
+            refreshNotif();
+
+            initValidasiKomite();
+        });
 
 
       /* ===== EVENT Loding PROCESSING ===== */
@@ -541,33 +580,45 @@
 
       /* ===== KLIK MENU INBOX ===== */
       $(document).on('click', '#btnInbox', function(e) {
-          e.preventDefault(); // ⛔ WAJIB
+          e.preventDefault();
+          if ($(this).hasClass('active')) {
+              loadInbox();
+              return;
+          }
+          $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
+          $(this).addClass('active');
+          window.detailOpen = false;
           loadInbox();
       });
 
       /* ===== FUNGSI LOAD INBOX (SATU-SATUNYA) ===== */
-      function loadInbox(page = 1, keywordParam = null) {
+      function loadInbox(page = 1, keywordParam = null, force = false) {
 
-          if (inboxLoading) return;
-          inboxLoading = true;
+          if (inboxLoading && !force) return;
+          if (!force) inboxLoading = true;
 
           let keyword = keywordParam ?? $('#searchInbox').val() ?? '';
 
           $('#inbox-wrapper').trigger('processing.inbox', [true]);
 
-          $.get("<?= site_url('ikprs/form_inbox_karu') ?>", {
-              page: page,
-              keyword: keyword
-          }, function(res) {
-
-              $('#inbox-wrapper').html(res);
-
-          }).always(function() {
-
-              inboxLoading = false;
-              $('#inbox-wrapper').trigger('processing.inbox', [false]);
-
-          });
+           $.ajax({
+               url: "<?= site_url('ikprs/form_inbox_karu') ?>",
+               type: "GET",
+               data: {
+                   page: page,
+                   keyword: keyword
+               },
+               cache: false
+           }).done(function(res) {
+               $('#inbox-wrapper').html(res);
+               // Reset checkbox selection setelah load
+               if (typeof resetMailboxSelection === 'function') {
+                   resetMailboxSelection();
+               }
+           }).always(function() {
+               inboxLoading = false;
+               $('#inbox-wrapper').trigger('processing.inbox', [false]);
+           });
       }
 
       /* ===== reloadInbox ===== */
@@ -615,6 +666,7 @@
 
           if (inboxLoading) return;
           inboxLoading = true;
+          window.detailOpen = true;
 
           $('#inbox-wrapper').trigger('processing.inbox', [true]);
 
@@ -625,16 +677,16 @@
                   tipe: tipe
               },
 
-              success: function(res) {
+                success: function(res) {
 
-                  $('#inbox-wrapper').html(res);
+                    $('#inbox-wrapper').html(res);
 
-                  // hanya inbox yang update status baca
-                  if (tipe === 'inbox') {
-                      tandaiSudahDibaca(id);
-                  }
+                    // Mark as read when opening from inbox
+                    if (tipe === 'inbox') {
+                        tandaiSudahDibaca(id);
+                    }
 
-              },
+                },
 
               complete: function() {
                   inboxLoading = false;
@@ -672,6 +724,7 @@
       $(document).on('click', '.btn-back', function() {
 
           const tipe = $(this).data('tipe') || 'inbox';
+          window.detailOpen = false;
 
           console.log("BACK:", tipe);
 
@@ -718,28 +771,31 @@
 
       /*
        * ===============================
-       * Drafts 
+        * Pending
        * ===============================
        */
 
-      /* ===== KLIK MENU DRAFTS ===== */
-      $(document).on('click', '#btnDrafts', function(e) {
+        /* ===== KLIK MENU PENDING ===== */
+      $(document).on('click', '#btnPending', function(e) {
           e.preventDefault();
-          loadDrafts(1);
+          if ($(this).hasClass('active')) {
+              loadPending(1);
+              return;
+          }
+          $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
+          $(this).addClass('active');
+          window.detailOpen = false;
+          loadPending(1);
       });
 
-      /* ===== LOAD DRAFTS ===== */
-      function loadDrafts(page = 1, keywordParam = null) {
-
-          if (draftsLoading) return;
-
-          draftsLoading = true;
-
-          let keyword = keywordParam ?? $('#searchDraft').val() ?? '';
+       /* ===== LOAD PENDING ===== */
+       function loadPending(page = 1, keywordParam = null) {
+           let url = "<?= site_url('ikprs/form_pending') ?>";
+          let keyword = keywordParam ?? $('#searchPending').val() ?? '';
 
           $('#inbox-wrapper').trigger('processing.inbox', [true]);
 
-          $.get("<?= site_url('ikprs/form_drafts') ?>", {
+           $.get("<?= site_url('ikprs/form_pending') ?>", {
               page: page,
               keyword: keyword
           }, function(res) {
@@ -748,59 +804,111 @@
 
           }).always(function() {
 
-              draftsLoading = false;
+              pendingLoading = false;
               $('#inbox-wrapper').trigger('processing.inbox', [false]);
 
           });
       }
 
-      /* ===== reloadDrafts ===== */
-      $(document).off('click', '.btn-draft-reload').on('click', '.btn-draft-reload', function() {
-          loadDrafts(1);
+      /* ===== reloadPending ===== */
+      $(document).off('click', '.btn-pending-reload').on('click', '.btn-pending-reload', function() {
+          loadPending(1);
       });
 
       /* ===== SEARCH ===== */
-      $(document).on('submit', '#formSearchDraft', function(e) {
+      $(document).on('submit', '#formSearchPending', function(e) {
           e.preventDefault();
-          loadDrafts(1);
+          loadPending(1);
       });
 
-      /* ===== SEARCH DRAFT (ENTER KEY) ===== */
-      $(document).on('keydown', '#searchDraft', function(e) {
-          if (e.keyCode === 13) {
+        /* ===== SEARCH PENDING (ENTER KEY) ===== */
+      $(document).on('keydown', '#searchPending', function(e) {
+          if (e.key === 'Enter') {
               e.preventDefault();
-              loadDrafts(1, this.value);
+              loadPending(1, this.value);
           }
       });
 
-      /* ===== SEARCH DRAFT (BUTTON) ===== */
-      $(document).off('click', '.btn-search-draft')
-          .on('click', '.btn-search-draft', function() {
-              let keyword = $('#searchDraft').val();
-              loadDrafts(1, keyword);
+        /* ===== SEARCH PENDING (BUTTON) ===== */
+      $(document).off('click', '.btn-search-pending')
+          .on('click', '.btn-search-pending', function() {
+              let keyword = $('#searchPending').val();
+              loadPending(1, keyword);
           });
 
-      /* ===== PAGINATION ===== */
+    /* ===== PAGINATION ===== */
 
-      // NEXT PAGINATION
-      $(document).on('click', '.btn-draft-next:not(.disabled)', function() {
-          loadDrafts($(this).data('page'));
-      });
+        // NEXT PAGINATION
+        $(document).on('click', '.btn-pending-next:not(.disabled)', function() {
+            loadPending($(this).data('page'));
+        });
 
-      // PREV PAGINATION
-      $(document).on('click', '.btn-draft-prev:not(.disabled)', function() {
-          loadDrafts($(this).data('page'));
-      });
+        // PREV PAGINATION
+        $(document).on('click', '.btn-pending-prev:not(.disabled)', function() {
+            loadPending($(this).data('page'));
+        });
 
-      /*
-       * ===============================
-       * Sent 
+        /* ===== KIRIM PENDING KE KARU ===== */
+        $(document).on('click', '.btn-kirim-pending', function() {
+            const id = $(this).data('id');
+            const btn = $(this);
+            
+            console.log('btn-kirim-pending clicked, id:', id);
+            console.log('csrf token:', '<?= csrf_hash() ?>');
+            
+            if (!id) {
+                alert('ID tidak ditemukan!');
+                return;
+            }
+            
+            if (!confirm('Kirim laporan ini ke KARU?')) return;
+
+            btn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Mengirim...');
+
+            $.ajax({
+                 url: "<?= site_url('ikprs/kirimPending') ?>",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    insiden_id: id,
+                    '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                },
+                success: function(res) {
+                    console.log('ajax success:', res);
+                    if (res.status) {
+                        alert('Laporan berhasil dikirim ke KARU');
+                        loadPending(1);
+                        loadInfo(1);
+                        refreshNotif();
+                    } else {
+                        alert(res.message || 'Gagal mengirim laporan');
+                        btn.prop('disabled', false).html('<i class="bi bi-send"></i> Kirim');
+                    }
+                },
+                error: function(xhr) {
+                    console.log('ajax error:', xhr);
+                    alert('Terjadi kesalahan saat mengirim');
+                    btn.prop('disabled', false).html('<i class="bi bi-send"></i> Kirim');
+                }
+            });
+        });
+
+       /*
+        * ===============================
+        * Sent
        * ===============================
        */
 
       /* ===== KLIK MENU SEND ===== */
       $(document).on('click', '#btnSend', function(e) {
-          e.preventDefault(); // ⛔ WAJIB
+          e.preventDefault();
+          if ($(this).hasClass('active')) {
+              loadSend(1);
+              return;
+          }
+          $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
+          $(this).addClass('active');
+          window.detailOpen = false;
           loadSend(1);
       });
 
@@ -883,8 +991,36 @@
       /* ===== KLIK MENU INFO ===== */
       $(document).on('click', '#btnInfo', function(e) {
           e.preventDefault();
+          if ($(this).hasClass('active')) {
+              loadInfo(1);
+              return;
+          }
+          $('#btnInbox, #btnPending, #btnSend, #btnInfo').removeClass('active');
+          $(this).addClass('active');
+          window.detailOpen = false;
           loadInfo(1);
       });
+
+      /* ===== AUTO REFRESH INFO ===== */
+      let infoRefreshInterval = null;
+      const INFO_REFRESH_TIME = 30000; // 30 detik
+
+      function startInfoAutoRefresh() {
+          if (infoRefreshInterval) clearInterval(infoRefreshInterval);
+          infoRefreshInterval = setInterval(function() {
+              if (!infoLoading) {
+                  let keyword = $('#searchInfo').val() ?? '';
+                  loadInfo(1, keyword);
+              }
+          }, INFO_REFRESH_TIME);
+      }
+
+      function stopInfoAutoRefresh() {
+          if (infoRefreshInterval) {
+              clearInterval(infoRefreshInterval);
+              infoRefreshInterval = null;
+          }
+      }
 
       /* ===== LOAD INFO ===== */
       function loadInfo(page = 1, keywordParam = null) {
@@ -902,6 +1038,7 @@
           }, function(res) {
 
               $('#inbox-wrapper').html(res);
+              refreshNotif(); // Update semua counters termasuk badge Info
 
           }).always(function() {
 
@@ -942,20 +1079,10 @@
 
       /* ===== KLIK ROW INFO ===== */
       $(document).on('click', '.info-row', function() {
-
-          let row = $(this);
-          let id = row.data('id');
-
-          // Update UI immediately sebelum server response
-          row.removeClass('notif-unread');
-          row.find('.notif-dot').remove();
-
-          // tandai sudah dibaca via server
-          tandaiSudahDibaca(id);
-
-          // buka detail inbox
-          loadDetailInsiden(id, 'inbox');
-
+          const id = $(this).data('id');
+          if (id) {
+              loadDetailInsiden(id, 'inbox');
+          }
       });
 
 
@@ -967,12 +1094,12 @@
               type: "POST",
               dataType: "json",
               data: {
-                  insiden_id: id
+                  insiden_id: id,
+                  '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
               },
               success: function(res) {
 
                   refreshNotif(); // update badge + dropdown notif
-
 
               },
               error: function(xhr) {
@@ -985,31 +1112,6 @@
 
       $(document).on('click', '.btn-kirim-verifikasi', function() {
           kirimVerifikasi(this);
-      });
-
-      $(document).on('click', '.btn-kirim-komite', function() {
-          let btn = this;
-          let id = $(btn).data('id');
-          $(btn).prop('disabled', true);
-          $.ajax({
-              url: "<?= base_url('ikprs/kirim-ke-komite') ?>",
-              type: "POST",
-              dataType: "json",
-              data: { insiden_id: id },
-              success: function(res) {
-                  if (res.status) {
-                      alert(res.message);
-                      loadInbox(1);
-                  } else {
-                      alert(res.message);
-                      $(btn).prop('disabled', false);
-                  }
-              },
-              error: function() {
-                  alert('Gagal mengirim ke komite');
-                  $(btn).prop('disabled', false);
-              }
-          });
       });
 
       $(document).off('click', '.btn-kirim-verifikasi').on('click', '.btn-kirim-verifikasi', function() {
@@ -1057,36 +1159,23 @@
                   grading: grading
               },
               success: function(res) {
-
+                  // Sukses — tampilkan toast hijau + refresh inbox
                   if (res.status) {
-
-                      $('#verifikasi_error').html(
-                          '<div class="text-success">' + res.message + '</div>'
-                      );
-
-                      //   loadDetailInsiden(res.insiden_id);
-
-                      // kembali ke inbox setelah verifikasi
-                      loadInbox(1);
-
-                      // delay kecil supaya DB selesai update
+                      toastSuccess(res.message);
                       setTimeout(function() {
+                          loadInbox(1);
                           refreshNotif();
-                      }, 100);
-
+                      }, 1500);
                   } else {
-
-                      $('#verifikasi_error').html(res.message);
+                      // Gagal dari server — tampilkan toast kuning
+                      toastWarning(res.message);
                       $(btn).prop('disabled', false);
-
                   }
-
               },
               error: function() {
-
-                  $('#verifikasi_error').html('Terjadi kesalahan server');
+                  // Error koneksi/server — tampilkan toast merah
+                  toastError('Terjadi kesalahan server');
                   $(btn).prop('disabled', false);
-
               }
           });
 
@@ -1185,17 +1274,94 @@
               },
               dataType: 'json',
               success: function(res) {
+                  // Sukses — toast hijau + reload halaman
                   if (res.status == 'success') {
-                      location.reload();
+                      toastSuccess(res.message);
+                      setTimeout(function() {
+                          location.reload();
+                      }, 1000);
                   } else {
-                      $('#komite_error').text(res.message);
+                      // Validasi gagal — toast kuning
+                      toastWarning(res.message);
                       $(btn).prop('disabled', false);
                   }
               },
               error: function() {
-                  $('#komite_error').text('Terjadi kesalahan server');
+                  // Error server — toast merah
+                  toastError('Terjadi kesalahan server');
                   $(btn).prop('disabled', false);
               }
-          });
-      }
-  </script>
+           });
+       }
+
+       /* ===== TAB EVENT - AUTO REFRESH INFO ===== */
+       $(document).on('shown.bs.tab', 'button[data-bs-toggle="tab"]', function(e) {
+           let target = $(e.target).attr('data-bs-target');
+           if (target === '#info') {
+               loadInfo(1);
+               startInfoAutoRefresh();
+           } else {
+               stopInfoAutoRefresh();
+           }
+       });
+
+       /* ===== START AUTO REFRESH IF INFO TAB ACTIVE ON LOAD ===== */
+        if ($('#info').hasClass('active')) {
+            startInfoAutoRefresh();
+        }
+
+    /* =====================================================
+         TOAST HELPER (SweetAlert2) — notifikasi pop-up di pojok kanan atas
+         Digunakan oleh: kirimVerifikasi(), validasiKomite(), dll.
+       ===================================================== */
+    // Peringatan kuning (warning) — untuk validasi client-side gagal
+    function toastWarning(msg) {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'warning',
+            iconColor: '#f0ad4e',
+            title: msg,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    }
+
+    // Error merah — untuk server error / unexpected error
+    function toastError(msg) {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            iconColor: '#d9534f',
+            title: msg,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    }
+
+    // Sukses hijau + icon centang — untuk operasi berhasil
+    function toastSuccess(msg) {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            iconColor: '#5cb85c',
+            title: msg,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    }
+
+    // Mobile sidebar: close on outside click
+    document.addEventListener('click', function(e) {
+        var sidebar = document.querySelector('#contentIKP .row > .col-md-3');
+        if (!sidebar || !sidebar.classList.contains('show')) return;
+        var toggle = document.querySelector('.sidebar-toggle');
+        if (sidebar.contains(e.target) || (toggle && toggle.contains(e.target))) return;
+        sidebar.classList.remove('show');
+    });
+    </script>

@@ -13,10 +13,10 @@
                 <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="navigation" data-accordion="true">
                     <?php if ($login_source == 'APP'): ?>
                         <li class="nav-item">
-                            <div class="px-3 py-2 mb-2 bg-warning text-dark rounded">
+                            <!-- <div class="px-3 py-2 mb-2 bg-warning text-dark rounded">
                                 <small class="d-block"><strong>Hak Akses:</strong> <?= session('role_asli') ?? '-' ?></small>
                                 <small class="d-block"><strong>User Role:</strong> <?= session('user_role') ?? '-' ?></small>
-                            </div>
+                            </div> -->
                         </li>
                         <?php
                         function renderMenu($menus)
@@ -45,7 +45,7 @@
                         ?>
                     <?php endif; ?>
 
-                    <?php if ($login_source == 'HRIS' && in_array(session('user_role'), ['KOMITE', 'KARU'])): ?>
+                    <?php if ($login_source == 'HRIS' && in_array(session('user_role'), ['KOMITE', 'KARU', 'KEPALA_KEPERAWATAN'])): ?>
                         <li class="nav-item">
                             <a href="<?= site_url('ikprs') ?>" class="nav-link">
                                 <i class="nav-icon bi bi-speedometer"></i>
@@ -75,6 +75,23 @@
         </div>
     <?php endif; ?>
 </aside>
+
+<script>
+    (function() {
+        // Navigasi sidebar — saat klik link, tutup sidebar di mobile
+        document.addEventListener('click', function(e) {
+            var link = e.target.closest('.sidebar-menu a.nav-link');
+            if (!link) return;
+            var href = link.getAttribute('href');
+            if (href && href !== '#' && href !== 'javascript:void(0)') {
+                if (window.innerWidth < 992) {
+                    document.body.classList.remove('sidebar-open');
+                    document.body.classList.add('sidebar-collapse');
+                }
+            }
+        }, true);
+    })();
+</script>
 
 <style>
     .sidebar-wrapper { overflow-y: auto; overflow-x: visible; }

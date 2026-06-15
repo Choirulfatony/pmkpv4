@@ -16,7 +16,7 @@ Ada 3 cara untuk mengaktifkan user:
 
 1. **Buka browser dan akses:**
    ```
-   http://localhost/pmkpv4/activate_google_users.php
+   http://localhost/siimut/activate_google_users.php
    ```
 
 2. **Lihat statistik user:**
@@ -127,7 +127,7 @@ WHERE profile_email LIKE '%@gmail.com'
 
 2. **Masuk ke direktori project:**
    ```bash
-   cd C:\xampp\htdocs\pmkpv4
+   cd C:\xampp\htdocs\siimut
    ```
 
 3. **Jalankan SQL via MySQL CLI:**
@@ -157,7 +157,7 @@ WHERE profile_email LIKE '%@gmail.com'
 
 ### 1. Cek via Web UI:
 ```
-http://localhost/pmkpv4/verify_columns.php
+http://localhost/siimut/verify_columns.php
 ```
 
 Akan menampilkan:
@@ -167,7 +167,7 @@ Akan menampilkan:
 
 ### 2. Test Login Google OAuth:
 
-1. Buka: `http://localhost/pmkpv4/index.php/auth`
+1. Buka: `http://localhost/siimut/index.php/auth`
 2. Klik "Login with Google"
 3. Pilih akun Google Anda
 4. **Expected:** Login berhasil dan redirect ke `/siimut/dashboard`

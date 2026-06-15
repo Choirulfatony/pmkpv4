@@ -33,7 +33,7 @@ class Database extends Config
         // 'hostname' => 'localhost',
         // 'username' => 'root',
         // 'password' => '',
-        // 'database' => 'sismadaknew',
+        'database' => 'sismadaknew',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
         'pConnect'     => false,

@@ -43,6 +43,16 @@ class AuthFilter implements FilterInterface
         $last = $session->get('last_activity');
 
         if ($last && (time() - $last) > $timeout) {
+            $profileId = $session->get('profile_id');
+            if ($profileId) {
+                $db = \Config\Database::connect();
+                $db->table('user_profile')
+                    ->where('profile_id', $profileId)
+                    ->update([
+                        'profile_online_status' => 0,
+                        'profile_remember_token' => null,
+                    ]);
+            }
             $session->destroy();
             return redirect()->to('/auth?timeout=1');
         }

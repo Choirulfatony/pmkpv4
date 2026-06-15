@@ -1,137 +1,3 @@
-<style>
-    .cell-target {
-        background-color: rgba(41, 185, 92) !important;
-        font-weight: bold;
-    }
-
-    .cell-empty {
-        background-color: rgba(255, 222, 60) !important;
-        font-weight: bold;
-    }
-
-    .cell-fail {
-        background-color: rgba(220, 57, 57) !important;
-        color: #fff !important;
-        font-weight: bold;
-    }
-
-    .legend-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 3px;
-        display: inline-block;
-    }
-
-    #ajax_detail_impunit td,
-    #ajax_detail_impunit th {
-        font-size: 13px;
-        vertical-align: middle;
-        white-space: nowrap;
-        padding: 10px 8px !important;
-    }
-
-    #ajax_detail_impunit th {
-        background-color: #363636 !important;
-        color: #fff;
-        text-align: center;
-        font-weight: 600;
-    }
-
-    .table-responsive {
-        position: relative;
-    }
-
-    .overlay-wrapper {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: transparent;
-    }
-
-    .overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: transparent;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-
-    .loader {
-        width: 3em;
-        height: 3em;
-        transform: rotate(165deg);
-    }
-
-    .loader:before,
-    .loader:after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        display: block;
-        width: 1em;
-        height: 1em;
-        border-radius: 0.5em;
-        transform: translate(-50%, -50%);
-    }
-
-    .loader:before {
-        animation: before8 2s infinite;
-    }
-
-    .loader:after {
-        animation: after6 2s infinite;
-    }
-
-    @keyframes before8 {
-        0% {
-            width: 1em;
-            box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
-        }
-
-        35% {
-            width: 4em;
-            box-shadow: 0 -1em rgba(225, 20, 98, 0.75), 0 1em rgba(111, 202, 220, 0.75);
-        }
-
-        70% {
-            width: 1em;
-            box-shadow: -2em -1em rgba(225, 20, 98, 0.75), 2em 1em rgba(111, 202, 220, 0.75);
-        }
-
-        100% {
-            box-shadow: 2em -1em rgba(225, 20, 98, 0.75), -2em 1em rgba(111, 202, 220, 0.75);
-        }
-    }
-
-    @keyframes after6 {
-        0% {
-            height: 1em;
-            box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
-        }
-
-        35% {
-            height: 4em;
-            box-shadow: 1em 0 rgba(61, 184, 143, 0.75), -1em 0 rgba(233, 169, 32, 0.75);
-        }
-
-        70% {
-            height: 1em;
-            box-shadow: 1em -2em rgba(61, 184, 143, 0.75), -1em 2em rgba(233, 169, 32, 0.75);
-        }
-
-        100% {
-            box-shadow: 1em 2em rgba(61, 184, 143, 0.75), -1em -2em rgba(233, 169, 32, 0.75);
-        }
-    }
-</style>
 
 <!-- ==================== HEADER INFO ==================== -->
 <div class="row mb-3">
@@ -143,7 +9,7 @@
                 </div>
                 <div class="flex-grow-1">
                     <h5 class="mb-1"><strong>Detail Rekap Indikator Mutu Prioritas Unit (IMPUnit)</strong></h5>
-                    <p class="mb-0">Indikator: <strong><?= isset($detail->indicator_element) ? esc($detail->indicator_element) : 'Data Detail' ?></strong></p>
+                    <p class="mb-0">Indikator: <strong><?= isset($detail->indicator_element) ? esc($detail->indicator_element) : 'Data Detail' ?><?php if (isset($detail->indicator_record_status) && $detail->indicator_record_status === 'D'): ?> <span class="badge bg-warning text-dark ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span><?php endif; ?></strong></p>
                     <p class="mb-0">Target: <strong><?= isset($detail->indicator_target) ? esc($detail->indicator_target) : '-' ?></strong>
                         <span class="text-muted"><?= isset($detail->indicator_units) ? esc($detail->indicator_units) : '' ?></span>
                     </p>
@@ -167,6 +33,12 @@
                 <h3 class="card-title">
                     <i class="fas fa-table me-2"></i>
                     Detail Per Ruangan
+                    <?php if (isset($detail->indicator_element)): ?>
+                        <small class="ms-2">- <?= esc($detail->indicator_element) ?></small>
+                        <?php if (isset($detail->indicator_record_status) && $detail->indicator_record_status === 'D'): ?>
+                            <span class="badge bg-warning text-dark ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>
+                        <?php endif; ?>
+                    <?php endif; ?>
                 </h3>
                 <div class="card-tools d-flex align-items-center gap-2">
                     <!-- Tombol Back -->
@@ -206,21 +78,21 @@
                     <table id="ajax_detail_impunit" class="table table-bordered table-hover table-striped mb-0" style="width: 100%;">
                         <thead>
                             <tr class="align-middle">
-                                <th style="width: 50px;" class="text-center">#</th>
-                                <th style="min-width: 200px; text-align: left !important; padding-left: 15px !important;">Ruangan</th>
-                                <th class="text-center">Target</th>
-                                <th class="text-center">Jan</th>
-                                <th class="text-center">Feb</th>
-                                <th class="text-center">Mar</th>
-                                <th class="text-center">Apr</th>
-                                <th class="text-center">Mei</th>
-                                <th class="text-center">Jun</th>
-                                <th class="text-center">Jul</th>
-                                <th class="text-center">Ags</th>
-                                <th class="text-center">Sep</th>
-                                <th class="text-center">Okt</th>
-                                <th class="text-center">Nov</th>
-                                <th class="text-center">Des</th>
+                                <th style="min-width: 40px;" class="text-center">#</th>
+                                <th style="min-width: 150px; text-align: left !important; padding-left: 15px !important;">Ruangan</th>
+                                <th class="text-center" style="min-width: 80px;">Target</th>
+                                <th class="text-center" style="min-width: 75px;">Jan</th>
+                                <th class="text-center" style="min-width: 75px;">Feb</th>
+                                <th class="text-center" style="min-width: 75px;">Mar</th>
+                                <th class="text-center" style="min-width: 75px;">Apr</th>
+                                <th class="text-center" style="min-width: 75px;">Mei</th>
+                                <th class="text-center" style="min-width: 75px;">Jun</th>
+                                <th class="text-center" style="min-width: 75px;">Jul</th>
+                                <th class="text-center" style="min-width: 75px;">Ags</th>
+                                <th class="text-center" style="min-width: 75px;">Sep</th>
+                                <th class="text-center" style="min-width: 75px;">Okt</th>
+                                <th class="text-center" style="min-width: 75px;">Nov</th>
+                                <th class="text-center" style="min-width: 75px;">Des</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -245,6 +117,64 @@
                     <div class="d-flex align-items-center">
                         <span class="legend-dot me-2" style="background-color: rgba(220, 57, 57);"></span>
                         <small class="text-muted">Tidak tercapai</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== DAILY DETAIL SECTION ==================== -->
+<div class="row mt-3" id="daily-section" style="display:none;">
+    <div class="col-12">
+        <div class="card card-outline card-info">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-calendar-day me-2"></i>
+                    <span id="daily-title">Detail Harian</span>
+                </h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeDaily()" title="Tutup">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="px-3 pt-3 pb-1">
+                    <h6 id="daily-info" class="mb-1"></h6>
+                    <small class="text-muted" id="daily-target-info"></small>
+                </div>
+                <div class="p-3" style="position:relative; min-height:120px;">
+                    <div class="overlay-wrapper" id="daily-loading" style="display:none;">
+                        <div class="overlay">
+                            <i class="loader"></i>
+                        </div>
+                    </div>
+                    <div id="daily-empty" class="text-center py-4" style="display:none;">
+                        <i class="fas fa-info-circle fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">Belum ada data untuk bulan ini</p>
+                    </div>
+                    <table id="daily-table" class="table table-inm-inm table-sm mb-0" style="display:none;">
+                        <thead>
+                            <tr id="daily-headers"></tr>
+                        </thead>
+                        <tbody id="daily-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex flex-wrap gap-3 align-items-center">
+                    <div class="d-flex align-items-center">
+                        <span class="legend-dot me-2" style="background-color: rgba(41, 185, 92);"></span>
+                        <small>Mencapai target</small>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="legend-dot me-2" style="background-color: rgba(255, 222, 60);"></span>
+                        <small>Belum terisi</small>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="legend-dot me-2" style="background-color: rgba(220, 57, 57);"></span>
+                        <small>Tidak tercapai</small>
                     </div>
                 </div>
             </div>
@@ -356,6 +286,9 @@
                                     }
                                 }
                             }
+                            // Buat cell bisa diklik untuk daily detail
+                            $(td).addClass('cell-clickable');
+                            $(td).attr('title', 'Klik untuk lihat detail harian');
                         } catch (e) {}
                     }
                 }
@@ -391,16 +324,196 @@
                 $('#ajax_detail_impunit').show();
             }
         });
+
+        // Cegah race condition: request counter
+        var dailyRequestId = 0;
+
+        // Click handler untuk cell bulan -> tampilkan daily detail per departemen
+        $('#ajax_detail_impunit tbody').on('click', 'td.cell-clickable', function() {
+            var $cell = $(this);
+            var col = $cell.index(); // 3=Jan, 4=Feb, ... 14=Des
+            var bulan = col - 2; // 1=Jan, 2=Feb, ... 12=Des
+
+            // Ambil department dari HTML cell itu sendiri (data-dept-id dari server)
+            var $cellHtml = $('<div>').html($cell.html());
+            var deptId = $cellHtml.find('[data-dept-id]').attr('data-dept-id') || 0;
+            var deptName = $cellHtml.find('[data-dept-name]').attr('data-dept-name') || '';
+
+            var bulanNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            var bulanLabel = bulanNames[bulan - 1];
+
+            // Tandai request terbaru
+            var myReqId = ++dailyRequestId;
+
+            // Tampilkan daily di bawah tabel
+            $('#daily-title').text('Detail Harian - ' + deptName + ' - ' + bulanLabel + ' ' + vtahun);
+            $('#daily-info').text('Memuat data...');
+            $('#daily-target-info').html('');
+            $('#daily-table').hide();
+            $('#daily-body').empty();
+            $('#daily-empty').hide();
+            $('#daily-loading').show();
+            $('#daily-section').show();
+
+            // AJAX fetch daily data (per departemen)
+            $.ajax({
+                url: '<?= site_url('siimut/rekap-laporan-impunit/ajax-daily-detail-impunit') ?>',
+                type: 'POST',
+                data: {
+                    indicator_id: indicatorId,
+                    tahun: vtahun,
+                    bulan: bulan,
+                    department_id: deptId
+                },
+                dataType: 'json',
+                success: function(resp) {
+                    // Abaikan response stale (dari request yang lebih lama)
+                    if (myReqId !== dailyRequestId) return;
+
+                    $('#daily-loading').hide();
+
+                    if (!resp || !resp.dept_data || resp.dept_data.length === 0) {
+                        $('#daily-empty').show();
+                        return;
+                    }
+
+                    var targetText = resp.target || 0;
+                    var operatorText = resp.operator || '>=';
+                    var unitsText = resp.units || '%';
+                    var operatorDisplay = operatorText;
+                    if (operatorDisplay === '>=') operatorDisplay = '???';
+                    if (operatorDisplay === '<=') operatorDisplay = '???';
+
+                    $('#daily-info').text(resp.indicator || '');
+                    var deptLabel = resp.dept_data.length === 1
+                        ? resp.dept_data[0].department_name
+                        : resp.dept_data.length + ' departemen';
+                    $('#daily-target-info').html(
+                        'Target: ' + operatorDisplay + ' ' + targetText + ' ' + unitsText +
+                        ' | ' + deptLabel
+                    );
+
+                    var days = resp.days || 31;
+
+                    // Bangun header: No, Ruangan, 1, 2, 3, ... , days
+                    var headerHtml = '<th class="text-center" style="width:40px;">No</th><th style="min-width:250px;">Ruangan</th>';
+                    for (var d = 1; d <= days; d++) {
+                        headerHtml += '<th class="text-center" style="width:70px;">' + d + '</th>';
+                    }
+
+                    // Bangun baris per departemen
+                    var bodyHtml = '';
+                    $.each(resp.dept_data, function(idx, dept) {
+                        bodyHtml += '<tr class="indicator-row">';
+                        bodyHtml += '<td class="text-center fw-bold">' + (idx + 1) + '</td>';
+                        bodyHtml += '<td class="text-start">' + dept.department_name + '</td>';
+
+                        $.each(dept.daily, function(i, item) {
+                            var cellClass = 'day-cell text-center';
+                            var nilaiDisplay = '-';
+
+                            if (item.nilai !== null) {
+                                nilaiDisplay = item.nilai + ' ' + unitsText;
+                                cellClass += ' cell-has-data';
+                                if (item.tercapai === true) cellClass += ' cell-target';
+                                else if (item.tercapai === false) cellClass += ' cell-fail';
+                            } else {
+                                cellClass += (item.num > 0 || item.denum > 0) ? ' cell-fail' : ' cell-empty';
+                            }
+
+                            var kpIcon = '';
+                            if (item.kendala || item.perbaikan) {
+                                kpIcon = '<i class="fas fa-exclamation-circle text-warning ms-1 kp-icon" style="font-size:10px;cursor:pointer;" data-dept-idx="' + idx + '" data-hari="' + item.hari + '"></i>';
+                            }
+
+                            bodyHtml += '<td class="' + cellClass + '" data-hari="' + item.hari + '">' +
+                                '<div class="fw-bold">' + nilaiDisplay + kpIcon + '</div>' +
+                                '<div class="num-denum">' + (item.num || 0) + ' / ' + (item.denum || 0) + '</div>' +
+                                '</td>';
+                        });
+
+                        bodyHtml += '</tr>';
+
+                    });
+
+                    // Update konten
+                    $('#daily-body').html(bodyHtml);
+                    $('#daily-headers').html(headerHtml);
+
+                    $('#daily-table').css('display', 'table');
+                    if (!$('#daily-table').parent().is('.daily-table-scroll')) {
+                        $('#daily-table').wrap('<div class="daily-table-scroll" style="overflow-x:auto;max-width:100%;"></div>');
+                    }
+
+                    // Click handler: icon warning -> toggle child row kendala/perbaikan
+                    $('#daily-body').off('click', '.kp-icon').on('click', '.kp-icon', function() {
+                        var deptIdx = $(this).data('dept-idx');
+                        var hari = $(this).data('hari');
+                        var deptData = resp.dept_data[deptIdx];
+                        if (!deptData) return;
+
+                        var dayData = null;
+                        $.each(deptData.daily, function(i, d) {
+                            if (d.hari === hari) dayData = d;
+                        });
+                        if (!dayData) return;
+
+                        var tr = $(this).closest('tr');
+                        var activeKey = deptIdx + '-' + hari;
+                        var nextTr = tr.next('.kp-detail-row');
+
+                        if (nextTr.length && nextTr.data('active-key') === activeKey) {
+                            nextTr.remove();
+                            tr.removeClass('kp-row-open');
+                            return;
+                        }
+
+                        $('#daily-body').find('.kp-detail-row').remove();
+                        $('#daily-body').find('.kp-row-open').removeClass('kp-row-open');
+
+                        var colSpan = tr.find('td').length;
+                        var detailHtml = '<tr class="kp-detail-row" data-active-key="' + activeKey + '">' +
+                            '<td colspan="' + colSpan + '" class="p-0">' +
+                            '<div class="p-3 bg-light" style="border-top:2px solid #ffc107;">' +
+                            '<div class="d-flex align-items-start gap-3 flex-wrap">' +
+                            '<div><strong>Ruangan:</strong> ' + $('<span>').text(deptData.department_name).html() + '</div>' +
+                            '<div class="badge bg-secondary fs-6">Hari ke-' + hari + '</div>' +
+                            '</div>' +
+                            '<hr class="my-2">' +
+                            '<div class="d-flex align-items-start gap-3 flex-wrap">' +
+                            '<div><strong>Kendala:</strong> ' + $('<span>').text(dayData.kendala || '-').html() + '</div>' +
+                            '<div><strong>Perbaikan:</strong> ' + $('<span>').text(dayData.perbaikan || '-').html() + '</div>' +
+                            '</div></div></td></tr>';
+
+                        tr.after(detailHtml);
+                        tr.addClass('kp-row-open');
+                    });
+                },
+                error: function() {
+                    if (myReqId !== dailyRequestId) return;
+                    $('#daily-loading').hide();
+                    $('#daily-empty').show();
+                    $('#daily-empty').html('<i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i><p class="text-danger">Gagal memuat data</p>');
+                    toastr.error('Gagal memuat data harian');
+                }
+            });
+        });
     });
+
+    function closeDaily() {
+        $('#daily-section').slideUp(300);
+    }
 
     function gantiTahun() {
         vtahun = $('#tahun').val();
+        closeDaily();
         if (table_detail) {
             table_detail.ajax.reload();
         }
     }
 
     function reload_table_impunit() {
+        closeDaily();
         if (table_detail) {
             table_detail.ajax.reload();
         }

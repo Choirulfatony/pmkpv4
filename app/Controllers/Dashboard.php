@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Models\DashboardModel;
 use App\Models\SiimutMenuModel;
 
 class Dashboard extends AppController
@@ -14,27 +15,48 @@ class Dashboard extends AppController
 
         $this->disableCache();
 
-        // ✅ ambil role user
         $role = session()->get('user_role');
-        // contoh: APP / KOMITE / KENDALI_MUTU / ADMINISTRATOR
+        $departmentId = session()->get('department_id');
 
-
-        // ✅ load model
         $menuModel = new SiimutMenuModel();
-
-        // ✅ ambil menu berdasarkan role
         $menus = $menuModel->getMenuByRole($role);
 
-        // 🔥 DEBUG DI SINI
-        // dd($menus, $role);
+        $tahun = (int) date('Y');
+        $bulan = (int) date('m');
+
+        $dashboardModel = new DashboardModel();
+
+        $filterDept = $role === 'ADMINISTRATOR' ? null : $departmentId;
+
+        $summary = $dashboardModel->getSummary($tahun, $filterDept);
+        $progress = $dashboardModel->getInputProgress($tahun, $bulan, $filterDept);
+        $targetStatus = $dashboardModel->getTargetStatus($tahun, $bulan, $filterDept);
+        $deptWithoutInput = $dashboardModel->getDepartmentsWithoutInput($tahun, $bulan);
+        $trend = $dashboardModel->getMonthlyTrend($tahun, $filterDept);
+
+        $topInm = $dashboardModel->getTopBottomIndicators($tahun, $bulan, $filterDept, 'inm', 5);
+        $topImprs = $dashboardModel->getTopBottomIndicators($tahun, $bulan, $filterDept, 'imprs', 5);
+        $topImpunit = $dashboardModel->getTopBottomIndicators($tahun, $bulan, $filterDept, 'impunit', 5);
+
+        $draftCounts = $dashboardModel->getDraftCounts($tahun, $bulan, $filterDept);
 
         return $this->render('dashboard/index', [
             'judul'    => 'Dashboard SIIMUT',
             'icon'     => '<i class="bi bi-speedometer"></i>',
-            '_content' => view('siimut/dashboard_home'),
-
-            // ✅ kirim ke view (WAJIB)
-            'menus'    => $menus
+            '_content' => view('siimut/dashboard_home', [
+                'summary'            => $summary,
+                'progress'           => $progress,
+                'targetStatus'       => $targetStatus,
+                'deptWithoutInput'   => $deptWithoutInput,
+                'trend'              => $trend,
+                'topInm'             => $topInm,
+                'topImprs'           => $topImprs,
+                'topImpunit'         => $topImpunit,
+                'draftCounts'        => $draftCounts,
+                'tahun'              => $tahun,
+                'bulan'              => $bulan,
+            ]),
+            'menus'    => $menus,
         ]);
     }
 }

@@ -34,6 +34,13 @@ class RekapLaporanInm extends AppController
         $tahun = $this->request->getGet('tahun') ?? date('Y');
         $indicatorId = $this->request->getGet('indicator_id');
 
+        $departments = $this->rekapModel->getActiveDepartmentsForYear((int) $tahun);
+        $draftCounts = $this->rekapModel->getDraftCountByDepartment((int) $tahun);
+        $draftByMonth = $this->rekapModel->getDraftCountByMonth((int) $tahun);
+        $totalDraft = array_sum($draftByMonth);
+
+        $departmentId = session()->get('department_id') ?? null;
+
         // Jika ada indicator_id, tampilkan detail
         if ($indicatorId) {
             $detail = $this->rekapModel->getDetailByIdInm((int) $indicatorId);
@@ -54,7 +61,13 @@ class RekapLaporanInm extends AppController
             'judul'    => 'Rekap Laporan INM',
             'icon'     => '<i class="bi bi-bar-chart"></i>',
             '_content' => view('siimut/rekap_laporan_inm', [
-                'tahun' => $tahun,
+                'tahun'        => $tahun,
+                'departments'  => $departments,
+                'draftCounts'  => $draftCounts,
+                'draftByMonth' => $draftByMonth,
+                'totalDraft'   => $totalDraft,
+                'role'         => $role,
+                'departmentId' => $departmentId,
             ]),
             'menus'    => $menus
         ]);
@@ -74,13 +87,21 @@ class RekapLaporanInm extends AppController
             return $this->response->setJSON(['error' => 'Invalid request - no POST data', 'post_data' => $post]);
         }
 
-        $indicators = $this->rekapModel->getIndicatorInm($post);
         $tahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
-        
+        $departmentId = isset($post['vdepartment']) && $post['vdepartment'] !== '' ? (int) $post['vdepartment'] : null;
+
+        // Non-admin: filter by own department
+        $role = session()->get('user_role') ?? '';
+        if (!in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
+            $departmentId = session()->get('department_id') ?? null;
+        }
+
+        $indicators = $this->rekapModel->getIndicatorInm($post, $departmentId ?? null);
+
         // Ambil SEMUA data sekaligus (1 query saja)
         $indicatorIds = array_column($indicators, 'indicator_id');
-        
-        $allData = $this->rekapModel->getAllMonthlyData($indicatorIds, $tahun);
+
+        $allData = $this->rekapModel->getAllMonthlyData($indicatorIds, $tahun, $departmentId);
 
         $data = [];
         $no = isset($post['start']) ? (int) $post['start'] : 0;
@@ -91,9 +112,14 @@ class RekapLaporanInm extends AppController
 
             $row[] = '<div class="fw-bold">' . $no . '</div>';
 
+            // [CHANGED] Tampilkan badge "Non-Aktif" kalo indicator_record_status = 'D'
+            $badge = '';
+            if (isset($indicator->indicator_record_status) && $indicator->indicator_record_status === 'D') {
+                $badge = ' <span class="badge bg-warning text-dark ms-1" style="font-size:10px;vertical-align:middle;">Non-Aktif</span>';
+            }
             $row[] = '<div class="py-1 text-start ps-2">
                 <a href="javascript:void(0);" class="fw-semibold text-decoration-none" title="Detail Rekapan Ruangan" onclick="view_detail_inm(' . $indicator->indicator_id . ');">' 
-                    . esc($indicator->indicator_element) . '
+                    . esc($indicator->indicator_element) . $badge . '
                 </a>
             </div>';
 
@@ -163,12 +189,20 @@ class RekapLaporanInm extends AppController
                 return $this->response->setJSON(['error' => 'Invalid indicator_id']);
             }
 
-            // Ambil semua ruangan untuk indicator ini
-            $departments = $this->rekapModel->getDepartmentsByIndicator($indicatorId, $tahun, $post);
+            // ADMINISTRATOR & KOMITE → lihat semua ruangan
+            // KENDALI_MUTU, APP → filter by department
+            $role = session()->get('user_role') ?? '';
+            $departmentId = null;
+            if (!in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
+                $departmentId = session()->get('department_id') ?? null;
+            }
+
+            // Ambil ruangan untuk indicator ini (filter by department jika bukan ADMIN)
+            $departments = $this->rekapModel->getDepartmentsByIndicator($indicatorId, $tahun, $post, $departmentId);
             log_message('error', 'DETAIL: departments count=' . count($departments));
             
-            // Ambil semua data detail sekaligus
-            $allDetailData = $this->rekapModel->getAllDetailData($indicatorId, $tahun);
+            // Ambil semua data detail sekaligus (filter by department jika bukan ADMIN)
+            $allDetailData = $this->rekapModel->getAllDetailData($indicatorId, $tahun, $departmentId);
             log_message('error', 'DETAIL: allDetailData count=' . count($allDetailData));
             
             // Ambil info indicator
@@ -187,11 +221,11 @@ class RekapLaporanInm extends AppController
                 $no++;
                 $row = [];
 
-                // No
-                $row[] = '<div class="fw-bold">' . $no . '</div>';
+                // No (dengan data-department-id untuk klik daily)
+                $row[] = '<div class="fw-bold" data-dept-id="' . $dept->department_id . '" data-dept-name="' . esc($dept->department_name) . '">' . $no . '</div>';
 
                 // Ruangan
-                $row[] = '<div class="py-1 text-start ps-2">' . esc($dept->department_name) . '</div>';
+                $row[] = '<div class="py-1 text-start ps-2 text-nowrap" style="overflow:hidden;text-overflow:ellipsis;">' . esc($dept->department_name) . '</div>';
 
                 // Target - tampilkan dengan units
                 $row[] = '<div class="py-1">
@@ -206,8 +240,9 @@ class RekapLaporanInm extends AppController
                     $key = $dept->department_id . '_' . $bulan;
                     $list = isset($allDetailData[$key]) ? $allDetailData[$key] : null;
 
+                    $deptAttr = ' data-dept-id="' . $dept->department_id . '" data-dept-name="' . esc($dept->department_name) . '"';
                     if ($list == null) {
-                        $row[] = '<div class="py-1">
+                        $row[] = '<div class="py-1"' . $deptAttr . '>
                             <span class="text-muted">-</span>
                             <span style="display:none" id="num_det">0</span>
                             <span style="display:none" id="denum_det">0</span>
@@ -217,7 +252,7 @@ class RekapLaporanInm extends AppController
                         $num = $list->num ?? 0;
                         $denum = $list->denum ?? 0;
 
-                        $row[] = '<div class="py-1">
+                        $row[] = '<div class="py-1"' . $deptAttr . '>
                             <span id="total_det">' . esc($total) . '</span>
                             <div class="small text-muted mt-1">
                                 <span id="num_det">' . esc($num) . '</span> | <span id="denum_det">' . esc($denum) . '</span>
@@ -257,6 +292,142 @@ class RekapLaporanInm extends AppController
             return $this->response->setJSON($data);
         }
         return $this->response->setJSON(['status' => false]);
+    }
+
+    /**
+     * AJAX: Daily detail semua departemen untuk satu bulan
+     */
+    public function getAjaxDailyDetail()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['error' => 'Invalid request']);
+        }
+
+        $indicatorId  = (int) $this->request->getPost('indicator_id');
+        $tahun        = (int) $this->request->getPost('tahun');
+        $bulan        = (int) $this->request->getPost('bulan');
+        $deptIdPost   = $this->request->getPost('department_id');
+
+        $role = session()->get('user_role') ?? '';
+        $userDeptId = null;
+        if (!in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
+            $userDeptId = session()->get('department_id') ?? null;
+        }
+
+        // Prioritaskan department_id dari klik user, fallback ke session
+        $filterDeptId = $deptIdPost ? (int) $deptIdPost : $userDeptId;
+
+        $info = $this->rekapModel->getDetailByIdInm($indicatorId);
+        $target  = $info ? (float) ($info->indicator_target ?? 0) : 0;
+        $factors = $info ? (float) ($info->indicator_factors ?? 1) : 1;
+        $operator = $info ? ($info->indicator_target_calculation ?? '>=') : '>=';
+        $units   = $info ? ($info->indicator_units ?? '%') : '%';
+
+        $daysInMonth = $this->getDaysInMonth($bulan, $tahun);
+
+        // Ambil departemen & data harian (filter per departemen jika diklik)
+        $departments = $this->rekapModel->getDepartmentsByIndicator($indicatorId, $tahun, [], $filterDeptId);
+        $rawData     = $this->rekapModel->getDailyDataAllDepartments($indicatorId, $tahun, $bulan, $filterDeptId);
+        $kendalaMap  = $this->rekapModel->getKendalaPerbaikan($indicatorId, $tahun, $bulan, $filterDeptId);
+
+        // Group by department_id => [day => data]
+        $byDept = [];
+        foreach ($rawData as $row) {
+            $deptId = (int) $row->result_department_id;
+            $day    = (int) $row->tanggal;
+            $byDept[$deptId][$day] = $row;
+        }
+
+        $deptDaily = [];
+        foreach ($departments as $dept) {
+            $did = (int) $dept->department_id;
+            $daily = [];
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                if (isset($byDept[$did][$d])) {
+                    $r     = $byDept[$did][$d];
+                    $num   = (float) $r->num;
+                    $denum = (float) $r->denum;
+                    $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
+                } else {
+                    $num   = 0;
+                    $denum = 0;
+                    $nilai = null;
+                }
+                $kpKey = $did . '_' . $d;
+                $kendala   = isset($kendalaMap[$kpKey]) ? $kendalaMap[$kpKey]['kendala'] : null;
+                $perbaikan = isset($kendalaMap[$kpKey]) ? $kendalaMap[$kpKey]['perbaikan'] : null;
+
+                $daily[] = [
+                    'hari'      => $d,
+                    'num'       => $num,
+                    'denum'     => $denum,
+                    'nilai'     => $nilai,
+                    'tercapai'  => $nilai !== null ? $this->hitungTercapai($nilai, $target, $operator) : null,
+                    'kendala'   => $kendala,
+                    'perbaikan' => $perbaikan,
+                ];
+            }
+            $deptDaily[] = [
+                'department_id'   => $did,
+                'department_name' => $dept->department_name,
+                'daily'           => $daily,
+            ];
+        }
+
+        $namaBulan = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        $deptIds = array_map(function($d) { return (int) $d->department_id; }, $departments);
+
+        return $this->response->setJSON([
+            'dept_data'   => $deptDaily,
+            'days'        => $daysInMonth,
+            'target'      => $target,
+            'units'       => $units,
+            'operator'    => $operator,
+            'bulan'       => $namaBulan[$bulan] ?? $bulan,
+            'bulan_angka' => $bulan,
+            'tahun'       => $tahun,
+            'indicator'   => $info ? $info->indicator_element : '',
+            '_debug'      => [
+                'deptIdPost_raw'    => $deptIdPost,
+                'filterDeptId'      => $filterDeptId,
+                'userDeptId'        => $userDeptId,
+                'role'              => $role,
+                'dept_count'        => count($departments),
+                'dept_ids'          => $deptIds,
+                'dept_data_count'   => count($deptDaily),
+            ],
+        ]);
+    }
+
+    /**
+     * Cek apakah nilai tercapai
+     */
+    private function hitungTercapai(?float $nilai, float $target, string $operator): ?bool
+    {
+        if ($nilai === null) return null;
+        return match ($operator) {
+            '>=' => $nilai >= $target,
+            '<=' => $nilai <= $target,
+            '>'  => $nilai > $target,
+            '<'  => $nilai < $target,
+            '='  => $nilai == $target,
+            default => $nilai >= $target,
+        };
+    }
+
+    private function getDaysInMonth(int $bulan, int $tahun): int
+    {
+        return match ($bulan) {
+            1, 3, 5, 7, 8, 10, 12 => 31,
+            4, 6, 9, 11 => 30,
+            2 => ($tahun % 4 == 0 && ($tahun % 100 != 0 || $tahun % 400 == 0)) ? 29 : 28,
+            default => 30,
+        };
     }
 
     /**
@@ -572,9 +743,16 @@ class RekapLaporanInm extends AppController
             $indicator = $this->rekapModel->getDetailByIdInm((int) $indicatorId);
             $indicatorName = $indicator->indicator_element ?? 'Detail';
             
+            // Filter department by role
+            $role = session()->get('user_role') ?? '';
+            $exportDeptId = null;
+            if (!in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
+                $exportDeptId = session()->get('department_id') ?? null;
+            }
+
             // Get data per department
-            $departments = $this->rekapModel->getDepartmentsByIndicator((int) $indicatorId, $tahun, []);
-            $allDetailData = $this->rekapModel->getAllDetailData((int) $indicatorId, $tahun);
+            $departments = $this->rekapModel->getDepartmentsByIndicator((int) $indicatorId, $tahun, [], $exportDeptId);
+            $allDetailData = $this->rekapModel->getAllDetailData((int) $indicatorId, $tahun, $exportDeptId);
 
             // Format Standar
             $targetVal = $indicator->indicator_target ?? '';

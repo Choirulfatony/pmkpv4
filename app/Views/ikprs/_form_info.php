@@ -42,17 +42,23 @@
                     </tr>
                 <?php endif; ?>
 
-                <?php 
+                <?php
                 $role = session()->get('user_role');
-                foreach ($notif as $row): 
+                foreach ($notif as $row):
                     // ===================== SAMA DENGAN HEADER DROPDOWN =====================
                     // iconJenis - SAMA dengan di _header.php line 584-604
                     $iconJenis = 'bi bi-info-circle';
-                    if ($row['jenis'] == 'KTD') { $iconJenis = 'bi bi-exclamation-triangle-fill text-danger'; }
-                    elseif ($row['jenis'] == 'KNC') { $iconJenis = 'bi bi-shield-exclamation text-purple'; }
-                    elseif ($row['jenis'] == 'KTC') { $iconJenis = 'bi bi-exclamation-circle-fill text-warning'; }
-                    elseif ($row['jenis'] == 'KPC') { $iconJenis = 'bi bi-info-circle-fill text-primary'; }
-                    elseif ($row['jenis'] == 'SENTINEL') { $iconJenis = 'bi bi-exclamation-octagon-fill text-danger'; }
+                    if ($row['jenis'] == 'KTD') {
+                        $iconJenis = 'bi bi-exclamation-triangle-fill text-danger';
+                    } elseif ($row['jenis'] == 'KNC') {
+                        $iconJenis = 'bi bi-shield-exclamation text-purple';
+                    } elseif ($row['jenis'] == 'KTC') {
+                        $iconJenis = 'bi bi-exclamation-circle-fill text-warning';
+                    } elseif ($row['jenis'] == 'KPC') {
+                        $iconJenis = 'bi bi-info-circle-fill text-primary';
+                    } elseif ($row['jenis'] == 'SENTINEL') {
+                        $iconJenis = 'bi bi-exclamation-octagon-fill text-danger';
+                    }
 
                     // Status read logic - SAMA dengan di _header.php line 650-704
                     $status_read = 'Belum Dibaca';
@@ -65,20 +71,21 @@
                             $warna_status = 'text-primary';
                         }
                     } elseif ($role == 'KARU') {
-                        // Prioritaskan berdasarkan timestamp, bukan is_read saja
-                        if (!empty($row['komite_read_at'])) {
-                            $status_read = 'Telah Dibaca Komite';
-                            $warna_status = 'text-success';
-                            $iconStatus = 'bi bi-check-circle-fill';
-                        } else if (!empty($row['karu_read_at'])) {
-                            $status_read = 'Sudah Dibaca';
-                            $warna_status = 'text-primary';
-                            $iconStatus = 'bi bi-eye-fill';
-                        } else if ($row['is_read'] == 1) {
-                            $status_read = 'Sudah Dibaca';
-                            $warna_status = 'text-primary';
+                        if ($row['is_read'] == 1) {
+                            if (!empty($row['komite_read_at'])) {
+                                $status_read = 'Telah Dibaca Komite';
+                                $warna_status = 'text-success';
+                                $iconStatus = 'bi bi-check-circle-fill';
+                            } else if (!empty($row['karu_read_at'])) {
+                                $status_read = 'Sudah Dibaca';
+                                $warna_status = 'text-primary';
+                                $iconStatus = 'bi bi-eye-fill';
+                            } else {
+                                $status_read = 'Sudah Dibaca';
+                                $warna_status = 'text-primary';
+                            }
                         }
-                    } elseif ($role == 'KOMITE') {
+                    } elseif ($role == 'KOMITE' || $role == 'KEPALA_KEPERAWATAN') {
                         if (!empty($row['komite_read_at'])) {
                             $status_read = 'Sudah Dibaca';
                             $warna_status = 'text-success';
@@ -89,30 +96,30 @@
                     // Status laporan badge
                     $statusLabel = $row['status_laporan'] ?? '-';
                     $statusColor = 'secondary';
-                    if ($statusLabel == 'DRAFT') {
+                    if ($statusLabel == 'PENDING') {
                         $statusColor = 'warning';
-                        // Untuk KARU, DRAFT berarti Inbox
-                        if (session('user_role') === 'KARU') {
-                            $statusLabel = 'Inbox';
-                            $statusColor = 'info';
-                        }
+                    } elseif ($statusLabel == 'KARU') {
+                        $statusColor = 'info';
+                    } elseif ($statusLabel == 'TERKIRIM') {
+                        $statusColor = 'primary';
+                    } elseif ($statusLabel == 'INSTALASI') {
+                        $statusColor = 'primary';
+                    } elseif ($statusLabel == 'SELESAI') {
+                        $statusColor = 'success';
                     }
-                    elseif ($statusLabel == 'KARU') { $statusColor = 'info'; }
-                    elseif ($statusLabel == 'INSTALASI') { $statusColor = 'primary'; }
-                    elseif ($statusLabel == 'SELESAI') { $statusColor = 'success'; }
                 ?>
 
                     <tr class="info-row <?= $row['is_read'] == 0 ? 'notif-unread' : '' ?>"
-                        data-id="<?= esc($row['insiden_id']) ?>"
-                        style="cursor:pointer">
+                        data-id="<?= esc($row['insiden_id']) ?>">
 
                         <!-- DOT UNREAD + ICON JENIS -->
                         <td class="mailbox-star text-muted" style="width:40px;">
                             <?php if ($row['is_read'] == 0): ?>
-                                <div class="notif-dot"></div>
+                                <div class="notif-dot blink"></div>
+                                <i class="<?= $iconStatus ?> <?= $warna_status ?>" style="font-size: 0.7rem;"></i>
+                            <?php else: ?>
+                                <i class="<?= $iconJenis ?> text-muted" style="font-size: 0.7rem;"></i>
                             <?php endif; ?>
-                            <i class="<?= $iconJenis ?>" style="font-size:15px;"
-                                title="<?= esc($row['jenis']) ?>"></i>
                         </td>
 
                         <!-- JENIS + UNIT -->
@@ -126,6 +133,22 @@
                             <div class="notif-status <?= $warna_status ?> small">
                                 <i class="<?= $iconStatus ?>"></i> <?= $status_read ?>
                             </div>
+                            <?php if (($row['status_laporan'] ?? '') === 'SELESAI' && !empty($row['grading_final'])): ?>
+                                <div class="small mt-1" style="border-left:3px solid #198754; padding-left:8px;">
+                                    <span class="text-success">
+                                        <i class="bi bi-check-circle-fill" style="font-size:10px;"></i>
+                                        <strong><?= esc($row['grading_final']) ?></strong>
+                                    </span>
+                                    <span class="text-muted d-block text-truncate">
+                                        <?= esc(substr(strip_tags($row['catatan_komite'] ?? ''), 0, 200)) ?>
+                                    </span>
+                                    <span style="font-size:11px; color:#6c757d;">
+                                        <i class="bi bi-person-check"></i> <?= esc($row['komite_nama'] ?: 'Komite PMKP') ?>
+                                        <i class="bi bi-clock ms-2"></i>
+                                        <?= date('d M Y H:i', strtotime($row['validated_at'] ?? $row['selesai_at'] ?? '')) ?>
+                                    </span>
+                                </div>
+                            <?php endif; ?>
                         </td>
 
                         <!-- STATUS LAPORAN -->
@@ -157,32 +180,32 @@ $end   = $total > 0 ? min($page * 20, $total) : 0;
 ?>
 
 <?php if ($total_pages > 0): ?>
-<div class="card-header mailbox-header d-flex align-items-center gap-2">
+    <div class="card-header mailbox-header d-flex align-items-center gap-2">
 
-    <!-- INFO -->
-    <span class="text-muted small">
-        <?= $start ?> – <?= $end ?> / <?= $total ?>
-    </span>
+        <!-- INFO -->
+        <span class="text-muted small">
+            <?= $start ?> – <?= $end ?> / <?= $total ?>
+        </span>
 
-    <div class="ms-auto"></div>
+        <div class="ms-auto"></div>
 
-    <span class="text-muted small">
-        <?= $total > 0 ? $page : 0 ?> / <?= $total_pages ?>
-    </span>
+        <span class="text-muted small">
+            <?= $total > 0 ? $page : 0 ?> / <?= $total_pages ?>
+        </span>
 
-    <div class="btn-group btn-group-sm">
-        <button class="btn btn-mailbox btn-info-prev"
-            data-page="<?= $page - 1 ?>"
-            <?= ($page <= 1 || $total == 0 ? 'disabled' : '') ?>>
-            <i class="bi bi-chevron-left"></i>
-        </button>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-mailbox btn-info-prev"
+                data-page="<?= $page - 1 ?>"
+                <?= ($page <= 1 || $total == 0 ? 'disabled' : '') ?>>
+                <i class="bi bi-chevron-left"></i>
+            </button>
 
-        <button class="btn btn-mailbox btn-info-next"
-            data-page="<?= $page + 1 ?>"
-            <?= ($page >= $total_pages || $total == 0 ? 'disabled' : '') ?>>
-            <i class="bi bi-chevron-right"></i>
-        </button>
+            <button class="btn btn-mailbox btn-info-next"
+                data-page="<?= $page + 1 ?>"
+                <?= ($page >= $total_pages || $total == 0 ? 'disabled' : '') ?>>
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+
     </div>
-
-</div>
 <?php endif; ?>

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This test suite verifies the Google OAuth auto-verify functionality in the PMKPV4 application. The feature automatically verifies users who login via Google OAuth, since Google has already validated their email ownership.
+This test suite verifies the Google OAuth auto-verify functionality in the SIIMUT application. The feature automatically verifies users who login via Google OAuth, since Google has already validated their email ownership.
 
 ## Test Files
 

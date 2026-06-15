@@ -280,7 +280,7 @@
     $jenis_insiden_full = $jenisInsidenText[$jenis_insiden] ?? $jenis_insiden;
 
     $grading = $insiden['grading_risiko'] ?? null;
-    $status  = $insiden['status_laporan'] ?? 'DRAFT';
+    $status  = $insiden['status_laporan'] ?? 'PENDING';
 
     $gradingBg = [
         'BIRU'   => 'rgba(13,110,253,0.15)',
@@ -308,7 +308,7 @@
     $icon       = $gradingIcon[$grading] ?? 'bi-info-circle';
 
     $statusColor = [
-        'DRAFT'     => 'secondary',
+        'PENDING'     => 'secondary',
         'KARU'      => 'info',
         'INSTALASI' => 'primary',
         'PROSES'    => 'warning',
@@ -316,8 +316,9 @@
     ];
 
     $statusText = [
-        'DRAFT'     => 'Menunggu verifikasi KARU',
+        'PENDING'     => 'Menunggu verifikasi KARU',
         'KARU'      => 'Telah diverifikasi KARU',
+        'TERKIRIM'  => 'Telah dibaca KOMITE',
         'INSTALASI' => 'Sedang dianalisa PMKP',
         'PROSES'    => 'Sedang diproses',
         'SELESAI'   => 'Laporan selesai'
@@ -326,10 +327,16 @@
     $badge = $statusColor[$status] ?? 'secondary';
     $statusLabel = $statusText[$status] ?? $status;
 
+    // Dynamic label: PENDING bisa berarti menunggu KARU atau menunggu KOMITE
+    if ($status === 'PENDING' && !empty($insiden['karu_read_at'])) {
+        $statusLabel = 'Menunggu diverifikasi KOMITE';
+    }
+
     $roleBadge = [
-        'PELAPOR' => '<span class="badge bg-info"><i class="bi bi-person me-1"></i>Pelapor</span>',
-        'KARU'    => '<span class="badge bg-warning text-dark"><i class="bi bi-person-badge me-1"></i>Kepala Ruangan</span>',
-        'KOMITE'  => '<span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>Komite PMKP</span>'
+        'PELAPOR'               => '<span class="badge bg-info"><i class="bi bi-person me-1"></i>Pelapor</span>',
+        'KARU'                  => '<span class="badge bg-warning text-dark"><i class="bi bi-person-badge me-1"></i>Kepala Ruangan</span>',
+        'KOMITE'                => '<span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>Komite PMKP</span>',
+        'KEPALA_KEPERAWATAN'    => '<span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>Kepala Keperawatan</span>',
     ];
 
     $currentRoleBadge = $roleBadge[$user_role] ?? '';
@@ -656,8 +663,9 @@
 
             <!--Hasil Verifikasi KARU-->
             <?php if (
-                $insiden['status_laporan'] != 'DRAFT' &&
-                (!empty($insiden['grading_risiko']) || !empty($insiden['catatan_atasan']))
+                $insiden['status_laporan'] != 'PENDING' &&
+                (!empty($insiden['grading_risiko']) || !empty($insiden['catatan_atasan'])) &&
+                empty($insiden['grading_final'])
             ): ?>
                 <div class="insiden-section">
 
@@ -713,138 +721,138 @@
 
             <?php endif; ?>
 
-
-            <?php if ($insiden['status_laporan'] == 'SELESAI'): ?>
-
-                <div class="insiden-section">
-
-                    <div class="insiden-section-title">
-                        <i class="bi bi-check2-square me-1"></i> Hasil Validasi Komite PMKP
-                    </div>
-
-                    <div class="insiden-box border-start border-4 border-success">
-
-                        <!-- PENGERJA -->
-                        <div class="mb-3">
-                            <div class="insiden-label">Divalidasi/diselesaikan oleh :</div>
-                            <div class="insiden-value">
-                                <span class="badge bg-success">
-                                    <i class="bi bi-shield-check me-1"></i>
-                                    <?= isset($komite_user->full_name) ? esc($komite_user->full_name) : 'Komite PMKP' ?>
-                                </span>
-                                <small class="text-muted ms-1">
-                                    <!-- (<?= isset($komite_user->nip) ? esc($komite_user->nip) : '-' ?>) -->
-                                </small>
-                            </div>
-                        </div>
-
-                        
-                        <!-- GRADING FINAL -->
-                        <div class="mb-2">
-                            <div class="insiden-label">Grading Risiko Final :</div>
-                            <div class="insiden-value">
-                                <?= esc($insiden['grading_final'] ?? '-') ?>
-                            </div>
-                        </div>
-
-                        <!-- PERBANDINGAN -->
-                        <div class="mb-2">
-                            <div class="insiden-label">Perbandingan Grading :</div>
-                            <div class="insiden-value">
-                                KARU : <?= esc($insiden['grading_risiko'] ?? '-') ?> <br>
-                                KOMITE : <strong><?= esc($insiden['grading_final'] ?? '-') ?></strong>
-                            </div>
-                        </div>
-
-                        <!-- CATATAN -->
-                        <div class="mb-2">
-                            <div class="insiden-label">Catatan Komite :</div>
-                            <div class="insiden-value">
-                                <?= nl2br(esc($insiden['catatan_komite'] ?? '')) ?>
-                            </div>
-                        </div>
-
-                        <!-- WAKTU -->
-                        <div class="mt-3 pt-2 border-top">
-                            <i class="bi bi-clock me-1"></i>
-                            Diselesaikan pada:
-                            <?= date('d M Y H:i', strtotime($insiden['validated_at'] ?? date('Y-m-d H:i:s'))) ?>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            <?php endif; ?>
         </div>
+    </div>
 
-        <?php if ($user_role === 'KOMITE' && $insiden['status_laporan'] == 'INSTALASI'): ?>
+    <?php if ($insiden['status_laporan'] == 'SELESAI'): ?>
 
-            <div class="insiden-section">
+        <div class="insiden-section">
 
-                <div class="insiden-section-title">
-                    <i class="bi bi-shield-check me-1"></i>Validasi Komite PMKP
-                </div>
+            <div class="insiden-section-title">
+                <i class="bi bi-check2-square me-1"></i> Hasil Validasi Komite PMKP
+            </div>
 
-                <div class="alert alert-success">
-                    <i class="bi bi-info-circle me-1"></i>
-                    Anda sebagai <strong>Komite PMKP</strong>. Silakan lakukan analisa dan validasi terhadap laporan ini.
-                </div>
+            <div class="insiden-box border-start border-4 border-success">
 
-                <input type="hidden" id="insiden_id" value="<?= $insiden['id'] ?>">
-
-                <!-- CATATAN KOMITE -->
+                <!-- PENGERJA -->
                 <div class="mb-3">
-                    <label class="insiden-label">Catatan Komite</label>
-                    <textarea class="form-control"
-                        id="catatan_komite"
-                        rows="4"
-                        placeholder="Tulis hasil analisa / validasi..."></textarea>
+                    <div class="insiden-label">Divalidasi/diselesaikan oleh :</div>
+                    <div class="insiden-value">
+                        <span class="badge bg-success">
+                            <i class="bi bi-shield-check me-1"></i>
+                            <?= isset($komite_user->full_name) ? esc($komite_user->full_name) : 'Komite PMKP' ?>
+                        </span>
+                        <small class="text-muted ms-1">
+                        </small>
+                    </div>
                 </div>
 
                 <!-- GRADING FINAL -->
-                <label class="insiden-label mb-2">
-                    Grading Risiko (Final)
-                </label>
-
-                <?php
-                $gradingList = ['BIRU', 'HIJAU', 'KUNING', 'MERAH'];
-                ?>
-
-                <?php foreach ($gradingList as $g): ?>
-                    <div class="form-check">
-                        <input class="form-check-input"
-                            type="radio"
-                            name="grading_komite"
-                            value="<?= $g ?>"
-                            <?= ($insiden['grading_risiko'] == $g) ? 'checked' : '' ?>>
-                        <label class="form-check-label">
-                            <?= $g ?>
-                        </label>
+                <div class="mb-2">
+                    <div class="insiden-label">Grading Risiko Final :</div>
+                    <div class="insiden-value">
+                        <?= esc($insiden['grading_final'] ?? '-') ?>
                     </div>
-                <?php endforeach; ?>
+                </div>
 
-                <!-- ERROR -->
-                <div id="komite_error" class="text-danger mt-2"></div>
+                <!-- PERBANDINGAN -->
+                <div class="mb-2">
+                    <div class="insiden-label">Perbandingan Grading :</div>
+                    <div class="insiden-value">
+                        KARU : <?= esc($insiden['grading_risiko'] ?? '-') ?> <br>
+                        KOMITE : <strong><?= esc($insiden['grading_final'] ?? '-') ?></strong>
+                    </div>
+                </div>
 
-                <!-- ACTION BUTTON -->
-                <div class="d-flex gap-2 mt-3">
+                <!-- CATATAN -->
+                <div class="mb-2">
+                    <div class="insiden-label">Catatan Komite :</div>
+                    <div class="insiden-value">
+                        <?= nl2br(esc($insiden['catatan_komite'] ?? '')) ?>
+                    </div>
+                </div>
 
-                    <!-- SETUJUI -->
-                    <button class="btn btn-success"
-                        onclick="validasiKomite(this)"
-                        data-aksi="setujui"
-                        data-id="<?= $insiden['id'] ?>">
-                        <i class="bi bi-check-circle"></i>
-                        Selesai
-                    </button>
-
+                <!-- WAKTU -->
+                <div class="mt-3 pt-2 border-top">
+                    <i class="bi bi-clock me-1"></i>
+                    Diselesaikan pada:
+                    <?= date('d M Y H:i', strtotime($insiden['validated_at'] ?? date('Y-m-d H:i:s'))) ?>
                 </div>
 
             </div>
 
-        <?php endif; ?>
-    </div>
+        </div>
+
+    <?php endif; ?>
+
+    <?php if ($user_role === 'KOMITE' && in_array($insiden['status_laporan'], ['PENDING', 'KARU', 'TERKIRIM', 'INSTALASI']) && empty($insiden['grading_final'])): ?>
+
+        <div class="insiden-section">
+
+            <?php $roleLabel = ($user_role === 'KOMITE') ? 'Komite PMKP' : 'Kepala Keperawatan'; ?>
+
+            <div class="insiden-section-title">
+                <i class="bi bi-shield-check me-1"></i>Validasi <?= $roleLabel ?>
+            </div>
+
+            <div class="alert alert-success">
+                <i class="bi bi-info-circle me-1"></i>
+                Anda sebagai <strong><?= $roleLabel ?></strong>. Silakan lakukan analisa dan validasi terhadap laporan ini.
+            </div>
+
+            <input type="hidden" id="insiden_id" value="<?= $insiden['id'] ?>">
+
+            <!-- CATATAN KOMITE -->
+            <div class="mb-3">
+                <label class="insiden-label">Catatan <?= $roleLabel ?></label>
+                <textarea class="form-control"
+                    id="catatan_komite"
+                    rows="4"
+                    placeholder="Tulis hasil analisa / validasi..."></textarea>
+            </div>
+
+            <!-- GRADING FINAL -->
+            <label class="insiden-label mb-2">
+                Grading Risiko (Final)
+            </label>
+
+            <?php
+            $gradingList = ['BIRU', 'HIJAU', 'KUNING', 'MERAH'];
+            ?>
+
+            <?php foreach ($gradingList as $g): ?>
+                <div class="form-check">
+                    <input class="form-check-input"
+                        type="radio"
+                        name="grading_komite"
+                        value="<?= $g ?>"
+                        <?= ($insiden['grading_risiko'] == $g) ? 'checked' : '' ?>>
+                    <label class="form-check-label">
+                        <?= $g ?>
+                    </label>
+                </div>
+            <?php endforeach; ?>
+
+            <!-- ERROR -->
+            <div id="komite_error" class="text-danger mt-2"></div>
+
+            <!-- ACTION BUTTON -->
+            <div class="d-flex gap-2 mt-3">
+
+                <!-- SETUJUI -->
+                <button class="btn btn-success"
+                    onclick="validasiKomite(this)"
+                    data-aksi="setujui"
+                    data-id="<?= $insiden['id'] ?>">
+                    <i class="bi bi-check-circle"></i>
+                    Selesai
+                </button>
+
+            </div>
+
+        </div>
+
+    <?php endif; ?>
 
     <div class="card-header mailbox-header d-flex align-items-center">
 
@@ -868,7 +876,10 @@
             <!-- PAGINATION -->
             <div class="btn-group btn-group-sm">
 
-                <?php if ($user_role === 'KARU' && in_array($insiden['status_laporan'], ['DRAFT', 'INBOX'])): ?>
+                <?php 
+            $canVerifyKARU = ($user_role === 'KARU' && in_array($insiden['status_laporan'], ['PENDING', 'KARU']) && empty($insiden['grading_risiko']));
+            ?>
+                <?php if ($canVerifyKARU): ?>
 
                     <button class="btn btn-mailbox btn-sm"
                         data-bs-toggle="collapse"
@@ -883,7 +894,10 @@
     </div>
 
 
-    <?php if ($user_role === 'KARU' && in_array($insiden['status_laporan'], ['DRAFT', 'INBOX'])): ?>
+    <?php 
+            $canVerifyKARU = ($user_role === 'KARU' && in_array($insiden['status_laporan'], ['PENDING', 'KARU']) && empty($insiden['grading_risiko']));
+            ?>
+                <?php if ($canVerifyKARU): ?>
         <div class="collapse" id="formVerifikasi">
 
             <div class="insiden-section">
@@ -940,18 +954,10 @@
                 </div>
                 <div id="verifikasi_error" class="text-danger mt-2"></div>
 
-                <?php if ($insiden['status_laporan'] == 'DRAFT'): ?>
-                <button class="btn btn-primary mt-3 btn-kirim-komite"
-                    data-id="<?= $insiden['id'] ?>">
-                    <i class="bi bi-send"></i>
-                    Kirim ke Komite
-                </button>
-                <?php endif; ?>
-
                 <button class="btn btn-success mt-3 btn-kirim-verifikasi"
                     data-id="<?= $insiden['id'] ?>">
-                    <i class="bi bi-check-circle"></i>
-                    Verifikasi
+                    <i class="bi bi-send"></i>
+                    Kirim Verifikasi
                 </button>
             </div>
 

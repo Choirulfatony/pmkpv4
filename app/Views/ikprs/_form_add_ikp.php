@@ -774,6 +774,17 @@
                 disabled>
                 Selanjutnya
             </button>
+
+            <!-- TOMBOL KIRIM LANGSUNG (HANYA UNTUK INPUT BARU) -->
+            <?php if (empty($insiden_id)): ?>
+            <button type="button"
+                class="btn btn-success"
+                id="btnKirimLangsung"
+                onclick="submitIkp('PENDING')"
+                style="display: none;">
+                <i class="bi bi-send"></i> Kirim Langsung ke KARU
+            </button>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -833,8 +844,8 @@
 
     // });
 
-    setTanggal("#tgl_masuk_view", "#tgl_masuk");
-    setTanggal("#tgl_insiden_view", "#tgl_insiden");
+    try { setTanggal("#tgl_masuk_view", "#tgl_masuk"); } catch(e) { console.warn('flatpickr tgl_masuk:', e); }
+    try { setTanggal("#tgl_insiden_view", "#tgl_insiden"); } catch(e) { console.warn('flatpickr tgl_insiden:', e); }
 
     function setTanggal(view, hidden) {
 
@@ -853,7 +864,7 @@
 
                     let formatDB = yyyy + "-" + mm + "-" + dd;
 
-                    $(hidden).val(formatDB);
+                    $(hidden).val(formatDB).trigger('change');
 
                 }
 
@@ -923,7 +934,10 @@
             if (raw.length > 3) formatted += '-' + raw.substring(3, 5);
             if (raw.length > 5) formatted += '-' + raw.substring(5, 7);
 
-            input.value = formatted;
+            // hanya set jika benar-benar berubah, cegah infinite loop input event
+            if (input.value !== formatted) {
+                input.value = formatted;
+            }
             input.setSelectionRange(formatted.length, formatted.length);
 
             if (raw.length === 7 && typeof tryCariPasienAuto === 'function') {
@@ -935,8 +949,9 @@
     // cari pasien
     function cariPasien() {
 
-        if (IKP.isSearching) return;
-        IKP.isSearching = true;
+        if (!window.IKP) window.IKP = { isSearching: false, lastMedrec: null };
+        if (window.IKP.isSearching) return;
+        window.IKP.isSearching = true;
 
         const kd_pasien = $('#kd_pasien').val();
         const tgl_masuk = $('#tgl_masuk').val();
@@ -956,7 +971,7 @@
 
             success: function(res) {
                 $('#loading_pasien').hide();
-                IKP.isSearching = false;
+                if (window.IKP) window.IKP.isSearching = false;
 
                 if (res.status === 'success') {
                     const d = res.data;
@@ -978,7 +993,7 @@
 
             error: function() {
                 $('#loading_pasien').hide();
-                IKP.isSearching = false;
+                if (window.IKP) window.IKP.isSearching = false;
                 toastError('Terjadi kesalahan koneksi ke server');
             }
         });
@@ -1058,9 +1073,9 @@
             kd_pasien_raw.length === 7 &&
             tgl_masuk &&
             asal_pasien &&
-            IKP.lastMedrec !== kd_pasien_raw
+            (!window.IKP || window.IKP.lastMedrec !== kd_pasien_raw)
         ) {
-            IKP.lastMedrec = kd_pasien_raw;
+            if (window.IKP) window.IKP.lastMedrec = kd_pasien_raw;
             cariPasien();
         }
     }
@@ -1623,11 +1638,27 @@
         const totalSteps = document.querySelectorAll('.bs-stepper-header .step').length;
         const btnPrev = document.getElementById('btnPrev');
         const btnNext = document.getElementById('btnNext');
+        const insiden_id = <?= !empty($insiden_id) ? $insiden_id : 0 ?>;
 
         btnPrev.disabled = window.currentStep === 1;
 
-        btnNext.textContent =
-            window.currentStep === totalSteps ? 'Simpan' : 'Selanjutnya';
+        if (window.currentStep === totalSteps) {
+            if (insiden_id > 0) {
+                // Edit DRAFT → tombol jadi "Kirim ke KARU"
+                btnNext.textContent = 'Kirim ke KARU';
+                btnNext.className = 'btn btn-success';
+                btnNext.onclick = function() { kirimDraft(); };
+            } else {
+                // Input baru → tombol tetap "Simpan"
+                btnNext.textContent = 'Simpan';
+                btnNext.className = 'btn btn-primary';
+                btnNext.onclick = function() { nextStep(); };
+            }
+        } else {
+            btnNext.textContent = 'Selanjutnya';
+            btnNext.className = 'btn btn-primary';
+            btnNext.onclick = function() { nextStep(); };
+        }
     }
 
     // load tempat insiden (select2 dengan AJAX)
@@ -1668,7 +1699,7 @@
     }
 
     // submit form IKP (placeholder)
-    function submitIkp(status = 'DRAFT') {
+    function submitIkp(status = 'PENDING') {
 
         // 🔥 tampilkan loading BAR DI LAYOUT UTAMA
         if (typeof showIKPLoading === 'function') {
@@ -1682,49 +1713,47 @@
             dataType: "json",
 
             success: function(res) {
-
+                // Reset error styling
                 $('.invalid-feedback').text('');
                 $('.is-invalid').removeClass('is-invalid');
 
                 if (!res.status) {
-
+                    // Tampilkan error validasi per-field
                     if (res.errors) {
                         $.each(res.errors, function(field, msg) {
                             $('[name="' + field + '"]').addClass('is-invalid');
                             $('#error_' + field).text(msg);
                         });
                     }
-
+                    // Gagal — toast merah
                     toastError(res.message);
-
-                    // ❌ HENTIKAN loading kalau gagal
                     hideIKPLoading();
                     return;
                 }
 
+                // Sukses — toast hijau + reload inbox
                 toastSuccess(res.message);
-                // showIKPLoading();
-
-                // 🔄 load inbox setelah simpan
                 $('#inbox-wrapper').load(
                     "<?= site_url('ikprs/form_inbox_karu') ?>",
                     function() {
-                        // ✅ STOP loading setelah load selesai
                         hideIKPLoading();
                     }
                 );
             },
 
             error: function() {
-                toastr.error('Terjadi kesalahan server');
+                // Error server — toast merah
+                toastError('Terjadi kesalahan server');
                 hideIKPLoading();
             }
         });
     }
 
     /* =====================================================
-         TOAST HELPER
+         TOAST HELPER (SweetAlert2) — notifikasi pop-up di pojok kanan atas
+         Dipanggil oleh: submitIkp(), kirimDraft()
        ===================================================== */
+    // Peringatan kuning (warning) — validasi client-side gagal
     function toastWarning(msg) {
         Swal.fire({
             toast: true,
@@ -1738,6 +1767,7 @@
         });
     }
 
+    // Error merah — server error / unexpected error
     function toastError(msg) {
         Swal.fire({
             toast: true,
@@ -1751,6 +1781,7 @@
         });
     }
 
+    // Sukses hijau + icon centang — operasi sukses
     function toastSuccess(msg) {
         Swal.fire({
             toast: true,
@@ -1763,6 +1794,53 @@
             timerProgressBar: true
         });
     }
+
+    /* ===== KIRIM DRAFT KE KARU ===== */
+    function kirimDraft() {
+        const insiden_id = <?= !empty($insiden_id) ? $insiden_id : 0 ?>;
+        
+        if (!insiden_id) {
+            alert('ID insiden tidak ditemukan!');
+            return;
+        }
+
+        if (!confirm('Kirim laporan ini ke KARU?')) return;
+
+        const btn = $('#btnKirim');
+        btn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Mengirim...');
+
+        $.ajax({
+            url: "<?= site_url('ikprs/kirimDraft') ?>",
+            type: "POST",
+            dataType: "json",
+            data: {
+                insiden_id: insiden_id,
+                '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+            },
+            success: function(res) {
+                if (res.status) {
+                    alert('Laporan berhasil dikirim ke KARU');
+                    // Reload Info tab
+                    if (typeof loadInfo === 'function') {
+                        loadInfo(1);
+                    }
+                    // Refresh notif counter
+                    if (typeof refreshNotif === 'function') {
+                        refreshNotif();
+                    }
+                    // Close modal if any
+                    $('#modal_ikp').modal('hide');
+                } else {
+                    alert(res.message || 'Gagal mengirim laporan');
+                    btn.prop('disabled', false).html('<i class="bi bi-send"></i> Kirim ke KARU');
+                }
+            },
+            error: function() {
+                alert('Terjadi kesalahan saat mengirim');
+                btn.prop('disabled', false).html('<i class="bi bi-send"></i> Kirim ke KARU');
+            }
+        });
+    }
 </script>
 
 <style>
@@ -1773,5 +1851,52 @@
 
     #ikpStepper .bs-stepper-header .step.active {
         opacity: 1;
+    }
+
+    @media (max-width: 767px) {
+        #ikpStepper .bs-stepper-header {
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            flex-wrap: nowrap !important;
+            gap: 0 !important;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            padding-bottom: 4px;
+        }
+        #ikpStepper .bs-stepper-header .step {
+            flex: 0 0 auto !important;
+            min-width: 50px !important;
+        }
+        #ikpStepper .bs-stepper-header .step .bs-stepper-label {
+            font-size: 9px !important;
+            white-space: nowrap;
+        }
+        #ikpStepper .bs-stepper-header .step .bs-stepper-circle {
+            width: 1.75rem !important;
+            height: 1.75rem !important;
+            font-size: .7rem !important;
+            line-height: 1.75rem !important;
+        }
+        #ikpStepper .bs-stepper-header .line {
+            flex: 0 0 10px !important;
+            min-width: 10px !important;
+        }
+
+        #ikpStepper .bs-stepper-content .row > [class*="col-"] {
+            padding-left: 4px !important;
+            padding-right: 4px !important;
+        }
+
+        #ikpStepper .bs-stepper-content .card-body {
+            padding: 0.75rem !important;
+        }
+
+        #ikpStepper .modal-footer {
+            flex-direction: column !important;
+            gap: 0.5rem !important;
+        }
+        #ikpStepper .modal-footer button {
+            width: 100% !important;
+        }
     }
 </style>
