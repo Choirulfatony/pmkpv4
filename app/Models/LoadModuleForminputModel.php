@@ -943,7 +943,7 @@ class LoadModuleForminputModel extends Model
 
         // Jika group_days mencukupi, izinkan langsung (override "tanggal 6" lock)
         if ($groupDays > 0 && $diffDays <= $groupDays) {
-            $restricted = $diffDays > 30 && $frequency === 'D';
+            $restricted = false;
             return [
                 'allowed' => true,
                 'restricted' => $restricted,
