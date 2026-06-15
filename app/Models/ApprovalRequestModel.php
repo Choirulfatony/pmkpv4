@@ -69,6 +69,21 @@ class ApprovalRequestModel extends Model
         return $q->get()->getResult();
     }
 
+    public function getMyRecentRequests(int $profileId, int $limit = 5): array
+    {
+        $db = db_connect();
+        return $db->table('approval_requests ar')
+            ->select("ar.*, COALESCE(qi.indicator_element, lqi.indicator_element) as indicator_name, mid.department_name, COALESCE(qi.indicator_category_id, lqi.indicator_category_id) as indicator_category_id")
+            ->join('quality_indicator qi', 'qi.indicator_id = ar.ar_indicator_id', 'left')
+            ->join('local_quality_indicator lqi', 'lqi.indicator_id = ar.ar_indicator_id', 'left')
+            ->join('master_institution_department mid', 'mid.department_id = ar.ar_department_id', 'left')
+            ->where('ar.ar_request_by', $profileId)
+            ->orderBy('ar.ar_request_date', 'DESC')
+            ->limit($limit)
+            ->get()
+            ->getResult();
+    }
+
     public function getPendingCount(?string $groupType = null): int
     {
         $db = db_connect();

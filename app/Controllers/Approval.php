@@ -312,10 +312,17 @@ class Approval extends AppController
         $data = $model->getPendingRequests(null, 5);
         $count = $model->getPendingCount();
 
+        $profileId = (int) session('profile_id');
+        $myRequests = [];
+        if ($profileId > 0) {
+            $myRequests = $model->getMyRecentRequests($profileId, 5);
+        }
+
         return $this->response->setJSON([
-            'status' => true,
-            'total'  => $count,
-            'data'   => $data
+            'status'      => true,
+            'total'       => $count,
+            'data'        => $data,
+            'my_requests' => $myRequests
         ]);
     }
 

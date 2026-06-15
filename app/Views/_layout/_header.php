@@ -313,6 +313,17 @@
     .dropdown-footer:hover {
         background: rgba(255, 255, 255, 0.05);
     }
+
+    /* backdate dropdown item: no blue on click */
+    .bd-item {
+        color: inherit !important;
+    }
+    .bd-item:active,
+    .bd-item:focus,
+    .bd-item:hover {
+        background: rgba(128,128,128,0.08) !important;
+        color: inherit !important;
+    }
 </style>
 
 
@@ -828,8 +839,20 @@
     }
 
     /* =============================
-       BACKDATE REQUEST NOTIFICATION
+       BACKDATE REQUEST: date+time helper
     ============================= */
+    function fmtBDDate(dt) {
+        if (!dt) return '-';
+        var d = new Date(dt.replace(' ','T'));
+        if (isNaN(d)) return dt.substring(0,16);
+        var dd = String(d.getDate()).padStart(2,'0');
+        var mm = String(d.getMonth()+1).padStart(2,'0');
+        var yyyy = d.getFullYear();
+        var hh = String(d.getHours()).padStart(2,'0');
+        var mi = String(d.getMinutes()).padStart(2,'0');
+        return dd+'-'+mm+'-'+yyyy+' '+hh+':'+mi;
+    }
+
     function refreshBackdateNotif() {
         // Hanya untuk APP login (Administrator, Kendali Mutu, Validasi)
         if ('<?= session('login_source') ?>' !== 'APP') {
@@ -845,10 +868,11 @@
                 xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
             },
             success: function(res) {
-                if (!res.status || !res.data) return;
+                if (!res.status) return;
 
                 var bdCount = res.total ?? 0;
                 var bdData = res.data ?? [];
+                var myData = res.my_requests ?? [];
 
                 var $badge = $('#badge-backdate_header');
                 if (bdCount > 0) {
@@ -858,54 +882,74 @@
                 }
 
                 var $bdItems = $('#backdate-notif-items');
-
-                if (bdData.length === 0) {
-                    $bdItems.html('<a class="dropdown-item text-muted text-center small">Tidak ada backdate request</a>');
-                    return;
-                }
-
                 var typeNames = {1:'INM', 5:'IMPRS', 6:'IMPUNIT', 7:'IKP'};
                 var typeSlugs = {1:'inm', 5:'imprs', 6:'impunit', 7:'ikp'};
                 var html = '';
-                bdData.forEach(function(item) {
-                    var typeName = typeNames[item.ar_group_type] || '?';
-                    var slug = typeSlugs[item.ar_group_type] || '';
-                    var name = item.indicator_name || '-';
-                    var unit = item.department_name || '-';
-                    var date = item.ar_request_date || '';
-                    var dateShort = date.substring(0, 10);
-                    var link = '<?= site_url('siimut/backdate/requests-list') ?>/' + slug;
-                    var clickable = user_role !== 'KENDALI_MUTU';
-                    if (clickable) {
-                        html += `
-                        <a href="${link}" class="dropdown-item">
-                            <div class="d-flex align-items-start gap-2">
-                                <div class="notif-icon"><i class="bi bi-calendar-check text-warning"></i></div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between">
-                                        <div class="notif-title">${typeName} - ${unit}</div>
-                                        <div class="notif-time">${dateShort}</div>
-                                    </div>
-                                    <small class="text-muted">${name}</small>
-                                </div>
-                            </div>
-                        </a>`;
-                    } else {
-                        html += `
-                        <div class="dropdown-item">
-                            <div class="d-flex align-items-start gap-2">
-                                <div class="notif-icon"><i class="bi bi-calendar-check text-warning"></i></div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between">
-                                        <div class="notif-title">${typeName} - ${unit}</div>
-                                        <div class="notif-time">${dateShort}</div>
-                                    </div>
-                                    <small class="text-muted">${name}</small>
-                                </div>
-                            </div>
-                        </div>`;
-                    }
-                });
+
+                /* ---------- MENUNGGU (pending) ---------- */
+                if (bdData.length > 0) {
+                    html += '<span class="dropdown-item dropdown-header small py-1">Menunggu Persetujuan</span>';
+                    bdData.forEach(function(item) {
+                        var typeName = typeNames[item.ar_group_type] || '?';
+                        var slug = typeSlugs[item.ar_group_type] || '';
+                        var name = item.indicator_name || '-';
+                        var unit = item.department_name || '-';
+                        var link = '<?= site_url('siimut/backdate/requests-list') ?>/' + slug;
+                        var clickable = user_role !== 'KENDALI_MUTU';
+                        var tag = clickable ? 'a' : 'div';
+                        var hrefAttr = clickable ? ' href="'+link+'"' : '';
+                        html += '<'+tag+hrefAttr+' class="dropdown-item bd-item">'+
+                            '<div class="d-flex align-items-start gap-2">'+
+                                '<div class="notif-icon"><i class="bi bi-calendar-check text-warning"></i></div>'+
+                                '<div class="flex-grow-1" style="min-width:0">'+
+                                    '<div class="notif-title">'+typeName+' - '+unit+'</div>'+
+                                    '<small class="text-muted d-block text-truncate">'+name+'</small>'+
+                                    '<small class="text-muted d-block" style="font-size:11px;opacity:.7">'+fmtBDDate(item.ar_request_date)+'</small>'+
+                                '</div>'+
+                            '</div>'+
+                        '</'+tag+'>';
+                    });
+                }
+
+                /* ---------- REQUEST SAYA ---------- */
+                if (myData.length > 0) {
+                    if (html) html += '<div class="dropdown-divider"></div>';
+                    html += '<span class="dropdown-item dropdown-header small py-1">Request Saya</span>';
+                    myData.forEach(function(item) {
+                        var typeName = typeNames[item.ar_group_type] || '?';
+                        var name = item.indicator_name || '-';
+                        var unit = item.department_name || '-';
+                        var status = item.ar_status || '';
+                        var statusBadge = '';
+                        var statusClass = '';
+                        if (status === 'pending') {
+                            statusBadge = '<span class="badge bg-warning text-dark">Pending</span>';
+                        } else if (status === 'approved') {
+                            statusBadge = '<span class="badge bg-success">Disetujui</span>';
+                        } else if (status === 'rejected') {
+                            statusBadge = '<span class="badge bg-danger">Ditolak</span>';
+                        } else {
+                            statusBadge = '<span class="badge bg-secondary">'+status+'</span>';
+                        }
+                        html += '<div class="dropdown-item bd-item">'+
+                            '<div class="d-flex align-items-start gap-2">'+
+                                '<div class="notif-icon"><i class="bi bi-clock-history text-secondary"></i></div>'+
+                                '<div class="flex-grow-1" style="min-width:0">'+
+                                    '<div class="d-flex justify-content-between align-items-center gap-1">'+
+                                        '<div class="notif-title text-truncate">'+typeName+' - '+unit+'</div>'+
+                                        '<div class="flex-shrink-0">'+statusBadge+'</div>'+
+                                    '</div>'+
+                                    '<small class="text-muted d-block text-truncate">'+name+'</small>'+
+                                    '<small class="text-muted d-block" style="font-size:11px;opacity:.7">'+fmtBDDate(item.ar_request_date)+'</small>'+
+                                '</div>'+
+                            '</div>'+
+                        '</div>';
+                    });
+                }
+
+                if (!html) {
+                    html = '<a class="dropdown-item text-muted text-center small">Tidak ada backdate request</a>';
+                }
                 $bdItems.html(html);
             },
             error: function(xhr, status, error) {
