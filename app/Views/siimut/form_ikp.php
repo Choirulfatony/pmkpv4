@@ -221,7 +221,7 @@
                     </a>
                     <div id="requestForm" class="d-none">
                         <div class="alert alert-warning py-2 mb-2">
-                            <i class="bi bi-exclamation-triangle me-1"></i> Data sudah melebihi batas input.
+                            <i class="bi bi-exclamation-triangle me-1"></i> Tanggal sudah melebihi batas input. Kirim request persetujuan ke admin untuk dapat mengedit/menghapus data.
                         </div>
                         <div class="mb-2">
                             <label class="form-label fw-bold small mb-1">Alasan</label>
