@@ -147,8 +147,24 @@ class ApprovalRequestModel extends Model
         ]);
     }
 
+    public function rejectExpiredApprovals(): int
+    {
+        $db = db_connect();
+        $cutoff = date('Y-m-d H:i:s', strtotime('-48 hours'));
+        $db->table('approval_requests')
+            ->where('ar_status', 'approved')
+            ->where('ar_approve_date IS NOT NULL')
+            ->where('ar_approve_date <', $cutoff)
+            ->update([
+                'ar_status' => 'rejected',
+                'ar_notes'  => 'Ditolak otomatis: respon lama (lebih dari 2x24 jam)',
+            ]);
+        return $db->affectedRows();
+    }
+
     public function isApproved(int $indicatorId, string $departmentId, string $period, int $userId): bool
     {
+        $this->rejectExpiredApprovals();
         $db = db_connect();
         $row = $db->table('approval_requests')
             ->where('ar_indicator_id', $indicatorId)
@@ -163,6 +179,7 @@ class ApprovalRequestModel extends Model
 
     public function getApprovedAction(int $indicatorId, string $departmentId, string $period, int $userId): ?string
     {
+        $this->rejectExpiredApprovals();
         $db = db_connect();
         $row = $db->table('approval_requests')
             ->select('ar_action_type')
@@ -178,6 +195,7 @@ class ApprovalRequestModel extends Model
 
     public function isApprovedForAction(int $indicatorId, string $departmentId, string $period, int $userId, string $actionType): bool
     {
+        $this->rejectExpiredApprovals();
         $db = db_connect();
         $row = $db->table('approval_requests')
             ->where('ar_indicator_id', $indicatorId)

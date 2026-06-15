@@ -27,6 +27,9 @@ class Approval extends AppController
 
         $this->disableCache();
 
+        $model = new ApprovalRequestModel();
+        $model->rejectExpiredApprovals();
+
         $cfg = $this->modules[$module];
         $tahun = $this->request->getGet('tahun') ?? date('Y');
         $bulan = $this->request->getGet('bulan') ?? date('m');
@@ -260,6 +263,9 @@ class Approval extends AppController
 
         $this->disableCache();
 
+        $model = new ApprovalRequestModel();
+        $model->rejectExpiredApprovals();
+
         $role = session()->get('user_role');
         $menuModel = new SiimutMenuModel();
         $menus = $menuModel->getMenuByRole($role);
@@ -283,6 +289,7 @@ class Approval extends AppController
         }
 
         $model = new ApprovalRequestModel();
+        $model->rejectExpiredApprovals();
         $groupType = $this->request->getPost('group_type');
         $data = $model->getPendingRequests($groupType);
 
@@ -296,6 +303,7 @@ class Approval extends AppController
         }
 
         $model = new ApprovalRequestModel();
+        $model->rejectExpiredApprovals();
         $groupType = $this->request->getPost('group_type');
         $data = $model->getAllRequests($groupType);
 
@@ -309,6 +317,7 @@ class Approval extends AppController
         }
 
         $model = new ApprovalRequestModel();
+        $model->rejectExpiredApprovals();
         $data = $model->getPendingRequests(null, 5);
         $count = $model->getPendingCount();
 
