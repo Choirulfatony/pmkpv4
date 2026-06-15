@@ -43,19 +43,6 @@
                         }
                         renderMenu($menus);
                         ?>
-                        <li class="nav-header mt-3" style="font-size:.75rem;font-weight:600;text-transform:uppercase;color:var(--bs-secondary-color);padding:.5rem 1rem;">Permintaan</li>
-                        <li class="nav-item">
-                            <a href="<?= site_url('siimut/backdate/requests-list') ?>" class="nav-link d-flex align-items-center">
-                                <i class="nav-icon bi bi-calendar-check"></i>
-                                <p class="mb-0 ms-2">Backdate Request</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="<?= site_url('siimut/approval') ?>" class="nav-link d-flex align-items-center">
-                                <i class="nav-icon bi bi-check2-square"></i>
-                                <p class="mb-0 ms-2">Approval</p>
-                            </a>
-                        </li>
                     <?php endif; ?>
 
                     <?php if ($login_source == 'HRIS' && in_array(session('user_role'), ['KOMITE', 'KARU', 'KEPALA_KEPERAWATAN'])): ?>
@@ -81,18 +68,6 @@
                                     </a>
                                 </li>
                             </ul>
-                        </li>
-                        <li class="nav-item">
-                            <a href="<?= site_url('siimut/backdate/requests-list') ?>" class="nav-link">
-                                <i class="nav-icon bi bi-calendar-check"></i>
-                                <p>Backdate Request</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="<?= site_url('siimut/approval') ?>" class="nav-link">
-                                <i class="nav-icon bi bi-check2-square"></i>
-                                <p>Approval</p>
-                            </a>
                         </li>
                     <?php endif; ?>
                 </ul>
