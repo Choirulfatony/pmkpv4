@@ -239,7 +239,7 @@
                     <hr>
                     <div id="requestStatusAlert"></div>
                     <a href="javascript:void(0)" id="btnRequestTrigger" onclick="toggleRequestForm()">
-                        <i class="bi bi-send me-1"></i> Kirim Request Approval
+                        <i class="bi bi-send me-1"></i> Request Backdate Approval
                     </a>
                     <div id="requestForm" class="d-none">
                         <div class="alert alert-warning py-2 mb-2">
