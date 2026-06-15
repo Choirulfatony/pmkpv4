@@ -328,8 +328,8 @@
             </li>
 
 
-            <!-- NOTIFICATION IKP -->
-            <li class="nav-item dropdown">
+            <!-- NOTIFICATION IKP (HRIS only) -->
+            <li class="nav-item dropdown" id="notif-ikp-nav"<?= session('login_source') != 'HRIS' ? ' style="display:none;"' : '' ?>>
                 <a href="#" class="nav-link position-relative"
                     data-bs-toggle="dropdown">
                     <i class="bi bi-bell"></i>
@@ -349,8 +349,8 @@
                 </div>
             </li>
 
-            <!-- BACKDATE REQUEST -->
-            <li class="nav-item dropdown">
+            <!-- BACKDATE REQUEST (APP only: Administrator, Kendali Mutu, Validasi) -->
+            <li class="nav-item dropdown" id="notif-backdate-nav"<?= session('login_source') == 'HRIS' ? ' style="display:none;"' : '' ?>>
                 <a href="#" class="nav-link position-relative"
                     data-bs-toggle="dropdown">
                     <i class="bi bi-calendar-check"></i>
@@ -800,6 +800,10 @@
        BACKDATE REQUEST NOTIFICATION
     ============================= */
     function refreshBackdateNotif() {
+        // Hanya untuk APP login (Administrator, Kendali Mutu, Validasi)
+        if ('<?= session('login_source') ?>' !== 'APP') {
+            return;
+        }
         $.ajax({
             url: "<?= base_url('siimut/backdate/ajax-notification') ?>",
             type: "GET",
