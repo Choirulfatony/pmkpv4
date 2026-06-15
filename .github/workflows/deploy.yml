@@ -1,0 +1,20 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [master, fitur-ikprs-notifikasi]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute deploy script via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          port: 22
+          script: |
+            cd /var/www/html/siimut
+            git pull origin ${{ github.ref_name }}
