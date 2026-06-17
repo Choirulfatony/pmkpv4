@@ -40,7 +40,7 @@ class FileManager extends AppController
         }
 
         return $this->render('siimut/file_manager', [
-            'judul'         => 'File Manager',
+            'judul'         => 'Dokumen Mutu',
             'icon'          => '<i class="bi bi-folder"></i>',
             '_content'      => view('siimut/file_manager', [
                 'items'         => $items,
@@ -64,7 +64,7 @@ class FileManager extends AppController
         foreach ($items as $row) {
             if ($row->is_folder) {
                 $icon = '<i class="bi bi-folder-fill text-warning me-2 fs-5"></i>';
-                $nameHtml = '<a href="' . site_url('siimut/file-manager?folder=' . $row->id) . '" class="text-decoration-none fw-medium">' . esc($row->file_name) . '</a>';
+                $nameHtml = '<a href="' . site_url('siimut/dokumen-mutu?folder=' . $row->id) . '" class="text-decoration-none fw-medium">' . esc($row->file_name) . '</a>';
                 $ext = '-';
                 $size = '-';
                 $actions = '<button class="btn btn-sm btn-outline-warning btn-request-delete" data-id="' . $row->id . '" data-type="folder" title="Minta Hapus Folder"><i class="bi bi-send"></i></button>';
@@ -74,7 +74,7 @@ class FileManager extends AppController
                 $ext = strtoupper(pathinfo($row->file_name, PATHINFO_EXTENSION));
                 $size = $this->formatSize((int) $row->file_size);
 
-                $actions = '<a href="' . site_url('siimut/file-manager/download/' . $row->id) . '" class="btn btn-sm btn-outline-info me-1" title="Download"><i class="bi bi-download"></i></a>';
+                $actions = '<a href="' . site_url('siimut/dokumen-mutu/download/' . $row->id) . '" class="btn btn-sm btn-outline-info me-1" title="Download"><i class="bi bi-download"></i></a>';
                 $fileUrl = base_url('uploads/file_manager/' . $row->file_path);
                 $actions .= '<a href="' . $fileUrl . '" class="btn btn-sm btn-outline-primary me-1" target="_blank" title="View"><i class="bi bi-eye"></i></a>';
                 $actions .= '<button class="btn btn-sm btn-outline-warning btn-request-delete" data-id="' . $row->id . '" data-type="file" title="Minta Hapus File"><i class="bi bi-send"></i></button>';
@@ -86,6 +86,7 @@ class FileManager extends AppController
                 $size,
                 $row->uploader_name ?: '-',
                 $row->created_at ? date('d/m/Y H:i', strtotime($row->created_at)) : '-',
+                $row->description ?: '-',
                 $actions,
             ];
         }
@@ -246,7 +247,7 @@ class FileManager extends AppController
         $this->disableCache();
 
         return $this->render('siimut/delete_requests', [
-            'judul'    => 'Permintaan Hapus File',
+            'judul'    => 'Permintaan Hapus Dokumen',
             'icon'     => '<i class="bi bi-exclamation-triangle"></i>',
             '_content' => view('siimut/delete_requests'),
         ]);

@@ -63,6 +63,7 @@ class Staff extends AppController
                 : '-';
 
             $actions = '<div class="btn-group btn-group-sm">';
+            $actions .= '<button type="button" class="btn btn-outline-info btn-view-staf" data-id="' . $row->profile_id . '" title="View"><i class="bi bi-eye"></i></button>';
             $actions .= '<a href="' . site_url('siimut/staf/edit/' . $row->profile_id) . '" class="btn btn-outline-primary" title="Edit"><i class="bi bi-pencil-square"></i></a>';
             $actions .= '<button type="button" class="btn btn-outline-danger btn-delete" data-id="' . $row->profile_id . '" data-name="' . esc($row->profile_fullname) . '" title="Hapus"><i class="bi bi-trash"></i></button>';
             $actions .= '</div>';
@@ -327,6 +328,43 @@ class Staff extends AppController
         }
 
         return $this->response->setJSON(['status' => false, 'message' => 'Gagal mengubah password']);
+    }
+
+    public function ajaxGetStaff(int $id)
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $staff = $this->staffModel->getStaffById($id);
+        if (!$staff) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Staf tidak ditemukan']);
+        }
+
+        helper('profile');
+        $staffPic = $staff->profile_photo ?? '';
+        $photoUrl = get_profile_picture($staffPic, $staff->profile_id, $staff->profile_fullname);
+
+        return $this->response->setJSON([
+            'status' => true,
+            'data'   => [
+                'photo'       => $photoUrl,
+                'fullname'    => esc($staff->profile_fullname),
+                'group'       => esc($staff->group_name ?? '-'),
+                'department'  => esc($staff->department_name ?? '-'),
+                'nip'         => esc($staff->profile_employee_id ?? '-'),
+                'email'       => esc($staff->profile_email ?? '-'),
+                'gender'      => $staff->profile_gender == 1 ? 'Laki-laki' : ($staff->profile_gender == 2 ? 'Perempuan' : '-'),
+                'handphone'   => esc($staff->profile_handphone1 ?? '-'),
+                'dob'         => $staff->profile_dob ? date('d/m/Y', strtotime($staff->profile_dob)) : '-',
+                'status'      => $staff->profile_disable ? 'Nonaktif' : 'Aktif',
+                'online'      => $staff->profile_online_status ? '<span class="badge bg-success"><i class="bi bi-circle-fill"></i> Online</span>' : '<span class="badge bg-secondary">Offline</span>',
+                'terdaftar'   => $staff->profile_insert_date ? date('d M Y', strtotime($staff->profile_insert_date)) : '-',
+                'last_login'  => $staff->profile_last_login ? date('d M Y H:i', strtotime($staff->profile_last_login)) : '-',
+                'note'        => nl2br(esc($staff->profile_note ?? '-')),
+                'password'    => esc($staff->profile_confirm_password ?? ''),
+            ]
+        ]);
     }
 
     public function toggleDisable(int $id)

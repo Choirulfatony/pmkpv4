@@ -33,7 +33,7 @@
 
 					<?php if ($isLast): ?>
 						<li class="breadcrumb-item active" aria-current="page">
-							<?= esc($label) ?>
+							<?= esc($judul ?? $label) ?>
 						</li>
 					<?php else: ?>
 						<li class="breadcrumb-item">

@@ -174,7 +174,7 @@
 
         var footer = document.getElementById('dt-footer');
         if (row._source === 'file') {
-            var link = '<?= site_url('siimut/file-manager/delete-requests') ?>';
+            var link = '<?= site_url('siimut/dokumen-mutu/delete-requests') ?>';
             footer.innerHTML = '<a href="'+link+'" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right"></i> Kelola di Hapus File</a>' +
                                '<button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Tutup</button>';
         } else {

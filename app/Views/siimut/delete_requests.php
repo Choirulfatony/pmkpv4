@@ -4,7 +4,7 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div>
                     <h5 class="mb-0">
-                        <i class="bi bi-exclamation-triangle me-1"></i>Permintaan Hapus File
+                        <i class="bi bi-exclamation-triangle me-1"></i>Permintaan Hapus Dokumen
                     </h5>
                 </div>
             </div>
@@ -107,7 +107,7 @@ function escHtml(str) {
 
 function loadHistory() {
     $.ajax({
-        url: '<?= site_url('siimut/file-manager/ajax-get-delete-history') ?>',
+        url: '<?= site_url('siimut/dokumen-mutu/ajax-get-delete-history') ?>',
         type: 'POST',
         success: function(res) {
             if (!res.status || !res.data.length) {
@@ -138,7 +138,7 @@ function loadHistory() {
 $(document).ready(function() {
     function loadPendingRequests() {
         $.ajax({
-            url: '<?= site_url('siimut/file-manager/ajax-get-delete-requests') ?>',
+            url: '<?= site_url('siimut/dokumen-mutu/ajax-get-delete-requests') ?>',
             type: 'POST',
             success: function(res) {
                 if (!res.status || !res.data.length) {
@@ -176,7 +176,7 @@ $(document).ready(function() {
         }).then(function(result) {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '<?= site_url('siimut/file-manager/approve-delete-request') ?>',
+                    url: '<?= site_url('siimut/dokumen-mutu/approve-delete-request') ?>',
                     type: 'POST',
                     data: { id: id },
                     success: function(res) {
@@ -200,7 +200,7 @@ $(document).ready(function() {
         var btn = $(this).find('button[type="submit"]');
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>');
         $.ajax({
-            url: '<?= site_url('siimut/file-manager/reject-delete-request') ?>',
+            url: '<?= site_url('siimut/dokumen-mutu/reject-delete-request') ?>',
             type: 'POST',
             data: $(this).serialize(),
             success: function(res) {

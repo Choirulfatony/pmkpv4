@@ -206,6 +206,7 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         // Manajemen Staf
         $routes->get('staf', 'Staff::index');
         $routes->post('staf/ajax-get-data', 'Staff::ajaxGetData');
+        $routes->post('staf/ajax-get-staff/(:num)', 'Staff::ajaxGetStaff/$1');
         $routes->get('staf/create', 'Staff::create');
         $routes->post('staf/store', 'Staff::store');
         $routes->get('staf/edit/(:num)', 'Staff::edit/$1');
@@ -236,20 +237,20 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('unit/ajax-request-open-period', 'Department::ajaxRequestOpenPeriod');
         $routes->post('unit/ajax-get-request-status', 'Department::ajaxGetRequestStatus');
 
-        // File Manager
-        $routes->get('file-manager', 'FileManager::index');
-        $routes->post('file-manager/create-folder', 'FileManager::createFolder');
-        $routes->post('file-manager/upload', 'FileManager::upload');
-        $routes->get('file-manager/download/(:num)', 'FileManager::download/$1');
-        $routes->post('file-manager/delete/(:num)', 'FileManager::delete/$1');
-        $routes->get('file-manager/delete-requests', 'FileManager::deleteRequestsList');
-        $routes->post('file-manager/request-delete', 'FileManager::requestDelete');
-        $routes->post('file-manager/ajax-get-my-requests', 'FileManager::ajaxGetMyRequests');
-        $routes->post('file-manager/ajax-get-delete-requests', 'FileManager::ajaxGetDeleteRequests');
-        $routes->post('file-manager/ajax-get-delete-history', 'FileManager::ajaxGetDeleteHistory');
-        $routes->post('file-manager/approve-delete-request', 'FileManager::approveDeleteRequest');
-        $routes->post('file-manager/reject-delete-request', 'FileManager::rejectDeleteRequest');
-        $routes->post('file-manager/rename-folder', 'FileManager::renameFolder');
+        // Dokumen Mutu
+        $routes->get('dokumen-mutu', 'FileManager::index');
+        $routes->post('dokumen-mutu/create-folder', 'FileManager::createFolder');
+        $routes->post('dokumen-mutu/upload', 'FileManager::upload');
+        $routes->get('dokumen-mutu/download/(:num)', 'FileManager::download/$1');
+        $routes->post('dokumen-mutu/delete/(:num)', 'FileManager::delete/$1');
+        $routes->get('dokumen-mutu/delete-requests', 'FileManager::deleteRequestsList');
+        $routes->post('dokumen-mutu/request-delete', 'FileManager::requestDelete');
+        $routes->post('dokumen-mutu/ajax-get-my-requests', 'FileManager::ajaxGetMyRequests');
+        $routes->post('dokumen-mutu/ajax-get-delete-requests', 'FileManager::ajaxGetDeleteRequests');
+        $routes->post('dokumen-mutu/ajax-get-delete-history', 'FileManager::ajaxGetDeleteHistory');
+        $routes->post('dokumen-mutu/approve-delete-request', 'FileManager::approveDeleteRequest');
+        $routes->post('dokumen-mutu/reject-delete-request', 'FileManager::rejectDeleteRequest');
+        $routes->post('dokumen-mutu/rename-folder', 'FileManager::renameFolder');
     });
 
     // ========== IKPRS ==========

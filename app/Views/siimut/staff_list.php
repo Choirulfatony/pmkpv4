@@ -71,10 +71,59 @@
                             <th class="text-center">Akun</th>
                             <th class="text-center">Status</th>
                             <th class="text-center">Terakhir Login</th>
-                            <th class="text-center" style="width:130px;">Aksi</th>
+                            <th class="text-center" style="width:160px;">Aksi</th>
                         </tr>
                     </thead>
                 </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal View Staf -->
+<div class="modal fade" id="viewStafModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h6 class="modal-title"><i class="bi bi-person me-2"></i>Detail Staf</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <img id="vPhoto" src="" alt="Photo" class="img-fluid rounded-circle mb-2" style="width:120px;height:120px;object-fit:cover;border:3px solid #dee2e6;">
+                        <h6 id="vFullname" class="mb-1"></h6>
+                        <small id="vGroup" class="text-muted"></small>
+                    </div>
+                    <div class="col-md-8">
+                        <table class="table table-sm table-borderless mb-0">
+                            <tr><td style="width:130px"><strong>Unit</strong></td><td id="vDepartment"></td></tr>
+                            <tr><td><strong>NIP</strong></td><td id="vNip"></td></tr>
+                            <tr><td><strong>Email</strong></td><td id="vEmail"></td></tr>
+                            <tr><td><strong>Jenis Kelamin</strong></td><td id="vGender"></td></tr>
+                            <tr><td><strong>Tanggal Lahir</strong></td><td id="vDob"></td></tr>
+                            <tr><td><strong>Handphone</strong></td><td id="vHandphone"></td></tr>
+                            <tr><td><strong>Status Akun</strong></td><td id="vStatus"></td></tr>
+                            <tr><td><strong>Status Online</strong></td><td id="vOnline"></td></tr>
+                            <tr><td><strong>Terdaftar</strong></td><td id="vTerdaftar"></td></tr>
+                            <tr><td><strong>Terakhir Login</strong></td><td id="vLastLogin"></td></tr>
+                            <tr><td><strong>Password</strong></td>
+                                <td>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control pw-mask" id="vPassword" value="" readonly style="font-size:inherit;max-width:200px;">
+                                        <button class="btn btn-outline-secondary btn-toggle-vpw" type="button">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr><td><strong>Catatan</strong></td><td id="vNote"></td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
@@ -124,6 +173,8 @@ $(document).ready(function() {
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
     });
 
+    $('<style>.pw-mask{-webkit-text-security:disc}.pw-mask::-webkit-text-security{auto}</style>').appendTo('head');
+
     $('#cari_staf').on('keyup', function() {
         table.draw();
     });
@@ -167,6 +218,45 @@ $(document).ready(function() {
                 el.prop('checked', !el.is(':checked'));
             }
         });
+    });
+
+    // View
+    $(document).on('click', '.btn-view-staf', function() {
+        var id = $(this).data('id');
+        $.ajax({
+            url: '<?= site_url('siimut/staf/ajax-get-staff/') ?>' + id,
+            type: 'POST',
+            dataType: 'json',
+            success: function(res) {
+                if (!res.status) { toastError(res.message); return; }
+                var d = res.data;
+                $('#vPhoto').attr('src', d.photo);
+                $('#vFullname').text(d.fullname);
+                $('#vGroup').text(d.group);
+                $('#vDepartment').text(d.department);
+                $('#vNip').text(d.nip);
+                $('#vEmail').text(d.email);
+                $('#vGender').text(d.gender);
+                $('#vDob').text(d.dob);
+                $('#vHandphone').text(d.handphone);
+                $('#vStatus').text(d.status);
+                $('#vOnline').html(d.online);
+                $('#vTerdaftar').text(d.terdaftar);
+                $('#vLastLogin').text(d.last_login);
+                $('#vNote').html(d.note);
+                $('#vPassword').val(d.password).addClass('pw-mask');
+                $('#viewStafModal').modal('show');
+            },
+            error: function() { toastError('Gagal memuat data staf'); }
+        });
+    });
+
+    // Toggle password view
+    $(document).on('click', '.btn-toggle-vpw', function() {
+        var input = $('#vPassword');
+        var icon = $(this).find('i');
+        input.toggleClass('pw-mask');
+        icon.toggleClass('bi-eye bi-eye-slash');
     });
 
     // Delete

@@ -892,7 +892,7 @@
                 var actionLabels = {edit:'Edit', delete:'Hapus', open_period:'Buka Periode'};
                 var actionIcons = {edit:'bi-pencil', delete:'bi-trash', open_period:'bi-unlock'};
                 var actionColors = {edit:'info', delete:'warning', open_period:'primary'};
-                var fileDeleteLink = '<?= site_url('siimut/file-manager/delete-requests') ?>';
+                var fileDeleteLink = '<?= site_url('siimut/dokumen-mutu/delete-requests') ?>';
                 var html = '';
 
                 /* ---------- BACKDATE MENUNGGU ---------- */
