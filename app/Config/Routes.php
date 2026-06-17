@@ -22,6 +22,7 @@ $routes->get('auth/cek_session', 'Auth::cek_session');
 $routes->get('auth/google-login', 'Auth::googleLogin');
 $routes->get('auth/google-callback', 'Auth::googleCallback');
 $routes->get('auth/google-sync', 'Auth::googleSync');
+$routes->post('auth/pre-sync', 'Auth::preSync');
 
 // Registrasi
 $routes->get('auth/register', 'Auth::showRegister');
@@ -234,6 +235,21 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('unit/ajax-restore-group', 'Department::ajaxRestoreGroup');
         $routes->post('unit/ajax-request-open-period', 'Department::ajaxRequestOpenPeriod');
         $routes->post('unit/ajax-get-request-status', 'Department::ajaxGetRequestStatus');
+
+        // File Manager
+        $routes->get('file-manager', 'FileManager::index');
+        $routes->post('file-manager/create-folder', 'FileManager::createFolder');
+        $routes->post('file-manager/upload', 'FileManager::upload');
+        $routes->get('file-manager/download/(:num)', 'FileManager::download/$1');
+        $routes->post('file-manager/delete/(:num)', 'FileManager::delete/$1');
+        $routes->get('file-manager/delete-requests', 'FileManager::deleteRequestsList');
+        $routes->post('file-manager/request-delete', 'FileManager::requestDelete');
+        $routes->post('file-manager/ajax-get-my-requests', 'FileManager::ajaxGetMyRequests');
+        $routes->post('file-manager/ajax-get-delete-requests', 'FileManager::ajaxGetDeleteRequests');
+        $routes->post('file-manager/ajax-get-delete-history', 'FileManager::ajaxGetDeleteHistory');
+        $routes->post('file-manager/approve-delete-request', 'FileManager::approveDeleteRequest');
+        $routes->post('file-manager/reject-delete-request', 'FileManager::rejectDeleteRequest');
+        $routes->post('file-manager/rename-folder', 'FileManager::renameFolder');
     });
 
     // ========== IKPRS ==========

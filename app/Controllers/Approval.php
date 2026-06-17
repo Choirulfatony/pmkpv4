@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\LoadModuleForminputModel;
 use App\Models\ApprovalRequestModel;
+use App\Models\FileManagerRequestModel;
 use App\Models\SiimutMenuModel;
 
 class Approval extends AppController
@@ -15,6 +16,7 @@ class Approval extends AppController
         'ikp'     => ['prefix' => 'local_', 'categoryId' => '7', 'title' => 'IKP'],
     ];
 
+    
     public function index(string $module = 'inm')
     {
         if (!session()->get('logged_in')) {
@@ -293,6 +295,29 @@ class Approval extends AppController
         $groupType = $this->request->getPost('group_type');
         $data = $model->getPendingRequests($groupType);
 
+        // Juga ambil permintaan hapus file
+        $fileReqModel = new FileManagerRequestModel();
+        $fileData = $fileReqModel->getPendingRequests();
+
+        // Transform file data to match backdate structure
+        foreach ($fileData as &$f) {
+            $f = (object) [
+                'id'               => $f->id,
+                '_source'          => 'file',
+                'request_by_name'  => $f->request_by_name ?? '-',
+                'indicator_name'   => $f->file_name ?? '-',
+                'ar_group_type'    => $f->is_folder ? 'folder' : 'file',
+                'ar_action_type'   => 'delete',
+                'ar_request_date'  => $f->fmr_request_date,
+                'ar_status'        => $f->fmr_status,
+                'ar_reason'        => $f->fmr_reason ?? '',
+                'department_name'  => '',
+                'ar_period'        => '',
+                'ar_period_end'    => '',
+            ];
+        }
+        $data = array_merge($data, $fileData);
+
         return $this->response->setJSON(['status' => true, 'data' => $data]);
     }
 
@@ -306,6 +331,32 @@ class Approval extends AppController
         $model->rejectExpiredApprovals();
         $groupType = $this->request->getPost('group_type');
         $data = $model->getAllRequests($groupType);
+
+        // Juga ambil history hapus file
+        $fileReqModel = new FileManagerRequestModel();
+        $fileData = $fileReqModel->getHistory();
+
+        // Transform file data to match backdate structure
+        foreach ($fileData as &$f) {
+            $f = (object) [
+                'id'               => $f->id,
+                '_source'          => 'file',
+                'request_by_name'  => $f->request_by_name ?? '-',
+                'approve_by_name'  => $f->approve_by_name ?? '-',
+                'indicator_name'   => $f->file_name ?? '-',
+                'ar_group_type'    => $f->is_folder ? 'folder' : 'file',
+                'ar_action_type'   => 'delete',
+                'ar_request_date'  => $f->fmr_request_date,
+                'ar_approve_date'  => $f->fmr_approve_date ?? '',
+                'ar_status'        => $f->fmr_status,
+                'ar_reason'        => $f->fmr_reason ?? '',
+                'ar_notes'         => $f->fmr_notes ?? '',
+                'department_name'  => '',
+                'ar_period'        => '',
+                'ar_period_end'    => '',
+            ];
+        }
+        $data = array_merge($data, $fileData);
 
         return $this->response->setJSON(['status' => true, 'data' => $data]);
     }
@@ -327,11 +378,23 @@ class Approval extends AppController
             $myRequests = $model->getMyRecentRequests($profileId, 5);
         }
 
+        // Juga ambil permintaan hapus file
+        $fileReqModel = new FileManagerRequestModel();
+        $fileData = $fileReqModel->getPendingRequests(null, null, 5);
+        $fileCount = $fileReqModel->getPendingCount();
+        $fileMyRequests = [];
+        if ($profileId > 0) {
+            $fileMyRequests = $fileReqModel->getMyRecentRequests($profileId, 5);
+        }
+
         return $this->response->setJSON([
-            'status'      => true,
-            'total'       => $count,
-            'data'        => $data,
-            'my_requests' => $myRequests
+            'status'            => true,
+            'total'             => $count,
+            'data'              => $data,
+            'my_requests'       => $myRequests,
+            'file_total'        => $fileCount,
+            'file_data'         => $fileData,
+            'file_my_requests'  => $fileMyRequests,
         ]);
     }
 

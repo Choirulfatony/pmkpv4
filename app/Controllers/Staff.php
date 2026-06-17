@@ -301,18 +301,18 @@ class Staff extends AppController
             return $this->response->setJSON(['status' => false, 'message' => 'Konfirmasi password tidak cocok']);
         }
 
-        $adminId = session('profile_id');
         $db = db_connect();
-        $admin = $db->table('user_profile')
+        $user = $db->table('user_profile')
             ->select('profile_password')
-            ->where('profile_id', $adminId)
+            ->where('profile_id', $id)
             ->get()
             ->getRow();
 
-        if (!$admin || $admin->profile_password !== md5($currentPassword)) {
-            return $this->response->setJSON(['status' => false, 'message' => 'Password admin saat ini salah']);
+        if (!$user || $user->profile_password !== md5($currentPassword)) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Password user saat ini salah']);
         }
 
+        $adminId = session('profile_id');
         $updateData = [
             'profile_password'          => md5($newPassword),
             'profile_confirm_password'  => $confirmPassword,

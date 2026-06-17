@@ -1001,6 +1001,52 @@ class Auth extends BaseController
     }
 
     /**
+     * Save phone & password before redirecting to Google OAuth
+     */
+    public function preSync()
+    {
+        if (!session()->get('logged_in')) {
+            return redirect()->to('/auth');
+        }
+
+        $profileId = session()->get('profile_id');
+        $phone = $this->request->getPost('profile_handphone1');
+        $newPassword = $this->request->getPost('new_password');
+        $confirmPassword = $this->request->getPost('confirm_password');
+
+        $db = db_connect();
+        $updateData = [];
+
+        if ($phone) {
+            if (!preg_match('/^08\d{7,12}$/', $phone)) {
+                return redirect()->back()->withInput()->with('error', 'Nomor telepon tidak valid. Masukkan nomor aktif (contoh: 081234567890)');
+            }
+            $updateData['profile_handphone1'] = $phone;
+        }
+
+        if ($newPassword === '' || $newPassword === null) {
+            return redirect()->back()->withInput()->with('error', 'Password baru wajib diisi');
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            return redirect()->back()->withInput()->with('error', 'Password dan konfirmasi password tidak cocok');
+        }
+        if (strlen($newPassword) < 8 || !preg_match('/[A-Z]/', $newPassword) || !preg_match('/[a-z]/', $newPassword) || !preg_match('/[0-9]/', $newPassword) || !preg_match('/[^A-Za-z0-9]/', $newPassword)) {
+            return redirect()->back()->withInput()->with('error', 'Password minimal 8 karakter, kombinasi huruf besar/kecil, angka, dan simbol');
+        }
+        $updateData['profile_password'] = md5($newPassword);
+        $updateData['profile_confirm_password'] = $confirmPassword;
+
+        if (!empty($updateData)) {
+            $db->table('user_profile')
+                ->where('profile_id', $profileId)
+                ->update($updateData);
+        }
+
+        return redirect()->to(site_url('auth/google-sync'));
+    }
+
+    /**
      * Redirect to Google OAuth
      */
     public function googleLogin()
@@ -1084,11 +1130,14 @@ class Auth extends BaseController
                         ->update([
                             'profile_fullname' => $name,
                             'profile_photo' => $picture,
+                            'profile_gmail' => $email,
+                            'profile_email' => $email,
                         ]);
                 }
                 session()->set([
                     'nama_lengkap'    => $name,
                     'profile_picture' => $picture,
+                    'profile_email'   => $email,
                 ]);
                 return redirect()->to(site_url('siimut/profile'))->with('success', 'Profil berhasil disinkronkan dari Google');
             }
@@ -1174,6 +1223,8 @@ class Auth extends BaseController
                         'profile_photo' => $picture,
                         'profile_online_status' => 1,
                         'profile_last_login' => date('Y-m-d H:i:s'),
+                        'profile_gmail' => $email,
+                        'profile_email' => $email,
                     ]);
                 
                 $user->profile_photo = $picture;

@@ -40,6 +40,15 @@ class Dashboard extends AppController
 
         $draftCounts = $dashboardModel->getDraftCounts($tahun, $bulan, $filterDept);
 
+        $profileId = session('profile_id');
+        $db = db_connect();
+        $user = $db->table('user_profile')
+            ->select('profile_gmail')
+            ->where('profile_id', $profileId)
+            ->get()
+            ->getRow();
+        $showGmailModal = empty($user->profile_gmail);
+
         return $this->render('dashboard/index', [
             'judul'    => 'Dashboard SIIMUT',
             'icon'     => '<i class="bi bi-speedometer"></i>',
@@ -55,6 +64,7 @@ class Dashboard extends AppController
                 'draftCounts'        => $draftCounts,
                 'tahun'              => $tahun,
                 'bulan'              => $bulan,
+                'showGmailModal'     => $showGmailModal,
             ]),
             'menus'    => $menus,
         ]);

@@ -326,7 +326,6 @@
     }
 </style>
 
-
 <!--begin::Header / Navbar-->
 <nav id="mainNavbar"
     class="app-header navbar navbar-expand border-bottom">
@@ -406,6 +405,7 @@
                 </div>
             </li>
 
+            
             <!-- DARK MODE -->
             <li class="nav-item">
                 <a href="#" class="nav-link d-flex align-items-center gap-2">
@@ -874,10 +874,14 @@
                 var bdCount = res.total ?? 0;
                 var bdData = res.data ?? [];
                 var myData = res.my_requests ?? [];
+                var fileTotal = res.file_total ?? 0;
+                var fileData = res.file_data ?? [];
+                var fileMyRequests = res.file_my_requests ?? [];
 
                 var $badge = $('#badge-backdate_header');
-                if (bdCount > 0) {
-                    $badge.text(bdCount > 9 ? '9+' : bdCount).show();
+                var totalPending = (bdCount || 0) + (fileTotal || 0);
+                if (totalPending > 0) {
+                    $badge.text(totalPending > 9 ? '9+' : totalPending).show();
                 } else {
                     $badge.hide();
                 }
@@ -888,11 +892,12 @@
                 var actionLabels = {edit:'Edit', delete:'Hapus', open_period:'Buka Periode'};
                 var actionIcons = {edit:'bi-pencil', delete:'bi-trash', open_period:'bi-unlock'};
                 var actionColors = {edit:'info', delete:'warning', open_period:'primary'};
+                var fileDeleteLink = '<?= site_url('siimut/file-manager/delete-requests') ?>';
                 var html = '';
 
-                /* ---------- MENUNGGU (pending) ---------- */
+                /* ---------- BACKDATE MENUNGGU ---------- */
                 if (bdData.length > 0) {
-                    html += '<span class="dropdown-item dropdown-header small py-1">Menunggu Persetujuan</span>';
+                    html += '<span class="dropdown-item dropdown-header small py-1">Backdate Menunggu Persetujuan</span>';
                     bdData.forEach(function(item) {
                         var typeName = typeNames[item.ar_group_type] || '?';
                         var slug = typeSlugs[item.ar_group_type] || '';
@@ -921,10 +926,35 @@
                     });
                 }
 
-                /* ---------- REQUEST SAYA ---------- */
+                /* ---------- FILE DELETE MENUNGGU ---------- */
+                if (fileData && fileData.length > 0) {
+                    if (html) html += '<div class="dropdown-divider"></div>';
+                    html += '<span class="dropdown-item dropdown-header small py-1">Hapus File Menunggu Persetujuan</span>';
+                    fileData.forEach(function(item) {
+                        var typeLabel = item.is_folder ? 'Folder' : 'File';
+                        var clickable = user_role !== 'KENDALI_MUTU';
+                        var tag = clickable ? 'a' : 'div';
+                        var hrefAttr = clickable ? ' href="'+fileDeleteLink+'"' : '';
+                        html += '<'+tag+hrefAttr+' class="dropdown-item bd-item">'+
+                            '<div class="d-flex align-items-start gap-2">'+
+                                '<div class="notif-icon"><i class="bi bi-trash text-danger"></i></div>'+
+                                '<div class="flex-grow-1" style="min-width:0">'+
+                                    '<div class="d-flex justify-content-between align-items-center gap-1">'+
+                                        '<div class="notif-title text-truncate">'+typeLabel+' - '+(item.request_by_name || '-')+'</div>'+
+                                        '<span class="badge bg-danger flex-shrink-0" style="font-size:10px;"><i class="bi bi-trash me-1"></i>Hapus</span>'+
+                                    '</div>'+
+                                    '<small class="text-muted d-block text-truncate">'+(item.file_name || '-')+'</small>'+
+                                    '<small class="text-muted d-block" style="font-size:11px;opacity:.7">'+fmtBDDate(item.fmr_request_date)+'</small>'+
+                                '</div>'+
+                            '</div>'+
+                        '</'+tag+'>';
+                    });
+                }
+
+                /* ---------- BACKDATE REQUEST SAYA ---------- */
                 if (myData.length > 0) {
                     if (html) html += '<div class="dropdown-divider"></div>';
-                    html += '<span class="dropdown-item dropdown-header small py-1">Request Saya</span>';
+                    html += '<span class="dropdown-item dropdown-header small py-1">Backdate Request Saya</span>';
                     myData.forEach(function(item) {
                         var typeName = typeNames[item.ar_group_type] || '?';
                         var name = item.indicator_name || '-';
@@ -934,7 +964,6 @@
                         var actColor = actionColors[item.ar_action_type] || 'secondary';
                         var status = item.ar_status || '';
                         var statusBadge = '';
-                        var statusClass = '';
                         if (status === 'pending') {
                             statusBadge = '<span class="badge bg-warning text-dark">Pending</span>';
                         } else if (status === 'approved') {
@@ -955,6 +984,39 @@
                                     '</div>'+
                                     '<small class="text-muted d-block text-truncate">'+name+'</small>'+
                                     '<small class="text-muted d-block" style="font-size:11px;opacity:.7">'+fmtBDDate(item.ar_request_date)+'</small>'+
+                                '</div>'+
+                            '</div>'+
+                        '</div>';
+                    });
+                }
+
+                /* ---------- FILE DELETE REQUEST SAYA ---------- */
+                if (fileMyRequests && fileMyRequests.length > 0) {
+                    if (html) html += '<div class="dropdown-divider"></div>';
+                    html += '<span class="dropdown-item dropdown-header small py-1">Hapus File Request Saya</span>';
+                    fileMyRequests.forEach(function(item) {
+                        var typeLabel = item.is_folder ? 'Folder' : 'File';
+                        var status = item.fmr_status || '';
+                        var statusBadge = '';
+                        if (status === 'pending') {
+                            statusBadge = '<span class="badge bg-warning text-dark">Pending</span>';
+                        } else if (status === 'approved') {
+                            statusBadge = '<span class="badge bg-success">Disetujui</span>';
+                        } else if (status === 'rejected') {
+                            statusBadge = '<span class="badge bg-danger">Ditolak</span>';
+                        } else {
+                            statusBadge = '<span class="badge bg-secondary">'+status+'</span>';
+                        }
+                        html += '<div class="dropdown-item bd-item">'+
+                            '<div class="d-flex align-items-start gap-2">'+
+                                '<div class="notif-icon"><i class="bi bi-clock-history text-secondary"></i></div>'+
+                                '<div class="flex-grow-1" style="min-width:0">'+
+                                    '<div class="d-flex justify-content-between align-items-center gap-1">'+
+                                        '<div class="notif-title text-truncate">'+typeLabel+' - Hapus</div>'+
+                                        '<div class="flex-shrink-0">'+statusBadge+'</div>'+
+                                    '</div>'+
+                                    '<small class="text-muted d-block text-truncate">'+(item.file_name || '-')+'</small>'+
+                                    '<small class="text-muted d-block" style="font-size:11px;opacity:.7">'+fmtBDDate(item.fmr_request_date)+'</small>'+
                                 '</div>'+
                             '</div>'+
                         '</div>';

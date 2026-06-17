@@ -163,7 +163,7 @@
                         <input type="hidden" name="profile_id" value="<?= $staff->profile_id ?>">
                         <div class="row g-2">
                             <div class="col-lg-4 col-md-6">
-                                <label class="form-label small mb-1">Password Saat Ini (Admin) <span class="text-danger">*</span></label>
+                                <label class="form-label small mb-1">Password Saat Ini <span class="text-danger">*</span></label>
                                 <div class="input-group input-group-sm">
                                     <div class="pw-field flex-fill" data-name="current_password" data-id="cp_current"></div>
                                     <button class="btn btn-outline-secondary btn-toggle-pw" type="button" data-target="cp_current">

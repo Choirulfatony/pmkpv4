@@ -140,6 +140,8 @@
         if (grpType == 5) return 'IMPRS';
         if (grpType == 6) return 'IMPUNIT';
         if (grpType == 7) return 'IKP';
+        if (grpType == 'folder') return 'Folder';
+        if (grpType == 'file') return 'File';
         return 'Lainnya';
     }
 
@@ -168,10 +170,17 @@
         document.getElementById('dt-selesai').textContent = row.ar_period_end || '-';
         document.getElementById('dt-alasan').textContent = row.ar_reason || '-';
         document.getElementById('dt-tindakan').innerHTML = actionBadge(row.ar_action_type);
+        document.getElementById('dt-status').innerHTML = '';
 
         var footer = document.getElementById('dt-footer');
-        footer.innerHTML = '<button type="button" class="btn btn-sm btn-outline-success" onclick="approveRequest(' + row.id + ')"><i class="bi bi-check-circle-fill"></i> Setujui</button>' +
-                           '<button type="button" class="btn btn-sm btn-outline-danger" onclick="bootstrap.Modal.getInstance(document.getElementById(\'modalDetail\')).hide();showRejectModal(' + row.id + ')"><i class="bi bi-x-circle-fill"></i> Tolak</button>';
+        if (row._source === 'file') {
+            var link = '<?= site_url('siimut/file-manager/delete-requests') ?>';
+            footer.innerHTML = '<a href="'+link+'" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right"></i> Kelola di Hapus File</a>' +
+                               '<button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Tutup</button>';
+        } else {
+            footer.innerHTML = '<button type="button" class="btn btn-sm btn-outline-success" onclick="approveRequest(' + row.id + ')"><i class="bi bi-check-circle-fill"></i> Setujui</button>' +
+                               '<button type="button" class="btn btn-sm btn-outline-danger" onclick="bootstrap.Modal.getInstance(document.getElementById(\'modalDetail\')).hide();showRejectModal(' + row.id + ')"><i class="bi bi-x-circle-fill"></i> Tolak</button>';
+        }
 
         var modal = new bootstrap.Modal(document.getElementById('modalDetail'));
         modal.show();

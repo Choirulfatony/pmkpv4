@@ -607,3 +607,152 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<?php if (!empty($showGmailModal)): ?>
+<style>
+.input-group:has(.is-invalid) .btn-outline-secondary {
+    border-color: #dc3545;
+}
+</style>
+<div class="modal fade" id="gmailModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title"><i class="bi bi-google me-2"></i>Hubungkan Akun Google</h5>
+            </div>
+            <div class="modal-body text-center pt-2 pb-4">
+                <h6 class="text-start">⚠️ Lengkapi Data Akun Anda</h6>
+                <p class="text-muted small mb-3 text-start">
+                    Selamat datang di SIIMUT (Sistem Informasi Indikator Mutu).<br><br>
+                    Untuk meningkatkan keamanan akun, setiap pengguna wajib melengkapi data akun dengan:
+                </p>
+                <ul class="text-muted small text-start mb-3">
+                    <li>Menghubungkan Email Google (Gmail) yang masih aktif.</li>
+                    <li>Mengisi Nomor Telepon/WhatsApp yang masih aktif.</li>
+                </ul>
+                <p class="text-muted small mb-3 text-start">
+                    Sinkronisasi ini hanya dilakukan satu kali dan bertujuan untuk:
+                </p>
+                <ul class="text-muted small text-start mb-3">
+                    <li>Meningkatkan keamanan akun.</li>
+                    <li>Mempermudah proses pemulihan akun apabila mengalami kendala login.</li>
+                    <li>Mendukung pengembangan fitur dan layanan SIIMUT di masa mendatang.</li>
+                </ul>
+                <p class="text-muted small mb-3 text-start">
+                    Silakan klik "Lengkapi Sekarang" untuk melanjutkan proses sinkronisasi akun.
+                </p>
+                <form method="post" action="<?= site_url('auth/pre-sync') ?>" autocomplete="off" novalidate>
+                    <?= csrf_field() ?>
+                    <?php if (session()->getFlashdata('error')): ?>
+                    <div class="alert alert-danger py-2 small mb-3" role="alert">
+                        <i class="bi bi-exclamation-triangle me-1"></i><?= session()->getFlashdata('error') ?>
+                    </div>
+                    <?php endif; ?>
+                    <div class="text-start mb-3">
+                        <label class="form-label small fw-semibold">Nomor Telepon/WhatsApp <span class="text-danger">*</span></label>
+                        <input type="tel" name="profile_handphone1" class="form-control form-control-sm" placeholder="08xxxxxxxxxx" required oninput="validatePhone(this)">
+                        <div id="phone-warning" class="text-danger small mt-1" style="display:none;">Nomor telepon tidak valid. Masukkan nomor aktif (contoh: 081234567890)</div>
+                    </div>
+                    <div class="text-start mb-3">
+                        <label class="form-label small fw-semibold">Password Baru <span class="text-danger">*</span></label>
+                        <div class="input-group input-group-sm">
+                            <input type="password" name="new_password" class="form-control" placeholder="Min. 8 karakter, kombinasi huruf besar/kecil, angka, simbol" minlength="8" required aria-label="Min. 8 karakter, kombinasi huruf besar/kecil, angka, simbol" oninput="validatePassword(this)">
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword(this, 'new_password')" tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div id="password-warning" class="text-danger small mt-1" style="display:none;">Password minimal 8 karakter, kombinasi huruf besar/kecil, angka, dan simbol</div>
+                    </div>
+                    <div class="text-start mb-3">
+                        <label class="form-label small fw-semibold">Konfirmasi Password Baru <span class="text-danger">*</span></label>
+                        <div class="input-group input-group-sm">
+                            <input type="password" name="confirm_password" class="form-control" placeholder="Ulangi password baru" required aria-label="Ulangi password baru" oninput="validateConfirmPassword(this)">
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword(this, 'confirm_password')" tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div id="confirm-password-warning" class="text-danger small mt-1" style="display:none;">Password tidak sama dengan password baru</div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-google me-2"></i>Lengkapi Sekarang
+                        </button>
+                        <a href="<?= site_url('auth/logout') ?>" class="btn btn-outline-secondary btn-sm">Nanti Saja</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function togglePassword(btn, name) {
+    var input = btn.closest('.input-group').querySelector('input[name="' + name + '"]');
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.querySelector('i').className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        btn.querySelector('i').className = 'bi bi-eye';
+    }
+}
+function validatePassword(input) {
+    var warning = document.getElementById('password-warning');
+    if (input.value.length > 0 && !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/.test(input.value)) {
+        warning.style.display = 'block';
+        return false;
+    } else {
+        warning.style.display = 'none';
+        return true;
+    }
+}
+function validateConfirmPassword(input) {
+    var warning = document.getElementById('confirm-password-warning');
+    var pw = document.querySelector('input[name="new_password"]');
+    if (input.value.length > 0 && input.value !== pw.value) {
+        warning.style.display = 'block';
+        return false;
+    } else {
+        warning.style.display = 'none';
+        return true;
+    }
+}
+function validatePhone(input) {
+    var warning = document.getElementById('phone-warning');
+    var valid = /^08\d{7,12}$/.test(input.value);
+    if (input.value.length > 0 && !valid) {
+        warning.style.display = 'block';
+        return false;
+    } else {
+        warning.style.display = 'none';
+        return true;
+    }
+}
+document.addEventListener('DOMContentLoaded', function() {
+    var el = document.getElementById('gmailModal');
+    if (el) {
+        var modal = new bootstrap.Modal(el);
+        modal.show();
+        el.addEventListener('shown.bs.modal', function() {
+            var form = el.querySelector('form');
+            if (form) form.reset();
+        });
+        var form = el.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                var pw = form.querySelector('input[name="new_password"]');
+                var cpw = form.querySelector('input[name="confirm_password"]');
+                var phone = form.querySelector('input[name="profile_handphone1"]');
+                var valid = true;
+                if (!phone.value.trim() || !validatePhone(phone)) { phone.classList.add('is-invalid'); validatePhone(phone); valid = false; }
+                if (!pw.value.trim() || !validatePassword(pw)) { pw.classList.add('is-invalid'); valid = false; }
+                if (!cpw.value.trim() || pw.value !== cpw.value) { cpw.classList.add('is-invalid'); validateConfirmPassword(cpw); valid = false; }
+                if (!valid) e.preventDefault();
+            });
+            form.querySelectorAll('input').forEach(function(inp) {
+                inp.addEventListener('input', function() { this.classList.remove('is-invalid'); });
+            });
+        }
+    }
+});
+</script>
+<?php endif; ?>
