@@ -73,7 +73,7 @@
                                 <?= esc($item->file_name) ?>
                                 <?php endif; ?>
                             </td>
-                            <td><?= $item->is_folder ? '-' : strtoupper(pathinfo($item->file_name, PATHINFO_EXTENSION)) ?></td>
+                            <td><?= $item->is_folder ? '<span class="badge bg-secondary">' . (int) $item->child_count . ' item</span>' : strtoupper(pathinfo($item->file_name, PATHINFO_EXTENSION)) ?></td>
                             <td><?= $item->is_folder ? '-' : $item->size_formatted ?></td>
                             <td class="small"><?= $item->uploader_name ?: '-' ?></td>
                             <td class="small"><?= $item->created_at ? date('d/m/Y H:i', strtotime($item->created_at)) : '-' ?></td>

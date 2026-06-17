@@ -30,7 +30,8 @@ class FileManagerModel extends Model
     {
         $db = db_connect();
         $builder = $db->table('siimut_file_manager fm');
-        $builder->select('fm.*, up.profile_fullname as uploader_name')
+        $subQuery = '(SELECT COUNT(*) FROM siimut_file_manager ch WHERE ch.parent_id = fm.id)';
+        $builder->select("fm.*, up.profile_fullname as uploader_name, $subQuery as child_count")
             ->join('user_profile up', 'up.profile_id = fm.uploaded_by', 'left');
 
         if ($parentId === null) {
