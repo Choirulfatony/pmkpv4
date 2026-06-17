@@ -82,7 +82,7 @@
                                 <button class="btn btn-sm btn-outline-secondary btn-rename-folder" data-id="<?= $item->id ?>" data-name="<?= esc($item->file_name, 'attr') ?>" title="Ubah Nama"><i class="bi bi-pencil"></i></button>
                                 <?php elseif (!$item->is_folder): ?>
                                 <a href="<?= site_url('siimut/file-manager/download/' . $item->id) ?>" class="btn btn-sm btn-outline-info" title="Download"><i class="bi bi-download"></i></a>
-                                <a href="https://docs.google.com/viewer?url=<?= urlencode(base_url('uploads/file_manager/' . $item->file_path)) ?>&embedded=true" class="btn btn-sm btn-outline-primary" target="_blank" title="View"><i class="bi bi-eye"></i></a>
+                                <a href="<?= base_url('uploads/file_manager/' . $item->file_path) ?>" class="btn btn-sm btn-outline-primary" target="_blank" title="View"><i class="bi bi-eye"></i></a>
                                 <?php endif; ?>
                                 <button class="btn btn-sm btn-outline-warning btn-request-delete" data-id="<?= $item->id ?>" data-type="<?= $item->is_folder ? 'folder' : 'file' ?>" title="Minta Hapus"><i class="bi bi-send"></i></button>
                             </td>
