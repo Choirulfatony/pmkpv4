@@ -83,10 +83,10 @@
                                 <?php elseif (!$item->is_folder): ?>
                                 <a href="<?= site_url('siimut/file-manager/download/' . $item->id) ?>" class="btn btn-sm btn-outline-info" title="Download"><i class="bi bi-download"></i></a>
                                 <?php $ext = strtolower(pathinfo($item->file_name, PATHINFO_EXTENSION)); ?>
-                                <?php if (in_array($ext, ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'])): ?>
-                                <a href="https://view.officeapps.live.com/op/view.aspx?src=<?= urlencode(base_url('uploads/file_manager/' . $item->file_path)) ?>" class="btn btn-sm btn-outline-primary" target="_blank" title="View"><i class="bi bi-eye"></i></a>
-                                <?php else: ?>
+                                <?php if (in_array($ext, ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'txt', 'csv'])): ?>
                                 <a href="<?= base_url('uploads/file_manager/' . $item->file_path) ?>" class="btn btn-sm btn-outline-primary" target="_blank" title="View"><i class="bi bi-eye"></i></a>
+                                <?php else: ?>
+                                <a href="<?= site_url('siimut/file-manager/download/' . $item->id) ?>" class="btn btn-sm btn-outline-primary" title="Download & Buka"><i class="bi bi-eye"></i></a>
                                 <?php endif; ?>
                                 <?php endif; ?>
                                 <button class="btn btn-sm btn-outline-warning btn-request-delete" data-id="<?= $item->id ?>" data-type="<?= $item->is_folder ? 'folder' : 'file' ?>" title="Minta Hapus"><i class="bi bi-send"></i></button>
