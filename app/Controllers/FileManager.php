@@ -169,6 +169,7 @@ class FileManager extends AppController
             'file_path'   => $newName,
             'file_type'   => $ext,
             'file_size'   => $file->getSize(),
+            'is_folder'   => 0,
             'uploaded_by' => session('profile_id'),
             'description' => $this->request->getPost('description') ?? '',
             'parent_id'   => $parentId,
