@@ -153,6 +153,55 @@
                     </form>
                 </div>
             </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0"><i class="bi bi-lock"></i> Ubah Password</h6>
+                </div>
+                <div class="card-body">
+                    <form id="form-change-password-staf" autocomplete="off">
+                        <input type="hidden" name="profile_id" value="<?= $staff->profile_id ?>">
+                        <div class="row g-2">
+                            <div class="col-lg-4 col-md-6">
+                                <label class="form-label small mb-1">Password Saat Ini (Admin) <span class="text-danger">*</span></label>
+                                <div class="input-group input-group-sm">
+                                    <div class="pw-field flex-fill" data-name="current_password" data-id="cp_current"></div>
+                                    <button class="btn btn-outline-secondary btn-toggle-pw" type="button" data-target="cp_current">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="text-danger small d-none" id="cp_current-error"></div>
+                            </div>
+                            <div class="col-lg-4 col-md-6">
+                                <label class="form-label small mb-1">Password Baru <span class="text-danger">*</span></label>
+                                <div class="input-group input-group-sm">
+                                    <div class="pw-field flex-fill" data-name="new_password" data-id="cp_new"></div>
+                                    <button class="btn btn-outline-secondary btn-toggle-pw" type="button" data-target="cp_new">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="text-danger small d-none" id="cp_new-error"></div>
+                            </div>
+                            <div class="col-lg-4 col-md-6">
+                                <label class="form-label small mb-1">Konfirmasi Password Baru <span class="text-danger">*</span></label>
+                                <div class="input-group input-group-sm">
+                                    <div class="pw-field flex-fill" data-name="confirm_password" data-id="cp_confirm"></div>
+                                    <button class="btn btn-outline-secondary btn-toggle-pw" type="button" data-target="cp_confirm">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="text-danger small d-none" id="cp_confirm-error"></div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-warning btn-sm" id="btn-change-password">
+                                <i class="bi bi-key"></i> Ubah Password
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -189,6 +238,32 @@ $(document).ready(function() {
         theme: 'bootstrap-5',
         width: '100%',
         dropdownParent: $('#form-edit-staf')
+    });
+
+    $('<style>.pw-mask{-webkit-text-security:disc}.pw-mask::-webkit-text-security{auto}</style>').appendTo('head');
+    setTimeout(function() {
+        $('.pw-field').each(function() {
+            var name = $(this).data('name');
+            var id = $(this).data('id');
+            var input = $('<input>', {
+                type: 'text',
+                class: 'form-control pw-mask',
+                name: name,
+                id: id
+            });
+            $(this).replaceWith(input);
+        });
+    }, 100);
+
+    $(document).on('click', '.btn-toggle-pw', function() {
+        var target = $('#' + $(this).data('target'));
+        var icon = $(this).find('i');
+        target.toggleClass('pw-mask');
+        if (target.hasClass('pw-mask')) {
+            icon.removeClass('bi-eye-slash').addClass('bi-eye');
+        } else {
+            icon.removeClass('bi-eye').addClass('bi-eye-slash');
+        }
     });
 
     function clearErrors() {
@@ -258,6 +333,59 @@ $(document).ready(function() {
                     },
                     error: function() {
                         toastError('Gagal menyimpan data');
+                    }
+                });
+            }
+        });
+    });
+
+    $('#form-change-password-staf').on('submit', function(e) {
+        e.preventDefault();
+        clearErrors();
+
+        var current = $('#cp_current').val().trim();
+        var newPw = $('#cp_new').val().trim();
+        var confirm = $('#cp_confirm').val().trim();
+        var valid = true;
+
+        if (!current) { showError('#cp_current', '#cp_current-error', 'Password saat ini wajib diisi'); valid = false; }
+        if (!newPw) { showError('#cp_new', '#cp_new-error', 'Password baru wajib diisi'); valid = false; }
+        else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/.test(newPw)) { showError('#cp_new', '#cp_new-error', 'Minimal 8 karakter, huruf besar/kecil, angka, dan simbol'); valid = false; }
+        if (!confirm) { showError('#cp_confirm', '#cp_confirm-error', 'Konfirmasi password wajib diisi'); valid = false; }
+        else if (newPw !== confirm) { showError('#cp_confirm', '#cp_confirm-error', 'Tidak cocok'); valid = false; }
+
+        if (!valid) return;
+
+        var id = $('input[name="profile_id"]').val();
+
+        Swal.fire({
+            title: 'Ubah Password?',
+            text: 'Password staf ' + profileId + ' akan diubah.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Ubah!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '<?= site_url('siimut/staf/change-password/') ?>' + id,
+                    type: 'POST',
+                    data: $(this).serialize(),
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res.status) {
+                            toastSuccess(res.message);
+                            $('#cp_current').val('');
+                            $('#cp_new').val('');
+                            $('#cp_confirm').val('');
+                        } else {
+                            toastError(res.message);
+                        }
+                    },
+                    error: function() {
+                        toastError('Gagal mengubah password');
                     }
                 });
             }

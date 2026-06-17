@@ -161,8 +161,8 @@ class Staff extends AppController
             return $this->response->setJSON(['status' => false, 'message' => 'Format email tidak valid']);
         }
 
-        if (strlen($password) < 6) {
-            return $this->response->setJSON(['status' => false, 'message' => 'Password minimal 6 karakter']);
+        if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/', $password)) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Password minimal 8 karakter, kombinasi huruf besar/kecil, angka, dan simbol']);
         }
 
         if ($this->staffModel->emailExists($email)) {
@@ -267,6 +267,66 @@ class Staff extends AppController
         }
 
         return $this->response->setJSON(['status' => false, 'message' => 'Gagal menghapus staf']);
+    }
+
+    public function changePassword(int $id)
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $role = session()->get('user_role');
+        if (!in_array($role, ['ADMINISTRATOR'])) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => false, 'message' => 'Akses ditolak']);
+        }
+
+        $staff = $this->staffModel->getStaffById($id);
+        if (!$staff) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Staf tidak ditemukan']);
+        }
+
+        $currentPassword = $this->request->getPost('current_password');
+        $newPassword     = $this->request->getPost('new_password');
+        $confirmPassword = $this->request->getPost('confirm_password');
+
+        if (!$currentPassword || !$newPassword || !$confirmPassword) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Semua field password wajib diisi']);
+        }
+
+        if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/', $newPassword)) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Password minimal 8 karakter, kombinasi huruf besar/kecil, angka, dan simbol']);
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Konfirmasi password tidak cocok']);
+        }
+
+        $adminId = session('profile_id');
+        $db = db_connect();
+        $admin = $db->table('user_profile')
+            ->select('profile_password')
+            ->where('profile_id', $adminId)
+            ->get()
+            ->getRow();
+
+        if (!$admin || $admin->profile_password !== md5($currentPassword)) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Password admin saat ini salah']);
+        }
+
+        $updateData = [
+            'profile_password'          => md5($newPassword),
+            'profile_confirm_password'  => $confirmPassword,
+            'profile_update_by'         => $adminId,
+            'profile_update_date'       => date('Y-m-d H:i:s'),
+        ];
+
+        $result = $this->staffModel->updateStaff($id, $updateData);
+
+        if ($result) {
+            return $this->response->setJSON(['status' => true, 'message' => 'Password staf berhasil diubah']);
+        }
+
+        return $this->response->setJSON(['status' => false, 'message' => 'Gagal mengubah password']);
     }
 
     public function toggleDisable(int $id)

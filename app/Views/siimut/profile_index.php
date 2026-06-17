@@ -303,7 +303,7 @@ $(document).ready(function() {
 
         if (!current) { showError('#cp_current', '#cp_current-error', 'Password saat ini wajib diisi'); valid = false; }
         if (!newPw) { showError('#cp_new', '#cp_new-error', 'Password baru wajib diisi'); valid = false; }
-        else if (newPw.length < 6) { showError('#cp_new', '#cp_new-error', 'Minimal 6 karakter'); valid = false; }
+        else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/.test(newPw)) { showError('#cp_new', '#cp_new-error', 'Minimal 8 karakter, huruf besar/kecil, angka, dan simbol'); valid = false; }
         if (!confirm) { showError('#cp_confirm', '#cp_confirm-error', 'Konfirmasi password wajib diisi'); valid = false; }
         else if (newPw !== confirm) { showError('#cp_confirm', '#cp_confirm-error', 'Tidak cocok'); valid = false; }
 
@@ -327,15 +327,10 @@ $(document).ready(function() {
                     dataType: 'json',
                     success: function(res) {
                         if (res.status) {
-                            Swal.fire({
-                                title: 'Berhasil!',
-                                text: res.message,
-                                icon: 'success',
-                                timer: 1500,
-                                showConfirmButton: false
-                            }).then(() => {
+                            toastSuccess(res.message);
+                            setTimeout(function() {
                                 window.location.href = '<?= site_url('auth/logout') ?>';
-                            });
+                            }, 1500);
                         } else {
                             toastError(res.message);
                         }

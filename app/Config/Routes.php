@@ -212,6 +212,7 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('staf/delete/(:num)', 'Staff::delete/$1');
         $routes->post('staf/toggle-disable/(:num)', 'Staff::toggleDisable/$1');
         $routes->post('staf/toggle-online/(:num)', 'Staff::toggleOnline/$1');
+        $routes->post('staf/change-password/(:num)', 'Staff::changePassword/$1');
 
         // Manajemen Unit / Bagian
         $routes->get('unit', 'Department::index');

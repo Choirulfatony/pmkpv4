@@ -101,8 +101,8 @@ class Profile extends AppController
             return $this->response->setJSON(['status' => false, 'message' => 'Semua field password wajib diisi']);
         }
 
-        if (strlen($newPassword) < 6) {
-            return $this->response->setJSON(['status' => false, 'message' => 'Password baru minimal 6 karakter']);
+        if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/', $newPassword)) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Password minimal 8 karakter, kombinasi huruf besar/kecil, angka, dan simbol']);
         }
 
         if ($newPassword !== $confirmPassword) {

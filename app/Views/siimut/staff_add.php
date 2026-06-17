@@ -158,7 +158,8 @@ $(document).ready(function() {
         if (!name) { showError('#profile_fullname', '#profile_fullname-error', 'Nama lengkap wajib diisi'); valid = false; }
         if (!email) { showError('#profile_email', '#profile_email-error', 'Email wajib diisi'); valid = false; }
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('#profile_email', '#profile_email-error', 'Format email tidak valid'); valid = false; }
-        if (!pw || pw.length < 6) { showError('#profile_password', '#profile_password-error', 'Password minimal 6 karakter'); valid = false; }
+        if (!pw) { showError('#profile_password', '#profile_password-error', 'Password wajib diisi'); valid = false; }
+        else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/.test(pw)) { showError('#profile_password', '#profile_password-error', 'Minimal 8 karakter, huruf besar/kecil, angka, dan simbol'); valid = false; }
         if (!nip) { showError('#profile_employee_id', '#profile_employee_id-error', 'NIP wajib diisi'); valid = false; }
         if (!gender) { showError('#profile_gender', '#profile_gender-error', 'Jenis kelamin wajib dipilih'); valid = false; }
         if (!dob) { showError('#profile_dob', '#profile_dob-error', 'Tanggal lahir wajib diisi'); valid = false; }

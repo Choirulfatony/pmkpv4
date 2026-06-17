@@ -35,6 +35,6 @@ class Captcha
         if ($sessionWord === null || $sessionWord === '') {
             return false;
         }
-        return strtoupper($input) === strtoupper($sessionWord);
+        return strtoupper(trim($input)) === strtoupper(trim($sessionWord));
     }
 }
