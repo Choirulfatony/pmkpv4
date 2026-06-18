@@ -81,6 +81,13 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('impunit/request-approval', 'LoadModuleForminputImpunit::request_approval');
         $routes->post('impunit/check-request-status', 'LoadModuleForminputImpunit::check_request_status');
 
+        // Menu Manager
+        $routes->get('menu-manager', 'MenuManager::index');
+        $routes->post('menu-manager/ajax-get-data', 'MenuManager::ajaxGetData');
+        $routes->post('menu-manager/store', 'MenuManager::store');
+        $routes->post('menu-manager/delete/(:num)', 'MenuManager::delete/$1');
+        $routes->get('menu-manager/get-menu/(:num)', 'MenuManager::getMenu/$1');
+
         // Form Input IKP
         $routes->get('ikp', 'LoadModuleForminputIkp::index');
         $routes->post('ikp/get-indicators', 'LoadModuleForminputIkp::get_indicators');
