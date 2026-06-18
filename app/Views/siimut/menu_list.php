@@ -51,12 +51,14 @@
                     <thead class="table-light">
                         <tr>
                             <th class="text-center" style="width:40px">No</th>
+                            <th style="width:60px">ID</th>
                             <th>Nama Menu</th>
                             <th style="width:180px">URL</th>
-                            <th style="width:100px">Icon</th>
+                            <th style="width:90px">Icon</th>
                             <th style="width:120px">Parent</th>
                             <th style="width:50px">Urutan</th>
-                            <th style="width:200px">Role Access</th>
+                            <th style="width:160px">Role Access</th>
+                            <th style="width:110px">Dibuat</th>
                             <th class="text-center" style="width:90px">Aksi</th>
                         </tr>
                     </thead>
@@ -168,6 +170,7 @@
             },
             columns: [
                 { data: 'no', className: 'text-center', orderable: false },
+                { data: 'id_menu', className: 'text-center', orderable: true },
                 { data: 'nama_menu', orderable: true },
                 { data: 'url', orderable: true, render: function(d) { return d ? '<code>' + escHtml(d) + '</code>' : '-'; } },
                 { data: 'icon', orderable: true, render: function(d) { return '<span class="badge bg-light text-dark"><i class="' + escHtml(d) + '"></i> ' + escHtml(d) + '</span>'; } },
@@ -179,6 +182,7 @@
                         return '<span class="badge bg-secondary me-1">' + r.trim() + '</span>';
                     }).join('');
                 }},
+                { data: 'created_at', orderable: true, render: function(d) { return d ? d : '-'; } },
                 { data: null, className: 'text-center', orderable: false, render: function(row) {
                     return '<button class="btn btn-sm btn-outline-primary btn-edit-menu me-1" data-id="' + row.id_menu + '" title="Edit"><i class="bi bi-pencil"></i></button>' +
                            '<button class="btn btn-sm btn-outline-danger btn-delete-menu" data-id="' + row.id_menu + '" data-name="' + escHtml(row.nama_menu) + '" title="Hapus"><i class="bi bi-trash"></i></button>';

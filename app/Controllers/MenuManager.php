@@ -89,6 +89,7 @@ class MenuManager extends AppController
                 'urutan'      => $row['urutan'],
                 'role_access' => $row['role_access'],
                 'parent_id'   => $row['parent_id'],
+                'created_at'  => $row['created_at'] ?? null,
             ];
         }
 
