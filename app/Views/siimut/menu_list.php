@@ -45,20 +45,20 @@
             </div>
             <button class="btn btn-sm btn-primary" id="btnTambahMenu"><i class="bi bi-plus-lg"></i> Tambah Menu</button>
         </div>
-        <div class="card-body p-0">
+        <div class="card-body p-2">
             <div class="table-responsive">
                 <table class="table table-sm table-hover align-middle mb-0" id="table-menu" style="width:100%">
                     <thead class="table-light">
                         <tr>
                             <th class="text-center" style="width:40px">No</th>
-                            <th style="width:60px">ID</th>
+                            <th style="width:50px">ID</th>
                             <th>Nama Menu</th>
-                            <th style="width:180px">URL</th>
-                            <th style="width:90px">Icon</th>
-                            <th style="width:120px">Parent</th>
-                            <th style="width:50px">Urutan</th>
-                            <th style="width:160px">Role Access</th>
-                            <th style="width:110px">Dibuat</th>
+                            <th style="width:140px" class="d-none d-lg-table-cell">URL</th>
+                            <th style="width:70px" class="d-none d-md-table-cell">Icon</th>
+                            <th style="width:110px" class="d-none d-md-table-cell">Parent</th>
+                            <th style="width:40px" class="text-center">Urut</th>
+                            <th style="width:150px" class="d-none d-xl-table-cell">Role Access</th>
+                            <th style="width:90px" class="d-none d-lg-table-cell">Dibuat</th>
                             <th class="text-center" style="width:90px">Aksi</th>
                         </tr>
                     </thead>
@@ -172,23 +172,26 @@
                 { data: 'no', className: 'text-center', orderable: false },
                 { data: 'id_menu', className: 'text-center', orderable: true },
                 { data: 'nama_menu', orderable: true },
-                { data: 'url', orderable: true, render: function(d) { return d ? '<code>' + escHtml(d) + '</code>' : '-'; } },
-                { data: 'icon', orderable: true, render: function(d) { return '<span class="badge bg-light text-dark"><i class="' + escHtml(d) + '"></i> ' + escHtml(d) + '</span>'; } },
-                { data: 'parent_nama', orderable: true },
+                { data: 'url', className: 'd-none d-lg-table-cell', orderable: true, render: function(d) { return d ? '<code class="small">' + escHtml(d) + '</code>' : '-'; } },
+                { data: 'icon', className: 'd-none d-md-table-cell', orderable: true, render: function(d) { return d ? '<span class="badge bg-light text-dark border small"><i class="' + escHtml(d) + '"></i></span>' : '-'; } },
+                { data: 'parent_nama', className: 'd-none d-md-table-cell', orderable: true },
                 { data: 'urutan', className: 'text-center', orderable: true },
-                { data: 'role_access', orderable: false, render: function(d) {
-                    if (!d) return '<span class="text-muted">-</span>';
+                { data: 'role_access', className: 'd-none d-xl-table-cell', orderable: false, render: function(d) {
+                    if (!d) return '<span class="text-muted small">-</span>';
                     return d.split(',').map(function(r) {
-                        return '<span class="badge bg-secondary me-1">' + r.trim() + '</span>';
-                    }).join('');
+                        return '<span class="badge bg-secondary" style="font-size:10px">' + r.trim() + '</span>';
+                    }).join(' ');
                 }},
-                { data: 'created_at', orderable: true, render: function(d) { return d ? d : '-'; } },
+                { data: 'created_at', className: 'd-none d-lg-table-cell small', orderable: true, render: function(d) { return d ? d : '-'; } },
                 { data: null, className: 'text-center', orderable: false, render: function(row) {
                     return '<button class="btn btn-sm btn-outline-primary btn-edit-menu me-1" data-id="' + row.id_menu + '" title="Edit"><i class="bi bi-pencil"></i></button>' +
                            '<button class="btn btn-sm btn-outline-danger btn-delete-menu" data-id="' + row.id_menu + '" data-name="' + escHtml(row.nama_menu) + '" title="Hapus"><i class="bi bi-trash"></i></button>';
                 }}
             ],
-            order: [[1, 'asc']]
+            order: [[6, 'asc']],
+            columnDefs: [
+                { targets: [7], orderable: false }
+            ]
         });
 
         $('#cari_menu').on('keyup', function() {
