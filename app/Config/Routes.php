@@ -120,6 +120,7 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         // Validation
         $routes->get('validation/(:any)/form', 'Validation::form/$1');
         $routes->post('validation/(:any)/save', 'Validation::save/$1');
+        $routes->post('validation/(:any)/ajax-get-data', 'Validation::ajaxGetData/$1');
         $routes->get('validation/(:any)', 'Validation::index/$1');
 
         // Trash

@@ -113,6 +113,60 @@ class Validation extends AppController
         ]);
     }
 
+    public function ajaxGetData(string $module = 'inm')
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthorized']);
+        }
+        if (!isset($this->modules[$module])) {
+            return $this->response->setJSON(['draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => []]);
+        }
+
+        $cfg = $this->modules[$module];
+        $post = $this->request->getPost();
+        $draw  = (int) ($post['draw'] ?? 1);
+        $start = (int) ($post['start'] ?? 0);
+        $length = (int) ($post['length'] ?? 25);
+        $tahun = (int) ($post['tahun'] ?? date('Y'));
+        $bulan = (int) ($post['bulan'] ?? date('m'));
+
+        $validationModel = new IndicatorValidationModel();
+        $data = $validationModel->getPendingIndicators($cfg['categoryId'], $tahun, $bulan);
+
+        $total = count($data);
+        $rows = [];
+        $no = 1;
+        $urlBase = site_url('siimut/validation/' . $module . '/form');
+
+        foreach ($data as $row) {
+            $statusHtml = !empty($row->validation_result)
+                ? ($row->validation_result === 'valid'
+                    ? '<span class="badge bg-success">Tervalidasi (' . number_format($row->validation_score, 1) . '%)</span>'
+                    : '<span class="badge bg-danger">Tidak Valid (' . number_format($row->validation_score, 1) . '%)</span>')
+                : '<span class="badge bg-warning text-dark">Menunggu Validasi</span>';
+
+            $aksiHtml = '<a href="' . $urlBase . '?indicator_id=' . $row->result_indicator_id . '&department_id=' . $row->result_department_id . '&tahun=' . $tahun . '&bulan=' . $bulan . '" class="btn btn-sm btn-outline-primary" title="Validasi"><i class="bi bi-check-circle"></i></a>';
+
+            $rows[] = [
+                'no'                => $no++,
+                'result_indicator_id' => $row->result_indicator_id,
+                'result_department_id' => $row->result_department_id,
+                'indicator_element' => $row->indicator_element ?? '-',
+                'department_name'   => $row->department_name ?? '-',
+                'total_records'     => $row->total_records,
+                'status_html'       => $statusHtml,
+                'aksi_html'         => $aksiHtml,
+            ];
+        }
+
+        return $this->response->setJSON([
+            'draw'            => $draw,
+            'recordsTotal'    => $total,
+            'recordsFiltered' => $total,
+            'data'            => $rows,
+        ]);
+    }
+
     public function save()
     {
         if (!$this->request->isAJAX()) {

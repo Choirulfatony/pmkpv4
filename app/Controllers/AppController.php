@@ -16,7 +16,7 @@ class AppController extends Controller
     protected function disableCache()
     {
         $this->response
-            ->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->setHeader('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0')
             ->setHeader('Cache-Control', 'post-check=0, pre-check=0', false)
             ->setHeader('Pragma', 'no-cache')
             ->setHeader('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
