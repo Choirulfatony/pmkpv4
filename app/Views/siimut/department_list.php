@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+<link rel="stylesheet" href="<?= base_url('assets/adminlte/css/responsive.bootstrap5.min.css') ?>">
 <div class="container-fluid">
     <style>
         #table-unit_paginate .pagination .page-link {
@@ -302,6 +302,9 @@
         }
     });
     $('#modal-form-indicator').on('hidden.bs.modal', function() {
+        if ($('#form-indicator-id').data('select2')) {
+            $('#form-indicator-id').select2('destroy');
+        }
         if (dtIndicator) {
             dtIndicator.columns.adjust().responsive.recalc();
         }
@@ -363,7 +366,7 @@
 
                     <div class="mb-2" id="indicator-select-wrapper">
                         <label class="form-label small">Pilih Indikator <span class="text-danger">*</span></label>
-                        <select class="form-select form-select-sm" name="indicator_id" id="form-indicator-id">
+                        <select class="form-select form-select-sm" name="indicator_id" id="form-indicator-id" style="width:100%">
                             <option value="">-- Pilih --</option>
                         </select>
                     </div>
@@ -405,7 +408,7 @@
     </div>
 </div>
 
-<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="<?= base_url('assets/adminlte/js/dataTables.responsive.min.js') ?>"></script>
 <script>
     var currentDeptId = 0;
     var currentDeptName = '';
@@ -573,6 +576,12 @@
                         sel.append('<option value="' + row.indicator_id + '">' + row.indicator_element + '</option>');
                     });
                 }
+                sel.select2({
+                    dropdownParent: $('#modal-form-indicator'),
+                    placeholder: '-- Cari Indikator --',
+                    allowClear: true,
+                    width: 'resolve'
+                });
             }
         });
 

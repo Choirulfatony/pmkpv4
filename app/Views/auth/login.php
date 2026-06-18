@@ -137,10 +137,17 @@
                     </label>
                 </div>
 
-                <div class="form-outline mb-3">
-                    <input type="password" name="password" class="form-control form-control-lg"
-                        placeholder="Password" required>
-                    <label class="form-label">Password</label>
+                <div class="mb-3" style="position: relative;">
+                    <div class="form-outline">
+                        <input type="password" name="password" id="passwordInput" class="form-control form-control-lg"
+                            placeholder="Password" required>
+                        <label class="form-label">Password</label>
+                    </div>
+                    <span id="togglePassword"
+                        class="position-absolute top-50 end-0 me-3 translate-middle-y"
+                        style="cursor: pointer; z-index: 3;">
+                        <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                    </span>
                 </div>
 
                 <div class="mb-3">
@@ -421,6 +428,18 @@ $registerName = session('register_name');
     });
 
     document.addEventListener('DOMContentLoaded', function() {
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('passwordInput');
+        const toggleIcon = document.getElementById('togglePasswordIcon');
+        if (togglePassword && passwordInput) {
+            togglePassword.addEventListener('click', function () {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                toggleIcon.classList.toggle('bi-eye');
+                toggleIcon.classList.toggle('bi-eye-slash');
+            });
+        }
+
         const btn = document.getElementById('btnRefreshCaptcha');
         if (btn) {
             btn.addEventListener('click', function() {

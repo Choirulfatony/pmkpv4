@@ -57,10 +57,12 @@ class AuthFilter implements FilterInterface
             return redirect()->to('/auth?timeout=1');
         }
 
-        // Update last_activity on every page load to keep session alive
-        // This ensures normal browsing activity keeps the user logged in
-        // The JavaScript only handles the case when user is completely idle
+        // Update last_activity & online status on every page load
         $session->set('last_activity', time());
+        $db = \Config\Database::connect();
+        $db->table('user_profile')
+            ->where('profile_id', $session->get('profile_id'))
+            ->update(['profile_online_status' => 1]);
 
         // 🔥 CEK LOGIN SOURCE - APP tidak boleh akses IKPRS
         $loginSource = $session->get('login_source');

@@ -501,7 +501,7 @@
             order: [[5, 'asc']],
             orderFixed: { pre: [[5, 'asc']] },
             language: {
-                url: "https://cdn.datatables.net/plug-ins/1.13.7/i18n/id.json"
+                url: "<?= base_url('assets/adminlte/js/id.json') ?>"
             }
         });
 
@@ -702,7 +702,7 @@
                         }
                     }
                 ],
-                language: { url: "https://cdn.datatables.net/plug-ins/1.13.7/i18n/id.json" }
+                language: { url: "<?= base_url('assets/adminlte/js/id.json') ?>" }
             });
         }
 

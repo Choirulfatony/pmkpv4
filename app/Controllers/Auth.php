@@ -1150,7 +1150,7 @@ class Auth extends BaseController
             }
 
             // Cek apakah email terdaftar di database aplikasi
-            $user = $this->sessionApps->select('user_profile.*, user_group.group_name as hak_akses, master_institution_department.department_name as lokasi')
+            $user = $this->sessionApps->select('user_profile.*, user_group.group_name as hak_akses, master_institution_department.department_name as lokasi, master_institution_department.department_id as department_id')
                 ->join('master_institution_department', 'master_institution_department.department_id = user_profile.profile_department_id', 'left')
                 ->join('user_group', 'user_group.group_id = user_profile.profile_group_id', 'left')
                 ->where('user_profile.profile_email', $email)
@@ -1231,8 +1231,9 @@ class Auth extends BaseController
 
                 $roleMap = [
                     'Kendali Mutu dan Tim Pokja' => 'KENDALI_MUTU',
-                    'Komite' => 'KOMITE',
-                    'Administrator' => 'ADMINISTRATOR'
+                    'Kendali Mutu'             => 'KENDALI_MUTU',
+                    'Komite'                    => 'KOMITE',
+                    'Administrator'             => 'ADMINISTRATOR'
                 ];
 
                 $userRole = $roleMap[$user->hak_akses] ?? 'APP';

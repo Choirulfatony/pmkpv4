@@ -1,0 +1,40 @@
+{
+    "emptyTable": "Tidak ada data yang tersedia pada tabel ini",
+    "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
+    "infoEmpty": "Menampilkan 0 sampai 0 dari 0 entri",
+    "infoFiltered": "(disaring dari _MAX_ entri keseluruhan)",
+    "lengthMenu": "Tampilkan _MENU_ entri",
+    "loadingRecords": "Sedang memuat...",
+    "processing": "Sedang memproses...",
+    "search": "Cari:",
+    "zeroRecords": "Tidak ditemukan data yang sesuai",
+    "paginate": {
+        "first": "Pertama",
+        "last": "Terakhir",
+        "next": "Selanjutnya",
+        "previous": "Sebelumnya"
+    },
+    "aria": {
+        "sortAscending": ": aktifkan untuk mengurutkan kolom ke atas",
+        "sortDescending": ": aktifkan untuk mengurutkan kolom menurun"
+    },
+    "decimal": ",",
+    "thousands": ".",
+    "searchPlaceholder": "kata kunci pencarian",
+    "datetime": {
+        "previous": "Sebelumnya",
+        "next": "Selanjutnya",
+        "hours": "Jam",
+        "minutes": "Menit",
+        "seconds": "Detik",
+        "unknown": "-",
+        "amPm": ["am", "pm"],
+        "weekdays": ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"],
+        "months": ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
+    },
+    "select": {
+        "cells": { "1": "1 sel dipilih", "_": "%d sel dipilih" },
+        "columns": { "1": "1 kolom dipilih", "_": "%d kolom dipilih" },
+        "rows": { "1": "1 baris dipilih", "_": "%d baris dipilih" }
+    }
+}

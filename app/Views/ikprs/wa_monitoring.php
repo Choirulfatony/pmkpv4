@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="<?= base_url('assets/login/img/rssm.ico') ?> " type="image/x-icon" />
     <title>Monitoring WhatsApp Messages</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="<?= base_url('assets/adminlte/css/bootstrap.min.css') ?>" rel="stylesheet">
+    <link href="<?= base_url('assets/adminlte/css/bootstrap-icons.min.css') ?>" rel="stylesheet">
 </head>
 
 <body>
@@ -193,7 +193,7 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="<?= base_url('assets/adminlte/plugins/bootstrap.bundle.min.js') ?>"></script>
     <script>
         function buildQueryString(status, search, per_page) {
             let params = [];

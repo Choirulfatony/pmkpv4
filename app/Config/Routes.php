@@ -15,6 +15,7 @@ $routes->get('auth/logout', 'Auth::logout');
 $routes->get('auth/refresh-captcha', 'Auth::refresh_captcha');
 $routes->post('auth/clear_register_session', 'Auth::clear_register_session');
 $routes->post('auth/ping', 'Auth::ping');
+
 $routes->get('auth/resend_verification', 'Auth::resend_verification');
 $routes->get('auth/cek_session', 'Auth::cek_session');
 
@@ -241,7 +242,7 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->get('dokumen-mutu', 'FileManager::index');
         $routes->post('dokumen-mutu/create-folder', 'FileManager::createFolder');
         $routes->post('dokumen-mutu/upload', 'FileManager::upload');
-        $routes->get('dokumen-mutu/download/(:num)', 'FileManager::download/$1');
+    $routes->get('dokumen-mutu/download/(:num)', 'FileManager::download/$1');
         $routes->post('dokumen-mutu/delete/(:num)', 'FileManager::delete/$1');
         $routes->get('dokumen-mutu/delete-requests', 'FileManager::deleteRequestsList');
         $routes->post('dokumen-mutu/request-delete', 'FileManager::requestDelete');

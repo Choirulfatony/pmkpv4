@@ -56,4 +56,6 @@
     document.addEventListener('click', resetActivityTimer);
     document.addEventListener('scroll', resetActivityTimer);
     resetActivityTimer();
+
+
   </script>

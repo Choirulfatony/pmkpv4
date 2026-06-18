@@ -89,6 +89,8 @@
                                 <?php $ext = strtolower(pathinfo($item->file_name, PATHINFO_EXTENSION)); ?>
                                 <?php if (in_array($ext, ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'txt', 'csv'])): ?>
                                 <a href="<?= base_url('uploads/file_manager/' . $item->file_path) ?>" class="btn btn-sm btn-outline-primary" target="_blank" title="View"><i class="bi bi-eye"></i></a>
+                                <?php elseif ($ext === 'docx'): ?>
+                                <a href="https://docs.google.com/gview?url=<?= urlencode(base_url('uploads/file_manager/' . $item->file_path)) ?>" target="_blank" class="btn btn-sm btn-outline-primary" title="Preview via Google"><i class="bi bi-eye"></i></a>
                                 <?php else: ?>
                                 <a href="<?= site_url('siimut/dokumen-mutu/download/' . $item->id) ?>" class="btn btn-sm btn-outline-primary" title="Download & Buka"><i class="bi bi-eye"></i></a>
                                 <?php endif; ?>
@@ -227,7 +229,6 @@
         </div>
     </div>
 </div>
-
 <!-- Modal Riwayat -->
 <div class="modal fade" id="riwayatModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered modal-lg">
