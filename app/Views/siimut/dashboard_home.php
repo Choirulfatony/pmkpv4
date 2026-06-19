@@ -184,8 +184,7 @@
                         <i class="bi bi-info-circle"></i>
                         Setiap bar adalah rata-rata dari seluruh indikator aktif di bulan tersebut.
                         Rumus per indikator: <strong>Nilai = (Numerator / Denumerator) &times; Faktor</strong>.
-                        Nilai 50,7 artinya rata-rata semua indikator IKP di bulan itu = 50,7.
-                        Untuk ADMINISTRATOR: rata-rata semua departemen. Untuk KENDALI MUTU: hanya departemen sendiri.
+                        ADMINISTRATOR: rata-rata semua departemen. KENDALI MUTU: hanya departemen sendiri.
                     </small>
                 </div>
             </div>
