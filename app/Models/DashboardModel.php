@@ -28,19 +28,32 @@ class DashboardModel extends Model
         $db = db_connect();
         $result = [];
 
-        foreach ([1, 5, 6, 7] as $type) {
-            $table = $type === 1 ? 'quality_indicator_group' : 'local_quality_indicator_group';
-            $indicatorTable = $type === 1 ? 'quality_indicator' : 'local_quality_indicator';
+        // Map group_type -> (indicator_table, category_id)
+        // INM (type=1) pakai quality_indicator dengan category_id=4
+        // Local types (5,6,7) pakai category_id = group_type
+        $typeMap = [
+            1 => ['table' => 'quality_indicator',       'category' => 4, 'groupTable' => 'quality_indicator_group'],
+            5 => ['table' => 'local_quality_indicator', 'category' => 5, 'groupTable' => 'local_quality_indicator_group'],
+            6 => ['table' => 'local_quality_indicator', 'category' => 6, 'groupTable' => 'local_quality_indicator_group'],
+            7 => ['table' => 'local_quality_indicator', 'category' => 7, 'groupTable' => 'local_quality_indicator_group'],
+        ];
 
-            $sql = "SELECT COUNT(DISTINCT g.group_indicator_id) AS cnt
-                    FROM {$table} g
-                    JOIN {$indicatorTable} i ON i.indicator_id = g.group_indicator_id AND i.indicator_record_status = 'A'
-                    WHERE g.group_type = ?";
-            $params = [$type];
-
+        foreach ($typeMap as $type => $cfg) {
             if ($departmentId !== null) {
-                $sql .= " AND g.group_department_id = ?";
-                $params[] = (string) $departmentId;
+                // Kendali Mutu: hitung indikator yg terdaftar di departemennya
+                $sql = "SELECT COUNT(DISTINCT g.group_indicator_id) AS cnt
+                        FROM {$cfg['groupTable']} g
+                        JOIN {$cfg['table']} i ON i.indicator_id = g.group_indicator_id AND i.indicator_record_status = 'A'
+                        WHERE g.group_type = ?
+                          AND g.group_department_id = ?";
+                $params = [$type, (string) $departmentId];
+            } else {
+                // ADMIN: hitung semua indikator aktif (sama dengan halaman data-indikator)
+                $sql = "SELECT COUNT(*) AS cnt
+                        FROM {$cfg['table']}
+                        WHERE indicator_category_id = ?
+                          AND indicator_record_status = 'A'";
+                $params = [$cfg['category']];
             }
 
             $row = $db->query($sql, $params)->getRow();
@@ -49,7 +62,6 @@ class DashboardModel extends Model
                 'label' => $this->labelMapping[$type],
                 'count' => $cnt,
             ];
-
         }
 
         return $result;
