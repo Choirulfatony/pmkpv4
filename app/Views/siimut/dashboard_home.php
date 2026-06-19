@@ -181,7 +181,6 @@
                 </div>
                 <div class="card-footer bg-transparent py-1">
                     <small class="text-muted">
-                        <i class="bi bi-info-circle"></i>
                         <div>Grafik menunjukkan persentase kelengkapan pengisian indikator mutu per bulan berdasarkan jenis indikator (INM, IMPRS, IMPUNIT, dan IKP).</div>
                         <div>Persentase dihitung dari jumlah indikator yang telah diisi dibandingkan dengan total indikator yang aktif pada bulan tersebut.</div>
                     </small>
