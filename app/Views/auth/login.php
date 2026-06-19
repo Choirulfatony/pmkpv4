@@ -6,8 +6,15 @@
 
     .login-wallpaper {
         min-height: 100vh;
-        background: url("<?= base_url('assets/img/rsud.png') ?>") no-repeat;
+        background: url("<?= base_url('assets/img/rsud.jpg') ?>") no-repeat;
         background-size: 100% 100%;
+    }
+
+    @supports (background-image: url('data:image/webp;base64,UklGRi4AAABXRUJQVlA4TCEAAAAvAUAAEB8wAiMw')) {
+        .login-wallpaper {
+            background: url("<?= base_url('assets/img/rsud.webp') ?>") no-repeat;
+            background-size: 100% 100%;
+        }
     }
 
 

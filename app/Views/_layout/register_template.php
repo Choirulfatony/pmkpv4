@@ -12,7 +12,7 @@ $layout = '
         html, body { height: 100%; }
         .login-wallpaper {
             min-height: 100vh;
-            background: url("' . base_url('assets/img/rsud.png') . '") no-repeat;
+            background: url("' . base_url('assets/img/rsud.jpg') . '") no-repeat;
             background-size: 100% 100%;
         }
         .login-overlay {
