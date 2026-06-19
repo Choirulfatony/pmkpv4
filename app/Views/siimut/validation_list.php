@@ -1,22 +1,30 @@
 <div class="container-fluid">
     <div class="card shadow-sm">
         <div class="card-header d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 py-2">
-            <form class="d-flex flex-wrap align-items-center gap-2 mb-0" method="get" id="filterForm">
-                <select name="tahun" id="filterTahun" class="form-select form-select-sm" style="width:85px">
+            <form class="d-flex flex-wrap align-items-center gap-1 mb-0" id="filterForm">
+                <select name="tahun" id="filterTahun" class="form-select form-select-sm" style="width:75px">
                     <?php for ($y = date('Y') - 2; $y <= date('Y'); $y++): ?>
                         <option value="<?= $y ?>" <?= $y == $tahun ? 'selected' : '' ?>><?= $y ?></option>
                     <?php endfor; ?>
                 </select>
-                <select name="bulan" id="filterBulan" class="form-select form-select-sm" style="width:120px">
+                <select name="bulan" id="filterBulan" class="form-select form-select-sm" style="width:110px">
                     <?php for ($m = 1; $m <= 12; $m++): ?>
                         <option value="<?= str_pad((string)$m, 2, '0', STR_PAD_LEFT) ?>" <?= $m == $bulan ? 'selected' : '' ?>>
                             <?= $namaBulan[$m] ?>
                         </option>
                     <?php endfor; ?>
                 </select>
-                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search"></i> Tampilkan</button>
+                <select name="department_id" id="filterDepartment" class="form-select form-select-sm" style="min-width:130px;max-width:180px">
+                    <option value="">Semua Unit</option>
+                    <?php foreach ($departments as $id => $name): ?>
+                        <option value="<?= $id ?>"><?= $name ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary px-2" title="Tampilkan"><i class="bi bi-search"></i></button>
             </form>
-            <span class="text-muted ms-auto"><?= $bulan ?>/<?= $tahun ?></span>
+            <div class="d-flex align-items-center ms-auto">
+                <input type="text" id="cari_validasi" class="form-control form-control-sm" placeholder="Cari..." style="min-width:100px;max-width:150px">
+            </div>
         </div>
         <div class="card-body p-3">
             <div class="table-responsive">
@@ -58,6 +66,8 @@
                 data: function(d) {
                     d.tahun = $('#filterTahun').val();
                     d.bulan = $('#filterBulan').val();
+                    d.department_id = $('#filterDepartment').val();
+                    d.search = { value: $('#cari_validasi').val() };
                 }
             },
             columns: [
@@ -74,6 +84,10 @@
         $('#filterForm').on('submit', function(e) {
             e.preventDefault();
             table.ajax.reload();
+        });
+
+        $('#cari_validasi').on('keyup', function() {
+            table.search($(this).val()).draw();
         });
     });
 </script>

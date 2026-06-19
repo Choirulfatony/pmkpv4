@@ -32,7 +32,7 @@ class DashboardModel extends Model
             $table = $type === 1 ? 'quality_indicator_group' : 'local_quality_indicator_group';
             $indicatorTable = $type === 1 ? 'quality_indicator' : 'local_quality_indicator';
 
-            $sql = "SELECT COUNT(DISTINCT g.group_indicator_id, g.group_department_id) AS cnt
+            $sql = "SELECT COUNT(DISTINCT g.group_indicator_id) AS cnt
                     FROM {$table} g
                     JOIN {$indicatorTable} i ON i.indicator_id = g.group_indicator_id
                     JOIN master_institution_department d ON d.department_id = g.group_department_id

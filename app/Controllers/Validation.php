@@ -38,6 +38,13 @@ class Validation extends AppController
         $validationModel = new IndicatorValidationModel();
         $data = $validationModel->getPendingIndicators($cfg['categoryId'], (int)$tahun, (int)$bulan);
 
+        // Extract unique departments
+        $departments = [];
+        foreach ($data as $row) {
+            $departments[$row->result_department_id] = $row->department_name;
+        }
+        asort($departments);
+
         $namaBulan = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
         return $this->render('siimut/validation_list', [
@@ -50,6 +57,7 @@ class Validation extends AppController
                 'tahun'        => $tahun,
                 'bulan'        => $bulan,
                 'data'         => $data,
+                'departments'  => $departments,
                 'namaBulan'    => $namaBulan,
                 'profileId'    => session('profile_id') ?? 0
             ])
@@ -129,16 +137,35 @@ class Validation extends AppController
         $length = (int) ($post['length'] ?? 25);
         $tahun = (int) ($post['tahun'] ?? date('Y'));
         $bulan = (int) ($post['bulan'] ?? date('m'));
+        $search = $post['search']['value'] ?? '';
+        $departmentFilter = $post['department_id'] ?? '';
 
         $validationModel = new IndicatorValidationModel();
-        $data = $validationModel->getPendingIndicators($cfg['categoryId'], $tahun, $bulan);
+        $allData = $validationModel->getPendingIndicators($cfg['categoryId'], $tahun, $bulan);
 
-        $total = count($data);
+        // Filter by department
+        if ($departmentFilter !== '') {
+            $allData = array_filter($allData, function ($row) use ($departmentFilter) {
+                return (string) $row->result_department_id === (string) $departmentFilter;
+            });
+        }
+
+        // Filter by search
+        if ($search) {
+            $allData = array_filter($allData, function ($row) use ($search) {
+                $q = strtolower($search);
+                return str_contains(strtolower($row->indicator_element ?? ''), $q)
+                    || str_contains(strtolower($row->department_name ?? ''), $q);
+            });
+        }
+
+        $total = count($allData);
+        $sliced = array_slice($allData, $start, $length);
         $rows = [];
-        $no = 1;
+        $no = $start + 1;
         $urlBase = site_url('siimut/validation/' . $module . '/form');
 
-        foreach ($data as $row) {
+        foreach ($sliced as $row) {
             $statusHtml = !empty($row->validation_result)
                 ? ($row->validation_result === 'valid'
                     ? '<span class="badge bg-success">Tervalidasi (' . number_format($row->validation_score, 1) . '%)</span>'

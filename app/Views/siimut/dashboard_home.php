@@ -125,8 +125,8 @@
                             <?php endforeach; ?>
                             <small class="text-muted d-block mt-1">
                                 <i class="bi bi-info-circle"></i>
-                                <strong>Harian:</strong> hari_terisi/total_hari &bull;
-                                <strong>Bulanan/Tahunan:</strong> 100% jika sudah diisi
+                                <strong>Harian:</strong> hari_terisi / total_hari &bull;
+                                <strong>Bulanan / Tahunan:</strong> 100% jika sudah diisi
                             </small>
                         </div>
                         <div class="col-md-4">
