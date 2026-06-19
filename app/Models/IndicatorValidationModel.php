@@ -75,7 +75,7 @@ class IndicatorValidationModel extends Model
               AND result_department_id = ?
               AND YEAR(result_period) = ?
               AND MONTH(result_period) = ?
-              AND result_record_status = 'D'
+              AND result_record_status = 'A'
             ORDER BY result_period ASC
         ", [$indicatorId, $departmentId, $tahun, $bulanStr])->getResult();
     }
