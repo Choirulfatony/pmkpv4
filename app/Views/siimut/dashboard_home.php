@@ -107,7 +107,11 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-8">
-                            <p class="text-center mb-3"><strong>Progress Pengisian per Jenis Indikator</strong></p>
+                            <p class="text-center mb-3">
+                                <strong>Progress Pengisian per Jenis Indikator</strong>
+                                <i class="bi bi-info-circle text-muted" data-bs-toggle="tooltip" data-bs-placement="right"
+                                   title="D: % hari terisi / total hari | M: 100% jika sudah diisi | Y: 100% jika sudah diisi. % akhir = rata-rata semua indikator."></i>
+                            </p>
                             <?php foreach ([1, 5, 6, 7] as $type): ?>
                                 <?php $c = $colors[$type]; ?>
                                 <?php $p = $progress[$type] ?? ['label' => '-', 'total' => 0, 'filled' => 0, 'pct' => 0]; ?>
@@ -119,6 +123,11 @@
                                     </div>
                                 </div>
                             <?php endforeach; ?>
+                            <small class="text-muted d-block mt-1">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Harian:</strong> hari_terisi/total_hari &bull;
+                                <strong>Bulanan/Tahunan:</strong> 100% jika sudah diisi
+                            </small>
                         </div>
                         <div class="col-md-4">
                             <p class="text-center mb-3"><strong>Pencapaian Target Bulan Ini</strong></p>
