@@ -454,7 +454,7 @@
                 { data: null, className: 'dt-center', orderable: false, searchable: false },
                 { data: 'indicator_element' },
                 { data: 'indicator_target', className: 'dt-center' },
-                { data: 'indicator_units', className: 'dt-center' },
+                { data: 'indicator_target_unit', className: 'dt-center' },
                 { data: 'indicator_frequency', className: 'dt-center' },
                 { data: 'indicator_record_status', className: 'dt-center' },
                 { data: null, className: 'dt-center', orderable: false, searchable: false }

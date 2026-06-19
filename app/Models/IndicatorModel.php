@@ -120,7 +120,7 @@ class IndicatorModel extends Model
 
         $orderColumn = $post['order'][0]['column'] ?? 0;
         $orderDir = $post['order'][0]['dir'] ?? 'ASC';
-        $columns = ['indicator_id', 'indicator_element', 'indicator_target', 'indicator_units', 'indicator_frequency', 'indicator_record_status'];
+        $columns = ['indicator_id', 'indicator_element', 'indicator_target', 'indicator_target_unit', 'indicator_frequency', 'indicator_record_status'];
         $orderBy = $columns[$orderColumn] ?? 'indicator_id';
         if ($orderBy !== 'indicator_record_status') {
             $builder->orderBy('qi.' . $orderBy, $orderDir);
