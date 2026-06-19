@@ -167,6 +167,8 @@
     </div>
 
     <div class="row">
+        <?php $hasTrend = ($summary[1]['count'] ?? 0) + ($summary[5]['count'] ?? 0) + ($summary[6]['count'] ?? 0) + ($summary[7]['count'] ?? 0) > 0; ?>
+        <?php if ($hasTrend): ?>
         <div class="col-lg-12 mb-3">
             <div class="card">
                 <div class="card-header">
@@ -182,6 +184,7 @@
                 </div>
             </div>
         </div>
+        <?php endif; ?>
     </div>
 
     <?php if (session('user_role') === 'ADMINISTRATOR'): ?>
@@ -563,6 +566,7 @@ document.addEventListener('DOMContentLoaded', function() {
         data: {
             labels: <?= $trendLabels ?>,
             datasets: [
+                <?php if (($summary[1]['count'] ?? 0) > 0): ?>
                 {
                     label: 'INM',
                     data: <?= $trendInm ?>,
@@ -570,6 +574,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     borderColor: 'rgba(13, 110, 253, 1)',
                     borderWidth: 1,
                 },
+                <?php endif; ?>
+                <?php if (($summary[5]['count'] ?? 0) > 0): ?>
                 {
                     label: 'IMPRS',
                     data: <?= $trendImprs ?>,
@@ -577,6 +583,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     borderColor: 'rgba(25, 135, 84, 1)',
                     borderWidth: 1,
                 },
+                <?php endif; ?>
+                <?php if (($summary[6]['count'] ?? 0) > 0): ?>
                 {
                     label: 'IMPUNIT',
                     data: <?= $trendImpunit ?>,
@@ -584,6 +592,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     borderColor: 'rgba(255, 193, 7, 1)',
                     borderWidth: 1,
                 },
+                <?php endif; ?>
+                <?php if (($summary[7]['count'] ?? 0) > 0): ?>
                 {
                     label: 'IKP',
                     data: <?= $trendIkp ?>,
@@ -591,6 +601,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     borderColor: 'rgba(13, 202, 240, 1)',
                     borderWidth: 1,
                 },
+                <?php endif; ?>
             ],
         },
         options: {
