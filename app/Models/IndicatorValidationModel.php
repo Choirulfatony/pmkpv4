@@ -52,7 +52,7 @@ class IndicatorValidationModel extends Model
                 AND YEAR(iv.validation_period) = ?
                 AND MONTH(iv.validation_period) = ?
                 AND iv.validation_category_id = ?
-            WHERE qir.result_record_status = 'D'
+            WHERE qir.result_record_status = 'A'
                 AND YEAR(qir.result_period) = ?
                 AND MONTH(qir.result_period) = ?
             GROUP BY qir.result_indicator_id, qi.indicator_element, qir.result_department_id, mid.department_name,
@@ -75,7 +75,7 @@ class IndicatorValidationModel extends Model
               AND result_department_id = ?
               AND YEAR(result_period) = ?
               AND MONTH(result_period) = ?
-              AND result_record_status = 'D'
+              AND result_record_status = 'A'
             ORDER BY result_period ASC
         ", [$indicatorId, $departmentId, $tahun, $bulanStr])->getResult();
     }
