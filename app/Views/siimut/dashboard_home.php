@@ -182,10 +182,8 @@
                 <div class="card-footer bg-transparent py-1">
                     <small class="text-muted">
                         <i class="bi bi-info-circle"></i>
-                        <div>Setiap bar adalah rata-rata dari seluruh indikator aktif di bulan tersebut.</div>
-                        <div>Rumus per indikator: <strong>Nilai = (Numerator / Denumerator) &times; Faktor</strong>.</div>
-                        <div>ADMINISTRATOR: rata-rata semua departemen.</div>
-                        <div>KENDALI MUTU: hanya departemen sendiri.</div>
+                        <div>Grafik menunjukkan persentase kelengkapan pengisian indikator mutu per bulan berdasarkan jenis indikator (INM, IMPRS, IMPUNIT, dan IKP).</div>
+                        <div>Persentase dihitung dari jumlah indikator yang telah diisi dibandingkan dengan total indikator yang aktif pada bulan tersebut.</div>
                     </small>
                 </div>
             </div>
