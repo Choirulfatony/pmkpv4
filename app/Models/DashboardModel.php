@@ -30,23 +30,30 @@ class DashboardModel extends Model
 
         foreach ([1, 5, 6, 7] as $type) {
             $table = $type === 1 ? 'quality_indicator_group' : 'local_quality_indicator_group';
+            $indicatorTable = $type === 1 ? 'quality_indicator' : 'local_quality_indicator';
 
-            $sql = "SELECT COUNT(DISTINCT group_indicator_id) AS cnt
-                    FROM {$table}
-                    WHERE group_type = ?
-                      AND group_record_status = 'A'";
+            $sql = "SELECT COUNT(DISTINCT g.group_indicator_id, g.group_department_id) AS cnt
+                    FROM {$table} g
+                    JOIN {$indicatorTable} i ON i.indicator_id = g.group_indicator_id
+                    JOIN master_institution_department d ON d.department_id = g.group_department_id
+                    WHERE g.group_type = ?
+                      AND g.group_record_status = 'A'
+                      AND i.indicator_record_status = 'A'
+                      AND d.department_record_status = 'A'";
             $params = [$type];
 
             if ($departmentId !== null) {
-                $sql .= " AND group_department_id = ?";
+                $sql .= " AND g.group_department_id = ?";
                 $params[] = (string) $departmentId;
             }
 
             $row = $db->query($sql, $params)->getRow();
+            $cnt = (int) ($row->cnt ?? 0);
             $result[$type] = [
                 'label' => $this->labelMapping[$type],
-                'count' => (int) ($row->cnt ?? 0),
+                'count' => $cnt,
             ];
+
         }
 
         return $result;
@@ -57,44 +64,97 @@ class DashboardModel extends Model
         $db = db_connect();
         $result = [];
 
+        $daysInMonth = (int) date('t', strtotime("$tahun-$bulan-01"));
+        $totalWeeks = (int) ceil($daysInMonth / 7);
+
         foreach ([1, 5, 6, 7] as $type) {
             $groupTable = $type === 1 ? 'quality_indicator_group' : 'local_quality_indicator_group';
             $resultTable = $type === 1 ? 'quality_indicator_result' : 'local_quality_indicator_result';
+            $indicatorTable = $type === 1 ? 'quality_indicator' : 'local_quality_indicator';
 
-            $periodStart = sprintf('%s-%02s-01', $tahun, $bulan);
-
-            $groupBuilder = $db->table($groupTable)
-                ->where('group_type', $type)
-                ->where('group_record_status', 'A');
+            $groupBuilder = $db->table("{$groupTable} g")
+                ->select("g.group_indicator_id, g.group_department_id, i.indicator_frequency")
+                ->join("{$indicatorTable} i", 'i.indicator_id = g.group_indicator_id')
+                ->join('master_institution_department d', 'd.department_id = g.group_department_id')
+                ->where('g.group_type', $type)
+                ->where('g.group_record_status', 'A')
+                ->where('i.indicator_record_status', 'A')
+                ->where('d.department_record_status', 'A');
             if ($departmentId !== null) {
-                $groupBuilder->where('group_department_id', (string) $departmentId);
+                $groupBuilder->where('g.group_department_id', (string) $departmentId);
             }
-            $total = (int) $groupBuilder->countAllResults();
+            $groups = $groupBuilder->get()->getResult();
 
-            $filledSql = "SELECT COUNT(DISTINCT CONCAT(r.result_indicator_id, '-', r.result_department_id)) as cnt
+            $totalGroups = count($groups);
+            if ($totalGroups === 0) {
+                $result[$type] = [
+                    'label'  => $this->labelMapping[$type],
+                    'total'  => 0,
+                    'filled' => 0,
+                    'pct'    => 0,
+                ];
+                continue;
+            }
+
+            $filledSql = "SELECT r.result_indicator_id, r.result_department_id,
+                    i.indicator_frequency,
+                    COUNT(DISTINCT r.result_period) AS hari_terisi
                 FROM {$resultTable} r
                 INNER JOIN {$groupTable} g
                     ON r.result_indicator_id = g.group_indicator_id
                     AND r.result_department_id = g.group_department_id
                     AND g.group_type = ?
                     AND g.group_record_status = 'A'
-                WHERE r.result_period = ?
-                    AND r.result_record_status IN ('D', 'A')";
-            $params = [$type, $periodStart];
+                JOIN {$indicatorTable} i ON i.indicator_id = g.group_indicator_id
+                JOIN master_institution_department d ON d.department_id = g.group_department_id
+                WHERE YEAR(r.result_period) = ?
+                    AND (i.indicator_frequency = 'Y' OR MONTH(r.result_period) = ?)
+                    AND r.result_record_status IN ('D', 'A')
+                    AND i.indicator_record_status = 'A'
+                    AND d.department_record_status = 'A'
+                GROUP BY r.result_indicator_id, r.result_department_id, i.indicator_frequency";
+            $params = [$type, $tahun, $bulan];
             if ($departmentId !== null) {
                 $filledSql .= " AND r.result_department_id = ?";
                 $params[] = (string) $departmentId;
             }
 
-            $filled = $db->query($filledSql, $params)->getRowArray();
-            $filledCount = (int) ($filled['cnt'] ?? 0);
-            $pct = $total > 0 ? round(($filledCount / $total) * 100, 1) : 0;
+            $filledRows = $db->query($filledSql, $params)->getResult();
+            $filledMap = [];
+            foreach ($filledRows as $row) {
+                $key = $row->result_indicator_id . '-' . $row->result_department_id;
+                $filledMap[$key] = $row;
+            }
+
+            $totalPct = 0;
+            $filledCount = 0;
+            foreach ($groups as $g) {
+                $key = $g->group_indicator_id . '-' . $g->group_department_id;
+                $freq = $g->indicator_frequency ?? 'D';
+
+                if (isset($filledMap[$key])) {
+                    $hariTerisi = (int) $filledMap[$key]->hari_terisi;
+                    if ($freq === 'D') {
+                        $indicatorPct = min(100, round(($hariTerisi / $daysInMonth) * 100, 1));
+                    } elseif ($freq === 'W') {
+                        $indicatorPct = min(100, round(($hariTerisi / $totalWeeks) * 100, 1));
+                    } else {
+                        $indicatorPct = 100;
+                    }
+                    if ($indicatorPct > 0) $filledCount++;
+                } else {
+                    $indicatorPct = 0;
+                }
+                $totalPct += $indicatorPct;
+            }
+
+            $avgPct = $totalGroups > 0 ? round($totalPct / $totalGroups, 1) : 0;
 
             $result[$type] = [
                 'label'  => $this->labelMapping[$type],
-                'total'  => $total,
+                'total'  => $totalGroups,
                 'filled' => $filledCount,
-                'pct'    => $pct,
+                'pct'    => $avgPct,
             ];
         }
 
@@ -111,8 +171,6 @@ class DashboardModel extends Model
             $indicatorTable = $type === 1 ? 'quality_indicator' : 'local_quality_indicator';
             $groupTable = $type === 1 ? 'quality_indicator_group' : 'local_quality_indicator_group';
 
-            $periodStart = sprintf('%s-%02s-01', $tahun, $bulan);
-
             $builder = $db->table($resultTable . ' r')
                 ->select("
                     r.result_indicator_id,
@@ -121,12 +179,20 @@ class DashboardModel extends Model
                     SUM(r.result_denumerator_value) AS denum,
                     i.indicator_target,
                     i.indicator_factors,
-                    i.indicator_target_calculation
+                    i.indicator_target_calculation,
+                    i.indicator_frequency,
+                    i.indicator_element,
+                    d.department_name
                 ")
-                ->join("{$indicatorTable} i", 'r.result_indicator_id = i.indicator_id', 'LEFT')
-                ->where('r.result_period', $periodStart)
+                ->join("{$indicatorTable} i", 'r.result_indicator_id = i.indicator_id AND i.indicator_record_status = \'A\'')
+                ->join("{$groupTable} g", 'g.group_indicator_id = r.result_indicator_id AND g.group_department_id = r.result_department_id')
+                ->join('master_institution_department d', 'd.department_id = g.group_department_id')
+                ->where('YEAR(r.result_period)', $tahun)
+                ->where("(i.indicator_frequency = 'Y' OR MONTH(r.result_period) = $bulan)")
                 ->whereIn('r.result_record_status', ['D', 'A'])
-                ->groupBy('r.result_indicator_id, r.result_department_id');
+                ->where('g.group_record_status', 'A')
+                ->where('d.department_record_status', 'A')
+                ->groupBy('r.result_indicator_id, r.result_department_id, i.indicator_element, i.indicator_frequency, d.department_name');
 
             if ($departmentId !== null) {
                 $builder->where('r.result_department_id', (string) $departmentId);
@@ -137,6 +203,9 @@ class DashboardModel extends Model
             $tercapai = 0;
             $tidakTercapai = 0;
             $tidakAdaData = 0;
+            $detailTercapai = [];
+            $detailTidak = [];
+            $detailNoData = [];
 
             foreach ($rows as $row) {
                 $num = (float) $row->num;
@@ -144,38 +213,64 @@ class DashboardModel extends Model
                 $target = (float) ($row->indicator_target ?? 0);
                 $factors = (float) ($row->indicator_factors ?? 1);
                 $operator = $row->indicator_target_calculation ?? '>=';
+                $element = $row->indicator_element ?? '-';
+                $deptName = $row->department_name ?? '-';
 
                 $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
 
                 if ($nilai === null) {
                     $tidakAdaData++;
+                    $detailNoData[] = [
+                        'indicator'  => $element,
+                        'department' => $deptName,
+                    ];
                     continue;
                 }
 
                 if ($this->cekTercapai($nilai, $target, $operator)) {
                     $tercapai++;
+                    $detailTercapai[] = [
+                        'indicator'  => $element,
+                        'department' => $deptName,
+                        'nilai'      => $nilai,
+                        'target'     => $target,
+                    ];
                 } else {
                     $tidakTercapai++;
+                    $detailTidak[] = [
+                        'indicator'  => $element,
+                        'department' => $deptName,
+                        'nilai'      => $nilai,
+                        'target'     => $target,
+                    ];
                 }
             }
 
-            $groupBuilder = $db->table($groupTable)
-                ->where('group_type', $type)
-                ->where('group_record_status', 'A');
+            $groupBuilder = $db->table("{$groupTable} g")
+                ->select('COUNT(DISTINCT g.group_indicator_id, g.group_department_id) AS cnt')
+                ->join("{$indicatorTable} i", 'i.indicator_id = g.group_indicator_id')
+                ->join('master_institution_department d', 'd.department_id = g.group_department_id')
+                ->where('g.group_type', $type)
+                ->where('g.group_record_status', 'A')
+                ->where('i.indicator_record_status', 'A')
+                ->where('d.department_record_status', 'A');
             if ($departmentId !== null) {
-                $groupBuilder->where('group_department_id', (string) $departmentId);
+                $groupBuilder->where('g.group_department_id', (string) $departmentId);
             }
-            $totalGroups = (int) $groupBuilder->countAllResults();
+            $totalGroups = (int) $groupBuilder->get()->getRow()->cnt;
 
             $belumInput = $totalGroups - ($tercapai + $tidakTercapai + $tidakAdaData);
 
             $result[$type] = [
-                'label'         => $this->labelMapping[$type],
-                'tercapai'      => $tercapai,
-                'tidak_tercapai'=> $tidakTercapai,
-                'tidak_ada_data'=> $tidakAdaData,
-                'belum_input'   => max(0, $belumInput),
-                'total'         => $totalGroups,
+                'label'          => $this->labelMapping[$type],
+                'tercapai'       => $tercapai,
+                'tidak_tercapai' => $tidakTercapai,
+                'tidak_ada_data' => $tidakAdaData,
+                'belum_input'    => max(0, $belumInput),
+                'total'          => $totalGroups,
+                'detail_tercapai' => $detailTercapai,
+                'detail_tidak'   => $detailTidak,
+                'detail_no_data' => $detailNoData,
             ];
         }
 
@@ -185,8 +280,6 @@ class DashboardModel extends Model
     public function getDepartmentsWithoutInput(int $tahun, int $bulan): array
     {
         $db = db_connect();
-        $periodStart = sprintf('%s-%02s-01', $tahun, $bulan);
-
         // Semua departemen yg punya grup aktif (tipe apa pun)
         $deptSql = "
             SELECT DISTINCT mid.department_id, mid.department_name
@@ -210,6 +303,7 @@ class DashboardModel extends Model
         foreach ([1, 5, 6, 7] as $type) {
             $groupTable = $type === 1 ? 'quality_indicator_group' : 'local_quality_indicator_group';
             $resultTable = $type === 1 ? 'quality_indicator_result' : 'local_quality_indicator_result';
+            $indicatorTable = $type === 1 ? 'quality_indicator' : 'local_quality_indicator';
 
             $rows = $db->query(
                 "SELECT DISTINCT group_department_id FROM {$groupTable} WHERE group_type = ? AND group_record_status = 'A'",
@@ -224,8 +318,11 @@ class DashboardModel extends Model
                      AND g.group_department_id = r.result_department_id
                      AND g.group_type = ?
                      AND g.group_record_status = 'A'
-                 WHERE r.result_period = ? AND r.result_record_status IN ('D','A')",
-                [$type, $periodStart]
+                 JOIN {$indicatorTable} i ON i.indicator_id = g.group_indicator_id
+                 WHERE YEAR(r.result_period) = ?
+                     AND (i.indicator_frequency = 'Y' OR MONTH(r.result_period) = ?)
+                     AND r.result_record_status IN ('D','A')",
+                [$type, $tahun, $bulan]
             )->getResult();
             $deptWithInput[$type] = array_map(fn($r) => $r->result_department_id, $rows);
         }
@@ -260,6 +357,7 @@ class DashboardModel extends Model
         foreach ([1, 5, 6, 7] as $type) {
             $resultTable = $type === 1 ? 'quality_indicator_result' : 'local_quality_indicator_result';
             $indicatorTable = $type === 1 ? 'quality_indicator' : 'local_quality_indicator';
+            $groupTable = $type === 1 ? 'quality_indicator_group' : 'local_quality_indicator_group';
 
             $builder = $db->table($resultTable . ' r')
                 ->select("
@@ -269,9 +367,13 @@ class DashboardModel extends Model
                     SUM(r.result_denumerator_value) AS denum,
                     i.indicator_factors
                 ")
-                ->join("{$indicatorTable} i", 'r.result_indicator_id = i.indicator_id', 'LEFT')
+                ->join("{$indicatorTable} i", 'r.result_indicator_id = i.indicator_id AND i.indicator_record_status = \'A\'')
+                ->join("{$groupTable} g", 'g.group_indicator_id = r.result_indicator_id AND g.group_department_id = r.result_department_id')
+                ->join('master_institution_department d', 'd.department_id = g.group_department_id')
                 ->where('YEAR(r.result_period)', $tahun)
-                ->whereIn('r.result_record_status', ['D', 'A']);
+                ->whereIn('r.result_record_status', ['D', 'A'])
+                ->where('g.group_record_status', 'A')
+                ->where('d.department_record_status', 'A');
 
             if ($departmentId !== null) {
                 $builder->where('r.result_department_id', (string) $departmentId);
@@ -310,19 +412,24 @@ class DashboardModel extends Model
     public function getDraftCounts(int $tahun, int $bulan, ?int $departmentId = null): array
     {
         $db = db_connect();
-        $periodStart = sprintf('%s-%02s-01', $tahun, $bulan);
         $result = [];
 
         foreach ([1, 5, 6, 7] as $type) {
             $groupTable = $type === 1 ? 'quality_indicator_group' : 'local_quality_indicator_group';
             $resultTable = $type === 1 ? 'quality_indicator_result' : 'local_quality_indicator_result';
+            $indicatorTable = $type === 1 ? 'quality_indicator' : 'local_quality_indicator';
 
             $builder = $db->table("{$resultTable} r")
                 ->select("COUNT(DISTINCT CONCAT(r.result_indicator_id, '-', r.result_department_id)) AS cnt")
                 ->join("{$groupTable} g", 'g.group_indicator_id = r.result_indicator_id AND g.group_department_id = r.result_department_id')
+                ->join("{$indicatorTable} i", 'i.indicator_id = g.group_indicator_id')
+                ->join('master_institution_department d', 'd.department_id = g.group_department_id')
                 ->where('g.group_type', $type)
                 ->where('g.group_record_status', 'A')
-                ->where('r.result_period', $periodStart)
+                ->where('i.indicator_record_status', 'A')
+                ->where('d.department_record_status', 'A')
+                ->where('YEAR(r.result_period)', $tahun)
+                ->where("(i.indicator_frequency = 'Y' OR MONTH(r.result_period) = $bulan)")
                 ->where('r.result_record_status', 'D');
 
             if ($departmentId !== null) {
@@ -347,7 +454,6 @@ class DashboardModel extends Model
         $groupTable = $groupType === 1 ? 'quality_indicator_group' : 'local_quality_indicator_group';
 
         $db = db_connect();
-        $periodStart = sprintf('%s-%02s-01', $tahun, $bulan);
 
         $builder = $db->table($resultTable . ' r')
             ->select("
@@ -362,10 +468,16 @@ class DashboardModel extends Model
                 SUM(r.result_denumerator_value) AS denum
             ")
             ->join("{$indicatorTable} i", 'r.result_indicator_id = i.indicator_id', 'LEFT')
+            ->join("{$groupTable} g", 'g.group_indicator_id = r.result_indicator_id AND g.group_department_id = r.result_department_id')
             ->join('master_institution_department mid', 'r.result_department_id = mid.department_id', 'LEFT')
-            ->where('r.result_period', $periodStart)
+            ->where('YEAR(r.result_period)', $tahun)
+            ->where("(i.indicator_frequency = 'Y' OR MONTH(r.result_period) = $bulan)")
             ->whereIn('r.result_record_status', ['D', 'A'])
-            ->groupBy('r.result_indicator_id, r.result_department_id');
+            ->where('g.group_record_status', 'A')
+            ->where('g.group_type', $groupType)
+            ->where('i.indicator_record_status', 'A')
+            ->where('mid.department_record_status', 'A')
+            ->groupBy('r.result_indicator_id, r.result_department_id, i.indicator_element, mid.department_name');
 
         if ($departmentId !== null) {
             $builder->where('r.result_department_id', (string) $departmentId);
