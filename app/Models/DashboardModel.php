@@ -34,11 +34,8 @@ class DashboardModel extends Model
 
             $sql = "SELECT COUNT(DISTINCT g.group_indicator_id) AS cnt
                     FROM {$table} g
-                    JOIN {$indicatorTable} i ON i.indicator_id = g.group_indicator_id
-                    JOIN master_institution_department d ON d.department_id = g.group_department_id
-                    WHERE g.group_type = ?
-                      AND i.indicator_record_status = 'A'
-                      AND d.department_record_status = 'A'";
+                    JOIN {$indicatorTable} i ON i.indicator_id = g.group_indicator_id AND i.indicator_record_status = 'A'
+                    WHERE g.group_type = ?";
             $params = [$type];
 
             if ($departmentId !== null) {
