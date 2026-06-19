@@ -37,7 +37,6 @@ class DashboardModel extends Model
                     JOIN {$indicatorTable} i ON i.indicator_id = g.group_indicator_id
                     JOIN master_institution_department d ON d.department_id = g.group_department_id
                     WHERE g.group_type = ?
-                      AND g.group_record_status = 'A'
                       AND i.indicator_record_status = 'A'
                       AND d.department_record_status = 'A'";
             $params = [$type];
