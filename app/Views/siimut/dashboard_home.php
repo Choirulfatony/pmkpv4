@@ -180,7 +180,13 @@
                     <canvas id="trendChart" style="max-height: 300px;"></canvas>
                 </div>
                 <div class="card-footer bg-transparent py-1">
-                    <small class="text-muted">* Rata-rata nilai indikator per bulan. Nilai = (Total Numerator / Total Denumerator) &times; Faktor</small>
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i>
+                        Setiap bar adalah rata-rata dari seluruh indikator aktif di bulan tersebut.
+                        Rumus per indikator: <strong>Nilai = (Numerator / Denumerator) &times; Faktor</strong>.
+                        Nilai 50,7 artinya rata-rata semua indikator IKP di bulan itu = 50,7.
+                        Untuk ADMINISTRATOR: rata-rata semua departemen. Untuk KENDALI MUTU: hanya departemen sendiri.
+                    </small>
                 </div>
             </div>
         </div>
