@@ -182,10 +182,10 @@
                 <div class="card-footer bg-transparent py-1">
                     <small class="text-muted">
                         <i class="bi bi-info-circle"></i>
-                        Setiap bar adalah rata-rata dari seluruh indikator aktif di bulan tersebut.<br>
-                        Rumus per indikator: <strong>Nilai = (Numerator / Denumerator) &times; Faktor</strong>.<br>
-                        ADMINISTRATOR: rata-rata semua departemen.<br>
-                        KENDALI MUTU: hanya departemen sendiri.
+                        <div>Setiap bar adalah rata-rata dari seluruh indikator aktif di bulan tersebut.</div>
+                        <div>Rumus per indikator: <strong>Nilai = (Numerator / Denumerator) &times; Faktor</strong>.</div>
+                        <div>ADMINISTRATOR: rata-rata semua departemen.</div>
+                        <div>KENDALI MUTU: hanya departemen sendiri.</div>
                     </small>
                 </div>
             </div>
