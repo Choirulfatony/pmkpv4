@@ -38,7 +38,7 @@ class Validation extends AppController
         $validationModel = new IndicatorValidationModel();
         $data = $validationModel->getPendingIndicators($cfg['categoryId'], (int)$tahun, (int)$bulan);
 
-        // Extract unique departments
+        // Extract unique departments from query results
         $departments = [];
         foreach ($data as $row) {
             $departments[$row->result_department_id] = $row->department_name;
