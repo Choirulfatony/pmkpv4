@@ -38,12 +38,21 @@ class Validation extends AppController
         $validationModel = new IndicatorValidationModel();
         $data = $validationModel->getPendingIndicators($cfg['categoryId'], (int)$tahun, (int)$bulan);
 
-        // Extract unique departments from query results
+        // Departemen dari data result yang sudah A
+        $db = db_connect();
+        $deptQuery = $db->query("
+            SELECT DISTINCT qir.result_department_id, mid.department_name
+            FROM {$cfg['prefix']}quality_indicator_result qir
+            JOIN master_institution_department mid ON mid.department_id = qir.result_department_id
+            WHERE qir.result_record_status = 'A'
+              AND YEAR(qir.result_period) = ?
+              AND MONTH(qir.result_period) = ?
+            ORDER BY mid.department_name ASC
+        ", [(int)$tahun, (int)$bulan]);
         $departments = [];
-        foreach ($data as $row) {
+        foreach ($deptQuery->getResult() as $row) {
             $departments[$row->result_department_id] = $row->department_name;
         }
-        asort($departments);
 
         $namaBulan = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
