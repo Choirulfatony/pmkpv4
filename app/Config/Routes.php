@@ -247,6 +247,24 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('unit/ajax-request-open-period', 'Department::ajaxRequestOpenPeriod');
         $routes->post('unit/ajax-get-request-status', 'Department::ajaxGetRequestStatus');
 
+        // Trias Mutu
+        $routes->get('trias-mutu', 'TriasMutu::index');
+        $routes->get('trias-mutu/pengukuran', 'TriasMutu::pengukuran');
+        $routes->get('trias-mutu/analisis-penyebab', 'TriasMutu::analisisPenyebab');
+        $routes->get('trias-mutu/pdsa', 'TriasMutu::pdsa');
+        $routes->get('trias-mutu/cetak', 'TriasMutu::cetak');
+        $routes->post('trias-mutu/get-indicators', 'TriasMutu::getIndicators');
+        $routes->post('trias-mutu/get-pengukuran-data', 'TriasMutu::getPengukuranData');
+        $routes->post('trias-mutu/get-or-create-dokumen', 'TriasMutu::getOrCreateDokumen');
+        $routes->post('trias-mutu/save-analisis', 'TriasMutu::saveAnalisis');
+        $routes->post('trias-mutu/save-pdsa', 'TriasMutu::savePdsa');
+        $routes->post('trias-mutu/simpan-draft', 'TriasMutu::simpanDraft');
+        $routes->post('trias-mutu/finalisasi', 'TriasMutu::finalisasi');
+        $routes->post('trias-mutu/save-ttd', 'TriasMutu::saveTtd');
+        $routes->post('trias-mutu/delete-dokumen', 'TriasMutu::deleteDokumen');
+        $routes->get('trias-mutu/cetak-pdf', 'TriasMutu::cetakPdf');
+        $routes->post('trias-mutu/get-dokumen-detail', 'TriasMutu::getDokumenDetail');
+
         // Dokumen Mutu
         $routes->get('dokumen-mutu', 'FileManager::index');
         $routes->post('dokumen-mutu/create-folder', 'FileManager::createFolder');
