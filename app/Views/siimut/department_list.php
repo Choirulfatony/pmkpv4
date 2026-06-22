@@ -258,6 +258,53 @@
             });
         });
 
+        // Toggle Indicator Group Status
+        $(document).on('change', '.btn-toggle-indicator-status', function() {
+            var el = $(this);
+            var id = el.data('id');
+            var type = el.data('type');
+            var currentStatus = el.data('status');
+            var newStatus = el.is(':checked') ? 'A' : 'D';
+            var action = newStatus === 'A' ? 'mengaktifkan' : 'menonaktifkan';
+
+            Swal.fire({
+                title: 'Ubah Status?',
+                text: 'Anda yakin ingin ' + action + ' indikator ini?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Ubah!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '<?= site_url('siimut/unit/toggle-indicator-status') ?>',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: { group_id: id, group_type: type, new_status: newStatus },
+                        success: function(res) {
+                            if (res.status) {
+                                toastSuccess(res.message);
+                                el.data('status', newStatus);
+                                el.next('label').text(newStatus === 'A' ? 'Aktif' : 'Nonaktif');
+                                if (dtIndicator) dtIndicator.ajax.reload();
+                            } else {
+                                toastError(res.message);
+                                el.prop('checked', !el.is(':checked'));
+                            }
+                        },
+                        error: function() {
+                            toastError('Gagal mengubah status');
+                            el.prop('checked', !el.is(':checked'));
+                        }
+                    });
+                } else {
+                    el.prop('checked', !el.is(':checked'));
+                }
+            });
+        });
+
         // Delete
         $(document).on('click', '.btn-delete', function() {
             var id = $(this).data('id');
@@ -333,7 +380,7 @@
                             <th class="text-center" data-priority="3">#</th>
                             <th data-priority="1">Periode</th>
                             <th data-priority="2">Judul Indikator</th>
-                            <th class="text-center" data-priority="5">Group Days</th>
+                            <th class="text-center" data-priority="5">Hari Efektif</th>
                             <th class="text-center" data-priority="4">Status</th>
                             <th class="text-center text-nowrap" data-priority="1">Aksi</th>
                         </tr>
@@ -466,12 +513,21 @@
                 { data: null, className: 'text-center', orderable: false, render: function(d,t,r,m) { return m.row + 1; } },
                 { data: 'group_period', render: function(d) { return '<strong>' + d + '</strong>'; } },
                 { data: 'indicator_element' },
-                { data: 'group_days', className: 'text-center' },
+                { data: null, className: 'text-center', render: function(d) {
+                    return d.group_days_expired
+                        ? '<span class="text-danger" title="Expired">' + d.group_days_effective + '</span>'
+                        : d.group_days_effective;
+                } },
                 {
-                    data: 'group_record_status',
+                    data: null,
                     className: 'text-center',
-                    render: function(d) {
-                        return d === 'A' ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Nonaktif</span>';
+                    render: function(d, type, row) {
+                        var checked = d.group_record_status === 'A' ? 'checked' : '';
+                        var label = d.group_record_status === 'A' ? 'Aktif' : 'Nonaktif';
+                        return '<div class="form-check form-switch d-inline-block">' +
+                            '<input class="form-check-input btn-toggle-indicator-status" type="checkbox" ' + checked +
+                            ' data-id="' + d.group_id + '" data-type="' + currentGroupType + '" data-status="' + d.group_record_status + '">' +
+                            '<label class="form-check-label small">' + label + '</label></div>';
                     }
                 },
                 {

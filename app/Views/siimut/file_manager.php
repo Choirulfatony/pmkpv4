@@ -30,7 +30,7 @@
                         <i class="bi bi-arrow-left"></i> Kembali
                     </a>
                     <?php endif; ?>
-                    <?php if (in_array(session('user_role'), ['ADMINISTRATOR', 'KOMITE', 'KENDALI_MUTU'])): ?>
+                    <?php if (session('user_role') === 'ADMINISTRATOR'): ?>
                     <button class="btn btn-outline-secondary btn-sm" id="btnOpenFolder">
                         <i class="bi bi-folder-plus me-1"></i>Folder Baru
                     </button>
@@ -82,7 +82,7 @@
                             <td class="small text-muted d-none d-md-table-cell" style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><?= esc($item->description ?? '-') ?></td>
                             <td class="text-nowrap text-center">
                                 <div class="d-flex gap-1 justify-content-center">
-                                <?php if ($item->is_folder && in_array(session('user_role'), ['ADMINISTRATOR', 'KOMITE', 'KENDALI_MUTU'])): ?>
+                                <?php if ($item->is_folder && session('user_role') === 'ADMINISTRATOR'): ?>
                                 <button class="btn btn-sm btn-outline-secondary btn-rename-folder" data-id="<?= $item->id ?>" data-name="<?= esc($item->file_name, 'attr') ?>" title="Ubah Nama"><i class="bi bi-pencil"></i></button>
                                 <?php elseif (!$item->is_folder): ?>
                                 <a href="<?= site_url('siimut/dokumen-mutu/download/' . $item->id) ?>" class="btn btn-sm btn-outline-info" title="Download"><i class="bi bi-download"></i></a>

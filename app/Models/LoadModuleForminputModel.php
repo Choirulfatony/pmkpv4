@@ -62,6 +62,10 @@ class LoadModuleForminputModel extends Model
             $sub->where('qig2.group_department_id', $userDepartmentId);
         }
         $sub->groupBy('qig2.group_indicator_id, qig2.group_department_id');
+
+        // Exclude if current year's record has status 'D' (nonaktif)
+        $sub->where("NOT EXISTS (SELECT 1 FROM {$tableQig} qig3 WHERE qig3.group_indicator_id = qig2.group_indicator_id AND qig3.group_department_id = qig2.group_department_id AND qig3.group_period = '{$tahun}' AND qig3.group_record_status = 'D')", null, false);
+
         $subSql = $sub->getCompiledSelect();
 
         $builder = $db->table($tableQig . ' qig');
@@ -131,6 +135,8 @@ class LoadModuleForminputModel extends Model
             $builder->where('DAY(qir.result_period)', $hari);
         }
 
+        $builder->orderBy('qir.result_insert_date', 'ASC');
+
         $existingData = $builder->get()->getResult();
 
         $monthlyTotal = $db->table($this->tablePrefix . 'quality_indicator_result')
@@ -177,37 +183,28 @@ class LoadModuleForminputModel extends Model
         $user_id = session('profile_id') ?? 0;
         $now = date('Y-m-d H:i:s');
 
-        $existing = $db->table($this->tablePrefix . 'quality_indicator_result')
+        $db->table($this->tablePrefix . 'quality_indicator_result')
             ->where('result_indicator_id', $indicatorId)
             ->where('result_department_id', $departmentId)
             ->where('result_period', $tanggal)
-            ->where('result_record_status', 'D')
-            ->get()
-            ->getRow();
+            ->whereIn('result_record_status', ['D', 'A'])
+            ->update([
+                'result_record_status' => 'X',
+                'result_update_by'     => $user_id,
+                'result_update_date'   => $now
+            ]);
 
-        if ($existing) {
-            $db->table($this->tablePrefix . 'quality_indicator_result')
-                ->where('result_id', $existing->result_id)
-                ->update([
-                    'result_numerator_value'   => $num,
-                    'result_denumerator_value' => $den,
-                    'result_update_by'         => $user_id,
-                    'result_update_date'       => $now,
-                    'result_record_status'     => 'D'
-                ]);
-        } else {
-            $db->table($this->tablePrefix . 'quality_indicator_result')
-                ->insert([
-                    'result_indicator_id'       => $indicatorId,
-                    'result_department_id'      => (string) $departmentId,
-                    'result_period'             => $tanggal,
-                    'result_numerator_value'    => (string) $num,
-                    'result_denumerator_value'  => (string) $den,
-                    'result_record_status'      => 'D',
-                    'result_insert_by'          => (string) $user_id,
-                    'result_insert_date'        => $now
-                ]);
-        }
+        $db->table($this->tablePrefix . 'quality_indicator_result')
+            ->insert([
+                'result_indicator_id'       => $indicatorId,
+                'result_department_id'      => (string) $departmentId,
+                'result_period'             => $tanggal,
+                'result_numerator_value'    => (string) $num,
+                'result_denumerator_value'  => (string) $den,
+                'result_record_status'      => 'D',
+                'result_insert_by'          => (string) $user_id,
+                'result_insert_date'        => $now
+            ]);
 
         return $db->affectedRows() > 0;
     }
@@ -257,16 +254,20 @@ class LoadModuleForminputModel extends Model
         $user_id = session('profile_id') ?? 0;
         $now = date('Y-m-d H:i:s');
 
-        $db->table($this->tablePrefix . 'quality_indicator_result')
+        $table = $this->tablePrefix . 'quality_indicator_result';
+
+        $db->table($table)
             ->where('result_indicator_id', $indicatorId)
             ->where('result_department_id', $departmentId)
             ->where('result_period', $tanggal)
-            ->where('result_record_status', 'D')
+            ->whereIn('result_record_status', ['D', 'A'])
             ->update([
                 'result_record_status'  => 'X',
                 'result_delete_by'      => $user_id,
                 'result_delete_date'    => $now
             ]);
+
+        $updated = $db->affectedRows();
 
         $db->table('local_rencana_perbaikan')
             ->where('result_indicator_id', $indicatorId)
@@ -275,7 +276,9 @@ class LoadModuleForminputModel extends Model
             ->where('indicator_category_id', $this->categoryId)
             ->delete();
 
-        return $db->affectedRows() > 0;
+        log_message('debug', "[deleteResult] table={$table} indicatorId={$indicatorId} deptId={$departmentId} period={$tanggal} updated={$updated}");
+
+        return $updated > 0;
     }
 
     public function validateResult(int $indicatorId, int $departmentId, string $tanggal): bool

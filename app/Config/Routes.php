@@ -236,6 +236,7 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('unit/toggle-disable/(:num)', 'Department::toggleDisable/$1');
         $routes->post('unit/ajax-get-indicators', 'Department::ajaxGetIndicators');
         $routes->post('unit/ajax-get-available-indicators', 'Department::ajaxGetAvailableIndicators');
+        $routes->post('unit/toggle-indicator-status', 'Department::toggleIndicatorStatus');
         $routes->post('unit/ajax-add-group', 'Department::ajaxAddGroup');
         $routes->post('unit/ajax-update-group', 'Department::ajaxUpdateGroup');
         $routes->post('unit/ajax-delete-group', 'Department::ajaxDeleteGroup');

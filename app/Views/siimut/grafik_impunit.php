@@ -201,6 +201,20 @@
             </div>
         </div>
 
+        <!-- 🔥 5. Analisis Trias Mutu -->
+        <div class="row" id="triasMutuSection" style="display:none;">
+            <div class="col-12">
+                <div class="card card-grafik">
+                    <div class="card-header">
+                        <i class="bi bi-file-text me-2"></i>Analisis Trias Mutu
+                    </div>
+                    <div class="card-body" id="triasMutuBody">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🔥 6. Per Tahun (History) -->
         <div class="row">
             <div class="col-12">
                 <div class="card card-grafik">
@@ -227,6 +241,28 @@
 
 <script>
     var lineChart, triwulanChart, semesterChart, perTahunChart;
+
+    Chart.register({
+        id: 'valueLabels',
+        afterDraw: function(chart) {
+            var ctx = chart.ctx;
+            chart.data.datasets.forEach(function(dataset, i) {
+                if (i > 0) return;
+                var meta = chart.getDatasetMeta(i);
+                meta.data.forEach(function(element, index) {
+                    var value = dataset.data[index];
+                    if (value === null || value === undefined) return;
+                    ctx.save();
+                    ctx.fillStyle = '#333';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(value, element.x, element.y - 8);
+                    ctx.restore();
+                });
+            });
+        }
+    });
     var currentIndicatorData = null;
 
     $(document).ready(function() {
@@ -280,6 +316,7 @@
             });
             if (document.getElementById('grafikContainer')) document.getElementById('grafikContainer').style.display = 'none';
             if (document.getElementById('indicatorInfo')) document.getElementById('indicatorInfo').style.display = 'none';
+            if (document.getElementById('triasMutuSection')) document.getElementById('triasMutuSection').style.display = 'none';
             resetSummaryCards();
         });
 
@@ -312,6 +349,153 @@
         }
     });
 
+    function generateTriasMutuAnalysis(bulanan, triwulan, indicator, tahun) {
+        var bulanNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        var twLabels = ['I', 'II', 'III', 'IV'];
+        var twMonths = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]];
+        var target = parseFloat(indicator.indicator_target || 0);
+        var units = indicator.indicator_units || '';
+        var name = indicator.indicator_element || 'Indikator';
+        var html = '';
+
+        for (var tw = 0; tw < 4; tw++) {
+            var months = twMonths[tw];
+            var values = [];
+
+            for (var m = 0; m < months.length; m++) {
+                var item = bulanan[months[m]];
+                if (item && item.nilai !== null && item.nilai !== undefined) {
+                    values.push(parseFloat(item.nilai));
+                } else {
+                    values.push(null);
+                }
+            }
+
+            var hasData = values.some(function(v) { return v !== null; });
+            if (!hasData) continue;
+
+            var validValues = values.filter(function(v) { return v !== null; });
+            var sum = validValues.reduce(function(a, b) { return a + b; }, 0);
+            var rata = sum / validValues.length;
+            var gap = target - rata;
+
+            html += '<div class="trias-mutu-item mb-4 pb-3 border-bottom">';
+            html += '<h6 class="fw-bold text-primary">Triwulan ' + twLabels[tw] + '</h6>';
+            html += '<p class="mb-1" style="text-align: justify; line-height: 1.8;">';
+
+            var firstMonthIdx = -1;
+            var lastMonthIdx = -1;
+            for (var m = 0; m < months.length; m++) {
+                if (values[m] !== null) {
+                    if (firstMonthIdx === -1) firstMonthIdx = m;
+                    lastMonthIdx = m;
+                }
+            }
+
+            var bulanAwal = bulanNames[months[firstMonthIdx] - 1];
+            var bulanAkhir = bulanNames[months[lastMonthIdx] - 1];
+
+            // Kondisi semua 0% seperti contoh CAPD
+            var allZero = (validValues.length > 0) && validValues.every(function(v) { return v === 0; });
+            var allSame = (validValues.length > 0) && validValues.every(function(v) { return v === validValues[0]; });
+
+            if (allZero && target > 0) {
+                html += 'Capaian indikator ' + name + ' pada Triwulan ' + twLabels[tw] + ' Tahun ' + tahun;
+                html += ' menunjukkan nilai 0' + units + ' pada seluruh bulan ';
+                html += bulanAwal + ' sampai ' + bulanAkhir;
+                html += ' dengan rata-rata capaian sebesar ' + rata.toFixed(2) + units + '.';
+                html += ' Nilai tersebut belum memenuhi target yang ditetapkan sebesar ' + target + units;
+                html += ' sehingga terdapat selisih ' + gap.toFixed(2) + units + ' dari target.';
+                html += '</p><p class="mb-1" style="text-align: justify; line-height: 1.8;">';
+                html += 'Trend capaian menunjukkan kondisi yang stabil pada nilai 0' + units + ' selama periode pengukuran,';
+                html += ' sehingga diperlukan analisis lebih lanjut terhadap faktor penyebab serta penyusunan rencana perbaikan melalui siklus PDSA.';
+            } else if (allSame) {
+                html += 'Capaian indikator ' + name + ' pada Triwulan ' + twLabels[tw] + ' Tahun ' + tahun;
+                html += ' menunjukkan nilai yang relatif stabil pada bulan ';
+                html += bulanAwal + ' sampai ' + bulanAkhir;
+                html += ', dengan rata-rata capaian sebesar ' + rata.toFixed(2) + units + '.';
+
+                if (rata < target) {
+                    html += '</p><p class="mb-1" style="text-align: justify; line-height: 1.8;">';
+                    html += 'Capaian tersebut belum memenuhi standar yang ditetapkan sebesar ' + target + units;
+                    html += ' dengan selisih ' + gap.toFixed(2) + units;
+                    html += ' sehingga masih diperlukan upaya perbaikan untuk mencapai target indikator.';
+                } else if (rata === target) {
+                    html += '</p><p class="mb-1" style="text-align: justify; line-height: 1.8;">';
+                    html += 'Capaian indikator telah memenuhi target yang ditetapkan sehingga mutu pelayanan dapat dipertahankan melalui monitoring dan evaluasi secara berkala.';
+                } else {
+                    html += '</p><p class="mb-1" style="text-align: justify; line-height: 1.8;">';
+                    html += 'Capaian indikator telah melampaui target yang ditetapkan sehingga diharapkan konsistensi pelayanan tetap dipertahankan.';
+                }
+
+                html += '</p><p class="mb-1" style="text-align: justify; line-height: 1.8;">';
+                html += 'Trend capaian relatif stabil selama periode pengukuran.';
+                if (gap > 0 && !(allZero && target > 0)) {
+                    html += ' Terdapat selisih sebesar ' + gap.toFixed(2) + units + ' terhadap target indikator.';
+                }
+            } else {
+                html += 'Capaian indikator ' + name + ' pada Triwulan ' + twLabels[tw] + ' Tahun ' + tahun;
+                html += ' menunjukkan';
+
+                var trend = 'stabil';
+                if (validValues.length >= 2) {
+                    var increasing = true;
+                    var decreasing = true;
+                    for (var v = 1; v < validValues.length; v++) {
+                        if (validValues[v] <= validValues[v - 1]) increasing = false;
+                        if (validValues[v] >= validValues[v - 1]) decreasing = false;
+                    }
+                    if (increasing) {
+                        trend = 'meningkat';
+                        html += ' tren peningkatan dari bulan ' + bulanAwal + ' hingga ' + bulanAkhir;
+                    } else if (decreasing) {
+                        trend = 'menurun';
+                        html += ' tren penurunan dari bulan ' + bulanAwal + ' hingga ' + bulanAkhir;
+                    } else {
+                        html += ' nilai yang fluktuatif dari bulan ' + bulanAwal + ' hingga ' + bulanAkhir;
+                    }
+                }
+                html += ', dengan rata-rata capaian sebesar ' + rata.toFixed(2) + units + '.';
+
+                if (rata < target) {
+                    html += '</p><p class="mb-1" style="text-align: justify; line-height: 1.8;">';
+                    html += 'Capaian tersebut belum memenuhi standar yang ditetapkan sebesar ' + target + units;
+                    html += ' dengan selisih ' + gap.toFixed(2) + units;
+                    html += ' sehingga masih diperlukan upaya perbaikan untuk mencapai target indikator.';
+                } else if (rata === target) {
+                    html += '</p><p class="mb-1" style="text-align: justify; line-height: 1.8;">';
+                    html += 'Capaian indikator telah memenuhi target yang ditetapkan sehingga mutu pelayanan dapat dipertahankan melalui monitoring dan evaluasi secara berkala.';
+                } else {
+                    html += '</p><p class="mb-1" style="text-align: justify; line-height: 1.8;">';
+                    html += 'Capaian indikator telah melampaui target yang ditetapkan sehingga diharapkan konsistensi pelayanan tetap dipertahankan.';
+                }
+
+                html += '</p><p class="mb-1" style="text-align: justify; line-height: 1.8;">';
+
+                if (trend === 'meningkat') {
+                    html += 'Trend capaian menunjukkan peningkatan dari bulan ke bulan yang mengindikasikan adanya perbaikan proses pelayanan.';
+                } else if (trend === 'menurun') {
+                    html += 'Trend capaian menunjukkan penurunan dibandingkan bulan sebelumnya sehingga diperlukan evaluasi terhadap proses pelayanan.';
+                } else {
+                    html += 'Trend capaian relatif stabil selama periode pengukuran.';
+                }
+
+                if (gap > 0) {
+                    html += ' Terdapat selisih sebesar ' + gap.toFixed(2) + units + ' terhadap target indikator.';
+                }
+            }
+
+            html += '</p></div>';
+        }
+
+        if (html === '') {
+            html = '<p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i> Belum ada data untuk dianalisis.</p>';
+        }
+
+        document.getElementById('triasMutuBody').innerHTML = html;
+        document.getElementById('triasMutuSection').style.display = '';
+    }
+
     function getMaxScale(target, units, dataArray) {
         var maxData = Math.max.apply(null, dataArray.filter(function(x) {
             return x > 0;
@@ -322,8 +506,8 @@
         var isIndex = units.indexOf('indek') !== -1 || units.indexOf('indeks') !== -1 || units.indexOf('index') !== -1;
 
         if (isPercent) {
-            var calcMax = target * 2;
-            return Math.max(maxData * 1.2, calcMax);
+            var maxVal = Math.max(maxData, target);
+            return Math.ceil((maxVal * 1.2) / 10) * 10 || 100;
         } else if (isTime) {
             return Math.max(maxData * 1.3, target * 1.3);
         } else if (isIndex) {
@@ -369,6 +553,9 @@
             }
             if (document.getElementById('grafikContainer')) {
                 document.getElementById('grafikContainer').style.display = 'none';
+            }
+            if (document.getElementById('triasMutuSection')) {
+                document.getElementById('triasMutuSection').style.display = 'none';
             }
             if (document.getElementById('loadingGrafik')) {
                 document.getElementById('loadingGrafik').style.display = 'none';
@@ -559,6 +746,7 @@
                     renderTriwulanChart(response.triwulan, response.indicator);
                     renderSemesterChart(response.semester, response.indicator);
                     renderPerTahunChart(response.per_tahun, response.indicator);
+                    generateTriasMutuAnalysis(response.bulanan, response.triwulan, response.indicator, response.tahun);
                 } else {
                     alert('Error mengambil data');
                 }

@@ -1225,7 +1225,7 @@
 
     function escJs(str) {
         if (!str) return '';
-        return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, "\\\"");
+        return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, "\\\"").replace(/\n/g, '\\n').replace(/\r/g, '\\r');
     }
 </script>
 

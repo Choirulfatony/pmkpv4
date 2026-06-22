@@ -467,9 +467,6 @@ class Approval extends AppController
                     'group_period'        => $period,
                     'group_record_status' => 'A',
                 ];
-                if ($groupType) {
-                    $where['group_type'] = (int) $groupType;
-                }
 
                 $tableMap = [1 => 'quality_indicator_group', 5 => 'local_quality_indicator_group', 6 => 'local_quality_indicator_group', 7 => 'local_quality_indicator_group'];
                 $tbl = $groupType ? ($tableMap[(int) $groupType] ?? 'quality_indicator_group') : 'quality_indicator_group';
@@ -483,7 +480,8 @@ class Approval extends AppController
                 ];
                 if ($existing) {
                     $db->table($tbl)->where($where)->update([
-                        'group_days' => $groupDays,
+                        'group_days'             => $groupDays,
+                        'group_days_changed_at'  => date('Y-m-d H:i:s'),
                     ]);
                 } else {
                     // Get institution_code from another existing record for same dept
@@ -501,6 +499,7 @@ class Approval extends AppController
                         'group_period'           => $period,
                         'group_type'             => (int) $groupType,
                         'group_days'             => $groupDays,
+                        'group_days_changed_at'  => date('Y-m-d H:i:s'),
                         'group_record_status'    => 'A',
                     ]);
                 }

@@ -281,8 +281,7 @@ class Department extends AppController
                 LEFT JOIN {$indTable} qi ON qi.indicator_id = qig.group_indicator_id
                 WHERE qig.group_department_id = ?
                   AND qig.group_type = ?
-                  AND qig.group_record_status = 'A'
-                ORDER BY qig.group_period DESC, qi.indicator_order_number ASC, qi.indicator_id ASC";
+                ORDER BY qig.group_record_status ASC, qig.group_period DESC, qi.indicator_order_number ASC, qi.indicator_id ASC";
 
         $data = $db->query($sql, [(string) $deptId, $type])->getResult();
 
@@ -656,6 +655,41 @@ class Department extends AppController
         if ($result) {
             $label = $newStatus === 'D' ? 'dinonaktifkan' : 'diaktifkan';
             return $this->response->setJSON(['status' => true, 'message' => 'Unit/bagian berhasil ' . $label, 'new_status' => $newStatus]);
+        }
+
+        return $this->response->setJSON(['status' => false, 'message' => 'Gagal mengubah status']);
+    }
+
+    public function toggleIndicatorStatus()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $role = session()->get('user_role');
+        if (!in_array($role, ['ADMINISTRATOR'])) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => false, 'message' => 'Akses ditolak']);
+        }
+
+        $groupId   = (int) $this->request->getPost('group_id');
+        $type      = (int) $this->request->getPost('group_type');
+        $newStatus = $this->request->getPost('new_status');
+
+        if (!$groupId || !in_array($newStatus, ['A', 'D'])) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Data tidak valid']);
+        }
+
+        $tableMap = [1 => 'quality_indicator_group', 5 => 'local_quality_indicator_group', 6 => 'local_quality_indicator_group', 7 => 'local_quality_indicator_group'];
+        $table = $tableMap[$type] ?? 'quality_indicator_group';
+
+        $db = db_connect();
+        $db->table($table)
+            ->where('group_id', $groupId)
+            ->update(['group_record_status' => $newStatus]);
+
+        if ($db->affectedRows() > 0) {
+            $label = $newStatus === 'D' ? 'dinonaktifkan' : 'diaktifkan';
+            return $this->response->setJSON(['status' => true, 'message' => 'Indikator berhasil ' . $label]);
         }
 
         return $this->response->setJSON(['status' => false, 'message' => 'Gagal mengubah status']);
