@@ -64,12 +64,25 @@ class TriasMutu extends AppController
         $role = session()->get('user_role');
         $deptId = session()->get('department_id');
 
-        $units = $db->table('master_institution_department')
-            ->select('department_id, department_name')
-            ->where('department_status', 'A')
-            ->orderBy('department_name', 'ASC')
-            ->get()
-            ->getResultArray();
+        if (in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
+            $units = $db->table('master_institution_department mid')
+                ->select('mid.department_id, mid.department_name')
+                ->where('mid.department_record_status', 'A')
+                ->groupStart()
+                    ->where("mid.department_id IN (SELECT DISTINCT group_department_id FROM quality_indicator_group WHERE group_record_status = 'A')", null, false)
+                    ->orWhere("mid.department_id IN (SELECT DISTINCT group_department_id FROM local_quality_indicator_group WHERE group_record_status = 'A')", null, false)
+                ->groupEnd()
+                ->orderBy('mid.department_name', 'ASC')
+                ->get()
+                ->getResultArray();
+        } else {
+            $units = $db->table('master_institution_department')
+                ->select('department_id, department_name')
+                ->where('department_id', $deptId)
+                ->where('department_record_status', 'A')
+                ->get()
+                ->getResultArray();
+        }
 
         $tahunList = range(date('Y'), date('Y') - 5);
 
@@ -97,6 +110,7 @@ class TriasMutu extends AppController
             'tahunList'   => $tahunList,
             'selected'    => $selected,
             'measurement' => $measurement,
+            'userRole'    => $role,
         ]);
     }
 
@@ -113,7 +127,7 @@ class TriasMutu extends AppController
 
         $units = $db->table('master_institution_department')
             ->select('department_id, department_name')
-            ->where('department_status', 'A')
+            ->where('department_record_status', 'A')
             ->orderBy('department_name', 'ASC')
             ->get()
             ->getResultArray();
@@ -121,11 +135,11 @@ class TriasMutu extends AppController
         $tahunList = range(date('Y'), date('Y') - 5);
 
         $dokumenId = $this->request->getGet('dokumen_id');
-        $selected = null;
-
-        if ($dokumenId) {
-            $selected = $this->dokumenModel->getDokumenWithRelations((int) $dokumenId);
+        if (!$dokumenId) {
+            return redirect()->to(site_url('siimut/trias-mutu/pengukuran'));
         }
+
+        $selected = $this->dokumenModel->getDokumenWithRelations((int) $dokumenId);
 
         return $this->render('siimut/triasmutu/analisis_penyebab', [
             'judul'     => 'Analisis Penyebab Masalah',
@@ -146,7 +160,7 @@ class TriasMutu extends AppController
         $db = db_connect();
         $units = $db->table('master_institution_department')
             ->select('department_id, department_name')
-            ->where('department_status', 'A')
+            ->where('department_record_status', 'A')
             ->orderBy('department_name', 'ASC')
             ->get()
             ->getResultArray();
@@ -180,12 +194,25 @@ class TriasMutu extends AppController
         $role = session()->get('user_role');
         $deptId = session()->get('department_id');
 
-        $units = $db->table('master_institution_department')
-            ->select('department_id, department_name')
-            ->where('department_status', 'A')
-            ->orderBy('department_name', 'ASC')
-            ->get()
-            ->getResultArray();
+        if (in_array($role, ['ADMINISTRATOR', 'KOMITE'])) {
+            $units = $db->table('master_institution_department mid')
+                ->select('mid.department_id, mid.department_name')
+                ->where('mid.department_record_status', 'A')
+                ->groupStart()
+                    ->where("mid.department_id IN (SELECT DISTINCT group_department_id FROM quality_indicator_group WHERE group_record_status = 'A')", null, false)
+                    ->orWhere("mid.department_id IN (SELECT DISTINCT group_department_id FROM local_quality_indicator_group WHERE group_record_status = 'A')", null, false)
+                ->groupEnd()
+                ->orderBy('mid.department_name', 'ASC')
+                ->get()
+                ->getResultArray();
+        } else {
+            $units = $db->table('master_institution_department')
+                ->select('department_id, department_name')
+                ->where('department_id', $deptId)
+                ->where('department_record_status', 'A')
+                ->get()
+                ->getResultArray();
+        }
 
         $tahunList = range(date('Y'), date('Y') - 5);
 
@@ -206,6 +233,14 @@ class TriasMutu extends AppController
             }
         }
 
+        $numdenum = [];
+        if ($dokumenId && $selected) {
+            $numdenum = $this->dokumenModel->getIndicatorNumDenum(
+                (int) $selected['indicator_category_id'],
+                (int) $selected['indicator_id']
+            );
+        }
+
         return $this->render('siimut/triasmutu/cetak', [
             'judul'        => 'Cetak Trias Mutu',
             'icon'         => '<i class="bi bi-printer"></i>',
@@ -213,35 +248,44 @@ class TriasMutu extends AppController
             'tahunList'    => $tahunList,
             'selected'     => $selected,
             'measurement'  => $measurement,
+            'userRole'     => $role,
+            'numdenum'     => $numdenum,
         ]);
     }
 
     public function getIndicators()
     {
-        $categoryId = (int) $this->request->getPost('category_id');
-        $tahun = (int) $this->request->getPost('tahun');
-        $unitId = $this->request->getPost('unit_id');
+        try {
+            $categoryId = (int) $this->request->getPost('category_id');
+            $tahun = (int) $this->request->getPost('tahun');
+            $unitId = $this->request->getPost('unit_id');
 
-        $table = $categoryId == 4 ? 'quality_indicator' : 'local_quality_indicator';
-        $tableGroup = $categoryId == 4 ? 'quality_indicator_group' : 'local_quality_indicator_group';
-        $tableResult = $categoryId == 4 ? 'quality_indicator_result' : 'local_quality_indicator_result';
+            $table = $categoryId == 4 ? 'quality_indicator' : 'local_quality_indicator';
+            $tableResult = $categoryId == 4 ? 'quality_indicator_result' : 'local_quality_indicator_result';
 
-        $db = db_connect();
+            $db = db_connect();
 
-        $builder = $db->table("$tableResult qir");
-        $builder->select("DISTINCT qi.indicator_id, qi.indicator_element");
-        $builder->join("$table qi", 'qi.indicator_id = qir.result_indicator_id', 'inner');
-        $builder->join("$tableGroup qig", 'qig.group_indicator_id = qi.indicator_id', 'inner');
-        $builder->where('qi.indicator_category_id', $categoryId);
-        $builder->where('YEAR(qir.result_period)', $tahun);
-        $builder->where('qir.result_record_status', 'A');
-        if ($unitId && $unitId > 0) {
-            $builder->where('qig.group_department_id', $unitId);
+            $builder = $db->table("$table qi");
+            $builder->select("DISTINCT qi.indicator_id, qi.indicator_element", false);
+            $builder->join("$tableResult qir", 'qi.indicator_id = qir.result_indicator_id', 'inner');
+            $builder->where('qi.indicator_category_id', $categoryId);
+            $builder->whereIn("qi.indicator_record_status", ['A', 'D']);
+            $builder->where('YEAR(qir.result_period)', $tahun);
+            $builder->where('qir.result_record_status', 'A');
+            if ($unitId && $unitId > 0) {
+                $builder->where('qir.result_department_id', $unitId);
+            }
+            $builder->orderBy('qi.indicator_element', 'ASC');
+
+            $indicators = $builder->get()->getResultArray();
+            return $this->response->setJSON($indicators);
+        } catch (\Throwable $e) {
+            log_message('error', '[getIndicators] ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ]);
         }
-        $builder->orderBy('qi.indicator_element', 'ASC');
-
-        $indicators = $builder->get()->getResultArray();
-        return $this->response->setJSON($indicators);
     }
 
     public function getPengukuranData()
@@ -267,11 +311,34 @@ class TriasMutu extends AppController
 
         if ($dokumen) {
             $selected = $this->dokumenModel->getDokumenWithRelations((int) $dokumen['id']);
+        } elseif ($measurement && $measurement['indicator'] ?? null) {
+            $data = [
+                'unit_id'               => $unitId,
+                'indicator_category_id' => $categoryId,
+                'indicator_id'          => $indicatorId,
+                'triwulan'              => $triwulan,
+                'tahun'                 => $tahun,
+            ];
+            $id = $this->dokumenModel->getOrCreateDokumen($data);
+            if ($id) {
+                $selected = $this->dokumenModel->getDokumenWithRelations((int) $id);
+            }
+        }
+
+        $numdenum = [];
+        if ($selected) {
+            $numdenum = $this->dokumenModel->getIndicatorNumDenum(
+                (int) $selected['indicator_category_id'],
+                (int) $selected['indicator_id']
+            );
         }
 
         return $this->response->setJSON([
             'measurement' => $measurement,
             'selected'    => $selected,
+            'numdenum'    => $numdenum,
+            'categoryLabels' => [4 => 'INM', 5 => 'IMPRS', 6 => 'IMPUNIT'],
+            'triwulanLabels' => ['', 'I', 'II', 'III', 'IV'],
         ]);
     }
 

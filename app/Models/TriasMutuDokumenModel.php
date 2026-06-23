@@ -120,8 +120,8 @@ class TriasMutuDokumenModel extends Model
         $bulanMulai = ($triwulan - 1) * 3 + 1;
         $bulanAkhir = $triwulan * 3;
 
-        $rows = $db->table("$tableResult qir")
-            ->select("
+        $builder = $db->table("$tableResult qir");
+        $builder->select("
                 MONTH(qir.result_period) AS bulan,
                 SUM(qir.result_numerator_value) AS num,
                 SUM(qir.result_denumerator_value) AS denum
@@ -131,8 +131,13 @@ class TriasMutuDokumenModel extends Model
             ->where('qir.result_record_status', 'A')
             ->where('YEAR(qir.result_period)', $tahun)
             ->where('MONTH(qir.result_period) >=', $bulanMulai)
-            ->where('MONTH(qir.result_period) <=', $bulanAkhir)
-            ->groupBy('MONTH(qir.result_period)')
+            ->where('MONTH(qir.result_period) <=', $bulanAkhir);
+
+        if ($unitId && $unitId > 0) {
+            $builder->where('qir.result_department_id', $unitId);
+        }
+
+        $rows = $builder->groupBy('MONTH(qir.result_period)')
             ->get()
             ->getResult();
 
@@ -146,7 +151,7 @@ class TriasMutuDokumenModel extends Model
         }
 
         $indicator = $this->getIndicatorInfo($categoryId, $indicatorId);
-        $factors = (float) ($indicator->indicator_factors ?? 1);
+        $factors = $indicator ? (float) ($indicator->indicator_factors ?? 1) : 1;
 
         $result = [];
         $totalNum = 0;
@@ -173,8 +178,46 @@ class TriasMutuDokumenModel extends Model
         $result['nilai_triwulan'] = $totalDenum > 0
             ? round(($totalNum / $totalDenum) * $factors, 2)
             : null;
-        $result['target'] = (float) ($indicator->indicator_target ?? 0);
+        $result['target'] = $indicator ? (float) ($indicator->indicator_target ?? 0) : 0;
         $result['indicator'] = $indicator;
+
+        return $result;
+    }
+
+    public function getIndicatorNumDenum(int $categoryId, int $indicatorId): array
+    {
+        $db = db_connect();
+        $result = ['numerator' => '', 'denominator' => ''];
+
+        $tables = $categoryId == 4
+            ? ['quality_indicator_variable']
+            : ['local_quality_indicator_variable', 'quality_indicator_variable'];
+
+        foreach ($tables as $table) {
+            try {
+                $rows = $db->table($table)
+                    ->select('variable_name, variable_type, variable_unit_name')
+                    ->where('variable_indicator_id', $indicatorId)
+                    ->where('variable_record_status', 'A')
+                    ->get()
+                    ->getResult();
+            } catch (\Throwable $e) {
+                continue;
+            }
+
+            if (empty($rows)) {
+                continue;
+            }
+
+            foreach ($rows as $r) {
+                if ($r->variable_type === 'N') {
+                    $result['numerator'] = $r->variable_name;
+                } elseif ($r->variable_type === 'D') {
+                    $result['denominator'] = $r->variable_name;
+                }
+            }
+            break;
+        }
 
         return $result;
     }

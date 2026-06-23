@@ -32,6 +32,7 @@
             <div class="mb-3">
                 <label class="form-label">Permasalahan</label>
                 <textarea class="form-control" id="permasalahan" rows="2"><?= esc($selected['analisis'][0]['permasalahan'] ?? '') ?></textarea>
+                <div class="field-error text-danger small mt-1" style="display:none;"><i class="bi bi-exclamation-circle me-1"></i>Permasalahan wajib diisi</div>
             </div>
 
             <div class="table-responsive">
@@ -44,7 +45,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $kategoriList = ['Man', 'Method', 'Machine', 'Material', 'Environment', 'Measurement']; ?>
+                        <?php $kategoriList = ['Man', 'Machine', 'Method', 'Material', 'Mothernature/Lingkungan', 'Measurement', 'Money']; ?>
                         <?php if ($selected && !empty($selected['analisis'])): ?>
                             <?php foreach ($selected['analisis'] as $row): ?>
                                 <tr>
@@ -88,13 +89,17 @@
                 <button class="btn btn-sm btn-outline-secondary" id="btnAddRow">
                     <i class="bi bi-plus-lg"></i> Tambah Baris
                 </button>
+                <div class="field-error text-danger small mt-1" style="display:none;"><i class="bi bi-exclamation-circle me-1"></i>Kategori & Penyebab wajib diisi</div>
             </div>
 
             <hr>
-            <div class="text-end">
-                <button class="btn btn-primary" id="btnSaveAnalisis">
-                    <i class="bi bi-save me-1"></i> Simpan Analisis
-                </button>
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i> Semua kolom harus diisi</small>
+                <div>
+                    <button class="btn btn-primary" id="btnSaveAnalisis">
+                        <i class="bi bi-save me-1"></i> Simpan Analisis
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -102,7 +107,7 @@
 
 <script>
 $(document).ready(function() {
-    var kategoriList = ['Man', 'Method', 'Machine', 'Material', 'Environment', 'Measurement'];
+    var kategoriList = ['Man', 'Machine', 'Method', 'Material', 'Mothernature/Lingkungan', 'Measurement', 'Money'];
 
     $('#btnAddRow').on('click', function() {
         var options = '';
@@ -121,25 +126,47 @@ $(document).ready(function() {
         if ($('#fishboneTable tbody tr').length > 1) {
             $(this).closest('tr').remove();
         } else {
-            alert('Minimal harus ada satu baris');
+            toastWarning('Minimal harus ada satu baris');
         }
     });
+
+    $('#permasalahan').on('input', function() { $('.field-error').first().hide(); });
+    $(document).on('input', '.penyebab', function() { $('.field-error').last().hide(); });
+    $(document).on('change', '.kategori', function() { $('.field-error').last().hide(); });
 
     $('#btnSaveAnalisis').on('click', function() {
         var dokumenId = <?= json_encode($selected['id'] ?? null) ?>;
         if (!dokumenId) {
-            alert('Dokumen belum dipilih. Silakan buat dokumen dari menu Pengukuran Indikator terlebih dahulu.');
+            toastWarning('Dokumen belum dipilih. Silakan buat dokumen dari menu Pengukuran Indikator terlebih dahulu.');
             return;
         }
 
         var kategori = [];
         var penyebab = [];
-        var permasalahan = $('#permasalahan').val();
+        var permasalahan = $('#permasalahan').val().trim();
+        $('.field-error').hide();
 
+        if (!permasalahan) {
+            $('.field-error').first().show();
+            return;
+        }
+
+        var valid = true;
         $('#fishboneTable tbody tr').each(function() {
-            kategori.push($(this).find('.kategori').val());
-            penyebab.push($(this).find('.penyebab').val());
+            var kat = $(this).find('.kategori').val();
+            var pen = $(this).find('.penyebab').val().trim();
+            if (!kat || !pen) {
+                valid = false;
+                return false;
+            }
+            kategori.push(kat);
+            penyebab.push(pen);
         });
+
+        if (!valid) {
+            $('.field-error').last().show();
+            return;
+        }
 
         $.ajax({
             url: '<?= site_url('siimut/trias-mutu/save-analisis') ?>',
@@ -155,13 +182,14 @@ $(document).ready(function() {
             },
             success: function(res) {
                 if (res.success) {
-                    alert('Analisis penyebab berhasil disimpan');
+                    $('.field-error').hide();
+                    toastSuccess('Analisis penyebab berhasil disimpan');
                 } else {
-                    alert(res.message || 'Gagal menyimpan');
+                    toastError(res.message || 'Gagal menyimpan');
                 }
             },
             error: function() {
-                alert('Terjadi kesalahan');
+                toastError('Terjadi kesalahan');
             },
             complete: function() {
                 $('#btnSaveAnalisis').prop('disabled', false).html('<i class="bi bi-save me-1"></i> Simpan Analisis');

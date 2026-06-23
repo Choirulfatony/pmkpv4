@@ -16,14 +16,15 @@ $triwulanLabels = ['', 'I', 'II', 'III', 'IV'];
                 <div class="col-md-6">
                     <div class="row g-2 justify-content-end">
                         <div class="col-md-2">
-                            <select class="form-select form-select-sm" id="category_id">
+                            <select class="form-select form-select-sm" id="category_id" autocomplete="off">
+                                <option value="">Pilih Jenis...</option>
                                 <option value="4">INM</option>
                                 <option value="5">IMPRS</option>
                                 <option value="6">IMP Unit</option>
                             </select>
                         </div>
-                        <div class="col-md-2">
-                            <select class="form-select form-select-sm" id="unit_id">
+                        <div class="col-md-5">
+                            <select class="form-select form-select-sm" id="unit_id" autocomplete="off">
                                 <option value="">Unit...</option>
                                 <?php foreach ($units as $u): ?>
                                     <option value="<?= $u['department_id'] ?>"><?= esc($u['department_name']) ?></option>
@@ -31,22 +32,24 @@ $triwulanLabels = ['', 'I', 'II', 'III', 'IV'];
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <select class="form-select form-select-sm" id="tahun">
+                            <select class="form-select form-select-sm" id="tahun" autocomplete="off">
                                 <?php foreach ($tahunList as $t): ?>
                                     <option value="<?= $t ?>"><?= $t ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-md-2">
-                            <select class="form-select form-select-sm" id="triwulan">
+                        <div class="col-md-3">
+                            <select class="form-select form-select-sm" id="triwulan" autocomplete="off">
                                 <option value="1">TW I</option>
                                 <option value="2">TW II</option>
                                 <option value="3">TW III</option>
                                 <option value="4">TW IV</option>
                             </select>
                         </div>
-                        <div class="col-md-2">
-                            <select class="form-select form-select-sm" id="indicator_id" style="display:none;">
+                    </div>
+                    <div class="row g-2 mt-1 justify-content-end">
+                        <div class="col-md-10">
+                            <select class="form-select form-select-sm" id="indicator_id" autocomplete="off">
                                 <option value="">Indikator...</option>
                             </select>
                         </div>
@@ -62,7 +65,7 @@ $triwulanLabels = ['', 'I', 'II', 'III', 'IV'];
     </div>
 
     <div id="previewArea">
-        <?php if ($selected): renderCetakPreview($selected, $measurement, $categoryLabels, $triwulanLabels); ?>
+        <?php if ($selected): renderCetakPreview($selected, $measurement, $categoryLabels, $triwulanLabels, $numdenum); ?>
         <?php else: ?>
             <div class="text-center text-muted py-5">
                 <i class="bi bi-file-earmark-text fs-1 d-block mb-3"></i>
@@ -73,24 +76,26 @@ $triwulanLabels = ['', 'I', 'II', 'III', 'IV'];
 </div>
 
 <?php
-function renderCetakPreview($d, $m, $categoryLabels, $triwulanLabels)
+function renderCetakPreview($d, $m, $categoryLabels, $triwulanLabels, $numdenum)
 {
     $ind = $m['indicator'] ?? null;
     $analisis = $d['analisis'] ?? [];
     $pdsa = $d['pdsa'] ?? null;
     $ttd = $d['ttd'] ?? null;
+    $numTeks = $numdenum['numerator'] ?? '';
+    $denTeks = $numdenum['denominator'] ?? '';
     $bulanNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
                     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 ?>
     <div class="card shadow-sm mb-4" id="dokumenPreview">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-header position-relative">
             <span><i class="bi bi-file-earmark-text me-2"></i>Preview Dokumen</span>
             <?php if ($d['status'] === 'final'): ?>
-                <span class="badge bg-success fs-6 px-3 py-2">
+                <span class="badge bg-success fs-6 px-3 py-2 position-absolute end-0 top-50 translate-middle-y me-2">
                     <i class="bi bi-check-circle me-1"></i> FINAL
                 </span>
             <?php else: ?>
-                <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+                <span class="badge bg-warning text-dark fs-6 px-3 py-2 position-absolute end-0 top-50 translate-middle-y me-2">
                     <i class="bi bi-pencil me-1"></i> DRAFT
                 </span>
             <?php endif; ?>
@@ -116,96 +121,115 @@ function renderCetakPreview($d, $m, $categoryLabels, $triwulanLabels)
                 </div>
             </div>
 
+<style>
+.table-cetak {
+    font-size: 14px;
+}
+.table-cetak th,
+.table-cetak td {
+    border: 1px solid #666 !important;
+}
+.table-cetak th {
+    font-weight: bold;
+}
+</style>
             <div class="border rounded p-3 mb-4">
-                <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="bi bi-bar-chart me-2"></i>A. Pengukuran Indikator</h6>
-                <table class="table table-sm table-borderless mb-3" style="max-width:500px">
-                    <tr><td style="width:140px"><strong>Nama Indikator</strong></td><td>: <?= esc($ind->indicator_element ?? '-') ?></td></tr>
-                    <tr><td><strong>Numerator</strong></td><td>: <?= $m['total_num'] ?? 0 ?></td></tr>
-                    <tr><td><strong>Denominator</strong></td><td>: <?= $m['total_denum'] ?? 0 ?></td></tr>
-                    <tr><td><strong>Formula</strong></td><td>: (Numerator / Denominator) &times; Faktor</td></tr>
-                    <tr><td><strong>Standar / Target</strong></td><td>: <?= ($ind->indicator_target ?? '0') . ' ' . ($ind->indicator_units ?? '') ?></td></tr>
-                    <tr><td><strong>Nilai Triwulan</strong></td><td>: <strong><?= $m['nilai_triwulan'] !== null ? $m['nilai_triwulan'] . ' ' . ($ind->indicator_units ?? '') : 'Tidak ada data' ?></strong></td></tr>
-                    <tr>
-                        <td><strong>Ketercapaian</strong></td>
-                        <td>:
-                            <?php if ($m['nilai_triwulan'] !== null): ?>
-                                <?php if ((float) $m['nilai_triwulan'] >= (float) ($ind->indicator_target ?? 0)): ?>
-                                    <span class="badge bg-success">Tercapai</span>
-                                <?php else: ?>
-                                    <span class="badge bg-danger">Belum Tercapai</span>
-                                    <small class="text-danger">(Gap: <?= round((float) ($ind->indicator_target ?? 0) - (float) $m['nilai_triwulan'], 2) ?>)</small>
-                                <?php endif; ?>
-                            <?php else: ?>
-                                <span class="badge bg-secondary">Tidak ada data</span>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                </table>
+                <h5 class="fw-bold mb-2 text-uppercase">A. PENGUKURAN INDIKATOR (STRUKTUR / PROSES / OUTCOME)</h5>
+                <hr class="mt-0 mb-3">
                 <div class="table-responsive mb-3">
-                    <table class="table table-bordered table-sm">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Bulan</th>
-                                <th>Numerator</th>
-                                <th>Denominator</th>
-                                <th>Nilai</th>
-                            </tr>
-                        </thead>
+                    <table class="table table-bordered align-middle text-center table-cetak">
                         <tbody>
-                            <?php foreach (($m['bulanan'] ?? []) as $b): ?>
-                                <tr>
-                                    <td><?= $bulanNames[$b['bulan']] ?? 'Bulan ' . $b['bulan'] ?></td>
-                                    <td><?= $b['num'] ?></td>
-                                    <td><?= $b['denum'] ?></td>
-                                    <td><?= $b['nilai'] !== null ? $b['nilai'] . ' ' . ($ind->indicator_units ?? '') : '-' ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                        <tfoot class="table-warning">
                             <tr>
-                                <th>Total Triwulan</th>
-                                <th><?= $m['total_num'] ?? 0 ?></th>
-                                <th><?= $m['total_denum'] ?? 0 ?></th>
-                                <th><?= $m['nilai_triwulan'] !== null ? $m['nilai_triwulan'] . ' ' . ($ind->indicator_units ?? '') : '-' ?></th>
+                                <th width="20%" colspan="2" class="text-start" scope="row">Judul Indikator</th>
+                                <td class="text-start" colspan="9"><?= esc($ind->indicator_element ?? '-') ?></td>
                             </tr>
-                        </tfoot>
+                            <tr>
+                                <th class="text-start" colspan="2" scope="row">Numerator</th>
+                                <td class="text-start" colspan="9"><?= esc($numTeks ?: $ind->indicator_element ?? '') ?></td>
+                            </tr>
+                            <tr>
+                                <th class="text-start" colspan="2" scope="row">Denominator</th>
+                                <td class="text-start" colspan="9"><?= esc($denTeks ?: 'Total ' . ($ind->indicator_element ?? '')) ?></td>
+                            </tr>
+                            <tr>
+                                <th class="text-start" colspan="2" scope="row">Formula</th>
+                                <td class="text-center" colspan="9">
+                                    <div class="text-center p-3" style="background:#f8f9fa;border-radius:4px;font-family:'Times New Roman',serif;">
+                                        <div style="display:inline-flex;align-items:center;gap:8px;font-size:1.1rem;">
+                                            <span>Hasil Capaian =</span>
+                                            <span style="display:inline-flex;flex-direction:column;align-items:center;">
+                                                <span style="border-bottom:2px solid #000;padding:2px 12px;font-style:italic;"><?= esc($numTeks ?: $ind->indicator_element ?? '') ?> (<?= esc($ind->indicator_units ?? '') ?>)</span>
+                                                <span style="padding:2px 12px;font-style:italic;"><?= esc($denTeks ?: 'Total ' . ($ind->indicator_element ?? '')) ?> (<?= esc($ind->indicator_units ?? '') ?>)</span>
+                                            </span>
+                                            <span>&times; 100%</span>
+                                        </div>
+                                        <div class="mt-2 small text-muted">Standar: &gt;= <?= esc($ind->indicator_target ?? '0') ?> <?= esc($ind->indicator_units ?? '%') ?></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="text-start" colspan="2" scope="row">Standar</th>
+                                <td class="text-start" colspan="9">
+                                    <?= esc($ind->indicator_target ?? '0') ?><?= esc($ind->indicator_units ?? '%') ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th rowspan="2" colspan="2" class="text-center" scope="row">
+                                    Hasil<br>Pengukuran
+                                </th>
+                                <th colspan="6">Bulan</th>
+                                <th rowspan="2" colspan="2">
+                                    Rata-Rata<br>
+                                    Triwulan <?= $triwulanLabels[$d['triwulan']] ?? '' ?><br>
+                                    Tahun <?= $d['tahun'] ?? '' ?>
+                                </th>
+                            </tr>
+                            <tr>
+                                <?php foreach (($m['bulanan'] ?? []) as $b): ?>
+                                    <th colspan="2" scope="row">
+                                        <?= $bulanNames[$b['bulan']] ?? 'B' . $b['bulan'] ?>
+                                    </th>
+                                <?php endforeach; ?>
+                            </tr>
+                            <?php
+                            $totalNum = 0; $totalDenum = 0; $capSum = 0; $capCount = 0;
+                            foreach (($m['bulanan'] ?? []) as $b):
+                                $totalNum += $b['num'];
+                                $totalDenum += $b['denum'];
+                                if ($b['nilai'] !== null) { $capSum += $b['nilai']; $capCount++; }
+                            endforeach;
+                            $avgNum = $totalNum / max(count($m['bulanan'] ?? []), 1);
+                            $avgDenum = $totalDenum / max(count($m['bulanan'] ?? []), 1);
+                            $avgCap = $capCount > 0 ? $capSum / $capCount : 0;
+                            ?>
+                            <tr>
+                                <th class="text-start" scope="row">Num</th><th rowspan="2" style="vertical-align:middle;width:40px;text-align:center;"><div style="display:inline-block;writing-mode:vertical-rl;transform:rotate(180deg);font-weight:bold;">Capaian</div></th>
+                                <?php foreach (($m['bulanan'] ?? []) as $b): ?>
+                                    <td><?= $b['num'] ?></td>
+                                    <td rowspan="2">
+                                        <?= $b['nilai'] !== null ? number_format($b['nilai'], 0) . '%' : '-' ?>
+                                    </td>
+                                <?php endforeach; ?>
+                                <td><?= number_format($avgNum, 0) ?></td>
+                                <td rowspan="2">
+                                    <?= number_format($avgCap, 0) ?>%
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="text-start" scope="row">Denum</th>
+                                <?php foreach (($m['bulanan'] ?? []) as $b): ?>
+                                    <td><?= $b['denum'] ?></td>
+                                <?php endforeach; ?>
+                                <td><?= number_format($avgDenum, 0) ?></td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
-                <div class="mb-3">
-                    <canvas id="bulananChart" height="200"></canvas>
-                </div>
-                <div class="alert alert-info mb-0 py-2">
-                    <small><i class="bi bi-info-circle me-1"></i>
-                        <strong>Analisis Otomatis:</strong>
-                        <?php if ($m['nilai_triwulan'] !== null): ?>
-                            Nilai Triwulan <?= $triwulanLabels[$d['triwulan']] ?> sebesar
-                            <strong><?= $m['nilai_triwulan'] . ' ' . ($ind->indicator_units ?? '') ?></strong>
-                            <?php if ((float) $m['nilai_triwulan'] >= (float) ($ind->indicator_target ?? 0)): ?>
-                            telah memenuhi target
-                            <?php else: ?>
-                            belum memenuhi target <?= ($ind->indicator_target ?? '0') . ' ' . ($ind->indicator_units ?? '') ?>
-                            (gap <?= round((float) ($ind->indicator_target ?? 0) - (float) $m['nilai_triwulan'], 2) ?>)
-                            <?php endif; ?>.
-                            <?php
-                            $trends = [];
-                            foreach (($m['bulanan'] ?? []) as $b) {
-                                if ($b['nilai'] !== null) $trends[] = $b['nilai'];
-                            }
-                            if (count($trends) >= 2):
-                                $trend = 'stabil';
-                                $allSame = count(array_unique($trends)) === 1;
-                                $increasing = end($trends) > reset($trends);
-                                $decreasing = end($trends) < reset($trends);
-                                if ($allSame) $trend = 'relatif stabil';
-                                elseif ($increasing) $trend = 'meningkat';
-                                elseif ($decreasing) $trend = 'menurun';
-                                echo 'Tren selama triwulan ini ' . $trend . '.';
-                            endif; ?>
-                        <?php else: ?>
-                            Belum ada data pengukuran untuk periode ini.
-                        <?php endif; ?>
-                    </small>
-                </div>
+            </div>
+
+            <div class="border rounded p-3 mb-4">
+                <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="bi bi-bar-chart me-2"></i>Grafik</h6>
+                <div class="chart-container"><canvas id="lineChart"></canvas></div>
             </div>
 
             <div class="border rounded p-3 mb-4">
@@ -362,23 +386,75 @@ function renderCetakPreview($d, $m, $categoryLabels, $triwulanLabels)
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+Chart.register({
+    id: 'customCetak',
+    afterDraw: function(c) {
+        var cfg = c.config.options.custom || {};
+        var tgt = parseFloat(cfg.target) || 0;
+        var unit = cfg.unit || '%';
+        var ctx = c.ctx;
+        var meta = c.getDatasetMeta(0);
+        if (meta && meta.data) {
+            meta.data.forEach(function(pt, i) {
+                var v = c.data.datasets[0].data[i];
+                if (v === null || v === undefined) return;
+                ctx.fillStyle = '#333';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(v + '%', pt.x, pt.y - 10);
+            });
+        }
+        var yTgt = c.scales.y.getPixelForValue(tgt);
+        ctx.save();
+        ctx.setLineDash([6, 4]);
+        ctx.strokeStyle = '#e74c3c';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(c.chartArea.left, yTgt);
+        ctx.lineTo(c.chartArea.right, yTgt);
+        ctx.stroke();
+        ctx.restore();
+        ctx.fillStyle = '#e74c3c';
+        ctx.font = 'bold 10px Arial';
+        ctx.textAlign = 'right';
+        ctx.fillText('Standar: ' + tgt + unit, c.chartArea.right - 4, yTgt - 6);
+    }
+});
+
 $(document).ready(function() {
     var dokumenId = <?= json_encode($selected['id'] ?? null) ?>;
+    var userRole = <?= json_encode($userRole) ?>;
+    var isKendali = !['ADMINISTRATOR', 'KOMITE'].includes(userRole);
     var chart = null;
 
+    if (isKendali) {
+        var firstReal = $('#unit_id option:first').next();
+        if (firstReal.length) {
+            $('#unit_id').val(firstReal.val());
+        }
+        $('#unit_id').prop('disabled', true);
+        $('#unit_id').select2({ theme: 'bootstrap-5', width: '100%', disabled: true });
+    } else {
+        $('#unit_id').select2({ theme: 'bootstrap-5', width: '100%', placeholder: 'Unit...', allowClear: true });
+    }
+    $('#indicator_id').select2({ theme: 'bootstrap-5', width: '100%', placeholder: 'Indikator...', allowClear: true });
+
     <?php if ($selected && $measurement): ?>
-    renderChart(<?= json_encode($measurement['bulanan'] ?? []) ?>, <?= json_encode($measurement['indicator']->indicator_units ?? '') ?>);
     $('#unit_id').val(<?= json_encode((string)($selected['unit_id'] ?? '')) ?>);
-    $('#category_id').val(<?= json_encode((string)($selected['indicator_category_id'] ?? '4')) ?>);
+    $('#category_id').val(<?= json_encode((string)($selected['indicator_category_id'] ?? '')) ?>);
     $('#tahun').val(<?= json_encode((string)($selected['tahun'] ?? '')) ?>);
     $('#triwulan').val(<?= json_encode((string)($selected['triwulan'] ?? '1')) ?>);
+    loadIndicators(function() {
+        $('#indicator_id').val(<?= json_encode((string)($selected['indicator_id'] ?? '')) ?>).trigger('change');
+    });
+    renderChart(<?= json_encode($measurement['bulanan'] ?? []) ?>, <?= json_encode($measurement['indicator']->indicator_units ?? '') ?>, <?= json_encode($measurement['target'] ?? 0) ?>, <?= json_encode($measurement['nilai_triwulan'] ?? null) ?>);
     <?php endif; ?>
 
     $('#unit_id, #category_id, #tahun').on('change', function() {
         loadIndicators();
     });
 
-    function loadIndicators() {
+    function loadIndicators(callback) {
         var unitId = $('#unit_id').val();
         var categoryId = $('#category_id').val();
         var tahun = $('#tahun').val();
@@ -394,7 +470,8 @@ $(document).ready(function() {
                 indicators.forEach(function(ind) {
                     sel.append('<option value="' + ind.indicator_id + '">' + ind.indicator_element + '</option>');
                 });
-                sel.show();
+                sel.select2('destroy').select2({ theme: 'bootstrap-5', width: '100%', placeholder: 'Indikator...', allowClear: true });
+                if (typeof callback === 'function') callback(indicators);
             }
         });
     }
@@ -407,7 +484,7 @@ $(document).ready(function() {
         var triwulan = $('#triwulan').val();
 
         if (!unitId || !categoryId || !indicatorId || !tahun || !triwulan) {
-            alert('Silakan pilih semua filter');
+            toastWarning('Silakan pilih semua filter');
             return;
         }
 
@@ -423,7 +500,7 @@ $(document).ready(function() {
         });
     });
 
-    function renderChart(data, unit) {
+    function renderChart(data, unit, target, avgTriwulan) {
         if (!data || !data.length) return;
         var bulanNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         var labels = [], values = [];
@@ -431,21 +508,48 @@ $(document).ready(function() {
             labels.push(bulanNames[b.bulan - 1] || 'B' + b.bulan);
             values.push(b.nilai);
         });
-        var ctx = document.getElementById('bulananChart');
+        var maxVal = Math.max(...values, target, avgTriwulan || 0) * 1.3 || 100;
+        var ctx = document.getElementById('lineChart');
         if (!ctx) return;
+        if (chart) chart.destroy();
+
+        var datasets = [{
+            label: 'Nilai Bulanan (' + (unit || '') + ')',
+            data: values,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.3,
+            pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+            pointRadius: 4
+        }];
+
+        if (avgTriwulan !== null && avgTriwulan !== undefined && !isNaN(avgTriwulan)) {
+            var avgData = labels.map(function() { return avgTriwulan; });
+            datasets.push({
+                label: 'Rata-Rata Triwulan: ' + (avgTriwulan % 1 === 0 ? avgTriwulan : avgTriwulan.toFixed(2)) + (unit || '%'),
+                data: avgData,
+                borderColor: '#3498db',
+                borderWidth: 2,
+                borderDash: [4, 4],
+                fill: false,
+                tension: 0,
+                pointRadius: 0,
+                pointHitRadius: 0
+            });
+        }
+
         chart = new Chart(ctx.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Nilai Bulanan (' + (unit || '') + ')',
-                    data: values,
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            type: 'line',
+            data: { labels: labels, datasets: datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                custom: { target: target, unit: (unit || '%'), avgTriwulan: avgTriwulan },
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, max: maxVal, title: { display: true, text: 'Capaian (%)' } } }
+            }
         });
     }
 
@@ -455,7 +559,7 @@ $(document).ready(function() {
             url: '<?= site_url('siimut/trias-mutu/simpan-draft') ?>',
             method: 'POST',
             data: { dokumen_id: dokumenId },
-            success: function(res) { if (res.success) alert('Dokumen disimpan sebagai Draft'); else alert(res.message); }
+            success: function(res) { if (res.success) toastSuccess('Dokumen disimpan sebagai Draft'); else toastError(res.message); }
         });
     });
 
@@ -465,7 +569,7 @@ $(document).ready(function() {
             url: '<?= site_url('siimut/trias-mutu/finalisasi') ?>',
             method: 'POST',
             data: { dokumen_id: dokumenId },
-            success: function(res) { if (res.success) { alert(res.message); location.reload(); } else alert(res.message); }
+            success: function(res) { if (res.success) { toastSuccess(res.message); location.reload(); } else toastError(res.message); }
         });
     });
 
@@ -475,7 +579,7 @@ $(document).ready(function() {
             url: '<?= site_url('siimut/trias-mutu/delete-dokumen') ?>',
             method: 'POST',
             data: { dokumen_id: dokumenId },
-            success: function(res) { if (res.success) { alert('Dokumen berhasil dihapus'); window.location.href = '<?= site_url('siimut/trias-mutu') ?>'; } else alert(res.message); }
+            success: function(res) { if (res.success) { toastSuccess('Dokumen berhasil dihapus'); window.location.href = '<?= site_url('siimut/trias-mutu') ?>'; } else toastError(res.message); }
         });
     });
 
@@ -507,7 +611,7 @@ $(document).on('click', '#btnSaveTtd', function() {
             kepala_unit: $('#editKepalaUnit').val()
         },
         success: function(res) {
-            if (res.success) { alert('Tanda tangan disimpan'); location.reload(); }
+            if (res.success) { toastSuccess('Tanda tangan disimpan'); location.reload(); }
         }
     });
 });
