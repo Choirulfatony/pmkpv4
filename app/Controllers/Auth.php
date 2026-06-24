@@ -54,7 +54,7 @@ class Auth extends BaseController
         ];
 
         $data = [
-            'login_title' => 'PMKP v2.0 RSSM ',
+            'login_title' => 'SIIMUT V2.0 RSSM',
             '_content'   => view('auth/login', $contentData),
             '_login_css' => view('_layout/_login_css'),
             '_login_js'  => view('_layout/_login_js'),
@@ -715,7 +715,7 @@ class Auth extends BaseController
         ];
 
         $data = [
-            'login_title' => 'Verifikasi Email - PMKP v2.0 RSSM',
+            'login_title' => 'Verifikasi Email - SIIMUT V2.0 RSSM',
             '_content'   => view('auth/verify_email_notice', $contentData),
             '_login_css' => view('_layout/_login_css'),
             '_login_js'  => view('_layout/_login_js'),
