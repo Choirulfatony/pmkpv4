@@ -27,15 +27,18 @@
         }
 
         .logo {
-            width: 75px;
+            width: 70px;
             vertical-align: middle;
-            padding-right: 10px;
         }
 
         .logo img {
-            width: 60px;
+            width: 65px;
             height: auto;
             display: block;
+        }
+
+        .spacer {
+            width: 70px;
         }
 
         .header-text {
@@ -58,6 +61,7 @@
 
         .rs {
             font: bold 16pt Arial;
+            line-height: 1;
         }
 
         .alamat {
@@ -234,6 +238,7 @@
                 <div class="alamat">Jalan Dr. Sutomo Nomor 59, Kartoharjo, Kota Madiun 63116</div>
                 <div class="alamat">Telepon (0351) 464325, Laman rssoedono.jatimprov.go.id, Pos-el rsu_soedonomdn@jatimprov.go.id</div>
             </td>
+            <td class="spacer">&nbsp;</td>
         </tr>
     </table>
 
