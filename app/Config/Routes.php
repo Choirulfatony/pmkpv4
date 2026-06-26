@@ -264,6 +264,9 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('trias-mutu/delete-dokumen', 'TriasMutu::deleteDokumen');
         $routes->get('trias-mutu/cetak-pdf', 'TriasMutu::cetakPdf');
         $routes->post('trias-mutu/get-dokumen-detail', 'TriasMutu::getDokumenDetail');
+        $routes->post('trias-mutu/analisis-ai', 'TriasMutu::analisisAi');
+        $routes->post('trias-mutu/save-analisis-ai', 'TriasMutu::saveAnalisisAi');
+        $routes->post('trias-mutu/generate-pdsa', 'TriasMutu::generatePdsa');
 
         // Dokumen Mutu
         $routes->get('dokumen-mutu', 'FileManager::index');

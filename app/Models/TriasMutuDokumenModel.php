@@ -10,7 +10,8 @@ class TriasMutuDokumenModel extends Model
     protected $primaryKey = 'id';
     protected $allowedFields = [
         'unit_id', 'indicator_category_id', 'indicator_id',
-        'triwulan', 'tahun', 'status', 'final_by', 'final_at', 'created_by'
+        'triwulan', 'tahun', 'status', 'final_by', 'final_at', 'created_by',
+        'analisis_ai'
     ];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';

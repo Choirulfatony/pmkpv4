@@ -9,6 +9,11 @@
                     </h5>
                     <small class="text-muted">Identifikasi akar penyebab masalah menggunakan diagram tulang ikan (Fishbone)</small>
                 </div>
+                <div class="col-md-6 text-end">
+                    <a href="<?= site_url('siimut/trias-mutu/pengukuran') ?>" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Kembali
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -39,8 +44,9 @@
                 <table class="table table-bordered" id="fishboneTable">
                     <thead class="table-light">
                         <tr>
-                            <th style="width:20%">Kategori</th>
+                            <th style="width:18%">Kategori</th>
                             <th>Penyebab</th>
+                            <th>Rencana Perbaikan</th>
                             <th style="width:60px">Aksi</th>
                         </tr>
                     </thead>
@@ -59,6 +65,9 @@
                                     <td>
                                         <textarea class="form-control form-control-sm penyebab" rows="2"><?= esc($row['penyebab']) ?></textarea>
                                     </td>
+                                    <td>
+                                        <textarea class="form-control form-control-sm rencana_perbaikan" rows="2"><?= esc($row['rencana_perbaikan'] ?? '') ?></textarea>
+                                    </td>
                                     <td class="text-center">
                                         <button class="btn btn-sm btn-danger btnRemoveRow"><i class="bi bi-x"></i></button>
                                     </td>
@@ -75,6 +84,9 @@
                                 </td>
                                 <td>
                                     <textarea class="form-control form-control-sm penyebab" rows="2"></textarea>
+                                </td>
+                                <td>
+                                    <textarea class="form-control form-control-sm rencana_perbaikan" rows="2"></textarea>
                                 </td>
                                 <td class="text-center">
                                     <button class="btn btn-sm btn-danger btnRemoveRow"><i class="bi bi-x"></i></button>
@@ -117,6 +129,7 @@ $(document).ready(function() {
         var tr = '<tr>' +
             '<td><select class="form-select form-select-sm kategori">' + options + '</select></td>' +
             '<td><textarea class="form-control form-control-sm penyebab" rows="2"></textarea></td>' +
+            '<td><textarea class="form-control form-control-sm rencana_perbaikan" rows="2"></textarea></td>' +
             '<td class="text-center"><button class="btn btn-sm btn-danger btnRemoveRow"><i class="bi bi-x"></i></button></td>' +
             '</tr>';
         $('#fishboneTable tbody').append(tr);
@@ -143,6 +156,7 @@ $(document).ready(function() {
 
         var kategori = [];
         var penyebab = [];
+        var rencanaPerbaikan = [];
         var permasalahan = $('#permasalahan').val().trim();
         $('.field-error').hide();
 
@@ -155,12 +169,14 @@ $(document).ready(function() {
         $('#fishboneTable tbody tr').each(function() {
             var kat = $(this).find('.kategori').val();
             var pen = $(this).find('.penyebab').val().trim();
+            var ren = $(this).find('.rencana_perbaikan').val().trim();
             if (!kat || !pen) {
                 valid = false;
                 return false;
             }
             kategori.push(kat);
             penyebab.push(pen);
+            rencanaPerbaikan.push(ren);
         });
 
         if (!valid) {
@@ -175,7 +191,8 @@ $(document).ready(function() {
                 dokumen_id: dokumenId,
                 permasalahan: permasalahan,
                 kategori: kategori,
-                penyebab: penyebab
+                penyebab: penyebab,
+                rencana_perbaikan: rencanaPerbaikan
             },
             beforeSend: function() {
                 $('#btnSaveAnalisis').prop('disabled', true).html('<i class="bi bi-hourglass"></i> Menyimpan...');

@@ -65,7 +65,7 @@ $triwulanLabels = ['', 'I', 'II', 'III', 'IV'];
     </div>
 
     <div id="previewArea">
-        <?php if ($selected): renderCetakPreview($selected, $measurement, $categoryLabels, $triwulanLabels, $numdenum); ?>
+        <?php if ($selected): renderCetakPreview($selected, $measurement, $categoryLabels, $triwulanLabels, $numdenum, $analisisOtomatis ?? ''); ?>
         <?php else: ?>
             <div class="text-center text-muted py-5">
                 <i class="bi bi-file-earmark-text fs-1 d-block mb-3"></i>
@@ -76,7 +76,7 @@ $triwulanLabels = ['', 'I', 'II', 'III', 'IV'];
 </div>
 
 <?php
-function renderCetakPreview($d, $m, $categoryLabels, $triwulanLabels, $numdenum)
+function renderCetakPreview($d, $m, $categoryLabels, $triwulanLabels, $numdenum, $analisisOtomatis = '')
 {
     $ind = $m['indicator'] ?? null;
     $analisis = $d['analisis'] ?? [];
@@ -229,8 +229,28 @@ function renderCetakPreview($d, $m, $categoryLabels, $triwulanLabels, $numdenum)
 
             <div class="border rounded p-3 mb-4">
                 <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="bi bi-bar-chart me-2"></i>Grafik</h6>
-                <div class="chart-container"><canvas id="lineChart"></canvas></div>
+                <h5 class="text-center fw-bold text-uppercase mb-3"><?= esc($ind->indicator_element ?? '') ?></h5>
+                <div class="chart-container" style="height:350px"><canvas id="lineChart"></canvas></div>
             </div>
+
+            <?php if (!empty($analisisOtomatis)): ?>
+            <?php
+                $formatted = preg_replace([
+                    '/=== (.+?) ===/',
+                    '/--- (.+?) ---/',
+                    '/\n((?:  -|[A-Z][a-z]+:|\d+\.|✗|✓))/',
+                ], [
+                    '<h6 class="fw-bold mt-3 mb-2 text-primary">$1</h6>',
+                    '<strong class="d-block mt-2">$1</strong>',
+                    "\n\$1",
+                ], esc($analisisOtomatis));
+                $formatted = nl2br($formatted);
+            ?>
+            <div class="border rounded p-3 mb-4 bg-light">
+                <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="bi bi-chat-quote me-2"></i>Analisis Otomatis</h6>
+                <div class="mb-0" style="text-align:justify;line-height:1.7;"><?= $formatted ?></div>
+            </div>
+            <?php endif; ?>
 
             <div class="border rounded p-3 mb-4">
                 <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="bi bi-diagram-3 me-2"></i>B. Analisis Penyebab Masalah</h6>
@@ -244,8 +264,9 @@ function renderCetakPreview($d, $m, $categoryLabels, $triwulanLabels, $numdenum)
                             <thead class="table-light">
                                 <tr>
                                     <th style="width:50px">No</th>
-                                    <th style="width:150px">Kategori</th>
+                                    <th style="width:120px">Kategori</th>
                                     <th>Penyebab</th>
+                                    <th>Rencana Perbaikan</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -254,6 +275,7 @@ function renderCetakPreview($d, $m, $categoryLabels, $triwulanLabels, $numdenum)
                                         <td class="text-center"><?= $no++ ?></td>
                                         <td><?= esc($a['kategori']) ?></td>
                                         <td><?= nl2br(esc($a['penyebab'])) ?></td>
+                                        <td><?= nl2br(esc($a['rencana_perbaikan'] ?? '')) ?: '<span class="text-muted">-</span>' ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -266,33 +288,75 @@ function renderCetakPreview($d, $m, $categoryLabels, $triwulanLabels, $numdenum)
 
             <div class="border rounded p-3 mb-4">
                 <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="bi bi-arrow-repeat me-2"></i>C. Siklus PDSA</h6>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="card h-100 border-primary">
-                            <div class="card-header bg-primary text-white py-1"><small><strong>Plan (Rencana)</strong></small></div>
-                            <div class="card-body py-2"><small><?= nl2br(esc($pdsa['plan'] ?? '<span class="text-muted">Belum diisi</span>')) ?></small></div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card h-100 border-success">
-                            <div class="card-header bg-success text-white py-1"><small><strong>Do (Pelaksanaan)</strong></small></div>
-                            <div class="card-body py-2"><small><?= nl2br(esc($pdsa['do'] ?? '<span class="text-muted">Belum diisi</span>')) ?></small></div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card h-100 border-warning">
-                            <div class="card-header bg-warning text-dark py-1"><small><strong>Study (Evaluasi)</strong></small></div>
-                            <div class="card-body py-2"><small><?= nl2br(esc($pdsa['study'] ?? '<span class="text-muted">Belum diisi</span>')) ?></small></div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card h-100 border-danger">
-                            <div class="card-header bg-danger text-white py-1"><small><strong>Act (Tindak Lanjut)</strong></small></div>
-                            <div class="card-body py-2"><small><?= nl2br(esc($pdsa['act'] ?? '<span class="text-muted">Belum diisi</span>')) ?></small></div>
-                        </div>
-                    </div>
+
+                <?php
+                $pdsaTools = $pdsa['tools'] ?? '';
+                $pdsaSteps = !empty($pdsa['steps']) ? json_decode($pdsa['steps'], true) : [];
+                $pdsaPlan = $pdsa['plan_rencana'] ?? $pdsa['plan'] ?? '';
+                $pdsaTarget = $pdsa['plan_target'] ?? '';
+                $pdsaDo = $pdsa['do_hasil'] ?? $pdsa['do'] ?? '';
+                $pdsaStudy = $pdsa['study_hasil'] ?? $pdsa['study'] ?? '';
+                $pdsaAct = $pdsa['act_kesimpulan'] ?? $pdsa['act'] ?? '';
+                $pdsaTindakLanjut = $pdsa['act_tindak_lanjut'] ?? '';
+                $hasPdsa = $pdsaTools || $pdsaSteps || $pdsaPlan || $pdsaTarget || $pdsaDo || $pdsaStudy || $pdsaAct || $pdsaTindakLanjut;
+                ?>
+
+                <?php if ($pdsaTools): ?>
+                    <p><strong>Tools / Fokus Perbaikan:</strong><br><?= nl2br(esc($pdsaTools)) ?></p>
+                <?php endif; ?>
+
+                <?php if ($pdsaSteps): ?>
+                    <p><strong>Langkah-langkah:</strong></p>
+                    <ol>
+                        <?php foreach ($pdsaSteps as $step): ?>
+                            <li><?= esc($step) ?></li>
+                        <?php endforeach; ?>
+                    </ol>
+                <?php endif; ?>
+
+                <?php if ($hasPdsa): ?>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:12%">Tahap</th>
+                                <th style="width:20%">Kategori</th>
+                                <th>Uraian</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td rowspan="2" class="fw-bold text-center align-middle" style="background:#cfe2ff">PLAN</td>
+                                <td>Rencana</td>
+                                <td><?= nl2br(esc($pdsaPlan)) ?: '<span class="text-muted">Belum diisi</span>' ?></td>
+                            </tr>
+                            <tr>
+                                <td>Target</td>
+                                <td><?= nl2br(esc($pdsaTarget)) ?: '<span class="text-muted">Belum diisi</span>' ?></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold text-center align-middle" style="background:#d1e7dd">DO</td>
+                                <td>Hasil Pengamatan</td>
+                                <td><?= nl2br(esc($pdsaDo)) ?: '<span class="text-muted">Belum diisi</span>' ?></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold text-center align-middle" style="background:#fff3cd">STUDY</td>
+                                <td>Hasil Pengamatan</td>
+                                <td><?= nl2br(esc($pdsaStudy)) ?: '<span class="text-muted">Belum diisi</span>' ?></td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2" class="fw-bold text-center align-middle" style="background:#f8d7da">ACT</td>
+                                <td>Kesimpulan</td>
+                                <td><?= nl2br(esc($pdsaAct)) ?: '<span class="text-muted">Belum diisi</span>' ?></td>
+                            </tr>
+                            <tr>
+                                <td>Tindak Lanjut</td>
+                                <td><?= nl2br(esc($pdsaTindakLanjut)) ?: '<span class="text-muted">Belum diisi</span>' ?></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <?php if (!$pdsa || (empty($pdsa['plan']) && empty($pdsa['do']) && empty($pdsa['study']) && empty($pdsa['act']))): ?>
+                <?php else: ?>
                     <p class="text-muted mt-2 mb-0"><i class="bi bi-pencil me-1"></i> Belum ada data PDSA. <a href="<?= site_url('siimut/trias-mutu/pdsa?dokumen_id=' . $d['id']) ?>">Isi sekarang</a></p>
                 <?php endif; ?>
             </div>
@@ -338,12 +402,13 @@ function renderCetakPreview($d, $m, $categoryLabels, $triwulanLabels, $numdenum)
                         </div>
                     <?php endif; ?>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <div class="btn-group">
+                <div class="col-md-6">
+                    <div class="d-flex flex-wrap gap-2 justify-content-md-end">
                         <?php if ($d['status'] !== 'final'): ?>
                             <button class="btn btn-warning" id="btnSimpanDraft"><i class="bi bi-save me-1"></i> Simpan Draft</button>
                             <button class="btn btn-success" id="btnFinalisasi"><i class="bi bi-check2-circle me-1"></i> Finalisasi</button>
                         <?php endif; ?>
+                        <a href="<?= site_url('siimut/trias-mutu/cetak-pdf?dokumen_id=' . $d['id'] . '&view=1') ?>" class="btn btn-outline-danger" target="_blank"><i class="bi bi-eye me-1"></i> Lihat PDF</a>
                         <a href="<?= site_url('siimut/trias-mutu/cetak-pdf?dokumen_id=' . $d['id']) ?>" class="btn btn-danger" target="_blank"><i class="bi bi-file-pdf me-1"></i> Cetak PDF</a>
                         <button class="btn btn-info" id="btnExportWord"><i class="bi bi-file-word me-1"></i> Export Word</button>
                         <?php if (in_array(session('user_role'), ['ADMINISTRATOR', 'KOMITE'])): ?>
@@ -385,42 +450,8 @@ function renderCetakPreview($d, $m, $categoryLabels, $triwulanLabels, $numdenum)
 <?php } ?>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script>
-Chart.register({
-    id: 'customCetak',
-    afterDraw: function(c) {
-        var cfg = c.config.options.custom || {};
-        var tgt = parseFloat(cfg.target) || 0;
-        var unit = cfg.unit || '%';
-        var ctx = c.ctx;
-        var meta = c.getDatasetMeta(0);
-        if (meta && meta.data) {
-            meta.data.forEach(function(pt, i) {
-                var v = c.data.datasets[0].data[i];
-                if (v === null || v === undefined) return;
-                ctx.fillStyle = '#333';
-                ctx.font = '10px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(v + '%', pt.x, pt.y - 10);
-            });
-        }
-        var yTgt = c.scales.y.getPixelForValue(tgt);
-        ctx.save();
-        ctx.setLineDash([6, 4]);
-        ctx.strokeStyle = '#e74c3c';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(c.chartArea.left, yTgt);
-        ctx.lineTo(c.chartArea.right, yTgt);
-        ctx.stroke();
-        ctx.restore();
-        ctx.fillStyle = '#e74c3c';
-        ctx.font = 'bold 10px Arial';
-        ctx.textAlign = 'right';
-        ctx.fillText('Standar: ' + tgt + unit, c.chartArea.right - 4, yTgt - 6);
-    }
-});
-
 $(document).ready(function() {
     var dokumenId = <?= json_encode($selected['id'] ?? null) ?>;
     var userRole = <?= json_encode($userRole) ?>;
@@ -447,7 +478,7 @@ $(document).ready(function() {
     loadIndicators(function() {
         $('#indicator_id').val(<?= json_encode((string)($selected['indicator_id'] ?? '')) ?>).trigger('change');
     });
-    renderChart(<?= json_encode($measurement['bulanan'] ?? []) ?>, <?= json_encode($measurement['indicator']->indicator_units ?? '') ?>, <?= json_encode($measurement['target'] ?? 0) ?>, <?= json_encode($measurement['nilai_triwulan'] ?? null) ?>);
+    renderChart(<?= json_encode($measurement['bulanan'] ?? []) ?>, <?= json_encode($measurement['indicator']->indicator_element ?? '') ?>, <?= json_encode($measurement['target'] ?? 0) ?>, <?= json_encode($measurement['nilai_triwulan'] ?? null) ?>, <?= json_encode($triwulanLabels[$selected['triwulan']] ?? '') ?>, <?= json_encode($selected['tahun'] ?? '') ?>);
     <?php endif; ?>
 
     $('#unit_id, #category_id, #tahun').on('change', function() {
@@ -500,56 +531,83 @@ $(document).ready(function() {
         });
     });
 
-    function renderChart(data, unit, target, avgTriwulan) {
+    function renderChart(data, indicatorName, target, avgTriwulan, twLabel, tahun) {
         if (!data || !data.length) return;
-        var bulanNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-        var labels = [], values = [];
-        data.forEach(function(b) {
-            labels.push(bulanNames[b.bulan - 1] || 'B' + b.bulan);
-            values.push(b.nilai);
-        });
-        var maxVal = Math.max(...values, target, avgTriwulan || 0) * 1.3 || 100;
+        var bulanPendek = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
+        var capaian = [];
+        data.forEach(function(b) { capaian.push(b.nilai); });
+        var triwulanLabel = 'RATA-RATA TW ' + (twLabel || '') + ' ' + (tahun || '');
+        var labels = [bulanPendek[data[0].bulan - 1], bulanPendek[data[1].bulan - 1], bulanPendek[data[2].bulan - 1], triwulanLabel];
+        var standarVal = parseFloat(target) || 0;
+        var standarData = [standarVal, standarVal, standarVal, standarVal];
+        var avgVal = (avgTriwulan !== null && avgTriwulan !== undefined && !isNaN(avgTriwulan)) ? Math.round(avgTriwulan * 100) / 100 : 0;
+        var capaianData = [capaian[0] || 0, capaian[1] || 0, capaian[2] || 0, avgVal];
+        var maxY = Math.max(standarVal, ...capaianData) * 1.3 || 12;
+        maxY = Math.ceil(maxY / 2) * 2;
+        if (maxY < 2) maxY = 2;
         var ctx = document.getElementById('lineChart');
         if (!ctx) return;
         if (chart) chart.destroy();
-
-        var datasets = [{
-            label: 'Nilai Bulanan (' + (unit || '') + ')',
-            data: values,
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.3,
-            pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-            pointRadius: 4
-        }];
-
-        if (avgTriwulan !== null && avgTriwulan !== undefined && !isNaN(avgTriwulan)) {
-            var avgData = labels.map(function() { return avgTriwulan; });
-            datasets.push({
-                label: 'Rata-Rata Triwulan: ' + (avgTriwulan % 1 === 0 ? avgTriwulan : avgTriwulan.toFixed(2)) + (unit || '%'),
-                data: avgData,
-                borderColor: '#3498db',
-                borderWidth: 2,
-                borderDash: [4, 4],
-                fill: false,
-                tension: 0,
-                pointRadius: 0,
-                pointHitRadius: 0
-            });
-        }
-
         chart = new Chart(ctx.getContext('2d'), {
             type: 'line',
-            data: { labels: labels, datasets: datasets },
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'STANDAR',
+                        data: standarData,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 2,
+                        borderDash: [],
+                        fill: false,
+                        tension: 0,
+                        pointStyle: 'diamond',
+                        pointRadius: 5,
+                        pointBackgroundColor: '#3498db'
+                    },
+                    {
+                        label: 'CAPAIAN',
+                        data: capaianData,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        borderWidth: 2,
+                        borderDash: [],
+                        fill: false,
+                        tension: 0,
+                        pointStyle: 'rect',
+                        pointRadius: 5,
+                        pointBackgroundColor: '#e74c3c'
+                    }
+                ]
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                custom: { target: target, unit: (unit || '%'), avgTriwulan: avgTriwulan },
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, max: maxVal, title: { display: true, text: 'Capaian (%)' } } }
-            }
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { size: 11 } } },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        color: '#333',
+                        font: { size: 10, weight: 'bold' },
+                        formatter: function(v) { return v + '%'; }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 10, weight: 'bold' } }
+                    },
+                    y: {
+                        min: 0,
+                        max: maxY,
+                        ticks: { stepSize: 2, callback: function(v) { return v + '%'; } },
+                        grid: { display: true, drawBorder: false }
+                    }
+                }
+            },
+            plugins: [ChartDataLabels]
         });
     }
 

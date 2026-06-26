@@ -62,26 +62,29 @@
     <div id="indicatorInfo" style="display:none;">
         <div class="card shadow-sm mb-3">
             <div class="card-body">
-                <h5 class="card-title" id="indicatorName"></h5>
-                <div class="row mt-3">
-                    <div class="col-md-3">
-                        <small class="text-muted d-block">Target</small>
-                        <strong id="targetLabel">-</strong>
-                    </div>
-                    <div class="col-md-3">
-                        <small class="text-muted d-block">Satuan</small>
-                        <strong id="unitsLabel">-</strong>
-                    </div>
-                    <div class="col-md-3">
-                        <small class="text-muted d-block">Nilai Triwulan</small>
-                        <strong id="triwulanNilai">-</strong>
-                    </div>
-                    <div class="col-md-3">
-                        <small class="text-muted d-block">Status</small>
-                        <strong id="statusLabel">-</strong>
+                <h5 class="card-title text-break" id="indicatorName"></h5>
+                <div class="card border-0 bg-light mt-4">
+                    <div class="card-body py-3">
+                        <div class="d-inline-block me-4">
+                            <small class="text-muted d-block">Target</small>
+                            <strong id="targetLabel">-</strong>
+                        </div>
+                        <div class="d-inline-block me-4">
+                            <small class="text-muted d-block">Satuan</small>
+                            <strong id="unitsLabel">-</strong>
+                        </div>
+                        <div class="d-inline-block me-4">
+                            <small class="text-muted d-block">Nilai Triwulan</small>
+                            <strong id="triwulanNilai">-</strong>
+                        </div>
+                        <div class="d-inline-block">
+                            <small class="text-muted d-block">Status</small>
+                            <strong id="statusLabel">-</strong>
+                        </div>
                     </div>
                 </div>
             </div>
+            <div class="card-footer py-2 btn-aksi" style="display:none;"></div>
         </div>
 
         <div class="card shadow-sm">
@@ -100,51 +103,52 @@
 
         <div class="card shadow-sm mt-3" id="grafikSection" style="display:none;">
             <div class="card-header">
-                <i class="bi bi-bar-chart me-2"></i>Grafik Nilai Bulanan
+                <i class="bi bi-bar-chart me-2"></i>Grafik Tren Pengukuran Indikator Mutu
             </div>
             <div class="card-body">
-                <div class="chart-container"><canvas id="lineChart"></canvas></div>
+                <h5 class="text-center fw-bold text-uppercase mb-3" id="chartTitle"></h5>
+                <div class="chart-container" style="height:350px"><canvas id="lineChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-3" id="aiAnalisisSection" style="display:none;">
+            <div class="card-header d-flex align-items-center flex-wrap gap-2">
+                <span><i class="bi bi-robot me-2"></i>Analisis AI</span>
+                <button class="btn btn-sm btn-outline-primary ms-auto" id="btnAnalisisAI">
+                    <i class="bi bi-stars"></i> Analisis dengan AI
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" id="btnTulisManual">
+                    <i class="bi bi-pencil"></i> Tulis Manual
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="aiAnalisisLoading" style="display:none;" class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted">Menganalisis data dengan AI...</p>
+                </div>
+                <div id="aiAnalisisContent" class="py-2" style="white-space:pre-wrap;line-height:1.8;"></div>
+                <div id="aiAnalisisError" class="alert alert-danger py-2" style="display:none;"></div>
+            </div>
+            <div id="aiManualForm" class="card-body border-top" style="display:none;">
+                <label class="form-label fw-semibold"><i class="bi bi-pencil me-1"></i>Analisis Manual</label>
+                <textarea class="form-control" id="manualAnalisisText" rows="8" placeholder="Tulis analisis Anda di sini..."></textarea>
+                <button class="btn btn-sm btn-primary mt-2" id="btnGunakanManual">
+                    <i class="bi bi-check-lg"></i> Gunakan Analisis Ini
+                </button>
+            </div>
+            <div class="card-footer py-2">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Akurasi data 100% untuk perhitungan matematis (nilai, selisih, tren, fluktuasi) karena langsung dari database. Untuk kualitas analisis dan rekomendasi, tidak sebagus AI karena hanya berdasarkan aturan statis.
+                </small>
             </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script>
-Chart.register({
-    id: 'customPk',
-    afterDraw: function(c) {
-        var cfg = c.config.options.custom || {};
-        var tgt = parseFloat(cfg.target) || 0;
-        var ctx = c.ctx;
-        var meta = c.getDatasetMeta(0);
-        if (meta && meta.data) {
-            meta.data.forEach(function(pt, i) {
-                var v = c.data.datasets[0].data[i];
-                if (v === null || v === undefined) return;
-                ctx.fillStyle = '#333';
-                ctx.font = '10px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(v + '%', pt.x, pt.y - 10);
-            });
-        }
-        var yTgt = c.scales.y.getPixelForValue(tgt);
-        ctx.save();
-        ctx.setLineDash([6, 4]);
-        ctx.strokeStyle = '#e74c3c';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(c.chartArea.left, yTgt);
-        ctx.lineTo(c.chartArea.right, yTgt);
-        ctx.stroke();
-        ctx.restore();
-        ctx.fillStyle = '#e74c3c';
-        ctx.font = 'bold 10px Arial';
-        ctx.textAlign = 'right';
-        ctx.fillText('Standar: ' + tgt + '%', c.chartArea.right - 4, yTgt - 6);
-    }
-});
-
 $(document).ready(function() {
     var dokumenId = <?= json_encode($selected['id'] ?? null) ?>;
     var userRole = <?= json_encode($userRole) ?>;
@@ -229,7 +233,11 @@ $(document).ready(function() {
                     dokumenId = res.selected.id;
                 }
                 renderPengukuran(res);
-                renderChart(res.measurement);
+                renderChart(res.measurement, res.selected?.triwulan, res.selected?.tahun);
+                if (dokumenId && res.selected?.analisis_ai) {
+                    $('#aiAnalisisContent').html(res.selected.analisis_ai.replace(/\n/g, '<br>'));
+                    $('#aiAnalisisSection').show();
+                }
             },
             error: function() {
                 toastError('Gagal memuat data');
@@ -359,13 +367,17 @@ $(document).ready(function() {
         $('#indicatorInfo').show();
 
         if (dokumenId) {
-            var btnHtml = '<a href="<?= site_url('siimut/trias-mutu/analisis-penyebab') ?>?dokumen_id=' + dokumenId + '" class="btn btn-warning btn-sm ms-2"><i class="bi bi-diagram-3"></i> Analisis Penyebab</a>' +
-                '<a href="<?= site_url('siimut/trias-mutu/pdsa') ?>?dokumen_id=' + dokumenId + '" class="btn btn-success btn-sm ms-2"><i class="bi bi-arrow-repeat"></i> PDSA</a>' +
-                '<a href="<?= site_url('siimut/trias-mutu/cetak') ?>?dokumen_id=' + dokumenId + '" class="btn btn-info btn-sm ms-2"><i class="bi bi-printer"></i> Cetak</a>';
-            $('#indicatorInfo .card-body .row').first().append(
-                '<div class="col-12 mt-2">' + btnHtml + '</div>'
-            );
+            var btnHtml = '<div class="d-flex flex-wrap gap-2">' +
+                '<a href="<?= site_url('siimut/trias-mutu/analisis-penyebab') ?>?dokumen_id=' + dokumenId + '" class="btn btn-warning btn-sm"><i class="bi bi-diagram-3"></i> Analisis Penyebab</a>' +
+                '<a href="<?= site_url('siimut/trias-mutu/pdsa') ?>?dokumen_id=' + dokumenId + '" class="btn btn-success btn-sm"><i class="bi bi-arrow-repeat"></i> PDSA</a>' +
+                '<a href="<?= site_url('siimut/trias-mutu/cetak') ?>?dokumen_id=' + dokumenId + '" class="btn btn-info btn-sm"><i class="bi bi-printer"></i> Cetak</a>' +
+                '</div>';
+            $('#indicatorInfo .card-footer.btn-aksi').html(btnHtml).show();
+        } else {
+            $('#indicatorInfo .card-footer.btn-aksi').hide();
         }
+
+        showAiSection();
     }
 
     function loadIndicators(callback) {
@@ -402,65 +414,102 @@ $(document).ready(function() {
     }
 
     var chart = null;
-    function renderChart(m) {
+    function renderChart(m, triwulan, tahun) {
         if (!m || !m.bulanan || !m.bulanan.length) {
             $('#grafikSection').hide();
             return;
         }
         $('#grafikSection').show();
 
-        var bulanSingkat = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-        var labels = [], values = [];
-        m.bulanan.forEach(function(b) {
-            labels.push(bulanSingkat[b.bulan] || 'B' + b.bulan);
-            values.push(b.nilai);
-        });
+        var twLabels = ['', 'I', 'II', 'III', 'IV'];
+        var twLabel = twLabels[triwulan] || '';
+        var bulanPendek = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
+        var labels = [
+            bulanPendek[m.bulanan[0].bulan - 1],
+            bulanPendek[m.bulanan[1].bulan - 1],
+            bulanPendek[m.bulanan[2].bulan - 1],
+            'RATA-RATA TW ' + twLabel + ' ' + (tahun || '')
+        ];
+        var standarVal = parseFloat(m.target) || 0;
+        var standarData = [standarVal, standarVal, standarVal, standarVal];
+        var avgVal = (m.nilai_triwulan !== null && m.nilai_triwulan !== undefined && !isNaN(m.nilai_triwulan))
+            ? Math.round(m.nilai_triwulan * 100) / 100 : 0;
+        var capaianData = [
+            m.bulanan[0].nilai || 0,
+            m.bulanan[1].nilai || 0,
+            m.bulanan[2].nilai || 0,
+            avgVal
+        ];
+        var maxY = Math.max(standarVal, ...capaianData) * 1.3 || 12;
+        maxY = Math.ceil(maxY / 2) * 2;
+        if (maxY < 2) maxY = 2;
+
+        $('#chartTitle').text(m.indicator?.indicator_element || '');
 
         if (chart) chart.destroy();
         var ctx = document.getElementById('lineChart');
         if (!ctx) return;
 
-        var target = m.target || 0;
-        var avgTriwulan = m.nilai_triwulan;
-        var maxVal = Math.max(...values, target, avgTriwulan || 0) * 1.3 || 100;
-
-        var datasets = [{
-            label: 'Nilai (v2 ' + (m.indicator?.indicator_units || '') + ')',
-            data: values,
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.3,
-            pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-            pointRadius: 4
-        }];
-
-        if (avgTriwulan !== null && avgTriwulan !== undefined && !isNaN(avgTriwulan)) {
-            var avgData = labels.map(function() { return avgTriwulan; });
-            datasets.push({
-                label: 'Rata-Rata Triwulan: ' + (avgTriwulan % 1 === 0 ? avgTriwulan : avgTriwulan.toFixed(2)) + '%',
-                data: avgData,
-                borderColor: '#3498db',
-                borderWidth: 2,
-                borderDash: [4, 4],
-                fill: false,
-                tension: 0,
-                pointRadius: 0,
-                pointHitRadius: 0
-            });
-        }
-
         chart = new Chart(ctx.getContext('2d'), {
             type: 'line',
-            data: { labels: labels, datasets: datasets },
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'STANDAR',
+                        data: standarData,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 2,
+                        borderDash: [],
+                        fill: false,
+                        tension: 0,
+                        pointStyle: 'diamond',
+                        pointRadius: 5,
+                        pointBackgroundColor: '#3498db'
+                    },
+                    {
+                        label: 'CAPAIAN',
+                        data: capaianData,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        borderWidth: 2,
+                        borderDash: [],
+                        fill: false,
+                        tension: 0,
+                        pointStyle: 'rect',
+                        pointRadius: 5,
+                        pointBackgroundColor: '#e74c3c'
+                    }
+                ]
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                custom: { target: target, avgTriwulan: avgTriwulan },
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, max: maxVal, title: { display: true, text: 'Capaian (%)' } } }
-            }
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { size: 11 } } },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        color: '#333',
+                        font: { size: 10, weight: 'bold' },
+                        formatter: function(v) { return v + '%'; }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 10, weight: 'bold' } }
+                    },
+                    y: {
+                        min: 0,
+                        max: maxY,
+                        ticks: { stepSize: 2, callback: function(v) { return v + '%'; } },
+                        grid: { display: true, drawBorder: false }
+                    }
+                }
+            },
+            plugins: [ChartDataLabels]
         });
     }
 
@@ -468,6 +517,98 @@ $(document).ready(function() {
         loadIndicators(function() {
             toastWarning('Silakan pilih Indikator terlebih dahulu');
         });
+    });
+
+    function getFilterParams() {
+        return {
+            unit_id: $('#unit_id').val(),
+            category_id: $('#category_id').val(),
+            indicator_id: $('#indicator_id').val(),
+            tahun: $('#tahun').val(),
+            triwulan: $('#triwulan').val()
+        };
+    }
+
+    function showAiSection() {
+        var p = getFilterParams();
+        if (p.unit_id && p.category_id && p.indicator_id && p.tahun && p.triwulan && dokumenId) {
+            $('#aiAnalisisSection').show();
+            $('#aiAnalisisContent').html('');
+            $('#aiAnalisisError').hide();
+        } else {
+            $('#aiAnalisisSection').hide();
+        }
+    }
+
+    function saveAnalisisAi(text) {
+        if (!dokumenId) return;
+        $.ajax({
+            url: '<?= site_url('siimut/trias-mutu/save-analisis-ai') ?>',
+            method: 'POST',
+            data: { dokumen_id: dokumenId, analisis_ai: text },
+            success: function(res) {
+                if (res.success) toastSuccess('Analisis tersimpan');
+            }
+        });
+    }
+
+    $('#btnAnalisisAI').on('click', function() {
+        var p = getFilterParams();
+        if (!p.unit_id || !p.category_id || !p.indicator_id || !p.tahun || !p.triwulan) {
+            toastWarning('Silakan pilih semua filter terlebih dahulu');
+            return;
+        }
+
+        $('#aiManualForm').hide();
+        $('#aiAnalisisLoading').show();
+        $('#aiAnalisisContent').html('');
+        $('#aiAnalisisError').hide();
+        $('#btnAnalisisAI').prop('disabled', true);
+
+        $.ajax({
+            url: '<?= site_url('siimut/trias-mutu/analisis-ai') ?>',
+            method: 'POST',
+            data: p,
+            success: function(res) {
+                $('#aiAnalisisLoading').hide();
+                if (res.success) {
+                    $('#aiAnalisisContent').html(res.analisis);
+                    saveAnalisisAi(res.analisis);
+                } else {
+                    $('#aiAnalisisError').text(res.message).show();
+                }
+            },
+            error: function() {
+                $('#aiAnalisisLoading').hide();
+                $('#aiAnalisisError').text('Gagal terhubung ke server').show();
+            },
+            complete: function() {
+                $('#btnAnalisisAI').prop('disabled', false);
+            }
+        });
+    });
+
+    $('#btnTulisManual').on('click', function() {
+        var existingText = $('#aiAnalisisContent').text().trim();
+        $('#aiManualForm').toggle();
+        if ($('#aiManualForm').is(':visible')) {
+            $('#manualAnalisisText').val(existingText || $('#aiAnalisisContent').text() || '');
+            $('#btnAnalisisAI').prop('disabled', true);
+        } else {
+            $('#btnAnalisisAI').prop('disabled', false);
+        }
+    });
+
+    $('#btnGunakanManual').on('click', function() {
+        var text = $('#manualAnalisisText').val().trim();
+        if (!text) {
+            toastWarning('Tulis analisis terlebih dahulu');
+            return;
+        }
+        $('#aiAnalisisContent').html(text.replace(/\n/g, '<br>'));
+        $('#aiManualForm').hide();
+        $('#btnAnalisisAI').prop('disabled', false);
+        saveAnalisisAi(text);
     });
 });
 </script>

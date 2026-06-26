@@ -39,7 +39,7 @@ class AuthFilter implements FilterInterface
             return redirect()->to('/auth')->with('error', 'Silakan login dulu');
         }
 
-        $timeout = 1800; // 30 menit untuk production
+        $timeout = 3600; // 1 jam
         $last = $session->get('last_activity');
 
         if ($last && (time() - $last) > $timeout) {
