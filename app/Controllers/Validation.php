@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\IndicatorValidationModel;
 use App\Models\LoadModuleForminputModel;
 use App\Models\SiimutMenuModel;
+use App\Models\UserGroupDepartmentModel;
 
 class Validation extends AppController
 {
@@ -14,6 +15,34 @@ class Validation extends AppController
         'impunit' => ['prefix' => 'local_', 'categoryId' => '6', 'title' => 'IMPUNIT'],
         'ikp'     => ['prefix' => 'local_', 'categoryId' => '7', 'title' => 'IKP'],
     ];
+
+    private function getAccessibleDepartmentIds(): array
+    {
+        $role = session()->get('user_role');
+        if ($role !== 'VALIDATOR') {
+            return [];
+        }
+
+        $profileId = session('profile_id');
+        if (!$profileId) {
+            return [];
+        }
+
+        $db = db_connect();
+        $profile = $db->table('user_profile')
+            ->select('profile_group_id')
+            ->where('profile_id', $profileId)
+            ->where('profile_record_status', 'A')
+            ->get()
+            ->getRow();
+
+        if (!$profile || !$profile->profile_group_id) {
+            return [];
+        }
+
+        $model = new UserGroupDepartmentModel();
+        return $model->getAssignedDepartmentIds((int) $profile->profile_group_id);
+    }
 
     public function index(string $module = 'inm')
     {
@@ -38,6 +67,8 @@ class Validation extends AppController
         $validationModel = new IndicatorValidationModel();
         $data = $validationModel->getPendingIndicators($cfg['categoryId'], (int)$tahun, (int)$bulan);
 
+        $accessibleDeptIds = $this->getAccessibleDepartmentIds();
+
         // Departemen dari data result yang sudah A
         $db = db_connect();
         $deptQuery = $db->query("
@@ -51,6 +82,9 @@ class Validation extends AppController
         ", [(int)$tahun, (int)$bulan]);
         $departments = [];
         foreach ($deptQuery->getResult() as $row) {
+            if (!empty($accessibleDeptIds) && !in_array($row->result_department_id, $accessibleDeptIds)) {
+                continue;
+            }
             $departments[$row->result_department_id] = $row->department_name;
         }
 
@@ -93,6 +127,12 @@ class Validation extends AppController
 
         if (!$indicatorId || !$departmentId) {
             return redirect()->to('siimut/validation/' . $module);
+        }
+
+        // Security check: VALIDATOR hanya bisa akses departemen yang diizinkan
+        $accessibleDeptIds = $this->getAccessibleDepartmentIds();
+        if (!empty($accessibleDeptIds) && !in_array($departmentId, $accessibleDeptIds)) {
+            return redirect()->to('siimut/validation/' . $module)->with('error', 'Anda tidak memiliki akses ke departemen ini');
         }
 
         $role = session()->get('user_role');
@@ -151,6 +191,15 @@ class Validation extends AppController
 
         $validationModel = new IndicatorValidationModel();
         $allData = $validationModel->getPendingIndicators($cfg['categoryId'], $tahun, $bulan);
+
+        $accessibleDeptIds = $this->getAccessibleDepartmentIds();
+
+        // Filter by group access (VALIDATOR only)
+        if (!empty($accessibleDeptIds)) {
+            $allData = array_filter($allData, function ($row) use ($accessibleDeptIds) {
+                return in_array($row->result_department_id, $accessibleDeptIds);
+            });
+        }
 
         // Filter by department
         if ($departmentFilter !== '') {

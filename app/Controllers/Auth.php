@@ -173,7 +173,8 @@ class Auth extends BaseController
             'Kendali Mutu dan Tim Pokja' => 'KENDALI_MUTU',
             'Kendali Mutu'             => 'KENDALI_MUTU',
             'Komite'                    => 'KOMITE',
-            'Administrator'             => 'ADMINISTRATOR'
+            'Administrator'             => 'ADMINISTRATOR',
+            'Validasi'                  => 'VALIDATOR',
         ];
 
         $userRole = $roleMap[$user->hak_akses] ?? 'APP';
@@ -210,6 +211,7 @@ class Auth extends BaseController
             'last_activity'   => time(),
 
             'profile_id'      => $user->profile_id,
+            'profile_group_id' => $user->profile_group_id,
             'nama_lengkap'    => $user->profile_fullname,
             'profile_email'   => $user->profile_email,
             'profile_picture' => $user->profile_photo ?? null,
@@ -937,12 +939,23 @@ class Auth extends BaseController
         log_message('info', 'EMAIL VERIFIED: ' . $user->profile_email);
 
         // 🎭 Set session (pakai data DB)
+        $vRoleMap = [
+            'Kendali Mutu dan Tim Pokja' => 'KENDALI_MUTU',
+            'Kendali Mutu'             => 'KENDALI_MUTU',
+            'Komite'                    => 'KOMITE',
+            'Administrator'             => 'ADMINISTRATOR',
+            'Validasi'                  => 'VALIDATOR',
+        ];
+
+        $vUserRole = $vRoleMap[$user->hak_akses] ?? 'APP';
+
         session()->set([
             'logged_in'       => true,
             'login_source'    => 'APP',
             'auth_method'     => 'APP',
 
             'profile_id'      => $user->profile_id,
+            'profile_group_id' => $user->profile_group_id,
             'nama_lengkap'    => $user->profile_fullname,
             'profile_email'   => $user->profile_email,
             'profile_picture' => $user->profile_photo ?: null,
@@ -950,7 +963,7 @@ class Auth extends BaseController
             'department_id'   => $user->profile_department_id,
             'department_name' => $user->lokasi,
 
-            'user_role'       => $user->group_code ?? 'APP',
+            'user_role'       => $vUserRole,
             'role_asli'       => $user->hak_akses,
 
             'login_time'      => date('Y-m-d H:i:s'),
@@ -1233,7 +1246,8 @@ class Auth extends BaseController
                     'Kendali Mutu dan Tim Pokja' => 'KENDALI_MUTU',
                     'Kendali Mutu'             => 'KENDALI_MUTU',
                     'Komite'                    => 'KOMITE',
-                    'Administrator'             => 'ADMINISTRATOR'
+                    'Administrator'             => 'ADMINISTRATOR',
+                    'Validasi'                  => 'VALIDATOR',
                 ];
 
                 $userRole = $roleMap[$user->hak_akses] ?? 'APP';
@@ -1245,6 +1259,7 @@ class Auth extends BaseController
                     'last_activity'   => time(),
 
                     'profile_id'      => $user->profile_id,
+                    'profile_group_id' => $user->profile_group_id,
                     'nama_lengkap'    => $user->profile_fullname,
                     'profile_email'   => $user->profile_email,
                     'profile_picture' => $picture ?: ($user->profile_photo ?? null),

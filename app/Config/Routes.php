@@ -225,6 +225,12 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
         $routes->post('staf/toggle-online/(:num)', 'Staff::toggleOnline/$1');
         $routes->post('staf/change-password/(:num)', 'Staff::changePassword/$1');
 
+        // Manajemen Akses Grup
+        $routes->get('group-access', 'GroupAccess::index');
+        $routes->post('group-access/ajax-get-departments/(:num)', 'GroupAccess::ajaxGetDepartments/$1');
+        $routes->get('group-access/edit/(:num)', 'GroupAccess::edit/$1');
+        $routes->post('group-access/update/(:num)', 'GroupAccess::update/$1');
+
         // Manajemen Unit / Bagian
         $routes->get('unit', 'Department::index');
         $routes->post('unit/ajax-get-data', 'Department::ajaxGetData');
