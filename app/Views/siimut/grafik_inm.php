@@ -92,7 +92,14 @@
         <div class="row">
             <div class="col-12">
                 <div class="card card-grafik">
-                    <div class="card-header"><i class="bi bi-graph-up me-2"></i>Tren Bulanan</div>
+                    <div class="card-header d-flex align-items-center">
+                        <span><i class="bi bi-graph-up me-2"></i>Tren Bulanan</span>
+                        <div id="btnDownloadGroup" class="ms-auto" style="display:none;">
+                            <button class="btn btn-sm btn-outline-primary" onclick="downloadGrafikPng()">
+                                <i class="bi bi-image me-1"></i>Download Grafik
+                            </button>
+                        </div>
+                    </div>
                     <div class="card-body">
                         <div class="chart-container"><canvas id="lineChart"></canvas></div>
                     </div>
@@ -544,6 +551,22 @@
         if (tabelNumDenumBody) tabelNumDenumBody.innerHTML = '';
     }
 
+    function downloadGrafikPng() {
+        var canvas = document.getElementById('lineChart');
+        if (!canvas) return;
+        var tmpCanvas = document.createElement('canvas');
+        tmpCanvas.width = canvas.width;
+        tmpCanvas.height = canvas.height;
+        var ctx = tmpCanvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, tmpCanvas.width, tmpCanvas.height);
+        ctx.drawImage(canvas, 0, 0);
+        var link = document.createElement('a');
+        link.download = 'Grafik_INM_Tren_Bulanan_' + document.getElementById('tahun').value + '.jpg';
+        link.href = tmpCanvas.toDataURL('image/jpeg', 0.95);
+        link.click();
+    }
+
     function loadGrafik(isYearChange = false) {
         var tahun = document.getElementById('tahun').value;
         var indicatorId = document.getElementById('indicator_id').value;
@@ -593,6 +616,8 @@
                     
                     if (grafikContainer) grafikContainer.style.display = 'block';
                     if (indicatorInfo) indicatorInfo.style.display = 'block';
+                    var btnGroup = document.getElementById('btnDownloadGroup');
+                    if (btnGroup) btnGroup.style.display = 'block';
                     // Tampilkan badge kalo indikator non-aktif
                     if (indicatorName) {
                         var nameText = response.indicator.indicator_element || '';

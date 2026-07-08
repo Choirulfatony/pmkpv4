@@ -101,12 +101,9 @@
                     <div class="card-header d-flex align-items-center">
                         <span><i class="bi bi-graph-up me-2"></i>Tren Bulanan</span>
                         <div id="btnDownloadGroup" class="ms-auto" style="display:none;">
-                            <button class="btn btn-sm btn-outline-primary me-1" onclick="downloadGrafikPng()">
+                            <button class="btn btn-sm btn-outline-primary" onclick="downloadGrafikPng()">
                                 <i class="bi bi-image me-1"></i>Download Grafik
                             </button>
-                            <a href="#" id="btnDownloadExcel" class="btn btn-sm btn-outline-success">
-                                <i class="bi bi-download me-1"></i>Excel
-                            </a>
                         </div>
                     </div>
                     <div class="card-body">
@@ -616,11 +613,6 @@
                     }
                     var btnGroup = document.getElementById('btnDownloadGroup');
                     if (btnGroup) {
-                        var dept = document.getElementById('department_id').value;
-                        var url = '<?= site_url('siimut/grafik-impunit/export') ?>?tahun=' + response.tahun + '&indicator_id=' + response.indicator.indicator_id;
-                        if (dept) url += '&department_id=' + dept;
-                        var btnExcel = document.getElementById('btnDownloadExcel');
-                        if (btnExcel) btnExcel.href = url;
                         btnGroup.style.display = 'block';
                     }
                     if (document.getElementById('indicatorName')) {
