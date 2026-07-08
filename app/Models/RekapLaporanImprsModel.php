@@ -689,35 +689,22 @@ protected $column_order = [
         $filterDepartmentId = null;
         if ($departmentId !== null && $departmentId > 0) {
             $builder->where("EXISTS (
-                SELECT 1 FROM local_quality_indicator_result lqir_sub
-                WHERE lqir_sub.result_indicator_id = lqi.indicator_id
-                AND YEAR(lqir_sub.result_period) = {$tahun}
-                AND lqir_sub.result_department_id = {$departmentId}
-                AND lqir_sub.result_record_status = 'A'
+                SELECT 1 FROM local_quality_indicator_group lqig
+                WHERE lqig.group_indicator_id = lqi.indicator_id
+                AND lqig.group_department_id = {$departmentId}
+                AND lqig.group_type = 5
+                AND lqig.group_record_status = 'A'
             )", null, false);
             $filterDepartmentId = $departmentId;
         } elseif (!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) {
             $builder->where("EXISTS (
-                SELECT 1 FROM local_quality_indicator_result lqir_sub
-                WHERE lqir_sub.result_indicator_id = lqi.indicator_id
-                AND YEAR(lqir_sub.result_period) = {$tahun}
-                AND lqir_sub.result_department_id = {$userDepartmentId}
-                AND lqir_sub.result_record_status = 'A'
+                SELECT 1 FROM local_quality_indicator_group lqig
+                WHERE lqig.group_indicator_id = lqi.indicator_id
+                AND lqig.group_department_id = {$userDepartmentId}
+                AND lqig.group_type = 5
+                AND lqig.group_record_status = 'A'
             )", null, false);
             $filterDepartmentId = $userDepartmentId;
-        }
-
-        $builder->where("EXISTS (
-            SELECT 1 FROM local_quality_indicator_result lqir_sub
-            WHERE lqir_sub.result_indicator_id = lqi.indicator_id
-            AND YEAR(lqir_sub.result_period) = {$tahun}
-            AND lqir_sub.result_record_status = 'A'
-        )", null, false);
-
-        // For current year: only active indicators
-        $tahunNow = (int) date('Y');
-        if ((int) $tahun === $tahunNow) {
-            $builder->where('lqi.indicator_record_status', 'A');
         }
 
         $builder->groupBy('lqi.indicator_id');

@@ -639,13 +639,6 @@ class RekapLaporanInmModel extends Model
         $builder->where('quality_indicator.indicator_category_id', '4');
         $builder->whereIn('quality_indicator.indicator_record_status', ['A']);
 
-        // Smart filter: only indicators with data in selected year
-        $builder->where("EXISTS (
-            SELECT 1 FROM quality_indicator_result lqir_sub
-            WHERE lqir_sub.result_indicator_id = quality_indicator.indicator_id
-            AND YEAR(lqir_sub.result_period) = {$tahun}
-        )");
-
         // Filter by user role / department override
         $userRole = session('user_role') ?? '';
         $userDepartmentId = session('department_id') ?? 0;
