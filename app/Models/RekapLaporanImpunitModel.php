@@ -1006,6 +1006,16 @@ class RekapLaporanImpunitModel extends Model
         if ($departmentId !== null && $departmentId > 0) {
             $builder->where('lqir.result_department_id', $departmentId);
         }
+        // Untuk M/Y: pilih record terawal per bulan (input user), bukan kumulatif akhir bulan
+        $builder->where("(lqi.indicator_frequency NOT IN ('M', 'Y') OR lqir.result_period = (
+            SELECT MIN(lqir2.result_period)
+            FROM local_quality_indicator_result lqir2
+            WHERE lqir2.result_indicator_id = lqir.result_indicator_id
+            AND lqir2.result_department_id = lqir.result_department_id
+            AND YEAR(lqir2.result_period) = YEAR(lqir.result_period)
+            AND MONTH(lqir2.result_period) = MONTH(lqir.result_period)
+            AND lqir2.result_record_status = 'A'
+        ))", null, false);
         $builder->groupBy('MONTH(lqir.result_period)');
 
         $results = $builder->get()->getResult();
