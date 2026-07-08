@@ -93,6 +93,16 @@ class RekapLaporanInmModel extends Model
         $builder->whereIn('qi.indicator_record_status', ['A']);
         $builder->where('qi.indicator_id', $indicator);
         $builder->where('qir.result_record_status', 'A');
+        // Untuk M/Y: pilih record terawal per bulan (input user), bukan kumulatif akhir bulan
+        $builder->where("(qi.indicator_frequency NOT IN ('M', 'Y') OR qir.result_period = (
+            SELECT MIN(lqir2.result_period)
+            FROM quality_indicator_result lqir2
+            WHERE lqir2.result_indicator_id = qir.result_indicator_id
+            AND lqir2.result_department_id = qir.result_department_id
+            AND YEAR(lqir2.result_period) = YEAR(qir.result_period)
+            AND MONTH(lqir2.result_period) = MONTH(qir.result_period)
+            AND lqir2.result_record_status = 'A'
+        ))", null, false);
 
         $builder->groupBy([
             'qi.indicator_category_id',
@@ -175,6 +185,16 @@ class RekapLaporanInmModel extends Model
         $builder->whereIn("qi.indicator_record_status", ['A']);
         $builder->whereIn('qi.indicator_id', $indicatorIds);
         $builder->where('qir.result_record_status', 'A');
+        // Untuk M/Y: pilih record terawal per bulan (input user), bukan kumulatif akhir bulan
+        $builder->where("(qi.indicator_frequency NOT IN ('M', 'Y') OR qir.result_period = (
+            SELECT MIN(lqir2.result_period)
+            FROM quality_indicator_result lqir2
+            WHERE lqir2.result_indicator_id = qir.result_indicator_id
+            AND lqir2.result_department_id = qir.result_department_id
+            AND YEAR(lqir2.result_period) = YEAR(qir.result_period)
+            AND MONTH(lqir2.result_period) = MONTH(qir.result_period)
+            AND lqir2.result_record_status = 'A'
+        ))", null, false);
     
         if ($departmentId !== null && $departmentId > 0) {
             $builder->where('qir.result_department_id', $departmentId);
@@ -991,6 +1011,16 @@ class RekapLaporanInmModel extends Model
         $builder->where('qir.result_indicator_id', $indicatorId);
         $builder->where('qir.result_record_status', 'A');
         $builder->where("YEAR(qir.result_period)", $tahun);
+        // Untuk M/Y: pilih record terawal per bulan (input user), bukan kumulatif akhir bulan
+        $builder->where("(qi.indicator_frequency NOT IN ('M', 'Y') OR qir.result_period = (
+            SELECT MIN(lqir2.result_period)
+            FROM quality_indicator_result lqir2
+            WHERE lqir2.result_indicator_id = qir.result_indicator_id
+            AND lqir2.result_department_id = qir.result_department_id
+            AND YEAR(lqir2.result_period) = YEAR(qir.result_period)
+            AND MONTH(lqir2.result_period) = MONTH(qir.result_period)
+            AND lqir2.result_record_status = 'A'
+        ))", null, false);
         if ($departmentId !== null) {
             $builder->where('qir.result_department_id', $departmentId);
         }
