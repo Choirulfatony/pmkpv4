@@ -250,31 +250,20 @@
                               const doc = parser.parseFromString(cellData, 'text/html');
                               var numEl = doc.getElementById('num_det');
                               var denumEl = doc.getElementById('denum_det');
+                              var totalEl = doc.getElementById('total_det');
 
                               if (numEl && denumEl) {
-                                  var num = parseInt(numEl.innerText) || 0;
-                                  var denum = parseInt(denumEl.innerText) || 0;
-
-                                  if (num == 0 && denum == 0) {
-                                      $(td).addClass('cell-empty');
-                                  } else {
-                                      var totalEl = doc.getElementById('total_det');
-                                      var nilai = totalEl ? parseFloat(totalEl.innerText) || 0 : 0;
+                                  if (totalEl) {
+                                      var nilai = parseFloat(totalEl.innerText) || 0;
                                       var tgt = parseInt(target) || 0;
 
                                       if (operator == "<=") {
-                                          if (nilai <= tgt) {
-                                              $(td).addClass('cell-target');
-                                          } else {
-                                              $(td).addClass('cell-fail');
-                                          }
+                                          $(td).addClass(nilai <= tgt ? 'cell-target' : 'cell-fail');
                                       } else {
-                                          if (nilai >= tgt) {
-                                              $(td).addClass('cell-target');
-                                          } else {
-                                              $(td).addClass('cell-fail');
-                                          }
+                                          $(td).addClass(nilai >= tgt ? 'cell-target' : 'cell-fail');
                                       }
+                                  } else {
+                                      $(td).addClass('cell-empty');
                                   }
                               }
                               // Buat cell bisa diklik untuk daily detail
