@@ -443,19 +443,20 @@ class RekapLaporanImpunitModel extends Model
                 local_quality_indicator.indicator_element,
                 master_institution_department.department_id,
                 master_institution_department.department_name
-            FROM local_quality_indicator_result
-            JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_result.result_indicator_id
-            JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_result.result_department_id
+            FROM local_quality_indicator_group
+            JOIN local_quality_indicator ON local_quality_indicator.indicator_id = local_quality_indicator_group.group_indicator_id
+            JOIN master_institution_department ON master_institution_department.department_id = local_quality_indicator_group.group_department_id
             WHERE local_quality_indicator.indicator_category_id = '6' 
             AND local_quality_indicator.indicator_record_status IN ('A')
-            AND local_quality_indicator_result.result_indicator_id = ?
-            AND YEAR(local_quality_indicator_result.result_period) = ?
+            AND local_quality_indicator_group.group_indicator_id = ?
+            AND local_quality_indicator_group.group_type = 6
+            AND local_quality_indicator_group.group_record_status = 'A'
             {$searchCondition}
             {$deptCondition}
             GROUP BY master_institution_department.department_id
             ORDER BY master_institution_department.department_name ASC
             {$limit}
-        ", [$indicatorId, $tahun]);
+        ", [$indicatorId]);
 
         return $query->getResult();
     }
