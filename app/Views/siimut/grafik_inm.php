@@ -130,9 +130,9 @@
                             <div class="mt-3 p-3 bg-light rounded border">
                                 <strong class="text-muted"><i class="bi bi-info-circle me-1"></i> Keterangan:</strong>
                                 <div class="d-flex flex-wrap gap-2 mt-2">
-                                    <span><span class="badge px-2 py-1" style="background-color: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;">Tercapai</span></span>
-                                    <span><span class="badge px-2 py-1" style="background-color: #ffebee; color: #c62828; border: 1px solid #ffcdd2;">Tidak</span></span>
-                                    <span><span class="badge px-2 py-1" style="background-color: #f5f5f5; color: #999999; border: 1px solid #e0e0e0;">N/A</span></span>
+                                    <span><span class="badge px-2 py-1" style="background-color: #4caf50; color: white; border: 1px solid #388e3c;">Tercapai</span></span>
+                                    <span><span class="badge px-2 py-1" style="background-color: #f44336; color: white; border: 1px solid #d32f2f;">Tidak</span></span>
+                                    <span><span class="badge px-2 py-1" style="background-color: #9e9e9e; color: white; border: 1px solid #757575;">N/A</span></span>
                                 </div>
                             </div>
                         </div>
@@ -1006,7 +1006,7 @@
             if (tidakAdaData) {
                 bgColor = 'background-color: #f5f5f5;';
                 textColor = 'color: #999999;';
-                statusBadge = '<span class="badge px-2 py-1" style="background-color: #e0e0e0; color: #757575; border: 1px solid #bdbdbd;">N/A</span>';
+                statusBadge = '<span class="badge px-2 py-1" style="background-color: #9e9e9e; color: white; border: 1px solid #757575;">N/A</span>';
             } else if (tercap) {
                 bgColor = 'background-color: #e8f5e9;';
                 textColor = 'color: #2e7d32;';
@@ -1030,8 +1030,8 @@
 
         var totalBg = totalTercap ? 'background: linear-gradient(135deg, #4caf50 0%, #43a047 100%); color: white;' : 'background: linear-gradient(135deg, #f44336 0%, #e53935 100%); color: white;';
         var totalStatusBadge = totalTercap ?
-            '<span class="badge px-2 py-1" style="background-color: white; color: #2e7d32; text-transform: none; border: 1px solid #a5d6a7;">Tercapai</span>' :
-            '<span class="badge px-2 py-1" style="background-color: white; color: #c62828; text-transform: none; border: 1px solid #ef9a9a;">Tidak Tercapai</span>';
+            '<span class="badge px-2 py-1" style="background-color: #4caf50; color: white; text-transform: none; border: 1px solid #388e3c;">Tercapai</span>' :
+            '<span class="badge px-2 py-1" style="background-color: #f44336; color: white; text-transform: none; border: 1px solid #d32f2f;">Tidak Tercapai</span>';
 
         html += '<tr style="' + totalBg + '">' +
             '<td class="text-center py-2" style="border: 1px solid #dee2e6; font-weight: bold;">Total</td>' +
@@ -1122,5 +1122,6 @@
         }
     <?php endif; ?>
 </script>
+
 
 
