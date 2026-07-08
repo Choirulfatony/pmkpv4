@@ -135,8 +135,8 @@
                             <div class="mt-3 p-3 bg-light rounded border">
                                 <strong class="text-muted"><i class="bi bi-info-circle me-1"></i> Keterangan:</strong>
                                 <div class="d-flex flex-wrap gap-2 mt-2">
-                                    <span><span class="badge px-2 py-1" style="background-color: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;">✅ Tercapai</span></span>
-                                    <span><span class="badge px-2 py-1" style="background-color: #ffebee; color: #c62828; border: 1px solid #ffcdd2;">❌ Tidak</span></span>
+                                    <span><span class="badge px-2 py-1" style="background-color: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;">Tercapai</span></span>
+                                    <span><span class="badge px-2 py-1" style="background-color: #ffebee; color: #c62828; border: 1px solid #ffcdd2;">Tidak</span></span>
                                     <span><span class="badge px-2 py-1" style="background-color: #f5f5f5; color: #999999; border: 1px solid #e0e0e0;">N/A</span></span>
                                 </div>
                             </div>
@@ -208,7 +208,7 @@
             </div>
         </div>
 
-        <!-- 🔥 5. Analisis Trias Mutu -->
+        <!--  5. Analisis Trias Mutu -->
         <div class="row" id="triasMutuSection" style="display:none;">
             <div class="col-12">
                 <div class="card card-grafik">
@@ -221,7 +221,7 @@
             </div>
         </div>
 
-        <!-- 🔥 6. Per Tahun (History) -->
+        <!--  6. Per Tahun (History) -->
         <div class="row">
             <div class="col-12">
                 <div class="card card-grafik">
@@ -691,25 +691,25 @@
                         var trendText = '';
 
                         if (diff > 0) {
-                            trendEl.textContent = '⬆ +' + diff.toFixed(1) + '%';
+                            trendEl.textContent = ' +' + diff.toFixed(1) + '%';
                             trendEl.className = 'mb-1 text-success fw-bold';
                             trendText = 'mengalami peningkatan ' + diff.toFixed(1) + '%';
                         } else if (diff < 0) {
-                            trendEl.textContent = '⬇ ' + Math.abs(diff).toFixed(1) + '%';
+                            trendEl.textContent = ' ' + Math.abs(diff).toFixed(1) + '%';
                             trendEl.className = 'mb-1 text-danger fw-bold';
                             trendText = 'mengalami penurunan ' + Math.abs(diff).toFixed(1) + '%';
                         } else {
-                            trendEl.textContent = '➡ Stabil';
+                            trendEl.textContent = ' Stabil';
                             trendEl.className = 'mb-1 text-muted fw-bold';
                             trendText = 'stabil';
                         }
 
                         if (response.tahunan.tercap) {
-                            statusEl.textContent = 'TERCAPAI ✓';
+                            statusEl.textContent = 'TERCAPAI ';
                             statusEl.className = 'mb-1 text-success fw-bold';
                             statusEl.parentElement.parentElement.classList.add('border-success');
                         } else {
-                            statusEl.textContent = 'TIDAK TERCAPAI ✗';
+                            statusEl.textContent = 'TIDAK TERCAPAI ';
                             statusEl.className = 'mb-1 text-danger fw-bold';
                             statusEl.parentElement.parentElement.classList.add('border-danger');
                         }
@@ -1005,11 +1005,11 @@
             } else if (tercap) {
                 bgColor = 'background-color: #e8f5e9;';
                 textColor = 'color: #2e7d32;';
-                statusBadge = '<span class="badge px-2 py-1" style="background-color: #4caf50; color: white; border: 1px solid #388e3c;">✅ Tercapai</span>';
+                statusBadge = '<span class="badge px-2 py-1" style="background-color: #4caf50; color: white; border: 1px solid #388e3c;">Tercapai</span>';
             } else {
                 bgColor = 'background-color: #ffebee;';
                 textColor = 'color: #c62828;';
-                statusBadge = '<span class="badge px-2 py-1" style="background-color: #f44336; color: white; border: 1px solid #d32f2f;">❌ Tidak</span>';
+                statusBadge = '<span class="badge px-2 py-1" style="background-color: #f44336; color: white; border: 1px solid #d32f2f;">Tidak</span>';
             }
 
             html += '<tr style="' + bgColor + textColor + '">' +
@@ -1025,8 +1025,8 @@
 
         var totalBg = totalTercap ? 'background: linear-gradient(135deg, #4caf50 0%, #43a047 100%); color: white;' : 'background: linear-gradient(135deg, #f44336 0%, #e53935 100%); color: white;';
         var totalStatusBadge = totalTercap ?
-            '<span class="badge px-2 py-1" style="background-color: white; color: #2e7d32; text-transform: none; border: 1px solid #a5d6a7;">✅ Tercapai</span>' :
-            '<span class="badge px-2 py-1" style="background-color: white; color: #c62828; text-transform: none; border: 1px solid #ef9a9a;">❌ Tidak Tercapai</span>';
+            '<span class="badge px-2 py-1" style="background-color: white; color: #2e7d32; text-transform: none; border: 1px solid #a5d6a7;">Tercapai</span>' :
+            '<span class="badge px-2 py-1" style="background-color: white; color: #c62828; text-transform: none; border: 1px solid #ef9a9a;">Tidak Tercapai</span>';
 
         html += '<tr style="' + totalBg + '">' +
             '<td class="text-center py-2" style="border: 1px solid #dee2e6; font-weight: bold;">Total</td>' +
@@ -1116,3 +1116,5 @@
         }
     <?php endif; ?>
 </script>
+
+
