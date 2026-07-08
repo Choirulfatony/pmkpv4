@@ -98,9 +98,9 @@
         <div class="row">
             <div class="col-12">
                 <div class="card card-grafik">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card-header d-flex align-items-center">
                         <span><i class="bi bi-graph-up me-2"></i>Tren Bulanan</span>
-                        <div id="btnDownloadGroup" style="display:none;">
+                        <div id="btnDownloadGroup" class="ms-auto" style="display:none;">
                             <button class="btn btn-sm btn-outline-primary me-1" onclick="downloadGrafikPng()">
                                 <i class="bi bi-image me-1"></i>Download Grafik
                             </button>
@@ -554,9 +554,16 @@
     function downloadGrafikPng() {
         var canvas = document.getElementById('lineChart');
         if (!canvas) return;
+        var tmpCanvas = document.createElement('canvas');
+        tmpCanvas.width = canvas.width;
+        tmpCanvas.height = canvas.height;
+        var ctx = tmpCanvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, tmpCanvas.width, tmpCanvas.height);
+        ctx.drawImage(canvas, 0, 0);
         var link = document.createElement('a');
-        link.download = 'Grafik_IMPUnit_Tren_Bulanan_' + document.getElementById('tahun').value + '.png';
-        link.href = canvas.toDataURL('image/png');
+        link.download = 'Grafik_IMPUnit_Tren_Bulanan_' + document.getElementById('tahun').value + '.jpg';
+        link.href = tmpCanvas.toDataURL('image/jpeg', 0.95);
         link.click();
     }
 
