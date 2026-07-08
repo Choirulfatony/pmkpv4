@@ -100,9 +100,9 @@
                 <div class="card card-grafik">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span><i class="bi bi-graph-up me-2"></i>Tren Bulanan</span>
-                        <a href="#" id="btnDownloadGrafik" class="btn btn-sm btn-outline-success" style="display:none;" target="_blank">
+                        <button id="btnDownloadGrafik" class="btn btn-sm btn-outline-success" style="display:none;" onclick="downloadGrafik()">
                             <i class="bi bi-download me-1"></i>Download Excel
-                        </a>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div class="chart-container"><canvas id="lineChart"></canvas></div>
@@ -546,6 +546,14 @@
         if (tabelNumDenumBody) tabelNumDenumBody.innerHTML = '';
     }
 
+    function downloadGrafik() {
+        var btn = document.getElementById('btnDownloadGrafik');
+        if (btn) {
+            var url = btn.getAttribute('data-url');
+            if (url) window.location.href = url;
+        }
+    }
+
     function loadGrafik(isYearChange) {
         var tahun = document.getElementById('tahun').value;
         var indicatorId = document.getElementById('indicator_id').value;
@@ -598,7 +606,7 @@
                         var dept = document.getElementById('department_id').value;
                         var url = '<?= site_url('siimut/grafik-impunit/export') ?>?tahun=' + response.tahun + '&indicator_id=' + response.indicator.indicator_id;
                         if (dept) url += '&department_id=' + dept;
-                        btnDownload.href = url;
+                        btnDownload.setAttribute('data-url', url);
                         btnDownload.style.display = 'inline-block';
                     }
                     if (document.getElementById('indicatorName')) {
