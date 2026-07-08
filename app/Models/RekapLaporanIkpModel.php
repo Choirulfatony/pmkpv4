@@ -81,6 +81,7 @@ protected $column_order = [
                     SUM(lqir.result_denumerator_value) AS denum,
 
                     CASE 
+                        WHEN SUM(lqir.result_denumerator_value) = 0 AND SUM(lqir.result_numerator_value) = 0 THEN 0
                         WHEN SUM(lqir.result_denumerator_value) = 0 THEN NULL
                         ELSE ROUND(
                             (SUM(lqir.result_numerator_value) / SUM(lqir.result_denumerator_value)) 
@@ -89,6 +90,7 @@ protected $column_order = [
                     END AS total_value,
 
                     CASE 
+                        WHEN SUM(lqir.result_denumerator_value) = 0 AND SUM(lqir.result_numerator_value) = 0 THEN '0 %'
                         WHEN SUM(lqir.result_denumerator_value) = 0 THEN 'TIDAK ADA DATA'
                         ELSE CONCAT(
                             ROUND(
@@ -165,6 +167,7 @@ protected $column_order = [
             SUM(lqir.result_denumerator_value) AS denum,
 
             CASE 
+                WHEN SUM(lqir.result_denumerator_value) = 0 AND SUM(lqir.result_numerator_value) = 0 THEN 0
                 WHEN SUM(lqir.result_denumerator_value) = 0 THEN NULL
                 ELSE ROUND(
                     SUM(lqir.result_numerator_value) /
@@ -174,6 +177,7 @@ protected $column_order = [
             END AS total_value,
 
             CASE 
+                WHEN SUM(lqir.result_denumerator_value) = 0 AND SUM(lqir.result_numerator_value) = 0 THEN '0 %'
                 WHEN SUM(lqir.result_denumerator_value) = 0 THEN 'TIDAK ADA DATA'
                 ELSE CONCAT(
                     ROUND(
@@ -1262,3 +1266,4 @@ protected $column_order = [
         return $result;
     }
 }
+

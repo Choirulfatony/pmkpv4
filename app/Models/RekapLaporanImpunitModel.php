@@ -105,6 +105,7 @@ class RekapLaporanImpunitModel extends Model
                     SUM(lqir.result_denumerator_value) AS denum,
 
                     CASE 
+                        WHEN SUM(lqir.result_denumerator_value) = 0 AND SUM(lqir.result_numerator_value) = 0 THEN 0
                         WHEN SUM(lqir.result_denumerator_value) = 0 THEN NULL
                         ELSE ROUND(
                             (SUM(lqir.result_numerator_value) / SUM(lqir.result_denumerator_value)) 
@@ -113,6 +114,7 @@ class RekapLaporanImpunitModel extends Model
                     END AS total_value,
 
                     CASE 
+                        WHEN SUM(lqir.result_denumerator_value) = 0 AND SUM(lqir.result_numerator_value) = 0 THEN '0 %'
                         WHEN SUM(lqir.result_denumerator_value) = 0 THEN 'TIDAK ADA DATA'
                         ELSE CONCAT(
                             ROUND(
@@ -525,6 +527,7 @@ class RekapLaporanImpunitModel extends Model
         SUM(lqir.result_denumerator_value) AS denum,
 
        CASE 
+        WHEN SUM(lqir.result_denumerator_value) = 0 AND SUM(lqir.result_numerator_value) = 0 THEN 0
         WHEN SUM(lqir.result_denumerator_value) = 0 THEN NULL
         ELSE ROUND(
             SUM(lqir.result_numerator_value) /
@@ -534,6 +537,7 @@ class RekapLaporanImpunitModel extends Model
         END AS total_value,
 
         CASE 
+            WHEN SUM(lqir.result_denumerator_value) = 0 AND SUM(lqir.result_numerator_value) = 0 THEN '0 %'
             WHEN SUM(lqir.result_denumerator_value) = 0 THEN 'TIDAK ADA DATA'
             ELSE CONCAT(
                 ROUND(
@@ -1308,3 +1312,4 @@ class RekapLaporanImpunitModel extends Model
         return $result;
     }
 }
+

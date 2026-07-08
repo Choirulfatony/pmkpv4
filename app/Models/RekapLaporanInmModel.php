@@ -59,6 +59,7 @@ class RekapLaporanInmModel extends Model
                     SUM(qir.result_denumerator_value) AS denum,
 
                     CASE 
+                        WHEN SUM(qir.result_denumerator_value) = 0 AND SUM(qir.result_numerator_value) = 0 THEN 0
                         WHEN SUM(qir.result_denumerator_value) = 0 THEN NULL
                         ELSE ROUND(
                             (SUM(qir.result_numerator_value) / SUM(qir.result_denumerator_value)) 
@@ -67,6 +68,7 @@ class RekapLaporanInmModel extends Model
                     END AS total_value,
 
                     CASE 
+                        WHEN SUM(qir.result_denumerator_value) = 0 AND SUM(qir.result_numerator_value) = 0 THEN '0 %'
                         WHEN SUM(qir.result_denumerator_value) = 0 THEN 'TIDAK ADA DATA'
                         ELSE CONCAT(
                             ROUND(
@@ -153,6 +155,7 @@ class RekapLaporanInmModel extends Model
             SUM(qir.result_denumerator_value) AS denum,
 
             CASE 
+                WHEN SUM(qir.result_denumerator_value) = 0 AND SUM(qir.result_numerator_value) = 0 THEN 0
                 WHEN SUM(qir.result_denumerator_value) = 0 THEN NULL
                 ELSE ROUND(
                     SUM(qir.result_numerator_value) /
@@ -162,6 +165,7 @@ class RekapLaporanInmModel extends Model
             END AS total_value,
 
             CASE 
+                WHEN SUM(qir.result_denumerator_value) = 0 AND SUM(qir.result_numerator_value) = 0 THEN '0 %'
                 WHEN SUM(qir.result_denumerator_value) = 0 THEN 'TIDAK ADA DATA'
                 ELSE CONCAT(
                     ROUND(
@@ -492,6 +496,7 @@ class RekapLaporanInmModel extends Model
         SUM(qir.result_denumerator_value) AS denum,
 
        CASE 
+        WHEN SUM(qir.result_denumerator_value) = 0 AND SUM(qir.result_numerator_value) = 0 THEN 0
         WHEN SUM(qir.result_denumerator_value) = 0 THEN NULL
         ELSE ROUND(
             SUM(qir.result_numerator_value) /
@@ -501,6 +506,7 @@ class RekapLaporanInmModel extends Model
         END AS total_value,
 
         CASE 
+            WHEN SUM(qir.result_denumerator_value) = 0 AND SUM(qir.result_numerator_value) = 0 THEN '0 %'
             WHEN SUM(qir.result_denumerator_value) = 0 THEN 'TIDAK ADA DATA'
             ELSE CONCAT(
                 ROUND(
@@ -1252,3 +1258,4 @@ class RekapLaporanInmModel extends Model
         return $result;
     }
 }
+
