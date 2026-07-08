@@ -156,6 +156,7 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
     $routes->get('grafik-impunit', 'GrafikImpunit::index');
     $routes->post('grafik-impunit/indicators', 'GrafikImpunit::getIndicatorsByYear');
     $routes->post('grafik-impunit/data', 'GrafikImpunit::getDataGrafik');
+    $routes->get('grafik-impunit/export', 'GrafikImpunit::exportExcel');
 
     // Rekap Periode IMPRS
     $routes->get('rekap-periode-imprs', 'RekapPeriodeImprs::index');
