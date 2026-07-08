@@ -878,8 +878,9 @@
                 var fileData = res.file_data ?? [];
                 var fileMyRequests = res.file_my_requests ?? [];
 
+                var isAdmin = user_role === 'ADMINISTRATOR';
                 var $badge = $('#badge-backdate_header');
-                var totalPending = (bdCount || 0) + (fileTotal || 0);
+                var totalPending = (isAdmin ? (bdCount || 0) + (fileTotal || 0) : 0);
                 if (totalPending > 0) {
                     $badge.text(totalPending > 9 ? '9+' : totalPending).show();
                 } else {
@@ -895,8 +896,8 @@
                 var fileDeleteLink = '<?= site_url('siimut/dokumen-mutu/delete-requests') ?>';
                 var html = '';
 
-                /* ---------- BACKDATE MENUNGGU ---------- */
-                if (bdData.length > 0) {
+                /* ---------- BACKDATE MENUNGGU (hanya ADMINISTRATOR) ---------- */
+                if (isAdmin && bdData.length > 0) {
                     html += '<span class="dropdown-item dropdown-header small py-1">Backdate Menunggu Persetujuan</span>';
                     bdData.forEach(function(item) {
                         var typeName = typeNames[item.ar_group_type] || '?';
@@ -907,9 +908,8 @@
                         var name = item.indicator_name || '-';
                         var unit = item.department_name || '-';
                         var link = '<?= site_url('siimut/backdate/requests-list') ?>/' + slug;
-                        var clickable = user_role !== 'KENDALI_MUTU';
-                        var tag = clickable ? 'a' : 'div';
-                        var hrefAttr = clickable ? ' href="'+link+'"' : '';
+                        var tag = 'a';
+                        var hrefAttr = ' href="'+link+'"';
                         html += '<'+tag+hrefAttr+' class="dropdown-item bd-item">'+
                             '<div class="d-flex align-items-start gap-2">'+
                                 '<div class="notif-icon"><i class="bi bi-calendar-check text-warning"></i></div>'+
@@ -926,15 +926,14 @@
                     });
                 }
 
-                /* ---------- FILE DELETE MENUNGGU ---------- */
-                if (fileData && fileData.length > 0) {
+                /* ---------- FILE DELETE MENUNGGU (hanya ADMINISTRATOR) ---------- */
+                if (isAdmin && fileData && fileData.length > 0) {
                     if (html) html += '<div class="dropdown-divider"></div>';
                     html += '<span class="dropdown-item dropdown-header small py-1">Hapus File Menunggu Persetujuan</span>';
                     fileData.forEach(function(item) {
                         var typeLabel = item.is_folder ? 'Folder' : 'File';
-                        var clickable = user_role !== 'KENDALI_MUTU';
-                        var tag = clickable ? 'a' : 'div';
-                        var hrefAttr = clickable ? ' href="'+fileDeleteLink+'"' : '';
+                        var tag = 'a';
+                        var hrefAttr = ' href="'+fileDeleteLink+'"';
                         html += '<'+tag+hrefAttr+' class="dropdown-item bd-item">'+
                             '<div class="d-flex align-items-start gap-2">'+
                                 '<div class="notif-icon"><i class="bi bi-trash text-danger"></i></div>'+
