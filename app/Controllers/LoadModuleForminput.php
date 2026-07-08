@@ -149,7 +149,7 @@ class LoadModuleForminput extends AppController
                     $r      = $dailyMap[$key][$foundDay];
                     $num    = (float) $r->num;
                     $denum  = (float) $r->denum;
-                    $nilai  = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
+                    $nilai  = $denum > 0 ? round(($num / $denum) * $factors, 2) : (($num == 0 && $denum == 0) ? 0 : null);
                     $status = $r->result_record_status ?? '';
                 } else {
                     $num    = 0;
@@ -185,7 +185,7 @@ class LoadModuleForminput extends AppController
                     $weekData = $weeks[$w];
                     $num = $weekData['num'];
                     $den = $weekData['den'];
-                    $nilai = $den > 0 ? round(($num / $den) * $factors, 2) : null;
+                    $nilai = $den > 0 ? round(($num / $den) * $factors, 2) : (($weekData['has_data'] && $num == 0 && $den == 0) ? 0 : null);
                     $startDay = ($w - 1) * 7 + 1;
                     $endDay = min($w * 7, $daysInMonth);
                     $daily[] = [
@@ -207,7 +207,7 @@ class LoadModuleForminput extends AppController
                         $r      = $dailyMap[$key][$d];
                         $num    = (float) $r->num;
                         $denum  = (float) $r->denum;
-                        $nilai  = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
+                        $nilai  = $denum > 0 ? round(($num / $denum) * $factors, 2) : (($num == 0 && $denum == 0) ? 0 : null);
                         $status = $r->result_record_status ?? '';
                     } else {
                         $num    = 0;
@@ -318,7 +318,7 @@ class LoadModuleForminput extends AppController
                     $r      = $byDept[$did][$d];
                     $num    = (float) $r->num;
                     $denum  = (float) $r->denum;
-                    $nilai  = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
+                    $nilai  = $denum > 0 ? round(($num / $denum) * $factors, 2) : (($num == 0 && $denum == 0) ? 0 : null);
                     $status = $r->result_record_status ?? '';
                 } else {
                     $num    = 0;

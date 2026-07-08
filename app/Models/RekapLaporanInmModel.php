@@ -90,7 +90,7 @@ class RekapLaporanInmModel extends Model
 
         $builder->where('qi.indicator_category_id', '4');
         // [CHANGED] Biar indikator non-aktif (status 'D') tetap muncul hasil rekapan historisnya
-        $builder->whereIn('qi.indicator_record_status', ['A', 'D']);
+        $builder->whereIn('qi.indicator_record_status', ['A']);
         $builder->where('qi.indicator_id', $indicator);
         $builder->where('qir.result_record_status', 'A');
 
@@ -172,7 +172,7 @@ class RekapLaporanInmModel extends Model
         $builder->where("YEAR(qir.result_period)", $tahun);
         $builder->where("qi.indicator_category_id", '4');
         // [CHANGED] Biar indikator non-aktif tetap ikut diambil data bulanannya
-        $builder->whereIn("qi.indicator_record_status", ['A', 'D']);
+        $builder->whereIn("qi.indicator_record_status", ['A']);
         $builder->whereIn('qi.indicator_id', $indicatorIds);
         $builder->where('qir.result_record_status', 'A');
     
@@ -230,16 +230,10 @@ class RekapLaporanInmModel extends Model
 
         $builder->where("quality_indicator.indicator_category_id", '4');
         // [CHANGED] Biar indikator non-aktif (status 'D') tetap muncul di daftar rekap
-        $builder->whereIn("quality_indicator.indicator_record_status", ['A', 'D']);
+        $builder->whereIn("quality_indicator.indicator_record_status", ['A']);
 
         $vtahun = isset($post['vtahun']) ? (int) $post['vtahun'] : (int) date('Y');
 
-        // Smart filter: only indicators with data in selected year
-        $builder->where("EXISTS (
-            SELECT 1 FROM quality_indicator_result lqir
-            WHERE lqir.result_indicator_id = quality_indicator.indicator_id
-            AND YEAR(lqir.result_period) = {$vtahun}
-        )");
         // Filter by user role / department override
         $userRole = session('user_role') ?? '';
         $userDepartmentId = session('department_id') ?? 0;
@@ -268,6 +262,7 @@ class RekapLaporanInmModel extends Model
         }
 
         // Order default
+        $builder->orderBy('quality_indicator.indicator_record_status', 'ASC');
         if (isset($post['order'])) {
             $col = $this->column_order[$post['order'][0]['column']] ?? 'indicator_element';
             $dir = $post['order'][0]['dir'] ?? 'ASC';
@@ -360,7 +355,6 @@ class RekapLaporanInmModel extends Model
         $db = db_connect();
 
         // Query sama dengan getIndicatorInm tapi hanya COUNT
-        $statusFilter = "IN ('A', 'D')";
         $query = $db->query("
             SELECT COUNT(*) as total FROM (
                 SELECT DISTINCT quality_indicator.indicator_id
@@ -368,16 +362,11 @@ class RekapLaporanInmModel extends Model
                 JOIN quality_indicator ON quality_indicator.indicator_id = quality_indicator_group.group_indicator_id
                 JOIN master_institution_department ON master_institution_department.department_id = quality_indicator_group.group_department_id
                 WHERE quality_indicator.indicator_category_id = '4'
-                AND quality_indicator.indicator_record_status {$statusFilter}
-                AND EXISTS (
-                    SELECT 1 FROM quality_indicator_result lqir
-                    WHERE lqir.result_indicator_id = quality_indicator.indicator_id
-                    AND YEAR(lqir.result_period) = ?
-                )
+                AND quality_indicator.indicator_record_status IN ('A')
                 " . ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? "AND master_institution_department.department_id = " . $userDepartmentId : "") . "
                 GROUP BY quality_indicator.indicator_id
             ) as counted
-        ", [$vtahun]);
+        ");
 
         $count = $query->getRow()->total ?? 0;
 
@@ -423,8 +412,8 @@ class RekapLaporanInmModel extends Model
             JOIN quality_indicator ON quality_indicator.indicator_id = quality_indicator_group.group_indicator_id
             JOIN master_institution_department ON master_institution_department.department_id = quality_indicator_group.group_department_id
             WHERE quality_indicator.indicator_category_id = '4' 
-            -- [CHANGED] Pake IN ('A', 'D') biar departemen indikator non-aktif tetap tampil di detail
-            AND quality_indicator.indicator_record_status IN ('A', 'D') 
+            -- [CHANGED] Pake IN ('A') biar departemen indikator non-aktif tetap tampil di detail
+            AND quality_indicator.indicator_record_status IN ('A') 
             AND quality_indicator_group.group_record_status = 'A'
             AND quality_indicator_group.group_indicator_id = ?
             {$searchCondition}
@@ -457,8 +446,8 @@ class RekapLaporanInmModel extends Model
             FROM quality_indicator
             WHERE quality_indicator.indicator_id = ?
             AND quality_indicator.indicator_category_id = '4' 
-            -- [CHANGED] Pake IN ('A', 'D') biar detail indikator non-aktif tetap bisa dibuka
-            AND quality_indicator.indicator_record_status IN ('A', 'D')
+            -- [CHANGED] Pake IN ('A') biar detail indikator non-aktif tetap bisa dibuka
+            AND quality_indicator.indicator_record_status IN ('A')
         ", [$indicatorId]);
 
         return $query->getRow();
@@ -560,8 +549,8 @@ class RekapLaporanInmModel extends Model
             JOIN master_institution_department ON master_institution_department.department_id = quality_indicator_group.group_department_id
             WHERE quality_indicator_group.group_indicator_id = ?
             AND quality_indicator.indicator_category_id = '4' 
-            -- [CHANGED] Pake IN ('A', 'D') biar hitungan departemen indikator non-aktif tetap akurat
-            AND quality_indicator.indicator_record_status IN ('A', 'D')
+            -- [CHANGED] Pake IN ('A') biar hitungan departemen indikator non-aktif tetap akurat
+            AND quality_indicator.indicator_record_status IN ('A')
             {$deptCondition}
             {$searchCondition}
         ", [$indicatorId]);
@@ -589,7 +578,6 @@ class RekapLaporanInmModel extends Model
         }
 
         // Query sama dengan getIndicatorInm tapi hanya COUNT
-        $statusFilter = "IN ('A', 'D')";
         $query = $db->query("
             SELECT COUNT(*) as total FROM (
                 SELECT DISTINCT quality_indicator.indicator_id
@@ -597,17 +585,12 @@ class RekapLaporanInmModel extends Model
                 JOIN quality_indicator ON quality_indicator.indicator_id = quality_indicator_group.group_indicator_id
                 JOIN master_institution_department ON master_institution_department.department_id = quality_indicator_group.group_department_id
                 WHERE quality_indicator.indicator_category_id = '4'
-                AND quality_indicator.indicator_record_status {$statusFilter}
-                AND EXISTS (
-                    SELECT 1 FROM quality_indicator_result lqir
-                    WHERE lqir.result_indicator_id = quality_indicator.indicator_id
-                    AND YEAR(lqir.result_period) = ?
-                )
+                AND quality_indicator.indicator_record_status IN ('A')
                 " . ((!in_array($userRole, ['ADMINISTRATOR', 'KOMITE']) && $userDepartmentId > 0) ? "AND master_institution_department.department_id = " . $userDepartmentId : "") . "
                 {$searchCondition}
                 GROUP BY quality_indicator.indicator_id
             ) as counted
-        ", [$vtahun]);
+        ");
 
         return $query->getRow()->total ?? 0;
     }
@@ -654,7 +637,7 @@ class RekapLaporanInmModel extends Model
         $builder->select('quality_indicator.indicator_id, quality_indicator.indicator_element, quality_indicator.indicator_target, quality_indicator.indicator_factors, quality_indicator.indicator_units, quality_indicator.indicator_target_calculation, quality_indicator.indicator_record_status');
         $builder->join('quality_indicator_group', 'quality_indicator.indicator_id = quality_indicator_group.group_indicator_id');
         $builder->where('quality_indicator.indicator_category_id', '4');
-        $builder->whereIn('quality_indicator.indicator_record_status', ['A', 'D']);
+        $builder->whereIn('quality_indicator.indicator_record_status', ['A']);
 
         // Smart filter: only indicators with data in selected year
         $builder->where("EXISTS (
@@ -1033,7 +1016,7 @@ class RekapLaporanInmModel extends Model
             $num = (float) $row->num;
             $denum = (float) $row->denum;
 
-            $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
+            $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : (($num == 0 && $denum == 0) ? 0 : null);
 
             $data[$bulan] = [
                 'num'    => $num,

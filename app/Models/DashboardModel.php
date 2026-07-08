@@ -224,7 +224,7 @@ class DashboardModel extends Model
                 $element = $row->indicator_element ?? '-';
                 $deptName = $row->department_name ?? '-';
 
-                $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
+                $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : (($num == 0 && $denum == 0) ? 0 : null);
 
                 if ($nilai === null) {
                     $tidakAdaData++;
@@ -501,7 +501,7 @@ class DashboardModel extends Model
             $factors = (float) ($row->indicator_factors ?? 1);
             $operator = $row->indicator_target_calculation ?? '>=';
 
-            $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
+            $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : (($num == 0 && $denum == 0) ? 0 : null);
             if ($nilai === null) continue;
 
             $tercapai = $this->cekTercapai($nilai, $target, $operator);

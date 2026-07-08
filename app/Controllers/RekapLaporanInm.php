@@ -347,7 +347,7 @@ class RekapLaporanInm extends AppController
                     $r     = $byDept[$did][$d];
                     $num   = (float) $r->num;
                     $denum = (float) $r->denum;
-                    $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : null;
+                    $nilai = $denum > 0 ? round(($num / $denum) * $factors, 2) : (($num == 0 && $denum == 0) ? 0 : null);
                 } else {
                     $num   = 0;
                     $denum = 0;
