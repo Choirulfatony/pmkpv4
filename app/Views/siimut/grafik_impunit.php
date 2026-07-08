@@ -100,9 +100,14 @@
                 <div class="card card-grafik">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span><i class="bi bi-graph-up me-2"></i>Tren Bulanan</span>
-                        <button id="btnDownloadGrafik" class="btn btn-sm btn-outline-success" style="display:none;" onclick="downloadGrafik()">
-                            <i class="bi bi-download me-1"></i>Download Excel
-                        </button>
+                        <div id="btnDownloadGroup" style="display:none;">
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="downloadGrafikPng()">
+                                <i class="bi bi-image me-1"></i>Download Grafik
+                            </button>
+                            <a href="#" id="btnDownloadExcel" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-download me-1"></i>Excel
+                            </a>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="chart-container"><canvas id="lineChart"></canvas></div>
@@ -546,12 +551,13 @@
         if (tabelNumDenumBody) tabelNumDenumBody.innerHTML = '';
     }
 
-    function downloadGrafik() {
-        var btn = document.getElementById('btnDownloadGrafik');
-        if (btn) {
-            var url = btn.getAttribute('data-url');
-            if (url) window.location.href = url;
-        }
+    function downloadGrafikPng() {
+        var canvas = document.getElementById('lineChart');
+        if (!canvas) return;
+        var link = document.createElement('a');
+        link.download = 'Grafik_IMPUnit_Tren_Bulanan_' + document.getElementById('tahun').value + '.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
     }
 
     function loadGrafik(isYearChange) {
@@ -601,13 +607,14 @@
                     if (document.getElementById('indicatorInfo')) {
                         document.getElementById('indicatorInfo').style.display = 'block';
                     }
-                    var btnDownload = document.getElementById('btnDownloadGrafik');
-                    if (btnDownload) {
+                    var btnGroup = document.getElementById('btnDownloadGroup');
+                    if (btnGroup) {
                         var dept = document.getElementById('department_id').value;
                         var url = '<?= site_url('siimut/grafik-impunit/export') ?>?tahun=' + response.tahun + '&indicator_id=' + response.indicator.indicator_id;
                         if (dept) url += '&department_id=' + dept;
-                        btnDownload.setAttribute('data-url', url);
-                        btnDownload.style.display = 'inline-block';
+                        var btnExcel = document.getElementById('btnDownloadExcel');
+                        if (btnExcel) btnExcel.href = url;
+                        btnGroup.style.display = 'block';
                     }
                     if (document.getElementById('indicatorName')) {
                         var nameText = response.indicator.indicator_element || '';
